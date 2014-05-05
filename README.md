@@ -1,28 +1,27 @@
 iapws
 =====
 
-Librería de python que implementa el estándar IAPWS-IF97, siendo capaz de calcular las propiedades físicas del agua líquida o vapor en un amplio rango de presiónes y temperaturas
+Python implementation of international-standard IAPWS-IF97 steam tables 
 
 
-dependencias
+dependences
 --------------------
 
-* python 2,3, es compatible con las dos ramas de desarrollo de python.
-* Numpy-scipy: librería con herramientas para el cálculo mátemático
+* python 2x;3x, compatible with both versions
+* Numpy-scipy: library with mathematic and scientific tools
 
 
-instalación
+install
 --------------------
 
-En debian se encuentra en los repositorios oficiales tanto en la rama testing como en sid. En estable se puede instalar usando pip::
+In debian you can find in oficial repositories in testing and sid. In stable you can install using pip::
 
 	pip install iapws
 
-En cualquier otro sistema operativo se puede instalar descargandolo de su página en `pypi <https://pypi.python.org/pypi?name=iapws&version=1.0.2>`_
-y descomprimiendolo en la carpate dist-packages de python.
+In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages.
 
 
-características
+Use
 --------------------
 
 Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-IF97
@@ -83,7 +82,6 @@ Usage::
 
 
    from iapws import IAPWS97
-
    sat_steam=IAPWS97(P=1,x=1)                #saturated steam with known P
    sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
    steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
