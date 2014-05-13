@@ -1446,8 +1446,10 @@ def _Region4(P, x):
     propiedades["cp"]=None
     propiedades["cv"]=None
     propiedades["w"]=None
-    propiedades["alfa"]=None
+    propiedades["alfav"]=None
     propiedades["kt"]=None
+    propiedades["alfap"]=None
+    propiedades["betap"]=None
     propiedades["region"]=4
     propiedades["x"]=x
     return propiedades
@@ -1898,8 +1900,8 @@ class _fase(dict):
     cp0=0
 
 
-class IAPWS97():
-    u"""Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-IF97
+class IAPWS97(object):
+    """Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-IF97
     
     Incoming properties::
     T   -   Temperature, K
@@ -2158,16 +2160,35 @@ class IAPWS97():
         
         elif self._thermo=="Px":
             P, x=args
-            if Pt/1e6<=P<=Pc and 0<=x<=1:
+            if Pt/1e6<=P<=Pc and 0<x<1:
                 propiedades=_Region4(P, x)
+            elif P>16.529:
+                T=_TSat_P(P)
+                rho=1./_Backward3_v_PT(T, P)
+                propiedades=_Region3(rho, T)
+            elif x==0:
+                T=_TSat_P(P)
+                propiedades=_Region1(T, P)
+            elif x==1:
+                T=_TSat_P(P)
+                propiedades=_Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
 
         elif self._thermo=="Tx":
             T, x=args
-            if Tt<=T<=Tc and 0<=x<=1:
-                P=_PSat_T(T)
+            P=_PSat_T(T)
+            if Tt<=T<=Tc and 0<x<1:
                 propiedades=_Region4(P, x)
+            elif P>16.529:
+                rho=1./_Backward3_v_PT(T, P)
+                propiedades=_Region3(rho, T)
+            elif x==0:
+                T=_TSat_P(P)
+                propiedades=_Region1(T, P)
+            elif x==1:
+                T=_TSat_P(P)
+                propiedades=_Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
     
@@ -2350,4 +2371,6 @@ if __name__ == "__main__":
     doctest.testmod()
 
     mix=IAPWS97(T=750+273.15,P=70.) 
-    print mix.f
+    print(mix.f)
+    mix=IAPWS97(P=20.0, x=0) 
+    print(mix.h, mix.Liquid.h, mix.Vapor.h, mix.region)
