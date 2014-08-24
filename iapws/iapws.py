@@ -1,18 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-####################################
-###  Implementación de la IAPWS-IF97 Steam Tables  ###
-####################################
+"IAPWS-IF97 Steam Tables implementation"
 
 from __future__ import division
 from math import sqrt, log, exp, tan, atan, acos, sin
 
 from scipy.optimize import fsolve
 
-__version__="1.0.3"
+__version__ = "1.0.3"
 
-#Boundary Region1-Region2
+# Boundary Region1-Region2
 def _h13_s(s):
     """Define the boundary between Region 1 and 3,  h=f(s)
 
@@ -21,26 +19,29 @@ def _h13_s(s):
     >>> "%.6f" % _h13_s(3.5)
     '1566.104611'
     """
-    sigma=s/3.8
-    I=[0, 1, 1, 3, 5, 6]
-    J=[0, -2, 2, -12, -4, -3]
-    n=[0.913965547600543, -0.430944856041991e-4, 0.603235694765419e2, 0.117518273082168e-17, 0.220000904781292, -0.690815545851641e2]
+    sigma = s / 3.8
+    I = [0, 1, 1, 3, 5, 6]
+    J = [0, -2, 2, -12, -4, -3]
+    n = [0.913965547600543, -0.430944856041991e-4, 0.603235694765419e2,
+         0.117518273082168e-17, 0.220000904781292, -0.690815545851641e2]
 
-    suma=0
+    suma = 0
     for i in range(6):
-        suma+=n[i]*(sigma-0.884)**I[i]*(sigma-0.864)**J[i]
-    return 1700*suma
+        suma+=n[i] * (sigma-0.884)**I[i] * (sigma-0.864)**J[i]
+    return 1700 * suma
 
 
-#Boundary Region2-Region3
+# Boundary Region2-Region3
 def _P23_T(T):
     """Define the boundary between Region 2 and 3, P=f(T)
 
     >>> "%.8f" % _P23_T(623.15)
     '16.52916425'
     """
-    n=[0, 0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2,0.57254459862746e3, 0.1391883977870e2]
-    return n[1]+n[2]*T+n[3]*T**2
+    n=[0, 0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2,
+       0.57254459862746e3, 0.1391883977870e2]
+    return n[1] + n[2] * T + n[3] * T**2
+
 
 def _t_P(P):
     """Define the boundary between Region 2 and 3, T=f(P)
@@ -48,8 +49,10 @@ def _t_P(P):
     >>> "%.2f" % _t_P(16.52916425)
     '623.15'
     """
-    n=[0, 0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2,0.57254459862746e3, 0.1391883977870e2]
-    return n[4]+((P-n[5])/n[3])**0.5
+    n=[0, 0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2,
+       0.57254459862746e3, 0.1391883977870e2]
+    return n[4] + ((P - n[5]) / n[3])**0.5
+
 
 def _t_hs(h, s):
     """Define the boundary between Region 2 and 3, T=f(h,s)
@@ -61,7 +64,8 @@ def _t_hs(h, s):
     """
     nu=h/3000
     sigma=s/5.3
-    I=[-12, -10, -8, -4, -3, -2, -2, -2, -2, 0, 1, 1, 1, 3, 3, 5, 6, 6, 8, 8, 8, 12, 12, 14, 14]
+    I=[-12, -10, -8, -4, -3, -2, -2, -2, -2, 0, 1, 1, 1, 3, 3, 5, 6, 6, 8, 8,
+            8, 12, 12, 14, 14]
     J=[10, 8, 3, 4, 3, -6, 2, 3, 4, 0, -3, -2, 10, -2, -1, -5, -6, -3, -8, -2, -1, -12, -1, -12, 1]
     n=[0.629096260829810e-3, -0.823453502583165e-3, 0.515446951519474e-7, -0.117565945784945e1, 0.348519684726192e1, -0.507837382408313e-11, -0.284637670005479e1, -0.236092263939673e1, 0.601492324973779e1, 0.148039650824546e1, 0.360075182221907e-3, -0.126700045009952e-1, -0.122184332521413e7, 0.149276502463272, 0.698733471798484, -0.252207040114321e-1, 0.147151930985213e-1, -0.108618917681849e1, -0.936875039816322e-3, 0.819877897570217e2, -0.182041861521835e3, 0.261907376402688e-5, -0.291626417025961e5, 0.140660774926165e-4, 0.783237062349385e7]
 
@@ -1681,7 +1685,7 @@ def _Dielectric(rho, T):
 
     return (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
 
-def _Refractive(rho, T, l):
+def _Refractive(rho, T, l=0.5893):
     """Equation for the refractive index
 
     >>> "%.8f" % _Refractive(997.047435, 298.15, 0.2265)
@@ -1985,8 +1989,8 @@ class IAPWS97(object):
     kwargs={"T": 0.0,
                     "P": 0.0,
                     "x": None,
-                    "h": 0.0,
-                    "s": 0.0,
+                    "h": None,
+                    "s": None,
                     "v": 0.0,
 
                     "l": 0.5893}
@@ -2145,7 +2149,7 @@ class IAPWS97(object):
                 vo=_Backward3_v_Ps(P, s)
                 To=_Backward3_T_Ps(P, s)
                 funcion = lambda par: (_Region3(par[0], par[1])["h"]-h, _Region3(par[0], par[1])["s"]-s)
-                rho,T=fsolve(funcion, [1/vo, T])
+                rho,T=fsolve(funcion, [1/vo, To])
                 propiedades=_Region3(rho, T)
             elif region==4:
                 T=_Backward4_T_hs(h, s)
@@ -2265,7 +2269,7 @@ class IAPWS97(object):
         fase.k=_ThCond(fase.rho, self.T)
         fase.nu=fase.mu/fase.rho
         fase.epsilon=_Dielectric(fase.rho, self.T)
-        fase.Prandt=fase.mu*fase.cp/fase.k
+        fase.Prandt=fase.mu*fase.cp*1000/fase.k
 
         fase.alfa=fase.k/1000/fase.rho/fase.cp
         fase.n=_Refractive(fase.rho, self.T, self.kwargs["l"])
@@ -2373,7 +2377,8 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    mix=IAPWS97(T=750+273.15,P=70.)
-    print(mix.f)
-    mix=IAPWS97(P=20.0, x=0)
-    print(mix.h, mix.Liquid.h, mix.Vapor.h, mix.region)
+    mix=IAPWS97(T=300, x=0)
+#    print(mix.f)
+#    mix=IAPWS97(P=20.0, x=0)
+#    print(mix.h, mix.Liquid.h, mix.Vapor.h, mix.region)
+    print(mix.Prandt)
