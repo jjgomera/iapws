@@ -32,7 +32,7 @@ Incoming properties:
 * P, Pressure, MPa
 * h, Specific enthalpy, kJ/kg
 * s, Specific entropy, kJ/kg·K
-* x, Quality
+* x, Quality, [-]
     
 Definitions options:
 
@@ -51,13 +51,14 @@ Properties:
 * a, Specific Helmholtz free energy, kJ/kg
 * v, Specific volume, m³/kg
 * rho, Density, kg/m³
+* x, quality, [-]
 * h, Specific enthalpy, kJ/kg
 * u, Specific internal energy, kJ/kg
 * s, Specific entropy, kJ/kg·K
 * cp, Specific isobaric heat capacity, kJ/kg·K
 * cv, Specific isochoric heat capacity, kJ/kg·K
-* Z, Compression factor
-* gamma, Isoentropic exponent
+* Z, Compression factor. [-]
+* gamma, Isoentropic exponent, [-]
 * alfav, Isobaric cubic expansion coefficient, 1/K
 * kt, Isothermal compressibility, 1/MPa
 * alfap, Relative pressure coefficient, 1/K
@@ -65,6 +66,17 @@ Properties:
 * joule, Joule-Thomson coefficient, K/MPa
 * deltat, Isothermal throttling coefficient, kJ/kg·MPa
 * region, Region
+
+* v0, Ideal specific volume, m³/kg
+* u0, Ideal specific internal energy, kJ/kg
+* h0, Ideal specific enthalpy, kJ/kg
+* s0, Ideal specific entropy, kJ/kg·K
+* a0, Ideal specific Helmholtz free energy, kJ/kg
+* g0, Ideal specific Gibbs free energy, kJ/kg
+* cp0, Ideal specific isobaric heat capacity, kJ/kg·K
+* cv0, Ideal specific isochoric heat capacity, kJ/kg·K
+* w0, Ideal speed of sound, m/s
+* gamma0, Ideal isoentropic exponent [-]
     
 * w, Speed of sound, m/s
 * mu, Dynamic viscosity, Pa·s
@@ -72,17 +84,18 @@ Properties:
 * k, Thermal conductivity, W/m·K
 * alfa, Thermal diffusivity, m²/s
 * sigma, Surface tension, N/m
-* epsilon, Dielectric constant
-* n, Refractive index
-* Pr, Prandtl number
+* epsilon, Dielectric constant, [-]
+* n, Refractive index, [-]
+* Prandt, Prandtl number, [-]
+* Tr, Reduced temperature, [-]
+* Pr, Reduced pressure, [-]
 
 
+Usage:
 
-Sample:
-
-	from iapws import IAPWS97
-	sat_steam=IAPWS97(P=1,x=1)                #saturated steam with known P
-	sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
-	steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
-	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpy
+from iapws import IAPWS97
+sat_steam=IAPWS97(P=1,x=1)                #saturated steam with known P
+sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
+steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
+print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
 
