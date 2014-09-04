@@ -2645,7 +2645,7 @@ def _Bound_hs(h, s):
         if smin <= s <= s13:
             P = _Backward1_P_hs(h, s)
             T = _Backward1_T_Ph(P, h)
-            if T-0.0218 >= 273.15 and Pt/1e6 <= P <= 100:
+            if T-0.0218 >= 273.15 and Pt <= P <= 100:
                 hs = _h1_s(s)
                 if h >= hs:
                     region = 1
@@ -2747,21 +2747,22 @@ def prop0(T, P):
     prop0.alfav = 1/T
     prop0.xkappa = 1/P
     # FIXME: Ideal Isentropic exponent dont work
+    prop0.gamma = 0
     # prop0.gamma = -prop0.v/P/1000*prop0.derivative("P", "v", "s", prop0)
     return prop0
 
 
 # Constants
-Rm = 8.31451    # kJ/kmol·K
-M = 18.015257   # kg/kmol
-R = 0.461526    # kJ/kg·K
-Tc = 647.096    # K
-Pc = 22.064     # MPa
-rhoc = 322      # kg/m³
-Tt = 273.16     # K
-Pt = 611.657    # Pa
-Tb = 373.1243   # K
-Dipole = 1.855  # Debye
+Rm = 8.31451      # kJ/kmol·K
+M = 18.015257     # kg/kmol
+R = 0.461526      # kJ/kg·K
+Tc = 647.096      # K
+Pc = 22.064       # MPa
+rhoc = 322        # kg/m³
+Tt = 273.16       # K
+Pt = 611.657e-6   # MPa
+Tb = 373.1243     # K
+Dipole = 1.855    # Debye
 f_acent = 0.3443
 
 # Pmin = _PSat_T(273.15)   # Minimum pressure
@@ -3050,7 +3051,7 @@ class IAPWS97(object):
 
         elif self._thermo == "Px":
             P, x = args
-            if Pt/1e6 <= P <= Pc and 0 < x < 1:
+            if Pt <= P <= Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif P > 16.529:
                 T = _TSat_P(P)
