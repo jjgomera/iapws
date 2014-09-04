@@ -98,4 +98,31 @@ Usage::
 	sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
 	steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
+    
+    
+Ice Ih properties
+-------------------------
 
+There is too implemented a function to calculate properties of ice Ih from 2009 revision, in this case only let temperature and pressure as input for calculate properties, the function return a dict with properties available:
+
+* P, Pressure, MPa
+* T, Temperature, K
+* v, Specific volume, m³/kg
+* rho, Density, kg/m³
+* g, Specific Gibbs free energy, kJ/kg
+* a, Specific Helmholtz free energy, kJ/kg
+* h, Specific enthalpy, kJ/kg
+* u, Specific internal energy, kJ/kg
+* s, Specific entropy, kJ/kg·K
+* cp, Specific isobaric heat capacity, kJ/kg·K
+* alfa, Cubic expansion coefficient, 1/K
+* beta, Pressure coefficient, MPa/K
+* kt, Isothermal compressibility, MPa
+* ks, Isentropic compressibility, MPa
+
+    
+Usage::
+    
+    from iapws import _Ice
+    ice=_Ice(273.15, 0.101325)            #Ice at normal melting point
+    print(ice["rho"])                     #Calculated density

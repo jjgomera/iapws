@@ -5,10 +5,31 @@
 
 from __future__ import division
 from math import sqrt, log, exp, tan, atan, acos, sin
+import unittest
 
 from scipy.optimize import fsolve
+from cmath import log as log_c
 
 __version__ = "1.0.4"
+
+# Constants
+Rm = 8.31451      # kJ/kmol·K
+M = 18.015257     # kg/kmol
+R = 0.461526      # kJ/kg·K
+Tc = 647.096      # K
+Pc = 22.064       # MPa
+rhoc = 322        # kg/m³
+Tt = 273.16       # K
+Pt = 611.657e-6   # MPa
+Tb = 373.1243     # K
+Dipole = 1.855    # Debye
+f_acent = 0.3443
+
+sc = 4.41202148223476     # Critic entropy
+# Pmin = _PSat_T(273.15)   # Minimum pressure
+Pmin = 0.000611212677444
+# Ps_623 = _PSat_T(623.15)  # P Saturation at 623.15 K, boundary region 1-3
+Ps_623 = 16.5291642526
 
 
 # Boundary Region1-Region2
@@ -2336,6 +2357,161 @@ def Region5_cp0(Tr, Pr):
     return go, gop, gopp, got, gott, gopt
 
 
+# IAPWS-06 for Ice
+def _Ice(T, P):
+    """Basic equation for Ice Ih
+
+    >>> "%.9f" % _Ice(100,100)["rho"]
+    '941.678203297'
+    >>> "%.9f" % _Ice(100,100)["h"]
+    '-483.491635676'
+    >>> "%.11f" % _Ice(100,100)["s"]
+    '-2.61195122589'
+    >>> "%.11f" % _Ice(273.152519,0.101325)["a"]
+    '-0.00918701567'
+    >>> "%.9f" % _Ice(273.152519,0.101325)["u"]
+    '-333.465403393'
+    >>> "%.11f" % _Ice(273.152519,0.101325)["cp"]
+    '2.09671391024'
+    >>> "%.15f" % _Ice(273.16,611.657e-6)["alfav"]
+    '0.000159863102566'
+    >>> "%.11f" % _Ice(273.16,611.657e-6)["beta"]
+    '1.35714764659'
+    >>> "%.11e" % _Ice(273.16,611.657e-6)["kt"]
+    '1.17793449348e-04'
+    >>> "%.11e" % _Ice(273.16,611.657e-6)["ks"]
+    '1.14161597779e-04'
+    """
+    # Check input in range of validity
+    if P < Pt:
+        Psub = _Sublimation_Pressure(T)
+        if Psub > P:
+            # Zone Gas
+            raise NotImplementedError("Incoming out of bound")
+    elif P > 208.566:
+        # Ice Ih limit upper pressure
+        raise NotImplementedError("Incoming out of bound")
+    else:
+        Pmel = _Melting_Pressure(T, P)
+        if Pmel < P:
+            # Zone Liquid
+            raise NotImplementedError("Incoming out of bound")
+
+    Tr = T/Tt
+    Pr = P/Pt
+    P0 = 101325e-6/Pt
+    s0 = -0.332733756492168e4*1e-3  # Express in kJ/kgK
+
+    gok = [-0.632020233335886e6, 0.655022213658955, -0.189369929326131e-7,
+           0.339746123271053e-14, -0.556464869058991e-21]
+    r2k = [complex(-0.725974574329220e2, -0.781008427112870e2)*1e-3,
+           complex(-0.557107698030123e-4, 0.464578634580806e-4)*1e-3,
+           complex(0.234801409215913e-10, -0.285651142904972e-10)*1e-3]
+    t1 = complex(0.368017112855051e-1, 0.510878114959572e-1)
+    t2 = complex(0.337315741065416, 0.335449415919309)
+    r1 = complex(0.447050716285388e2, 0.656876847463481e2)*1e-3
+
+    go = gop = gopp = 0
+    for k in range(5):
+        go += gok[k]*1e-3*(Pr-P0)**k
+    for k in range(1, 5):
+        gop += gok[k]*1e-3*k/Pt*(Pr-P0)**(k-1)
+    for k in range(2, 5):
+        gopp += gok[k]*1e-3*k*(k-1)/Pt**2*(Pr-P0)**(k-2)
+    r2 = r2p = 0
+    for k in range(3):
+        r2 += r2k[k]*(Pr-P0)**k
+    for k in range(1, 3):
+        r2p += r2k[k]*k/Pt*(Pr-P0)**(k-1)
+    r2pp = r2k[2]*2/Pt**2
+
+    c = r1*((t1-Tr)*log_c(t1-Tr)+(t1+Tr)*log_c(t1+Tr)-2*t1*log_c(t1)-Tr**2/t1) + \
+        r2*((t2-Tr)*log_c(t2-Tr)+(t2+Tr)*log_c(t2+Tr)-2*t2*log_c(t2)-Tr**2/t2)
+    ct = r1*(-log_c(t1-Tr)+log_c(t1+Tr)-2*Tr/t1) + \
+        r2*(-log_c(t2-Tr)+log_c(t2+Tr)-2*Tr/t2)
+    ctt = r1*(1/(t1-Tr)+1/(t1+Tr)-2/t1) + r2*(1/(t2-Tr)+1/(t2+Tr)-2/t2)
+    cp = r2p*((t2-Tr)*log_c(t2-Tr)+(t2+Tr)*log_c(t2+Tr)-2*t2*log_c(t2)-Tr**2/t2)
+    ctp = r2p*(-log_c(t2-Tr)+log_c(t2+Tr)-2*Tr/t2)
+    cpp = r2pp*((t2-Tr)*log_c(t2-Tr)+(t2+Tr)*log_c(t2+Tr)-2*t2*log_c(t2)-Tr**2/t2)
+
+    g = go-s0*Tt*Tr+Tt*c.real
+    gt = -s0+ct.real
+    gp = gop+Tt*cp.real
+    gtt = ctt.real/Tt
+    gtp = ctp.real
+    gpp = gopp+Tt*cpp.real
+
+    propiedades = {}
+    propiedades["T"] = T
+    propiedades["P"] = P
+    propiedades["v"] = gp/1000
+    propiedades["rho"] = 1000./gp
+    propiedades["h"] = g-T*gt
+    propiedades["s"] = -gt
+    propiedades["cp"] = -T*gtt
+    propiedades["u"] = g-T*gt-P*gp
+    propiedades["g"] = g
+    propiedades["a"] = g-P*gp
+    propiedades["alfav"] = gtp/gp
+    propiedades["beta"] = -gtp/gpp
+    propiedades["kt"] = -gpp/gp
+    propiedades["ks"] = (gtp**2-gtt*gpp)/gp/gtt
+    return propiedades
+
+
+def _Sublimation_Pressure(T):
+    "Sublimation Pressure correlation"
+    Tita = T/Tt
+    suma = 0
+    a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
+    expo = [0.333333333e-2, 1.20666667, 1.70333333]
+    for ai, expi in zip(a, expo):
+        suma += ai*Tita**expi
+        return exp(suma/Tita)*Pt
+
+
+def _Melting_Pressure(T, P):
+    "Melting Pressure correlation"
+    if P < 208.566 and 251.165 <= T <= 273.16:
+        # Ice Ih
+        Tref = Tt
+        Pref = Pt
+        Tita = T/Tref
+        a = [0.119539337e7, 0.808183159e5, 0.33382686e4]
+        expo = [3., 0.2575e2, 0.10375e3]
+        suma = 1
+        for ai, expi in zip(a, expo):
+            suma += ai*(1-Tita**expi)
+        P = suma*Pref
+    elif 208.566 < P < 350.1 and 251.165 < T <= 256.164:
+        # Ice III
+        Tref = 251.165
+        Pref = 208566.
+        Tita = T/Tref
+        P = Pref*(1-0.299948*(1-Tita**60.))
+    elif 350.1 < P < 632.4 and 256.164 < T <= 273.31:
+        # Ice V
+        Tref = 256.164
+        Pref = 350100.
+        Tita = T/Tref
+        P = Pref*(1-1.18721*(1-Tita**8.))
+    elif 632.4 < P < 2216 and 273.31 < T <= 355:
+        # Ice VI
+        Tref = 273.31
+        Pref = 632400.
+        Tita = T/Tref
+        P = Pref*(1-1.07476*(1-Tita**4.6))
+    elif 2216 < P and 355. < T <= 715:
+        # Ice VII
+        Tref = 355
+        Pref = 2216000.
+        Tita = T/Tref
+        P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5) +
+                     0.806106e-7*(1-Tita**22))
+
+    return P
+
+
 # Transport properties
 def _Viscosity(rho, T):
     """Equation for the Viscosity
@@ -2750,25 +2926,6 @@ def prop0(T, P):
     prop0.gamma = 0
     # prop0.gamma = -prop0.v/P/1000*prop0.derivative("P", "v", "s", prop0)
     return prop0
-
-
-# Constants
-Rm = 8.31451      # kJ/kmol·K
-M = 18.015257     # kg/kmol
-R = 0.461526      # kJ/kg·K
-Tc = 647.096      # K
-Pc = 22.064       # MPa
-rhoc = 322        # kg/m³
-Tt = 273.16       # K
-Pt = 611.657e-6   # MPa
-Tb = 373.1243     # K
-Dipole = 1.855    # Debye
-f_acent = 0.3443
-
-# Pmin = _PSat_T(273.15)   # Minimum pressure
-Pmin = 1e-6               # Minimum pressure
-Ps_623 = _PSat_T(623.15)  # Saturated Pressure at 623.15 K, boundary between region 1 and 3
-sc = 4.41202148223476     # Critic entropy
 
 
 class _fase(dict):
