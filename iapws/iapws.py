@@ -3420,12 +3420,26 @@ class IAPWS97_Tx(IAPWS97):
         IAPWS97.__init__(self, T=T, x=x)
 
 
+# Test
+class Test(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_Refractive(self):
+        T = (298.15, 773.15, 673.15)
+        rho = (997.047435, 30.4758534, 523.371289)
+        l = (0.2265, 0.5893)
+        value = ((1.39277824, 1.01098988, 1.19757252),
+                 (1.33285819, 1.00949307, 1.16968699))
+        for i, li in enumerate(l):
+            for j in range(len(T)):
+                self.assertEquals(
+                    "%.8f" % _Refractive(rho[j], T[j], li), str(value[i][j]))
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    mix = IAPWS97(T=300, x=0)
-#    print(mix.f)
-#    mix=IAPWS97(P=20.0, x=0)
-#    print(mix.h, mix.Liquid.h, mix.Vapor.h, mix.region)
-    print(mix.Prandt)
+    unittest.main()
