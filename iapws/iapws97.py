@@ -2486,25 +2486,25 @@ def _Melting_Pressure(T, P):
     elif 208.566 < P < 350.1 and 251.165 < T <= 256.164:
         # Ice III
         Tref = 251.165
-        Pref = 208566.
+        Pref = 208.566
         Tita = T/Tref
         P = Pref*(1-0.299948*(1-Tita**60.))
     elif 350.1 < P < 632.4 and 256.164 < T <= 273.31:
         # Ice V
         Tref = 256.164
-        Pref = 350100.
+        Pref = 350.100
         Tita = T/Tref
         P = Pref*(1-1.18721*(1-Tita**8.))
     elif 632.4 < P < 2216 and 273.31 < T <= 355:
         # Ice VI
         Tref = 273.31
-        Pref = 632400.
+        Pref = 632.400
         Tita = T/Tref
         P = Pref*(1-1.07476*(1-Tita**4.6))
     elif 2216 < P and 355. < T <= 715:
         # Ice VII
         Tref = 355
-        Pref = 2216000.
+        Pref = 2216.000
         Tita = T/Tref
         P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5) +
                      0.806106e-7*(1-Tita**22))
