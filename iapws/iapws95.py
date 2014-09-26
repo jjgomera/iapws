@@ -92,11 +92,10 @@ class MEoS(object):
               "P": 0.0,
               "rho": 0.0,
               "v": 0.0,
-              "h": 0.0,
-              "s": 0.0,
-              "u": 0.0,
+              "h": None,
+              "s": None,
+              "u": None,
               "x": None,
-              "v": 0.0,
 
               "eq": 0,
               "visco": 0,
@@ -228,7 +227,6 @@ class MEoS(object):
                     return par["h"]-par["P"]/1000*par["v"]-u
                 rho = fsolve(funcion, 200)
                 propiedades = self._eq(rho[0], T)
-
             elif P and rho:
                 T = fsolve(lambda T: self._eq(rho, T)["P"]-P, 600)
                 propiedades = self._eq(rho, T[0])
@@ -244,7 +242,6 @@ class MEoS(object):
                     return par["h"]-par["P"]/1000*par["v"]-u, par["P"]-P
                 rho, T = fsolve(funcion, [200, 600])
                 propiedades = self._eq(rho[0], T[0])
-
             elif rho and h is not None:
                 T = fsolve(lambda T: self._eq(rho, T)["h"]-h, 600)
                 propiedades = self._eq(rho, T[0])
@@ -278,61 +275,61 @@ class MEoS(object):
             if propiedades["P"]<=0:
                 raise ValueError ("Wrong input values")
 
-        self.T = T
-        self.Tr = T/self.Tc
-        self.P = propiedades["P"]
-        self.Pr = self.P/self.Pc
+#        self.T = T
+#        self.Tr = T/self.Tc
+#        self.P = propiedades["P"]
+#        self.Pr = self.P/self.Pc
 
 
-        self.Liquido = _fase()
-        self.Gas = _fase()
-        if self.x < 1:            # liquid phase
-            liquido = _Region1(self.T, self.P.MPa)
-            self.fill(self.Liquido, liquido)
-            self.Liquido.epsilon = unidades.Tension(_Tension(self.T))
-        if self.x > 0:            # vapor phase
-            vapor = _Region2(self.T, self.P.MPa)
-            self.fill(self.Gas, vapor)
-        if self.x in (0, 1):        # single phase
-            self.fill(self, propiedades)
-        else:
-            self.h = unidades.Enthalpy(self.x*self.Gas.h+(1-self.x)*self.Liquido.h)
-            self.s = unidades.SpecificHeat(self.x*self.Gas.s+(1-self.x)*self.Liquido.s)
-            self.u = unidades.SpecificHeat(self.x*self.Gas.u+(1-self.x)*self.Liquido.u)
-            self.a = unidades.Enthalpy(self.x*self.Gas.a+(1-self.x)*self.Liquido.a)
-            self.g = unidades.Enthalpy(self.x*self.Gas.g+(1-self.x)*self.Liquido.g)
-
-            self.cv = unidades.SpecificHeat(None)
-            self.cp = unidades.SpecificHeat(None)
-            self.cp_cv = unidades.Dimensionless(None)
-            self.w = unidades.Speed(None)
-
-
-    def getphase(self, fld):
-        """Return fluid phase"""
-        # check if fld above critical pressure
-        if fld["P"] > self.Pc.MPa:
-            # check if fld above critical pressure
-            if fld["T"] > self.Tc:
-                return QApplication.translate("pychemqt", "Supercritical fluid")
-            else:
-                return QApplication.translate("pychemqt", "Compressible liquid")
-        # check if fld above critical pressure
-        elif fld["T"] > self.Tc:
-            return QApplication.translate("pychemqt", "Gas")
-        # check quality
-        if fld["x"] >= 1.:
-            if self.kwargs["x"] == 1.:
-                return QApplication.translate("pychemqt", "Saturated vapor")
-            else:
-                return QApplication.translate("pychemqt", "Vapor")
-        elif 0 < fld["x"] < 1:
-            return QApplication.translate("pychemqt", "Two phases")
-        elif fld["x"] <= 0.:
-            if self.kwargs["x"] == 0.:
-                return QApplication.translate("pychemqt", "Saturated liquid")
-            else:
-                return QApplication.translate("pychemqt", "Liquid")
+#        self.Liquido = _fase()
+#        self.Gas = _fase()
+#        if self.x < 1:            # liquid phase
+#            liquido = _Region1(self.T, self.P.MPa)
+#            self.fill(self.Liquido, liquido)
+#            self.Liquido.epsilon = unidades.Tension(_Tension(self.T))
+#        if self.x > 0:            # vapor phase
+#            vapor = _Region2(self.T, self.P.MPa)
+#            self.fill(self.Gas, vapor)
+#        if self.x in (0, 1):        # single phase
+#            self.fill(self, propiedades)
+#        else:
+#            self.h = unidades.Enthalpy(self.x*self.Gas.h+(1-self.x)*self.Liquido.h)
+#            self.s = unidades.SpecificHeat(self.x*self.Gas.s+(1-self.x)*self.Liquido.s)
+#            self.u = unidades.SpecificHeat(self.x*self.Gas.u+(1-self.x)*self.Liquido.u)
+#            self.a = unidades.Enthalpy(self.x*self.Gas.a+(1-self.x)*self.Liquido.a)
+#            self.g = unidades.Enthalpy(self.x*self.Gas.g+(1-self.x)*self.Liquido.g)
+#
+#            self.cv = unidades.SpecificHeat(None)
+#            self.cp = unidades.SpecificHeat(None)
+#            self.cp_cv = unidades.Dimensionless(None)
+#            self.w = unidades.Speed(None)
+#
+#
+#    def getphase(self, fld):
+#        """Return fluid phase"""
+#        # check if fld above critical pressure
+#        if fld["P"] > self.Pc.MPa:
+#            # check if fld above critical pressure
+#            if fld["T"] > self.Tc:
+#                return QApplication.translate("pychemqt", "Supercritical fluid")
+#            else:
+#                return QApplication.translate("pychemqt", "Compressible liquid")
+#        # check if fld above critical pressure
+#        elif fld["T"] > self.Tc:
+#            return QApplication.translate("pychemqt", "Gas")
+#        # check quality
+#        if fld["x"] >= 1.:
+#            if self.kwargs["x"] == 1.:
+#                return QApplication.translate("pychemqt", "Saturated vapor")
+#            else:
+#                return QApplication.translate("pychemqt", "Vapor")
+#        elif 0 < fld["x"] < 1:
+#            return QApplication.translate("pychemqt", "Two phases")
+#        elif fld["x"] <= 0.:
+#            if self.kwargs["x"] == 0.:
+#                return QApplication.translate("pychemqt", "Saturated liquid")
+#            else:
+#                return QApplication.translate("pychemqt", "Liquid")
 
 
             self.T = T
@@ -909,15 +906,15 @@ class MEoS(object):
 class IAPWS95(MEoS):
     """Multiparameter equation of state for water (including IAPWS95)
 
-    >>> water=H2O(T=300, rho=996.5560)
+    >>> water=IAPWS95(T=300, rho=996.5560)
     >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P.MPa, water.cv.kJkgK, water.w, water.s.kJkgK)
     0.0992418352 4.13018112 1501.51914 0.393062643
 
-    >>> water=H2O(T=500, rho=0.435)
+    >>> water=IAPWS95(T=500, rho=0.435)
     >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P.MPa, water.cv.kJkgK, water.w, water.s.kJkgK)
     0.0999679423 1.50817541 548.31425 7.944882714
 
-    >>> water=H2O(T=900., P=700)
+    >>> water=IAPWS95(T=900., P=700)
     >>> print "%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv.kJkgK, water.w, water.s.kJkgK)
     870.7690 2.66422350 2019.33608 4.17223802
     """
@@ -1150,4 +1147,5 @@ if __name__ == "__main__":
 #    agua=H2O(T=298.15, P=0.101325, visco=0, thermal=0)
 #    print  agua.P.MPa, agua.rho
 
-
+    sat_steam=IAPWS95(P=1,x=1)
+    print sat_steam.Liquido.h
