@@ -2,6 +2,14 @@ from setuptools import setup
 
 from iapws.iapws import __version__
 
+    
+#from distutils.command.install import INSTALL_SCHEMES
+#
+## Modify the data install dir to match the source install dir:
+#
+#for scheme in INSTALL_SCHEMES.values():
+#    scheme['data'] = scheme['purelib']
+
 with open('README.rst') as file:
     long_description = file.read()
 
@@ -9,6 +17,7 @@ setup(
     name='iapws',
     version=__version__,
     packages=['iapws'],
+    package_data={'': ['LICENSE']},
     author='jjgomera',
     author_email='jjgomera@gmail.com',
     url='https://github.com/jjgomera/iapws',
