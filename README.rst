@@ -1,8 +1,12 @@
 iapws
 =====
 
-Python implementation of international-standard IAPWS-IF97 steam tables 
+Python implementation of international-standard IAPWS. The available standard are::
 
+    IAPWS-IF97
+    IAPWS-95
+    IAPWS-05 for Heavy water
+    IAPWS-06 for Ice
 
 dependences
 --------------------
@@ -21,7 +25,13 @@ In debian you can find in oficial repositories in testing and sid. In stable you
 In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages.
 
 
-Use
+TODO
+--------------------
+
+Add IAPWS-08 for seawater
+
+
+IAPWS-IF97
 --------------------
 
 Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-IF97
@@ -100,8 +110,36 @@ Usage::
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
     
-Ice Ih properties
--------------------------
+IAPWS-95
+--------------------------------
+
+Same definitions posibilities and calculated properties as IAPWS-IF97
+
+Usage::
+
+	from iapws import IAPWS95
+	sat_steam=IAPWS95(P=1,x=1)                #saturated steam with known P
+	sat_liquid=IAPWS95(T=370, x=0)            #saturated liquid with known T
+	steam=IAPWS95(P=2.5, T=500)               #steam with known P and T
+	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
+
+
+IAPWS-05 for Heavy water
+------------------------------------------------
+
+Same definitions posibilities and calculated properties as IAPWS-IF97
+
+Usage::
+
+	from iapws import D2O
+	sat_steam=D2O(P=1,x=1)                #saturated steam with known P
+	sat_liquid=D2O(T=370, x=0)            #saturated liquid with known T
+	steam=D2O(P=2.5, T=500)               #steam with known P and T
+	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
+
+    
+IAPWS-06 for Ice Ih
+--------------------------------------------
 
 There is too implemented a function to calculate properties of ice Ih from 2009 revision, in this case only let temperature and pressure as input for calculate properties, the function return a dict with properties available:
 

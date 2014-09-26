@@ -10,7 +10,6 @@ import unittest
 from scipy.optimize import fsolve
 from cmath import log as log_c
 
-__version__ = "1.0.4"
 
 # Constants
 Rm = 8.31451      # kJ/kmol·K

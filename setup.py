@@ -1,6 +1,6 @@
 from setuptools import setup
 
-from iapws.iapws import __version__
+from iapws import __version__
 
     
 #from distutils.command.install import INSTALL_SCHEMES
