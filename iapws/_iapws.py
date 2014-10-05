@@ -6,8 +6,8 @@
 ###############################################################################
 
 from __future__ import division
-from math import log, exp, tan, atan, acos, sin
 
+from math import log, exp, tan, atan, acos, sin, pi
 from cmath import log as log_c
 
 
@@ -17,7 +17,7 @@ M = 18.015257     # kg/kmol
 R = 0.461526      # kJ/kg·K
 Tc = 647.096      # K
 Pc = 22.064       # MPa
-rhoc = 322        # kg/m³
+rhoc = 322.       # kg/m³
 Tt = 273.16       # K
 Pt = 611.657e-6   # MPa
 Tb = 373.1243     # K
@@ -110,6 +110,11 @@ def _Ice(T, P):
     gpp = gopp+Tt*cpp.real
 
     propiedades = {}
+    propiedades["gt"] = gt
+    propiedades["gp"] = gp
+    propiedades["gtt"] = gtt
+    propiedades["gpp"] = gpp
+    propiedades["gtp"] = gtp
     propiedades["T"] = T
     propiedades["P"] = P
     propiedades["v"] = gp/1000
@@ -128,18 +133,18 @@ def _Ice(T, P):
 
 
 def _Sublimation_Pressure(T):
-    "Sublimation Pressure correlation"
+    """Sublimation Pressure correlation"""
     Tita = T/Tt
     suma = 0
     a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
     expo = [0.333333333e-2, 1.20666667, 1.70333333]
     for ai, expi in zip(a, expo):
         suma += ai*Tita**expi
-        return exp(suma/Tita)*Pt
+    return exp(suma/Tita)*Pt
 
 
 def _Melting_Pressure(T, P):
-    "Melting Pressure correlation"
+    """Melting Pressure correlation"""
     if P < 208.566 and 251.165 <= T <= 273.16:
         # Ice Ih
         Tref = Tt
@@ -181,7 +186,7 @@ def _Melting_Pressure(T, P):
 
 
 # Transport properties
-def _Viscosity(rho, T):
+def _Viscosity(rho, T, fase=None, drho=None):
     """Equation for the Viscosity
 
     >>> "%.12f" % _Viscosity(997.047435,298.15)
@@ -209,38 +214,32 @@ def _Viscosity(rho, T):
     for i in range(21):
         suma += nr[i]*(Dr-1)**I[i]*(1/Tr-1)**J[i]
     fi1 = exp(Dr*suma)
-    if 645.91 < T < 650.77 and 245.8 < rho < 405.3:
-        xu = 0.068
-        qc = 1.9
-        qd = 1.1
-        v = 0.63
-        g = 1.239
-        Xo = 0.13
-        Go = 0.06
-        Tr2 = 1.5
-        # TODO: Implement critical enhancement
-        a, b = 0
-        DeltaX = Dr*(a-b*Tr2/Tr)
-        X = Xo*(DeltaX/Go)**(v/g)
+    if fase and drho:
+        qc = 1/1.9
+        qd = 1/1.1
+        
+        DeltaX = Pc*Dr**2*(fase.drhodP_T/rho-drho/rho*1.5/Tr)
+        if DeltaX < 0:
+            DeltaX = 0
+        X = 0.13*(DeltaX/0.06)**(0.63/1.239)
         if X <= 0.3817016416:
-            Y = qc/5*X*(qd*X)**5*(1-qc*X+(qc*X)**2-765/504*(qd*X)**2)
+            Y = qc/5*X*(qd*X)**5*(1-qc*X+(qc*X)**2-765./504*(qd*X)**2)
         else:
             Fid = acos((1+qd**2*X**2)**-0.5)
-            w = ((qc*X-1)/(qc*X+1))**0.5*tan(Fid/2)
+            w = abs((qc*X-1)/(qc*X+1))**0.5*tan(Fid/2)
             if qc*X > 1:
                 Lw = log((1+w)/(1-w))
             else:
                 Lw = 2*atan(abs(w))
             Y = sin(3*Fid)/12-sin(2*Fid)/4/qc/X+(1-5/4*(qc*X)**2)/(qc*X)**2*sin(
                 Fid)-((1-3/2*(qc*X)**2)*Fid-abs((qc*X)**2-1)**1.5*Lw)/(qc*X)**3
-        fi2 = exp(xu*Y)
+        fi2 = exp(0.068*Y)
     else:
         fi2 = 1
-
     return fi0*fi1*fi2*1e-6
 
 
-def _ThCond(rho, T):
+def _ThCond(rho, T, fase=None, drho=None):
     """Equation for the thermal conductivity
 
     >>> "%.9f" % _ThCond(997.047435,298.15)
@@ -248,30 +247,77 @@ def _ThCond(rho, T):
     >>> "%.10f" % _ThCond(26.0569558,873.15)
     '0.0867570353'
     """
-    d = rho/317.7
-    Tr = T/647.26
+    d = rho/322.
+    Tr = T/647.096
 
-    no = [0.102811e-1, 0.299621e-1, 0.156146e-1, -0.422464e-2]
+    no = [2.443221e-3, 1.323095e-2, 6.770357e-3, -3.454586e-3, 4.096266e-4]
     suma = 0
-    for i in range(4):
-        suma += no[i]*Tr**i
-    L0 = Tr**0.5*suma
+    for i in range(5):
+        suma += no[i]/Tr**i
+    L0 = Tr**0.5/suma
 
-    n1 = [0, -0.397070, 0.400302, 0.106e1, -0.171587, 0.239219e1]
-    L1 = n1[1]+n1[2]*d+n1[3]*exp(n1[4]*(d+n1[5])**2)
+    nij = [
+        [1.60397357, -0.646013523, 0.111443906, 0.102997357, -0.0504123634, 0.00609859258], 
+        [2.33771842, -2.78843778, 1.53616167, -0.463045512, 0.0832827019, -0.00719201245], 
+        [2.19650529, -4.54580785, 3.55777244, -1.40944978, 0.275418278, -0.0205938816], 
+        [-1.21051378, 1.60812989, -0.621178141, 0.071637322, 0, 0], 
+        [-2.7203370, 4.57586331, -3.18369245, 1.1168348, -0.19268305, 0.012913842]]
+    suma = 0
+    for i in range(5):
+        suma2 = 0
+        for j in range(6):
+            suma2 += nij[i][j]*(d-1)**j
+        suma += (1/Tr-1)**i*suma2
+    L1 = exp(d*suma)
 
-    n2 = [0, 0.701309e-1, 0.118520e-1, 0.642857, 0.169937e-2, -0.102000e1,
-          -0.411717e1, -0.617937e1, 0.822994e-1, 0.100932e2, 0.308976e-2]
-    DT = abs(Tr-1)+n2[10]
-    A = 2+n2[8]/DT**0.6
-    if Tr < 1:
-        B = n2[9]/DT**0.6
-    else:
-        B = 1/DT
-    L2 = (n2[1]/Tr**10+n2[2])*d**1.8*exp(n2[3]*(1-d**2.8)) + n2[4]*B*d**A*exp(
-        A/(1+A)*(1-d**(1+A)))+n2[5]*exp(n2[6]*Tr**1.5+n2[7]*d**-5)
+    L2 = 0
+    if fase:
+        R = 0.46151805
+        
+        if not drho:
+            #Calculate (drho/dP)T
+            Aij = [
+                [6.53786807199516, 6.52717759281799, 5.35500529896124,
+                 1.55225959906681, 1.11999926419994], 
+                [-5.61149954923348, -6.30816983387575, -3.96415689925446,
+                 0.464621290821181, 0.595748562571649], 
+                [3.39624167361325, 8.08379285492595, 8.91990208918795,
+                 8.93237374861479, 9.88952565078920], 
+                [-2.27492629730878, -9.82240510197603, -12.0338729505790,
+                 -11.0321960061126, -10.3255051147040], 
+                [10.2631854662709, 12.1358413791395, 9.19494865194302,
+                 6.16780999933360, 4.66861294457414], 
+                [1.97815050331519, -5.54349664571295, -2.16866274479712,
+                 -0.965458722086812, -0.503243546373828]]
+                   
+            if d <= 0.310559006:
+                j = 0
+            elif 0.310559006 < d <= 0.776397516:
+                j = 1
+            elif 0.776397516 < d <= 1.242236025:
+                j = 2
+            elif 1.242236025 < d <= 1.863354037:
+                j = 3
+            else:
+                j = 4
+                
+            suma = 0
+            for i in range(6):
+                suma += Aij[i][j]*d**i
+            drho = 1/suma
 
-    return L0+L1+L2
+        DeltaX = Pc*d**2*(fase.drhodP_T/rho-drho/rho*1.5/Tr)
+        if DeltaX < 0:
+            DeltaX = 0
+        X = 0.13*(DeltaX/0.06)**(0.63/1.239)
+        y = 0.4*X
+        if y < 1.2e-7:
+            Z =0
+        else:
+            Z = 2/pi/y*(((1-1/fase.cp_cv)*atan(y)+y/fase.cp_cv)-(1-exp(-1/(1/y+y**2/3/d**2))))
+        L2 = 177.8514*d*fase.cp/R*Tr/fase.mu*1e-6*Z
+
+    return 1e-3*(L0*L1+L2)
 
 
 def _Tension(T):
@@ -317,8 +363,9 @@ def _Dielectric(rho, T):
         g += n[i]*d**I[i]*Tr**J[i]
     A = Na*mu**2*rho*g/M/epsilon0/k/T
     B = Na*alfa*rho/3/M/epsilon0
-    return (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
-
+    e = (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
+    return e
+    
 
 def _Refractive(rho, T, l=0.5893):
     """Equation for the refractive index
@@ -330,7 +377,7 @@ def _Refractive(rho, T, l=0.5893):
     """
     Lir = 5.432937
     Luv = 0.229202
-    d = rho/1000
+    d = rho/1000.
     Tr = T/273.15
     L = l/0.589
     a = [0.244257733, 0.974634476e-2, -0.373234996e-2, 0.268678472e-3,
