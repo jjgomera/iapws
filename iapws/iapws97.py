@@ -6,7 +6,6 @@
 from __future__ import division
 from math import sqrt, log, exp
 from cmath import log as log_c
-import unittest
 
 from scipy.optimize import fsolve
 
@@ -3085,26 +3084,6 @@ class IAPWS97_Tx(IAPWS97):
         IAPWS97.__init__(self, T=T, x=x)
 
 
-# Test
-class Test(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def test_Refractive(self):
-        T = (298.15, 773.15, 673.15)
-        rho = (997.047435, 30.4758534, 523.371289)
-        l = (0.2265, 0.5893)
-        value = ((1.39277824, 1.01098988, 1.19757252),
-                 (1.33285819, 1.00949307, 1.16968699))
-        for i, li in enumerate(l):
-            for j in range(len(T)):
-                self.assertEquals(
-                    "%.8f" % _Refractive(rho[j], T[j], li), str(value[i][j]))
-
-
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
-    unittest.main()
