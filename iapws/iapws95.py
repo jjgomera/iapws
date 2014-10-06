@@ -974,6 +974,35 @@ class IAPWS95(MEoS):
         return _ThCond(rho, T, fase, drho)
 
 
+class IAPWS95_PT(IAPWS95):
+    """Derivated class for direct P and T input"""
+    def __init__(self, P, T):
+        IAPWS95.__init__(self, T=T, P=P)
+
+
+class IAPWS95_Ph(IAPWS95):
+    """Derivated class for direct P and h input"""
+    def __init__(self, P, h):
+        IAPWS95.__init__(self, P=P, h=h)
+
+
+class IAPWS95_Ps(IAPWS95):
+    """Derivated class for direct P and s input"""
+    def __init__(self, P, s):
+        IAPWS95.__init__(self, P=P, s=s)
+
+
+class IAPWS95_Pv(IAPWS95):
+    """Derivated class for direct P and v input"""
+    def __init__(self, P, v):
+        IAPWS95.__init__(self, P=P, v=v)
+
+
+class IAPWS95_Tx(IAPWS95):
+    """Derivated class for direct T and x input"""
+    def __init__(self, T, x):
+        IAPWS95.__init__(self, T=T, x=x)
+
 class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
