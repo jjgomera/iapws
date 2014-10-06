@@ -447,7 +447,6 @@ class MEoS(_fase):
             fase.epsilon = _Dielectric(fase.rho, self.T)
             fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
         else:
-            print self.name
             fase.epsilon = None
             fase.n = None
 
@@ -887,9 +886,6 @@ class IAPWS95(MEoS):
            "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796, 27.5075105]}
 
     _constants = {
-        "__type__": "Helmholtz",
-        "__name__": u"Helmholtz equation of state for water of Wagner and Pruß (2002).",
-        "__doc__":  u"""Wagner, W., Pruß, A. The IAPWS formulation 1995 for the thermodyamic properties of ordinary water substance for general and scientific use. J. Phys. Chem. Ref. Data 31 (2002), 387 – 535.""",
         "R": 8.314371357587,
 
         "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
@@ -1028,9 +1024,6 @@ class D2O(MEoS):
           "ao_hyp": [], "hyp": []}
 
     _constants = {
-        "__type__": "Helmholtz",
-        "__name__": u"Helmholtz equation of state for heavy water of Hill et al. (1982).",
-        "__doc__":  u"""Hill, P.G., MacMillan, R.D.C., and Lee, V., "A Fundamental Equation of State for Heavy Water," J. Phys. Chem. Ref. Data, 11(1):1-14, 1982.""",
         "R": 8.3143565,
         "rhoref": 17.875414*M,
 

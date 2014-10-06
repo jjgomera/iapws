@@ -1,7 +1,7 @@
 iapws
 =====
 
-Python implementation of international-standard IAPWS. The available standard are::
+Python implementation of standard from IAPWS (http://www.iapws.org/release.html). The available standard are::
 
     IAPWS-IF97
     IAPWS-95
@@ -10,20 +10,20 @@ Python implementation of international-standard IAPWS. The available standard ar
 dependences
 --------------------
 
-* python 2x;3x, compatible with both versions
+* python 2x, 3x, compatible with both versions
 * Numpy-scipy: library with mathematic and scientific tools
 
 
 install
 --------------------
 
-In debian you can find in oficial repositories in testing and sid. In stable you can install using pip::
+In debian you can find in official repositories in testing and sid. In stable you can install using pip::
 
 	pip install iapws
 
-In ubuntu it's in oficial repositories from ubuntu saucy (13.10)
+In ubuntu it's in official repositories from ubuntu saucy (13.10)
 
-In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages. This is the recomended options to have the latest version.
+In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages. This is the recommended options to have the latest version.
 
 
 TODO
@@ -116,7 +116,7 @@ Usage::
 IAPWS-95
 --------------------------------
 
-Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-95
+Class to model a state for liquid water or steam with the general and scientific formulation IAPWS-95
 
 Incoming properties:
 
@@ -127,7 +127,7 @@ Incoming properties:
 * h, Specific enthalpy, kJ/kg
 * s, Specific entropy, kJ/kg·K
 * x, Quality, [-]
-* l, Opcional parameter to light wavelength for Refractive index, mm
+* l, Optional parameter to light wavelength for Refractive index, mm
 
 rho and v are equivalent, only one can be defined
 Definitions options:

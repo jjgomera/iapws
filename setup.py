@@ -14,7 +14,7 @@ setup(
     author='jjgomera',
     author_email='jjgomera@gmail.com',
     url='https://github.com/jjgomera/iapws',
-    description='Python implementation of international-standard IAPWS-IF97',
+    description='Python implementation of standard from The International Association for the Properties of Water and Steam',
     long_description=long_description,
     license="gpl v3",
     install_requires=["scipy"],
