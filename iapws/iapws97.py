@@ -138,7 +138,7 @@ def _TSat_P(P):
 
 
 def _PSat_h(h):
-    """Define the saturated line, P=f(h)
+    """Define the saturated line, P=f(h) for region 3
 
     >>> "%.8f" % _PSat_h(1700)
     '17.24175718'
@@ -167,7 +167,7 @@ def _PSat_h(h):
 
 
 def _PSat_s(s):
-    """Define the saturated line, P=f(s)
+    """Define the saturated line, P=f(s) for region 3
 
     >>> "%.8f" % _PSat_s(3.8)
     '16.87755057'
@@ -568,7 +568,7 @@ def _hab_s(s):
     else:
         h = -0.349898083432139e4 + 0.257560716905876e4*s - \
             0.421073558227969e3*s**2+0.276349063799944e2*s**3
-        return h
+    return h
 
 
 def _Backward2a_T_Ph(P, h):
@@ -1208,11 +1208,11 @@ def _Backward3a_T_Ph(P, h):
          -0.642109823904738e-2, -0.235155868604540e-1, 0.252233108341612e-2,
          -0.764885133368119e-2, 0.136176427574291e-1, -0.133027883575669e-1]
 
-    Pr = P/100
-    nu = h/2300
+    Pr = P/100.
+    nu = h/2300.
     suma = 0
-    for i in range(31):
-        suma += n[i]*(Pr+0.240)**I[i]*(nu-0.615)**J[i]
+    for i, j, n in zip(I, J, n):
+        suma += n*(Pr+0.240)**i*(nu-0.615)**j
     return 760*suma
 
 
@@ -1240,23 +1240,22 @@ def _Backward3b_T_Ph(P, h):
          0.323346442811720, 0.873281936020439, -0.436653048526683,
          0.286596714529479, -0.131778331276228, 0.676682064330275e-2]
 
-    Pr = P/100
-    nu = h/2800
+    Pr = P/100.
+    nu = h/2800.
     suma = 0
-    for i in range(33):
-        suma += n[i]*(Pr+0.298)**I[i]*(nu-0.72)**J[i]
+    for i, j, n in zip(I, J, n):
+        suma += n*(Pr+0.298)**i*(nu-0.72)**j
     return 860*suma
 
 
 def _Backward3_T_Ph(P, h):
     """Backward equation for region 3, T=f(P,h)"""
     hf = _h_3ab(P)
-    Tsat = _TSat_P(P)
     if h <= hf:
         T = _Backward3a_T_Ph(P, h)
     else:
         T = _Backward3b_T_Ph(P, h)
-    return max(Tsat, T)
+    return T
 
 
 def _Backward3a_v_Ps(P, s):
@@ -1396,12 +1395,11 @@ def _Backward3b_T_Ps(P, s):
 def _Backward3_T_Ps(P, s):
     """Backward equation for region 3, T=f(P,s)"""
     sc = 4.41202148223476
-    Tsat = _TSat_P(P)
     if s <= sc:
         T = _Backward3a_T_Ps(P, s)
     else:
         T = _Backward3b_T_Ps(P, s)
-    return max(Tsat, T)
+    return T
 
 
 def _Backward3a_P_hs(h, s):
