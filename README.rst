@@ -5,7 +5,6 @@ Python implementation of international-standard IAPWS. The available standard ar
 
     IAPWS-IF97
     IAPWS-95
-    IAPWS-05 for Heavy water
     IAPWS-06 for Ice
 
 dependences
@@ -22,13 +21,16 @@ In debian you can find in oficial repositories in testing and sid. In stable you
 
 	pip install iapws
 
-In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages.
+In ubuntu it's in oficial repositories from ubuntu saucy (13.10)
+
+In other SO you can download from its webpage in `pypi <http://pypi.python.org/pypi/iapws>`_ and unzipped in python folder dist-packages. This is the recomended options to have the latest version.
 
 
 TODO
 --------------------
 
 Add IAPWS-08 for seawater
+Add IAPWS-05 for Heavy water
 
 
 IAPWS-IF97
@@ -110,10 +112,117 @@ Usage::
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
     
+    
 IAPWS-95
 --------------------------------
 
-Same definitions posibilities and calculated properties as IAPWS-IF97
+Class to model a state for liquid water or steam with the Industrial Formulation IAPWS-95
+
+Incoming properties:
+
+* T, Temperature, K
+* P, Pressure, MPa
+* rho, Density, kg/m3
+* v, Specific volume, m3/kg
+* h, Specific enthalpy, kJ/kg
+* s, Specific entropy, kJ/kg·K
+* x, Quality, [-]
+* l, Opcional parameter to light wavelength for Refractive index, mm
+
+rho and v are equivalent, only one can be defined
+Definitions options:
+
+* T, P (Not valid for two-phases region)
+* T, rho
+* T, h
+* T, s
+* T, u
+* P, rho
+* P, h
+* P, s
+* P, u
+* rho, h
+* rho, s
+* rho, u
+* h, s
+* h, u
+* s, u
+* T, x (Only for two-phases region)
+* P, x (Only for two-phases region) Very slow
+
+Properties:
+* P,  Pressure, MPa
+* Pr, Reduced pressure, [-]
+* T, Temperature, K
+* Tr, Reduced temperature, [-]
+* x, Quality, [-]
+* v, Specific volume, m³/kg
+* rho, Density, kg/m³
+* h, Specific enthalpy, kJ/kg
+* s, Specific entropy, kJ/kg·K
+* u, Specific internal energy, kJ/kg
+* g, Specific Gibbs free energy, kJ/kg
+* a, Specific Helmholtz free energy, kJ/kg
+* cp, Specific isobaric heat capacity, kJ/kg·K
+* cv, Specific isochoric heat capacity, kJ/kg·K
+* cp_cv, Heat capacity ratio, [-]
+* w, Speed of sound, m/s
+* Z, Compression factor, [-]
+* fi, Fugacity coefficient, [-]
+* f, Fugacity, MPa
+* gamma, Isoentropic exponent, [-]
+
+* alfav, Thermal expansion coefficient (Volume expansivity), 1/K
+* kappa, Isothermal compressibility, 1/MPa
+* alfap, Relative pressure coefficient, 1/K
+* betap, Isothermal stress coefficient, kg/m³
+* betas, Isoentropic temperature-pressure coefficient, [-]
+* joule, Joule-Thomson coefficient, K/MPa
+* Gruneisen, Gruneisen parameter, [-]
+* virialB, Second virial coefficient, m³/kg
+* virialC, Third virial coefficient, m⁶/kg²
+* dpdT_rho, Derivatives, dp/dT at constant rho, MPa/K
+* dpdrho_T, Derivatives, dp/drho at constant T, MPa·m³/kg
+* drhodT_P, Derivatives, drho/dT at constant P, kg/m³·K
+* drhodP_T, Derivatives, drho/dP at constant T, kg/m³·MPa
+* dhdT_rho, Derivatives, dh/dT at constant rho, kJ/kg·K
+* dhdP_T, Isothermal throttling coefficient, kJ/kg·MPa
+* dhdT_P, Derivatives, dh/dT at constant P, kJ/kg·K
+* dhdrho_T, Derivatives, dh/drho at constant T, kJ·m³/kg²
+* dhdrho_P, Derivatives, dh/drho at constant P, kJ·m³/kg²
+* dhdP_rho, Derivatives, dh/dP at constant rho, kJ/kg·MPa
+* kt, Isothermal Expansion Coefficient, [-]
+* ks, Adiabatic Compressibility, 1/MPa
+* Ks, Adiabatic bulk modulus, MPa
+* Kt, Isothermal bulk modulus, MPa
+
+* Hvap, Vaporization heat, kJ/kg
+* Z_rho, (Z-1) over the density, m³/kg
+* IntP,  Internal pressure, MPa
+* invT, Negative reciprocal temperature, 1/K
+* hInput, Specific heat input, kJ/kg
+
+* mu, Dynamic viscosity, Pa·s
+* nu, Kinematic viscosity, m²/s
+* k, Thermal conductivity, W/m·K
+* sigma, Surface tension, N/m
+* alfa, Thermal diffusivity, m²/s
+* Pramdt, Prandtl number, [-]
+* epsilon, Dielectric constant, [-]
+* n, Refractive index, [-]
+
+* v0, Ideal gas Specific volume, m³/kg
+* rho0, Ideal gas Density, kg/m³
+* h0, Ideal gas Specific enthalpy, kJ/kg
+* u0, Ideal gas Specific internal energy, kJ/kg
+* s0, Ideal gas Specific entropy, kJ/kg·K
+* a0, Ideal gas Specific Helmholtz free energy, kJ/kg
+* g0, Ideal gas Specific Gibbs free energy, kJ/kg
+* cp0, Ideal gas Specific isobaric heat capacity, kJ/kg·K
+* cv0, Ideal gas Specific isochoric heat capacity, kJ/kg·K
+* cp0_cv, Ideal gas Heat capacity ratio, [-]
+* gamma0, Ideal gas Isoentropic exponent, [-]
+
 
 Usage::
 
@@ -123,19 +232,6 @@ Usage::
 	steam=IAPWS95(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
 
-
-IAPWS-05 for Heavy water
-------------------------------------------------
-
-Same definitions posibilities and calculated properties as IAPWS-IF97
-
-Usage::
-
-	from iapws import D2O
-	sat_steam=D2O(P=1,x=1)                #saturated steam with known P
-	sat_liquid=D2O(T=370, x=0)            #saturated liquid with known T
-	steam=D2O(P=2.5, T=500)               #steam with known P and T
-	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
 
     
 IAPWS-06 for Ice Ih
