@@ -355,9 +355,7 @@ class MEoS(_fase):
             self.Z = x*self.Gas.Z+(1-x)*self.Liquid.Z
             self.f = x*self.Gas.f+(1-x)*self.Liquid.f
 
-            # FIXME: Dont work
             self.Z_rho = x*self.Gas.Z_rho+(1-x)*self.Liquid.Z_rho
-
             self.IntP = x*self.Gas.IntP+(1-x)*self.Liquid.IntP
 
         # Calculate special properties useful only for one phase
@@ -441,7 +439,6 @@ class MEoS(_fase):
         fase.hInput = fase.v*self.derivative("h", "v", "P", fase)
 
         fase.mu = self._visco(fase.rho, self.T, fase)
-        # Thermal conductivity not exactly, for vapor mainly
         fase.k = self._thermo(fase.rho, self.T, fase)
         fase.nu = fase.mu/fase.rho
         fase.alfa = fase.k/1000/fase.rho/fase.cp
@@ -1129,48 +1126,16 @@ if __name__ == "__main__":
 #    import doctest
 #    doctest.testmod()
 
-#    unittest.main(verbosity=2)
-
 #    water=IAPWS95(T=300., x=0.5)
-#    print water.x
-#    print water.Liquido.Z
-#    print water.Gas.Z
-#    print water.Z
-#    print water.Liquid.cp, water.Gas.cp
 #    print water.P
 #    print water.cp0
 #    print water.virialB, water.virialC
-#    print water.k, water.Liquid.k, water.Gas.k
 #    print water.cp0, water.rho0, water.h, water.s, water.g, water.a
-#    print water.hInput, water.Liquid.hInput, water.Gas.hInput
 
 #    aire=D2O(T=300, rho=1100)
 #    print  aire.P, aire.rho, aire.mu, aire.k
 #    aire=D2O(T=500, P=0.1)
 #    print  aire.T, aire.P, aire.rho, aire.x, aire.Liquid.cp, aire.Gas.cp
 
-
-#
-#    aire=IAPWS95(T=500, P=1)
-#    print "%0.2f %0.6f %0.10f %0.3f %0.3f %0.5f %0.4f %0.2f" % (aire.T, aire.P.MPa, aire.rho, aire.h.kJkg, aire.s.kJkgK, aire.cv.kJkgK, aire.cp.kJkgK, aire.w)
-#    print aire.T, aire.P.MPa, aire.rho, aire.h.kJkg, aire.s.kJkgK
-
-#    water=IAPWS95(T=300, P=0.101325)
-#    print "%0.1f %0.6f %0.5f %0.4f %0.4f" % (water.T, water.P, water.rho, water.h, water.s)
-#    print water.cp, water.x
-
-#    agua=IAPWS95(T=298.15, P=0.101325)
-#    print  agua.P, agua.x
-
-#    sat_steam=IAPWS95(P=1,x=0.5)
-#    print sat_steam.Gas.h-sat_steam.Liquid.h
-
-
-#    aire=IAPWS95(T=298.15, rho=0)
-#    print  aire.T, aire.P, aire.rho, aire.k, aire.mu
-
-#    water = IAPWS95(rho=750., T=647.35)
-#    print water.k
-
     water = IAPWS95(T=620, P=20)
-    print water.k
+    print(water.virialC)
