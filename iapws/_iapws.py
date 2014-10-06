@@ -260,12 +260,12 @@ def _ThCond(rho, T, fase=None, drho=None):
         [1.60397357, -0.646013523, 0.111443906, 0.102997357, -0.0504123634, 0.00609859258], 
         [2.33771842, -2.78843778, 1.53616167, -0.463045512, 0.0832827019, -0.00719201245], 
         [2.19650529, -4.54580785, 3.55777244, -1.40944978, 0.275418278, -0.0205938816], 
-        [-1.21051378, 1.60812989, -0.621178141, 0.071637322, 0, 0], 
+        [-1.21051378, 1.60812989, -0.621178141, 0.0716373224, 0, 0], 
         [-2.7203370, 4.57586331, -3.18369245, 1.1168348, -0.19268305, 0.012913842]]
     suma = 0
-    for i in range(5):
+    for i in range(len(nij)):
         suma2 = 0
-        for j in range(6):
+        for j in range(len(nij[i])):
             suma2 += nij[i][j]*(d-1)**j
         suma += (1/Tr-1)**i*suma2
     L1 = exp(d*suma)
@@ -310,13 +310,12 @@ def _ThCond(rho, T, fase=None, drho=None):
         if DeltaX < 0:
             DeltaX = 0
         X = 0.13*(DeltaX/0.06)**(0.63/1.239)
-        y = 0.4*X
+        y = X/0.4
         if y < 1.2e-7:
             Z =0
         else:
             Z = 2/pi/y*(((1-1/fase.cp_cv)*atan(y)+y/fase.cp_cv)-(1-exp(-1/(1/y+y**2/3/d**2))))
         L2 = 177.8514*d*fase.cp/R*Tr/fase.mu*1e-6*Z
-
     return 1e-3*(L0*L1+L2)
 
 
@@ -443,5 +442,7 @@ class _fase(object):
 
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+#    import doctest
+#    doctest.testmod()
+
+    print _ThCond(998., 298.15)

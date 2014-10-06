@@ -1140,8 +1140,8 @@ if __name__ == "__main__":
 #    aire=IAPWS95(T=298.15, rho=0)
 #    print  aire.T, aire.P, aire.rho, aire.k, aire.mu
 
-#    water = IAPWS95(rho=322., T=647.35)
-#    print water.mu
+#    water = IAPWS95(rho=750., T=647.35)
+#    print water.k
 
-    water = IAPWS95(P=100., T=373.15, l=0.2265)
-    print water.n, water.x
+    water = IAPWS95(T=620, P=20)
+    print water.k
