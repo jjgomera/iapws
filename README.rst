@@ -29,8 +29,8 @@ In other SO you can download from its webpage in `pypi <http://pypi.python.org/p
 TODO
 --------------------
 
-Add IAPWS-08 for seawater
-Add IAPWS-05 for Heavy water
+* Add IAPWS-08 for seawater
+* Add IAPWS-05 for Heavy water
 
 
 IAPWS-IF97
@@ -151,6 +151,7 @@ Definitions options:
 * P, x (Only for two-phases region) Very slow
 
 Properties:
+
 * P,  Pressure, MPa
 * Pr, Reduced pressure, [-]
 * T, Temperature, K
