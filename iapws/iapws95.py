@@ -1066,10 +1066,11 @@ class D2O(MEoS):
         "ao": [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2, -0.70412e2],
         "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
 
-    def _visco(self, rho, T):
+    @classmethod
+    def _visco(cls, rho, T, fase=None):
         """International Association for the Properties of Water and Steam, "Viscosity and Thermal Conductivity of Heavy Water Substance," Physical Chemistry of Aqueous Systems:  Proceedings of the 12th International Conference on the Properties of Water and Steam, Orlando, Florida, September 11-16, A107-A138, 1994"""
-        Tr = T/643.89
-        rhor = rho/self.M/17.87542
+        Tr = T/643.847
+        rhor = rho/358.0
 
         no = [1.0, 0.940695, 0.578377, -0.202044]
         fi0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
@@ -1083,39 +1084,39 @@ class D2O(MEoS):
                -1.037026, -1.287846, -0.02148229, 0.07013759, 0.4660127,
                0.2292075, -0.4857462, 0.01641220, -0.02884911, 0.1607171,
                -0.009603846, -0.01163815, -0.008239587, 0.004559914, -0.003886659]
+
         array = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
         fi1 = exp(rhor*sum(array))
 
         return 55.2651e-6*fi0*fi1
 
-    def _thermo(self, rho, T):
+    @classmethod
+    def _thermo(cls, rho, T, fase=None):
         """International Association for the Properties of Water and Steam, "Viscosity and Thermal Conductivity of Heavy Water Substance," Physical Chemistry of Aqueous Systems:  Proceedings of the 12th International Conference on the Properties of Water and Steam, Orlando, Florida, September 11-16, A107-A138, 1994."""
-        rhor = rho/self.M/17.87542
-        Tr = T/643.89
+        rhor = rho/358
+        Tr = T/643.847
         tau = Tr/(abs(Tr-1.1)+1.1)
 
         no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
         Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
-        nr = [483.656, -191.039, 73.0358, -7.57467]
-        Lr = sum([Li*rhor**i for i, Li in enumerate(nr)])
-
-        b = [-2.506, -167.310, 0.354296e5, 0.5e10, 0.144847, -5.64493, -2.8,
-             -0.080738543, -17.943, 0.125698, -741.112]
-        f1 = exp(b[4]*Tr+b[5]*Tr**2)
-        f2 = exp(b[6]*(rhor-1)**2)+b[7]*exp(b[8]*(rhor-b[9])**2)
-        f3 = 1+exp(60*(tau-1.)+20)
-        f4 = 1+exp(100*(tau-1)+15)
-        Lr += b[1]*(1-exp(b[0]*rhor))
-        Lc = b[2]*f1*f2*(1+f2**2*(b[3]*f1**4/f3+3.5*f2/f4))
-        Ll = b[10]*f1**1.2*(1-exp(-(rhor/2.5)**10))
-
-        return 0.742128e-3*(Lo*Lr+Lc+Ll)
-
-
         
+        nr = [483.656, -191.039, 73.0358, -7.57467]
+        Lr = -167.31*(1-exp(-2.506*rhor))+sum([Li*rhor**(i+1) for i, Li in enumerate(nr)])
+
+        f1 = exp(0.144847*Tr-5.64493*Tr**2)
+        f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
+        f3 = 1+exp(60*(tau-1)+20)
+        f4 = 1+exp(100*(tau-1)+15)
+        Lc = 35429.6*f1*f2*(1+f2**2*(5e9*f1**4/f3+3.5*f2/f4))
+        
+        Ll = -741.112*f1**1.2*(1-exp(-(rhor/2.5)**10))
+
+        return 0.742128e-3*(Lo+Lr+Lc+Ll)
+
+
 if __name__ == "__main__":
-#    import doctest
-#    doctest.testmod()
+    import doctest
+    doctest.testmod()
 
 #    water=IAPWS95(T=300., x=0.5)
 #    print water.P
@@ -1128,5 +1129,11 @@ if __name__ == "__main__":
 #    aire=D2O(T=500, P=0.1)
 #    print  aire.T, aire.P, aire.rho, aire.x, aire.Liquid.cp, aire.Gas.cp
 
-    water = IAPWS95(T=620, P=20)
-    print(water.virialC)
+#    water = IAPWS95(T=620, P=20)
+#    print(water.virialC)
+
+#    heavy = D2O()
+    state = D2O(T=300, P=0.1)
+    print state.k
+    water=D2O(T=300, rho=996.5560)
+    print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
