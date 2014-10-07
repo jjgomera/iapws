@@ -456,11 +456,13 @@ class MEoS(_fase):
 
         rhoL = self._Liquid_Density(T)
         rhoG = self._Vapor_Density(T)
-        g = 1000.
+        g = 500.
         erroro = 1e6
         rholo = rhoL
         rhogo = rhoG
+        contador = 0
         while True:
+            contador += 1
             deltaL = rhoL/self.rhoc
             deltaG = rhoG/self.rhoc
             liquido = self._Helmholtz(rhoL, T)
@@ -475,19 +477,21 @@ class MEoS(_fase):
             Kdv = 2*vapor["fird"]+deltaG*vapor["firdd"]+1/deltaG
             Delta = Jdv*Kdl-Jdl*Kdv
             error = abs(Kv-Kl)+abs(Jv-Jl)
-#            print error, g
-            if error < 1e-12:
+            if error < 1e-12 or contador > 150:
                 break
             elif error > erroro:
                 rhoL = rholo
                 rhoG = rhogo
-                g = g/2.
+                g = g*0.5
             else:
                 erroro = error
                 rholo = rhoL
                 rhogo = rhoG
                 rhoL = rhoL+g/Delta*((Kv-Kl)*Jdv-(Jv-Jl)*Kdv)
                 rhoG = rhoG+g/Delta*((Kv-Kl)*Jdl-(Jv-Jl)*Kdl)
+        if error > 1e-7:
+            print("Iteration don´t converge")
+            
         Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
