@@ -1480,7 +1480,7 @@ def _Backward3_P_hs(h, s):
         return _Backward3b_P_hs(h, s)
 
 
-def _Backward3_v_PT(T, P):
+def _Backward3_v_PT(P, T):
     """Backward equation for region 3, v=f(P,T)"""
     if P > 40:
         if T <= _tab_P(P):
@@ -1570,7 +1570,7 @@ def _Backward3_v_PT(T, P):
             region = "q"
         elif tqu < T <= trx:
             tef = _tef_P(P)
-            twx = _twx_P(T)
+            twx = _twx_P(P)
             tuv = _txx_P(P, "uv")
             if 22.11 < P <= 22.5:
                 if T <= tuv:
@@ -2735,7 +2735,7 @@ class IAPWS97(object):
             elif region == 2:
                 propiedades = _Region2(T, P)
             elif region == 3:
-                vo = _Backward3_v_PT(T, P)
+                vo = _Backward3_v_PT(P, T)
                 funcion = lambda rho: _Region3(rho, self.kwargs["T"])["P"]-P
                 rho = fsolve(funcion, 1/vo)
                 propiedades = _Region3(rho, T)
@@ -2874,7 +2874,7 @@ class IAPWS97(object):
                 propiedades = _Region4(P, x)
             elif P > 16.529:
                 T = _TSat_P(P)
-                rho = 1./_Backward3_v_PT(T, P)
+                rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
             elif x == 0:
                 T = _TSat_P(P)
@@ -2891,7 +2891,7 @@ class IAPWS97(object):
             if Tt <= T <= Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif P > 16.529:
-                rho = 1./_Backward3_v_PT(T, P)
+                rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
             elif x == 0:
                 T = _TSat_P(P)
