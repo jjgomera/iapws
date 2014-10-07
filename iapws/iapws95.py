@@ -839,35 +839,29 @@ class MEoS(_fase):
         rho = Pr*self.rhoc
         return rho
 
-    def _Tension(self, T=None):
+    def _Tension(self, T):
         """Equation for the surface tension"""
-        if self.Tt <= self.T <= self.Tc and self._surface:
-            if not T:
-                T = self.T
-            tau = 1-T/self.Tc
-            tension = 0
-            for sigma, n in zip(self._surface["sigma"],
-                                self._surface["exp"]):
-                tension += sigma*tau**n
-            sigma = tension
-        else:
-            sigma = None
-        return sigma
+        tau = 1-T/self.Tc
+        tension = 0
+        for sigma, n in zip(self._surface["sigma"],
+                            self._surface["exp"]):
+            tension += sigma*tau**n
+        return tension
 
 
 class IAPWS95(MEoS):
     """Multiparameter equation of state for water (including IAPWS95)
 
     >>> water=IAPWS95(T=300, rho=996.5560)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P.MPa, water.cv.kJkgK, water.w, water.s.kJkgK)
-    0.0992418352 4.13018112 1501.51914 0.393062643
+    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
+    0.0992418350 4.13018112 1501.51914 0.393062643
 
     >>> water=IAPWS95(T=500, rho=0.435)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P.MPa, water.cv.kJkgK, water.w, water.s.kJkgK)
+    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
     0.0999679423 1.50817541 548.31425 7.944882714
 
     >>> water=IAPWS95(T=900., P=700)
-    >>> print "%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv.kJkgK, water.w, water.s.kJkgK)
+    >>> print "%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv, water.w, water.s)
     870.7690 2.66422350 2019.33608 4.17223802
     """
     name = "water"
@@ -1004,7 +998,7 @@ class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
     >>> water=D2O(T=300, rho=996.5560)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P.MPa, water.cv.kJkgK, water.w, water.s.kJkgK)
+    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
     0.0992418352 4.13018112 1501.51914 0.393062643
     """
     name = "heavy water"
