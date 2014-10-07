@@ -6,13 +6,24 @@ __version__ = "1.1"
 import unittest
 
 from iapws97 import IAPWS97
+from iapws97 import (_Region1, _Region2, _Region3, _Region5, 
+                     _Backward1_T_Ph, _Backward1_T_Ps, _Backward1_P_hs,
+                     _Backward2_T_Ph, _Backward2_T_Ps, _Backward2_P_hs, 
+                     _h_3ab, _Backward3_T_Ph, _Backward3_v_Ph, _Backward3_T_Ps,
+                     _Backward3_v_Ps, _PSat_h, _PSat_s, _Backward3_P_hs, _h1_s, 
+                     _h3a_s, _h2ab_s, _h2c3b_s, _PSat_T, _TSat_P, _h13_s,
+                     _t_hs, _Backward4_T_hs, _tab_P, _top_P, _twx_P, _tef_P, 
+                     _txx_P, _Backward3_v_PT)
 from iapws95 import IAPWS95, D2O
 from _iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure, M, 
                     _Viscosity, _ThCond, _Tension, _Dielectric)
 
 # Test
 class Test(unittest.TestCase):
-
+    """
+    Global unittest for module
+    Run for python2 and python3 before to release distribution
+    """
     def test_Helmholtz(self):
         """Table 6 from IAPWS95, pag 14"""
         T = 500
@@ -331,31 +342,330 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.n, 6), 1.298369)
         
     def test_IAPWS97_1(self):
-        """"""
-        fluid = IAPWS97(T=300, P=3)
-        self.assertEqual(round(fluid.v, 11), 0.00100215168)
-        self.assertEqual(round(fluid.h, 6), 115.331273)
-        self.assertEqual(round(fluid.u, 6), 112.324818)
-        self.assertEqual(round(fluid.s, 9), 0.392294792)
-        self.assertEqual(round(fluid.cp, 8), 4.17301218)
-        self.assertEqual(round(fluid.w, 5), 1507.73921)
+        """Table 5, pag 9"""
+        fluid = _Region1(300, 3)
+        self.assertEqual(round(fluid["v"], 11), 0.00100215168)
+        self.assertEqual(round(fluid["h"], 6), 115.331273)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 6), 112.324818)
+        self.assertEqual(round(fluid["s"], 9), 0.392294792)
+        self.assertEqual(round(fluid["cp"], 8), 4.17301218)
+        self.assertEqual(round(fluid["w"], 5), 1507.73921)
 
-        fluid = IAPWS97(T=300, P=80)
-        self.assertEqual(round(fluid.v, 12), 0.000971180894)
-        self.assertEqual(round(fluid.h, 6), 184.142828)
-        self.assertEqual(round(fluid.u, 6), 106.448356)
-        self.assertEqual(round(fluid.s, 9), 0.368563852)
-        self.assertEqual(round(fluid.cp, 8), 4.01008987)
-        self.assertEqual(round(fluid.w, 5), 1634.69054)
+        fluid = _Region1(300, 80)
+        self.assertEqual(round(fluid["v"], 12), 0.000971180894)
+        self.assertEqual(round(fluid["h"], 6), 184.142828)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 6), 106.448356)
+        self.assertEqual(round(fluid["s"], 9), 0.368563852)
+        self.assertEqual(round(fluid["cp"], 8), 4.01008987)
+        self.assertEqual(round(fluid["w"], 5), 1634.69054)
 
-        fluid = IAPWS97(T=500, P=3)
-        self.assertEqual(round(fluid.v, 10), 0.0012024180)
-        self.assertEqual(round(fluid.h, 6), 975.542239)
-        self.assertEqual(round(fluid.u, 6), 971.934985)
-        self.assertEqual(round(fluid.s, 9), 2.58041912)
-        self.assertEqual(round(fluid.cp, 8), 4.65580682)
-        self.assertEqual(round(fluid.w, 5), 1240.71337)
+        fluid = _Region1(500, 3)
+        self.assertEqual(round(fluid["v"], 10), 0.0012024180)
+        self.assertEqual(round(fluid["h"], 6), 975.542239)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 6), 971.934985)
+        self.assertEqual(round(fluid["s"], 9), 2.58041912)
+        self.assertEqual(round(fluid["cp"], 8), 4.65580682)
+        self.assertEqual(round(fluid["w"], 5), 1240.71337)
 
+        # _Backward1_T_Ph Table 7 pag 11
+        self.assertEqual(round(_Backward1_T_Ph(3, 500), 6), 391.798509)
+        self.assertEqual(round(_Backward1_T_Ph(80, 500), 6), 378.108626)
+        self.assertEqual(round(_Backward1_T_Ph(80, 1500), 6), 611.041229)
+        
+        # _Backward1_T_Ps Table 9 pag 12
+        self.assertEqual(round(_Backward1_T_Ps(3, 0.5), 6), 307.842258)
+        self.assertEqual(round(_Backward1_T_Ps(80, 0.5), 6), 309.979785)
+        self.assertEqual(round(_Backward1_T_Ps(80, 3), 6), 565.899909)
+        
+        # _Backward1_P_hs Table 3 pag 6 for supplementary p(h,s)
+        self.assertEqual(round(_Backward1_P_hs(0.001, 0), 13), 0.0009800980612)
+        self.assertEqual(round(_Backward1_P_hs(90, 0), 8), 91.92954727)
+        self.assertEqual(round(_Backward1_P_hs(1500, 3.4), 8), 58.68294423)
+
+    def test_IAPWS97_2(self):
+        """Table 15, pag 17"""
+        fluid = _Region2(300, 0.0035)
+        self.assertEqual(round(fluid["v"], 7), 39.4913866)
+        self.assertEqual(round(fluid["h"], 5), 2549.91145)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2411.69160)
+        self.assertEqual(round(fluid["s"], 8), 8.52238967)
+        self.assertEqual(round(fluid["cp"], 8), 1.91300162)
+        self.assertEqual(round(fluid["w"], 6), 427.920172)
+
+        fluid = _Region2(700, 0.0035)
+        self.assertEqual(round(fluid["v"], 7), 92.3015898)
+        self.assertEqual(round(fluid["h"], 5), 3335.68375)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 3012.62819)
+        self.assertEqual(round(fluid["s"], 7), 10.1749996)
+        self.assertEqual(round(fluid["cp"], 8), 2.08141274)
+        self.assertEqual(round(fluid["w"], 6), 644.289068)
+
+        fluid = _Region2(700, 30)
+        self.assertEqual(round(fluid["v"], 11), 0.00542946619)
+        self.assertEqual(round(fluid["h"], 5), 2631.49474)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2468.61076)
+        self.assertEqual(round(fluid["s"], 8), 5.17540298)
+        self.assertEqual(round(fluid["cp"], 7), 10.3505092)
+        self.assertEqual(round(fluid["w"], 6), 480.386523)
+
+        # Backward2_T_Ph Table 24 pag 25
+        self.assertEqual(round(_Backward2_T_Ph(0.001, 3000), 6), 534.433241)
+        self.assertEqual(round(_Backward2_T_Ph(3, 3000), 6), 575.373370)
+        self.assertEqual(round(_Backward2_T_Ph(3, 4000), 5), 1010.77577)
+        self.assertEqual(round(_Backward2_T_Ph(5, 3500), 6), 801.299102)
+        self.assertEqual(round(_Backward2_T_Ph(5, 4000), 5), 1015.31583)
+        self.assertEqual(round(_Backward2_T_Ph(25, 3500), 6), 875.279054)
+        self.assertEqual(round(_Backward2_T_Ph(40, 2700), 6), 743.056411)
+        self.assertEqual(round(_Backward2_T_Ph(60, 2700), 6), 791.137067)
+        self.assertEqual(round(_Backward2_T_Ph(60, 3200), 6), 882.756860)
+        
+        # _Backward2_T_Ps Table 9 pag 12
+        self.assertEqual(round(_Backward2_T_Ps(0.1, 7.5), 6), 399.517097)
+        self.assertEqual(round(_Backward2_T_Ps(0.1, 8), 6), 514.127081)
+        self.assertEqual(round(_Backward2_T_Ps(2.5, 8), 5), 1039.84917)
+        self.assertEqual(round(_Backward2_T_Ps(8, 6), 6), 600.484040)
+        self.assertEqual(round(_Backward2_T_Ps(8, 7.5), 5), 1064.95556)
+        self.assertEqual(round(_Backward2_T_Ps(90, 6), 5), 1038.01126)
+        self.assertEqual(round(_Backward2_T_Ps(20, 5.75), 6), 697.992849)
+        self.assertEqual(round(_Backward2_T_Ps(80, 5.25), 6), 854.011484)
+        self.assertEqual(round(_Backward2_T_Ps(80, 5.75), 6), 949.017998)
+
+        # _Backward2_P_hs Table 9 pag 10 for supplementary p(h,s)
+        self.assertEqual(round(_Backward2_P_hs(2800, 6.5), 9), 1.371012767)
+        self.assertEqual(round(_Backward2_P_hs(2800, 9.5), 12), 0.001879743844)
+        self.assertEqual(round(_Backward2_P_hs(4100, 9.5), 10), 0.1024788997)
+        self.assertEqual(round(_Backward2_P_hs(2800, 6), 9), 4.793911442)
+        self.assertEqual(round(_Backward2_P_hs(3600, 6), 8), 83.95519209)
+        self.assertEqual(round(_Backward2_P_hs(3600, 7), 9), 7.527161441)
+        self.assertEqual(round(_Backward2_P_hs(2800, 5.1), 8), 94.39202060)
+        self.assertEqual(round(_Backward2_P_hs(2800, 5.8), 9), 8.414574124)
+        self.assertEqual(round(_Backward2_P_hs(3400, 5.8), 8), 83.76903879)
+
+    def test_IAPWS97_3(self):
+        """Table 33, pag 49"""
+        fluid = _Region3(500, 650)
+        self.assertEqual(round(fluid["P"], 7), 25.5837018)
+        self.assertEqual(round(fluid["h"], 5), 1863.43019)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 1812.26279)
+        self.assertEqual(round(fluid["s"], 8), 4.05427273)
+        self.assertEqual(round(fluid["cp"], 7), 13.8935717)
+        self.assertEqual(round(fluid["w"], 6), 502.005554)
+
+        fluid = _Region3(200, 650)
+        self.assertEqual(round(fluid["P"], 7), 22.2930643)
+        self.assertEqual(round(fluid["h"], 5), 2375.12401)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2263.65868)
+        self.assertEqual(round(fluid["s"], 8), 4.85438792)
+        self.assertEqual(round(fluid["cp"], 7), 44.6579342)
+        self.assertEqual(round(fluid["w"], 6), 383.444594)
+
+        fluid = _Region3(500, 750)
+        self.assertEqual(round(fluid["P"], 7), 78.3095639)
+        self.assertEqual(round(fluid["h"], 5), 2258.68845)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2102.06932)
+        self.assertEqual(round(fluid["s"], 8), 4.46971906)
+        self.assertEqual(round(fluid["cp"], 8), 6.34165359)
+        self.assertEqual(round(fluid["w"], 6), 760.696041)
+
+        # _h_3ab   pag 7
+        self.assertEqual(round(_h_3ab(25), 6), 2095.936454)
+        
+    def test_IAPWS97_3_Sup03(self):
+        """Test for supplementary 03 for region 3"""
+        # _Backward3_T_Ph Table 5 pag 8
+        self.assertEqual(round(_Backward3_T_Ph(20, 1700), 7), 629.3083892)
+        self.assertEqual(round(_Backward3_T_Ph(50, 2000), 7), 690.5718338)
+        self.assertEqual(round(_Backward3_T_Ph(100, 2100), 7), 733.6163014)
+        self.assertEqual(round(_Backward3_T_Ph(20, 2500), 7), 641.8418053)
+        self.assertEqual(round(_Backward3_T_Ph(50, 2400), 7), 735.1848618)
+        self.assertEqual(round(_Backward3_T_Ph(100, 2700), 7), 842.0460876)
+
+        # _Backward3_v_Ph Table 8 pag 10
+        self.assertEqual(round(_Backward3_v_Ph(20, 1700), 12), 1.749903962e-3)
+        self.assertEqual(round(_Backward3_v_Ph(50, 2000), 12), 1.908139035e-3)
+        self.assertEqual(round(_Backward3_v_Ph(100, 2100), 12), 1.676229776e-3)
+        self.assertEqual(round(_Backward3_v_Ph(20, 2500), 12), 6.670547043e-3)
+        self.assertEqual(round(_Backward3_v_Ph(50, 2400), 12), 2.801244590e-3)
+        self.assertEqual(round(_Backward3_v_Ph(100, 2700), 12), 2.404234998e-3)
+
+        # _Backward3_T_Ps Table 12 pag 13
+        self.assertEqual(round(_Backward3_T_Ps(20, 3.8), 7), 628.2959869)
+        self.assertEqual(round(_Backward3_T_Ps(50, 3.6), 7), 629.7158726)
+        self.assertEqual(round(_Backward3_T_Ps(100, 4.0), 7), 705.6880237)
+        self.assertEqual(round(_Backward3_T_Ps(20, 5.0), 7), 640.1176443)
+        self.assertEqual(round(_Backward3_T_Ps(50, 4.5), 7), 716.3687517)
+        self.assertEqual(round(_Backward3_T_Ps(100, 5.0), 7), 847.4332825)
+
+        # _Backward3_v_Ps Table 15 pag 15
+        self.assertEqual(round(_Backward3_v_Ps(20, 3.8), 12), 1.733791463e-3)
+        self.assertEqual(round(_Backward3_v_Ps(50, 3.6), 12), 1.469680170e-3)
+        self.assertEqual(round(_Backward3_v_Ps(100, 4.0), 12), 1.555893131e-3)
+        self.assertEqual(round(_Backward3_v_Ps(20, 5.0), 12), 6.262101987e-3)
+        self.assertEqual(round(_Backward3_v_Ps(50, 4.5), 12), 2.332634294e-3)
+        self.assertEqual(round(_Backward3_v_Ps(100, 5.0), 12), 2.449610757e-3)
+
+        #_PSat_h Table 18 pag 18
+        self.assertEqual(round(_PSat_h(1700), 8), 17.24175718)
+        self.assertEqual(round(_PSat_h(2000), 8), 21.93442957)
+        self.assertEqual(round(_PSat_h(2400), 8), 20.18090839)
+
+        #_PSat_s Table 20 pag 19
+        self.assertEqual(round(_PSat_s(3.8), 8), 16.87755057)
+        self.assertEqual(round(_PSat_s(4.2), 8), 21.64451789)
+        self.assertEqual(round(_PSat_s(5.2), 8), 16.68968482)
+
+    def test_IAPWS97_3_Sup04(self):
+        """Test for supplementary 04 for region 3"""
+        # _Backward3_P_hs Table 5 pag 10
+        self.assertEqual(round(_Backward3_P_hs(1700, 3.8), 8), 25.55703246)
+        self.assertEqual(round(_Backward3_P_hs(2000, 4.2), 8), 45.40873468)
+        self.assertEqual(round(_Backward3_P_hs(2100, 4.3), 8), 60.78123340)
+        self.assertEqual(round(_Backward3_P_hs(2600, 5.1), 8), 34.34999263)
+        self.assertEqual(round(_Backward3_P_hs(2400, 4.7), 8), 63.63924887)
+        self.assertEqual(round(_Backward3_P_hs(2700, 5.0), 8), 88.39043281)
+
+        # _h1_s _h3a_s Table 11 pag 17
+        self.assertEqual(round(_h1_s(1), 7), 308.5509647)
+        self.assertEqual(round(_h1_s(2), 7), 700.6304472)
+        self.assertEqual(round(_h1_s(3), 6), 1198.359754)
+        self.assertEqual(round(_h3a_s(3.8), 6), 1685.025565)
+        self.assertEqual(round(_h3a_s(4), 6), 1816.891476)
+        self.assertEqual(round(_h3a_s(4.2), 6), 1949.352563)
+        
+        # _h2ab_s _h2c3b_s Table 18 pag 21
+        self.assertEqual(round(_h2ab_s(7), 6), 2723.729985)
+        self.assertEqual(round(_h2ab_s(8), 6), 2599.047210)
+        self.assertEqual(round(_h2ab_s(9), 6), 2511.861477)
+        self.assertEqual(round(_h2c3b_s(5.5), 6), 2687.693850)
+        self.assertEqual(round(_h2c3b_s(5.0), 6), 2451.623609)
+        self.assertEqual(round(_h2c3b_s(4.5), 6), 2144.360448)
+        
+        # _h13_s Table 18 pag 21
+        self.assertEqual(round(_h13_s(3.7), 6), 1632.525047)
+        self.assertEqual(round(_h13_s(3.6), 6), 1593.027214)
+        self.assertEqual(round(_h13_s(3.5), 6), 1566.104611)
+
+        # _t_hs Table 26 pag 26
+        self.assertEqual(round(_t_hs(2600, 5.1), 7), 713.5259364)
+        self.assertEqual(round(_t_hs(2700, 5.15), 7), 768.5345532)
+        self.assertEqual(round(_t_hs(2800, 5.2), 7), 817.6202120)
+
+        # _Backward4_T_hs Table 29 pag 31
+        self.assertEqual(round(_Backward4_T_hs(1800, 5.3), 7), 346.8475498)
+        self.assertEqual(round(_Backward4_T_hs(2400, 6.0), 7), 425.1373305)
+        self.assertEqual(round(_Backward4_T_hs(2500, 5.5), 7), 522.5579013)
+        
+    def test_IAPWS97_3_Sup05(self):
+        """Test for supplementary 05 for region 3 v=f(T,P)"""
+        # T=f(P) limit Table 3 pag 11
+        self.assertEqual(round(_tab_P(40), 7), 693.0341408)
+        self.assertEqual(round(_txx_P(25, "cd"), 7), 649.3659208)
+        self.assertEqual(round(_tef_P(40), 7), 713.9593992)
+        self.assertEqual(round(_txx_P(23, "gh"), 7), 649.8873759)
+        self.assertEqual(round(_txx_P(23, "ij"), 7), 651.5778091)
+        self.assertEqual(round(_txx_P(23, "jk"), 7), 655.8338344)
+        self.assertEqual(round(_txx_P(22.8, "mn"), 7), 649.6054133)
+        self.assertEqual(round(_top_P(22.8), 7), 650.0106943)
+        self.assertEqual(round(_txx_P(22, "qu"), 7), 645.6355027)
+        self.assertEqual(round(_txx_P(22, "rx"), 7), 648.2622754)
+
+        # _Backward3_v_PT Table 5 pag 13
+        self.assertEqual(round(_Backward3_v_PT(50, 630), 12), 1.470853100e-3)
+        self.assertEqual(round(_Backward3_v_PT(80, 670), 12), 1.503831359e-3)
+        self.assertEqual(round(_Backward3_v_PT(50, 710), 12), 2.204728587e-3)
+        self.assertEqual(round(_Backward3_v_PT(80, 750), 12), 1.973692940e-3)
+        self.assertEqual(round(_Backward3_v_PT(20, 630), 12), 1.761696406e-3)
+        self.assertEqual(round(_Backward3_v_PT(30, 650), 12), 1.819560617e-3)
+        self.assertEqual(round(_Backward3_v_PT(26, 656), 12), 2.245587720e-3)
+        self.assertEqual(round(_Backward3_v_PT(30, 670), 12), 2.506897702e-3)
+        self.assertEqual(round(_Backward3_v_PT(26, 661), 12), 2.970225962e-3)
+        self.assertEqual(round(_Backward3_v_PT(30, 675), 12), 3.004627086e-3)
+        self.assertEqual(round(_Backward3_v_PT(26, 671), 12), 5.019029401e-3)
+        self.assertEqual(round(_Backward3_v_PT(30, 690), 12), 4.656470142e-3)
+        self.assertEqual(round(_Backward3_v_PT(23.6, 649), 12), 2.163198378e-3)
+        self.assertEqual(round(_Backward3_v_PT(24, 650), 12), 2.166044161e-3)
+        self.assertEqual(round(_Backward3_v_PT(23.6, 652), 12), 2.651081407e-3)
+        self.assertEqual(round(_Backward3_v_PT(24, 654), 12), 2.967802335e-3)
+        self.assertEqual(round(_Backward3_v_PT(23.6, 653), 12), 3.273916816e-3)
+        self.assertEqual(round(_Backward3_v_PT(24, 655), 12), 3.550329864e-3)
+        self.assertEqual(round(_Backward3_v_PT(23.5, 655), 12), 4.545001142e-3)
+        self.assertEqual(round(_Backward3_v_PT(24, 660), 12), 5.100267704e-3)
+        self.assertEqual(round(_Backward3_v_PT(23, 660), 12), 6.109525997e-3)
+        self.assertEqual(round(_Backward3_v_PT(24, 670), 12), 6.427325645e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.6, 646), 12), 2.117860851e-3)
+        self.assertEqual(round(_Backward3_v_PT(23, 646), 12), 2.062374674e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.6, 648.6), 12), 2.533063780e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.8, 649.3), 12), 2.572971781e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.6, 649.0), 12), 2.923432711e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.8, 649.7), 12), 2.913311494e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.6, 649.1), 12), 3.131208996e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.8, 649.9), 12), 3.221160278e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.6, 649.4), 12), 3.715596186e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.8, 650.2), 12), 3.664754790e-3)
+        self.assertEqual(round(_Backward3_v_PT(21.1, 640), 12), 1.970999272e-3)
+        self.assertEqual(round(_Backward3_v_PT(21.8, 643), 12), 2.043919161e-3)
+        self.assertEqual(round(_Backward3_v_PT(21.1, 644), 12), 5.251009921e-3)
+        self.assertEqual(round(_Backward3_v_PT(21.8, 648), 12), 5.256844741e-3)
+        self.assertEqual(round(_Backward3_v_PT(19.1, 635), 12), 1.932829079e-3)
+        self.assertEqual(round(_Backward3_v_PT(20, 638), 12), 1.985387227e-3)
+        self.assertEqual(round(_Backward3_v_PT(17, 626), 12), 8.483262001e-3)
+        self.assertEqual(round(_Backward3_v_PT(20, 640), 12), 6.227528101e-3)
+        
+        # T=f(P) limit Table 11 pag 19
+        self.assertEqual(round(_txx_P(22.3, "uv"), 7), 647.7996121)
+        self.assertEqual(round(_twx_P(22.3), 7), 648.2049480)
+
+        # _Backward3_v_PT Table 13 pag 20
+        self.assertEqual(round(_Backward3_v_PT(21.5, 644.6), 12), 2.268366647e-3)
+        self.assertEqual(round(_Backward3_v_PT(22, 646.1), 12), 2.296350553e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.5, 648.6), 12), 2.832373260e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.3, 647.9), 12), 2.811424405e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.15, 647.5), 12), 3.694032281e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.3, 648.1), 12), 3.622226305e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.11, 648), 12), 4.528072649e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.3, 649), 12), 4.556905799e-3)
+        self.assertEqual(round(_Backward3_v_PT(22, 646.84), 12), 2.698354719e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.064, 647.05), 12), 2.717655648e-3)
+        self.assertEqual(round(_Backward3_v_PT(22, 646.89), 12), 3.798732962e-3)
+        self.assertEqual(round(_Backward3_v_PT(22.064, 647.15), 11), 3.701940010e-3)
+        
+    def test_IAPWS97_4(self):
+        """Saturation line"""
+        # _PSat_T Table 35 pag 34
+        self.assertEqual(round(_PSat_T(300), 11), 0.00353658941)
+        self.assertEqual(round(_PSat_T(500), 8), 2.63889776)
+        self.assertEqual(round(_PSat_T(600), 7), 12.3443146)
+
+        # _TSat_P Table 36 pag 36
+        self.assertEqual(round(_TSat_P(0.1), 6), 372.755919)
+        self.assertEqual(round(_TSat_P(1), 6), 453.035632)
+        self.assertEqual(round(_TSat_P(10), 6), 584.149488)
+
+    def test_IAPWS97_5(self):
+        """Table 42, pag 40"""
+        fluid = _Region5(1500, 0.5)
+        self.assertEqual(round(fluid["v"], 8), 1.38455090)
+        self.assertEqual(round(fluid["h"], 5), 5219.76855)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 4527.49310)
+        self.assertEqual(round(fluid["s"], 8), 9.65408875)
+        self.assertEqual(round(fluid["cp"], 8), 2.61609445)
+        self.assertEqual(round(fluid["w"], 6), 917.068690)
+
+        fluid = _Region5(1500, 30)
+        self.assertEqual(round(fluid["v"], 10), 0.0230761299)
+        self.assertEqual(round(fluid["h"], 5), 5167.23514)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 4474.95124)
+        self.assertEqual(round(fluid["s"], 8), 7.72970133)
+        self.assertEqual(round(fluid["cp"], 8), 2.72724317)
+        self.assertEqual(round(fluid["w"], 6), 928.548002)
+
+        fluid = _Region5(2000, 30)
+        self.assertEqual(round(fluid["v"], 10), 0.0311385219)
+        self.assertEqual(round(fluid["h"], 5), 6571.22604)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 5637.07038)
+        self.assertEqual(round(fluid["s"], 8), 8.53640523)
+        self.assertEqual(round(fluid["cp"], 8), 2.88569882)
+        self.assertEqual(round(fluid["w"], 5), 1067.36948)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main(verbosity=1)
