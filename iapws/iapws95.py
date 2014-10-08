@@ -1133,7 +1133,8 @@ if __name__ == "__main__":
 #    print(water.virialC)
 
 #    heavy = D2O()
-    state = D2O(T=300, P=0.1)
-    print state.k
-    water=D2O(T=300, rho=996.5560)
-    print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
+#    state = D2O(T=300, P=0.1)
+#    print state.k
+#    water=D2O(T=321.9235, rho=0.0716)
+#    print water.P, water.cv, water.w, water.s
+#    print water.a

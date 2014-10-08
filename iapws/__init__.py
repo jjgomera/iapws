@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__version__ = "1.1"
+__version__ = "1.0.5"
 
 import unittest
 
@@ -278,26 +278,27 @@ class Test(unittest.TestCase):
 
     def test_Tension(self):
         """Selected values from table 1"""
-        self.assertEqual(round(_Tension(273.16)*1000, 2), 75.65)
-        self.assertEqual(round(_Tension(283.15)*1000, 2), 74.22)
-        self.assertEqual(round(_Tension(293.15)*1000, 2), 72.74)
-        self.assertEqual(round(_Tension(303.15)*1000, 2), 71.19)
-        self.assertEqual(round(_Tension(313.15)*1000, 2), 69.60)
-        self.assertEqual(round(_Tension(323.15)*1000, 2), 67.94)
-        self.assertEqual(round(_Tension(333.15)*1000, 2), 66.24)
-        self.assertEqual(round(_Tension(343.15)*1000, 2), 64.48)
-        self.assertEqual(round(_Tension(353.15)*1000, 2), 62.67)
-        self.assertEqual(round(_Tension(363.15)*1000, 2), 60.82)
-        self.assertEqual(round(_Tension(373.15)*1000, 2), 58.91)
-        self.assertEqual(round(_Tension(393.15)*1000, 2), 54.97)
-        self.assertEqual(round(_Tension(413.15)*1000, 2), 50.86)
-        self.assertEqual(round(_Tension(433.15)*1000, 2), 46.59)
-        self.assertEqual(round(_Tension(453.15)*1000, 2), 42.19)
-        self.assertEqual(round(_Tension(473.15)*1000, 2), 37.67)
-        self.assertEqual(round(_Tension(523.15)*1000, 2), 26.04)
-        self.assertEqual(round(_Tension(573.15)*1000, 2), 14.36)
-        self.assertEqual(round(_Tension(623.15)*1000, 2), 3.67)
-        self.assertEqual(round(_Tension(643.15)*1000, 2), 0.39)
+        fluid = IAPWS95()
+        self.assertEqual(round(fluid._Tension(273.16)*1000, 2), 75.65)
+        self.assertEqual(round(fluid._Tension(283.15)*1000, 2), 74.22)
+        self.assertEqual(round(fluid._Tension(293.15)*1000, 2), 72.74)
+        self.assertEqual(round(fluid._Tension(303.15)*1000, 2), 71.19)
+        self.assertEqual(round(fluid._Tension(313.15)*1000, 2), 69.60)
+        self.assertEqual(round(fluid._Tension(323.15)*1000, 2), 67.94)
+        self.assertEqual(round(fluid._Tension(333.15)*1000, 2), 66.24)
+        self.assertEqual(round(fluid._Tension(343.15)*1000, 2), 64.48)
+        self.assertEqual(round(fluid._Tension(353.15)*1000, 2), 62.67)
+        self.assertEqual(round(fluid._Tension(363.15)*1000, 2), 60.82)
+        self.assertEqual(round(fluid._Tension(373.15)*1000, 2), 58.91)
+        self.assertEqual(round(fluid._Tension(393.15)*1000, 2), 54.97)
+        self.assertEqual(round(fluid._Tension(413.15)*1000, 2), 50.86)
+        self.assertEqual(round(fluid._Tension(433.15)*1000, 2), 46.59)
+        self.assertEqual(round(fluid._Tension(453.15)*1000, 2), 42.19)
+        self.assertEqual(round(fluid._Tension(473.15)*1000, 2), 37.67)
+        self.assertEqual(round(fluid._Tension(523.15)*1000, 2), 26.04)
+        self.assertEqual(round(fluid._Tension(573.15)*1000, 2), 14.36)
+        self.assertEqual(round(fluid._Tension(623.15)*1000, 2), 3.67)
+        self.assertEqual(round(fluid._Tension(643.15)*1000, 2), 0.39)
 
     def test_Dielect(self):
         """Table 4, pag 8"""
@@ -340,7 +341,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.n, 6), 1.327710)
         fluid = IAPWS95(P=100., T=473.15, l=1.01398)
         self.assertEqual(round(fluid.n, 6), 1.298369)
-        
+
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""
         fluid = _Region1(300, 3)
@@ -666,6 +667,149 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid["s"], 8), 8.53640523)
         self.assertEqual(round(fluid["cp"], 8), 2.88569882)
         self.assertEqual(round(fluid["w"], 5), 1067.36948)
+
+    def test_D2O(self):
+        """Table 5 pag 11"""
+        fluid = D2O()
+        Tr = 643.847
+        rhor = 358
+        ar = 21.671*1000/358
+        sr = 21.671*1000/358./643.847
+        pr = 21.671*1000
+
+        state = fluid._Helmholtz(0.0002*rhor, 0.5*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -2.644979)
+        self.assertEqual(round(state["P"]/pr, 7), 0.0004402)
+        self.assertEqual(round(state["cv"]/sr, 4), 14.2768)
+
+        state = fluid._Helmholtz(3.18*rhor, 0.5*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -0.217388)
+        self.assertEqual(round(state["P"]/pr, 7), 4.3549719)
+        self.assertEqual(round(state["cv"]/sr, 4), 41.4463)
+
+        state = fluid._Helmholtz(0.0295*rhor, 0.75*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -7.272543)
+        self.assertEqual(round(state["P"]/pr, 7), 0.0870308)
+        self.assertEqual(round(state["cv"]/sr, 4), 20.1586)
+
+        state = fluid._Helmholtz(2.83*rhor, 0.75*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -4.292707)
+        self.assertEqual(round(state["P"]/pr, 7), 4.4752958)
+        self.assertEqual(round(state["cv"]/sr, 4), 33.4367)
+
+        state = fluid._Helmholtz(0.3*rhor, Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -15.163326)
+        self.assertEqual(round(state["P"]/pr, 7), 0.8014044)
+        self.assertEqual(round(state["cv"]/sr, 4), 30.8587)
+
+        state = fluid._Helmholtz(1.55*rhor, Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -12.643811)
+        self.assertEqual(round(state["P"]/pr, 7), 1.0976283)
+        self.assertEqual(round(state["cv"]/sr, 4), 33.0103)
+
+        state = fluid._Helmholtz(0.4*rhor, 1.2*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -25.471535)
+        self.assertEqual(round(state["P"]/pr, 7), 1.4990994)
+        self.assertEqual(round(state["cv"]/sr, 4), 23.6594)
+
+        state = fluid._Helmholtz(1.61*rhor, 1.2*Tr)
+        self.assertEqual(round((state["h"]-state["P"]*1000*state["v"]-state["T"]*state["s"])/ar, 6), -21.278164)
+        self.assertEqual(round(state["P"]/pr, 7), 4.5643798)
+        self.assertEqual(round(state["cv"]/sr, 4), 25.4800)
+
+    def test_D2O_Viscosity(self):
+        """Table A5 pag 10"""
+        mur = 55.2651e-6
+        Tr = 643.847
+        rhor = 358
+        self.assertEqual(round(D2O._visco(3.09*rhor, 0.431*Tr)/mur, 10), 36.9123166244)
+        self.assertEqual(round(D2O._visco(3.23*rhor, 0.431*Tr)/mur, 10), 34.1531546602)
+        self.assertEqual(round(D2O._visco(0.0002*rhor, 0.5*Tr)/mur, 10), 0.1972984225)
+        self.assertEqual(round(D2O._visco(3.07*rhor, 0.5*Tr)/mur, 10), 12.0604912273)
+        self.assertEqual(round(D2O._visco(3.18*rhor, 0.5*Tr)/mur, 10), 12.4679405772)
+        self.assertEqual(round(D2O._visco(0.0027*rhor, 0.6*Tr)/mur, 10), 0.2365829037)
+        self.assertEqual(round(D2O._visco(2.95*rhor, 0.6*Tr)/mur, 10), 5.2437249935)
+        self.assertEqual(round(D2O._visco(3.07*rhor, 0.6*Tr)/mur, 10), 5.7578399754)
+        self.assertEqual(round(D2O._visco(0.0295*rhor, 0.75*Tr)/mur, 10), 0.2951479769)
+        self.assertEqual(round(D2O._visco(2.65*rhor, 0.75*Tr)/mur, 10), 2.6275043948)
+        self.assertEqual(round(D2O._visco(2.83*rhor, 0.75*Tr)/mur, 10), 3.0417583586)
+        self.assertEqual(round(D2O._visco(0.08*rhor, 0.9*Tr)/mur, 10), 0.3685472578)
+        self.assertEqual(round(D2O._visco(0.163*rhor, 0.9*Tr)/mur, 10), 0.3619649145)
+        self.assertEqual(round(D2O._visco(2.16*rhor, 0.9*Tr)/mur, 10), 1.6561616211)
+        self.assertEqual(round(D2O._visco(2.52*rhor, 0.9*Tr)/mur, 10), 2.1041364724)
+        self.assertEqual(round(D2O._visco(0.3*rhor, Tr)/mur, 10), 0.4424816849)
+        self.assertEqual(round(D2O._visco(0.7*rhor, Tr)/mur, 10), 0.5528693914)
+        self.assertEqual(round(D2O._visco(1.55*rhor, Tr)/mur, 10), 1.1038442411)
+        self.assertEqual(round(D2O._visco(2.26*rhor, Tr)/mur, 10), 1.7569585722)
+        self.assertEqual(round(D2O._visco(0.49*rhor, 1.1*Tr)/mur, 10), 0.5633038063)
+        self.assertEqual(round(D2O._visco(0.98*rhor, 1.1*Tr)/mur, 10), 0.7816387903)
+        self.assertEqual(round(D2O._visco(1.47*rhor, 1.1*Tr)/mur, 10), 1.1169456968)
+        self.assertEqual(round(D2O._visco(1.96*rhor, 1.1*Tr)/mur, 10), 1.5001420619)
+        self.assertEqual(round(D2O._visco(0.4*rhor, 1.2*Tr)/mur, 10), 0.6094539064)
+        self.assertEqual(round(D2O._visco(0.8*rhor, 1.2*Tr)/mur, 10), 0.7651099154)
+        self.assertEqual(round(D2O._visco(1.2*rhor, 1.2*Tr)/mur, 10), 0.9937870139)
+        self.assertEqual(round(D2O._visco(1.61*rhor, 1.2*Tr)/mur, 10), 1.2711900131)
+
+    def test_D2O_ThCond(self):
+        """Table B4 pag 17"""
+        lr = 0.742128e-3
+        Tr = 643.847
+        rhor = 358
+        self.assertEqual(round(D2O._thermo(3.09*rhor, 0.431*Tr)/lr, 9), 762.915707396)
+        self.assertEqual(round(D2O._thermo(3.23*rhor, 0.431*Tr)/lr, 9), 833.912049618)
+        self.assertEqual(round(D2O._thermo(0.0002*rhor, 0.5*Tr)/lr, 9), 27.006536978)
+        self.assertEqual(round(D2O._thermo(3.07*rhor, 0.5*Tr)/lr, 9), 835.786416818)
+        self.assertEqual(round(D2O._thermo(3.18*rhor, 0.5*Tr)/lr, 9), 891.181752526)
+        self.assertEqual(round(D2O._thermo(0.0027*rhor, 0.6*Tr)/lr, 9), 35.339949553)
+        self.assertEqual(round(D2O._thermo(2.95*rhor, 0.6*Tr)/lr, 9), 861.240794445)
+        self.assertEqual(round(D2O._thermo(3.07*rhor, 0.6*Tr)/lr, 9), 919.859094854)
+        self.assertEqual(round(D2O._thermo(0.0295*rhor, 0.75*Tr)/lr, 9), 55.216750017)
+        self.assertEqual(round(D2O._thermo(2.65*rhor, 0.75*Tr)/lr, 9), 790.442563472)
+        self.assertEqual(round(D2O._thermo(2.83*rhor, 0.75*Tr)/lr, 9), 869.672292625)
+        self.assertEqual(round(D2O._thermo(0.08*rhor, 0.9*Tr)/lr, 9), 74.522283066)
+        self.assertEqual(round(D2O._thermo(0.163*rhor, 0.9*Tr)/lr, 9), 106.301972320)
+        self.assertEqual(round(D2O._thermo(2.16*rhor, 0.9*Tr)/lr, 9), 627.777590127)
+        self.assertEqual(round(D2O._thermo(2.52*rhor, 0.9*Tr)/lr, 9), 761.055043002)
+        self.assertEqual(round(D2O._thermo(0.3*rhor, Tr)/lr, 9), 143.422002971)
+        self.assertEqual(round(D2O._thermo(0.7*rhor, Tr)/lr, 9), 469.015122112)
+        self.assertEqual(round(D2O._thermo(1.55*rhor, Tr)/lr, 9), 502.846952426)
+        self.assertEqual(round(D2O._thermo(2.26*rhor, Tr)/lr, 9), 668.743524402)
+        self.assertEqual(round(D2O._thermo(0.49*rhor, 1.1*Tr)/lr, 9), 184.813462109)
+        self.assertEqual(round(D2O._thermo(0.98*rhor, 1.1*Tr)/lr, 9), 326.652382218)
+        self.assertEqual(round(D2O._thermo(1.47*rhor, 1.1*Tr)/lr, 9), 438.370305052)
+        self.assertEqual(round(D2O._thermo(1.96*rhor, 1.1*Tr)/lr, 9), 572.014411428)
+        self.assertEqual(round(D2O._thermo(0.4*rhor, 1.2*Tr)/lr, 9), 160.059403824)
+        self.assertEqual(round(D2O._thermo(0.8*rhor, 1.2*Tr)/lr, 9), 259.605241187)
+        self.assertEqual(round(D2O._thermo(1.2*rhor, 1.2*Tr)/lr, 9), 362.179570932)
+        self.assertEqual(round(D2O._thermo(1.61*rhor, 1.2*Tr)/lr, 9), 471.747729424)
+        self.assertEqual(round(D2O._thermo(0.3*rhor, 1.27*Tr)/lr, 9), 145.249914694)
+        self.assertEqual(round(D2O._thermo(0.6*rhor, 1.27*Tr)/lr, 9), 211.996299238)
+        self.assertEqual(round(D2O._thermo(0.95*rhor, 1.27*Tr)/lr, 9), 299.251471210)
+        self.assertEqual(round(D2O._thermo(1.37*rhor, 1.27*Tr)/lr, 9), 409.359675394)
+
+    def test_D2O_Tension(self):
+        """Selected values from table 1"""
+        fluid = D2O()
+        self.assertEqual(round(fluid._Tension(273.15+3.8)*1000, 2), 74.93)
+        self.assertEqual(round(fluid._Tension(283.15)*1000, 2), 74.06)
+        self.assertEqual(round(fluid._Tension(293.15)*1000, 2), 72.61)
+        self.assertEqual(round(fluid._Tension(303.15)*1000, 2), 71.09)
+        self.assertEqual(round(fluid._Tension(313.15)*1000, 2), 69.52)
+        self.assertEqual(round(fluid._Tension(323.15)*1000, 2), 67.89)
+        self.assertEqual(round(fluid._Tension(333.15)*1000, 2), 66.21)
+        self.assertEqual(round(fluid._Tension(343.15)*1000, 2), 64.47)
+        self.assertEqual(round(fluid._Tension(353.15)*1000, 2), 62.67)
+        self.assertEqual(round(fluid._Tension(363.15)*1000, 2), 60.82)
+        self.assertEqual(round(fluid._Tension(373.15)*1000, 2), 58.93)
+        self.assertEqual(round(fluid._Tension(393.15)*1000, 2), 54.99)
+        self.assertEqual(round(fluid._Tension(413.15)*1000, 2), 50.87)
+        self.assertEqual(round(fluid._Tension(433.15)*1000, 2), 46.59)
+        self.assertEqual(round(fluid._Tension(453.15)*1000, 2), 42.16)
+        self.assertEqual(round(fluid._Tension(473.15)*1000, 2), 37.61)
+        self.assertEqual(round(fluid._Tension(523.15)*1000, 2), 25.84)
+        self.assertEqual(round(fluid._Tension(573.15)*1000, 2), 13.99)
+        self.assertEqual(round(fluid._Tension(623.15)*1000, 2), 3.17)
+        self.assertEqual(round(fluid._Tension(643.15)*1000, 2), 0.05)
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)
