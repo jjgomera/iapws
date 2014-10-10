@@ -130,10 +130,11 @@ class MEoS(_fase):
               "u": None,
               "x": None,
               "l": 0.5893}
+    status = 0
+    msg = "Undefined"
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
-#        self._constants = self.eq[self.kwargs["eq"]]
         self.R = self._constants["R"]/self.M
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
         self.kwargs = MEoS.kwargs.copy()
