@@ -6,7 +6,9 @@ Python implementation of standard from IAPWS (http://www.iapws.org/release.html)
     IAPWS-IF97
     IAPWS-95
     IAPWS-06 for Ice
-
+    IAPWS-08 for seawater
+    IAPWS-05 for Heavy water
+    
 dependences
 --------------------
 
@@ -29,8 +31,7 @@ In other SO you can download from its webpage in `pypi <http://pypi.python.org/p
 TODO
 --------------------
 
-* Add IAPWS-08 for seawater
-* Add IAPWS-05 for Heavy water
+Improve convergence for heavy water
 
 
 IAPWS-IF97
@@ -261,3 +262,67 @@ Usage::
     from iapws import _Ice
     ice=_Ice(273.15, 0.101325)            #Ice at normal melting point
     print(ice["rho"])                     #Calculated density
+
+    
+IAPWS-05 for Heavy water
+--------------------------------------------
+
+Same properties as for  IAPWS-95
+
+Usage::
+
+	from iapws import D2O
+	sat_liquid=D2O(T=370, x=0)            #saturated liquid with known T
+	print(sat_liquid.h) #calculated enthalpy
+
+    
+IAPWS-08 for seawater
+--------------------------------------------
+
+Incoming properties:
+
+* T: Temperature, K
+* P: Pressure, MPa
+* S: Salinity, kg/kg
+
+S is the Reference-Composition Salinity as defined in Millero, F.J., R. Feistel, D.G. Wright and T.J. McDougall, "The composition of Standard Seawater and the definition of the Reference-Composition Salinity Scale", Deep-Sea Res. I 55, 50 (2008).
+
+Calculated properties:
+
+* T: Temperature, K
+* P: Pressure, MPa
+* rho: Density, kg/m³
+* v: Specific volume, m³/kg
+* h: Specific enthalpy, kJ/kg
+* s: Specific entropy, kJ/kg·K
+* u: Specific internal energy, kJ/kg
+* g: Specific Gibbs free energy, kJ/kg
+* a: Specific Helmholtz free energy, kJ/kg
+* cp: Specific isobaric heat capacity, kJ/kg·K
+
+* gt: Derivative Gibbs energy with temperature, kJ/kg·K
+* gp: Derivative Gibbs energy with pressure, m³/kg
+* gtt: Derivative Gibbs energy with temperature square, kJ/kg·K²
+* gtp: Derivative Gibbs energy with pressure and temperature, m³/kg·K
+* gpp: Derivative Gibbs energy with temperature square, m³/kg·MPa
+* gs: Derivative Gibbs energy with salinity, kJ/kg
+* gsp: Derivative Gibbs energy with salinity and pressure, m³/kg
+
+* alfa: Thermal expansion coefficient, 1/K
+* betas: Isentropic temperature-pressure coefficient, K/MPa
+* kt: Isothermal compressibility, 1/MPa
+* ks: Isentropic compressibility, 1/MPa
+* w: Sound Speed, m/s
+
+* mu: Relative chemical potential, kJ/kg
+* muw: Chemical potential of H2O, kJ/kg
+* mus: Chemical potential of sea salt, kJ/kg
+* osm: Osmotic coefficient, [-]
+* haline: Haline contraction coefficient, kg/kg
+
+        
+Usage::
+    
+    from iapws import SeaWater
+    state = SeaWater(T=300, P=0.101325, S=0.001)    #Seawater with 0.1% Salinity
+    print(state.cp)     # Get cp
