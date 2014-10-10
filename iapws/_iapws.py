@@ -217,7 +217,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
     if fase and drho:
         qc = 1/1.9
         qd = 1/1.1
-        
+
         DeltaX = Pc*Dr**2*(fase.drhodP_T/rho-drho/rho*1.5/Tr)
         if DeltaX < 0:
             DeltaX = 0
@@ -257,10 +257,10 @@ def _ThCond(rho, T, fase=None, drho=None):
     L0 = Tr**0.5/suma
 
     nij = [
-        [1.60397357, -0.646013523, 0.111443906, 0.102997357, -0.0504123634, 0.00609859258], 
-        [2.33771842, -2.78843778, 1.53616167, -0.463045512, 0.0832827019, -0.00719201245], 
-        [2.19650529, -4.54580785, 3.55777244, -1.40944978, 0.275418278, -0.0205938816], 
-        [-1.21051378, 1.60812989, -0.621178141, 0.0716373224, 0, 0], 
+        [1.60397357, -0.646013523, 0.111443906, 0.102997357, -0.0504123634, 0.00609859258],
+        [2.33771842, -2.78843778, 1.53616167, -0.463045512, 0.0832827019, -0.00719201245],
+        [2.19650529, -4.54580785, 3.55777244, -1.40944978, 0.275418278, -0.0205938816],
+        [-1.21051378, 1.60812989, -0.621178141, 0.0716373224, 0, 0],
         [-2.7203370, 4.57586331, -3.18369245, 1.1168348, -0.19268305, 0.012913842]]
     suma = 0
     for i in range(len(nij)):
@@ -280,7 +280,7 @@ def _ThCond(rho, T, fase=None, drho=None):
         X = 0.13*(DeltaX/0.06)**(0.63/1.239)
         y = X/0.4
         if y < 1.2e-7:
-            Z =0
+            Z = 0
         else:
             Z = 2/pi/y*(((1-1/fase.cp_cv)*atan(y)+y/fase.cp_cv)-(1-exp(-1/(1/y+y**2/3/d**2))))
         L2 = 177.8514*d*fase.cp/R*Tr/fase.mu*1e-6*Z
@@ -332,7 +332,7 @@ def _Dielectric(rho, T):
     B = Na*alfa*rho/3/M/epsilon0
     e = (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
     return e
-    
+
 
 def _Refractive(rho, T, l=0.5893):
     """Equation for the refractive index
@@ -358,13 +358,13 @@ class _fase(object):
     """Class to implement a null phase"""
     v = None
     rho = None
-    
+
     h = None
     s = None
     u = None
     a = None
     g = None
-    
+
     cp = None
     cv = None
     cp_cv = None
@@ -372,7 +372,7 @@ class _fase(object):
     Z = None
     fi = None
     f = None
-    
+
     mu = None
     k = None
     nu = None
@@ -403,7 +403,7 @@ class _fase(object):
     dhdrho_P = None
     dhdP_T = None
     dhdP_rho = None
-    
+
     Z_rho = None
     IntP = None
     hInput = None

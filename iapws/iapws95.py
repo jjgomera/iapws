@@ -7,7 +7,6 @@
 #   o   Heavy water formulation 2005
 ###############################################################################
 
-import os
 
 from scipy import exp, log, __version__
 if int(__version__.split(".")[1]) < 10:
@@ -388,7 +387,6 @@ class MEoS(_fase):
         self.cv0 = cp0.cv
         self.cp0_cv = self.cp0/self.cv0
         self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
-        
 
     def fill(self, fase, estado):
         """Fill phase properties"""
@@ -492,7 +490,7 @@ class MEoS(_fase):
                 rhoG = rhoG+g/Delta*((Kv-Kl)*Jdl-(Jv-Jl)*Kdl)
         if error > 1e-7:
             print("Iteration don´t converge")
-            
+
         Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
@@ -525,8 +523,7 @@ class MEoS(_fase):
         propiedades["C"] = C
         propiedades["dpdrho"] = self.R*T*(1+2*delta*fird+delta**2*firdd)
         propiedades["drhodt"] = -rho*(1+delta*fird-delta*tau*firdt)/(T*(1+2*delta*fird+delta**2*firdd))
-        propiedades["dhdrho"] =  self.R*T/rho*(tau*delta*(fiodt+firdt)+delta*fird+delta**2*firdd)
-        
+        propiedades["dhdrho"] = self.R*T/rho*(tau*delta*(fiodt+firdt)+delta*fird+delta**2*firdd)
 #        dbt=-phi11/rho/t
 #        propiedades["cps"] = propiedades["cv"] Add cps from Argon pag.27
 
@@ -566,11 +563,11 @@ class MEoS(_fase):
             cI = -(1+co)/tau0
             cII = co*(1-log(tau0))-log(delta0)
             for c, t in zip(ci, ti):
-                cI-=c*t*tau0**(t-1)
-                cII+=c*(t-1)*tau0**t
+                cI -= c*t*tau0**(t-1)
+                cII += c*(t-1)*tau0**t
             for ao, tita in zip(cp["ao_exp"], titao):
-                cI-=ao*tita*(1/(1-exp(-tita*tau0))-1)
-                cII+=ao*tita*(tau0*(1/(1-exp(-tita*tau0))-1)-log(1-exp(-tita*tau0)))
+                cI -= ao*tita*(1/(1-exp(-tita*tau0))-1)
+                cII += ao*tita*(tau0*(1/(1-exp(-tita*tau0))-1)-log(1-exp(-tita*tau0)))
 
             Fi0 = {"ao_log": [1,  co],
                    "pow": [0, 1] + ti,
@@ -763,7 +760,6 @@ class MEoS(_fase):
             C += nr4[i]*(Delta_Virial**b[i]*(2*Fd_virial+delta_0*Fdd_virial) +
                 2*DeltaBd_Virial*(F_virial+delta_0*Fd_virial) +
                 DeltaBdd_Virial*delta_0*F_virial)
-                
 
         return fir, firt, firtt, fird, firdd, firdt, firdtt, B, C
 
@@ -995,6 +991,7 @@ class IAPWS95_Tx(IAPWS95):
     def __init__(self, T, x):
         IAPWS95.__init__(self, T=T, x=x)
 
+
 class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
@@ -1100,7 +1097,7 @@ class D2O(MEoS):
 
         no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
         Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
-        
+
         nr = [483.656, -191.039, 73.0358, -7.57467]
         Lr = -167.31*(1-exp(-2.506*rhor))+sum([Li*rhor**(i+1) for i, Li in enumerate(nr)])
 
@@ -1109,7 +1106,7 @@ class D2O(MEoS):
         f3 = 1+exp(60*(tau-1)+20)
         f4 = 1+exp(100*(tau-1)+15)
         Lc = 35429.6*f1*f2*(1+f2**2*(5e9*f1**4/f3+3.5*f2/f4))
-        
+
         Ll = -741.112*f1**1.2*(1-exp(-(rhor/2.5)**10))
 
         return 0.742128e-3*(Lo+Lr+Lc+Ll)
@@ -1119,12 +1116,6 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-#    water=IAPWS95(T=300., x=0.5)
-#    print water.P
-#    print water.cp0
-#    print water.virialB, water.virialC
-#    print water.cp0, water.rho0, water.h, water.s, water.g, water.a
-
 #    aire=D2O(T=300, rho=1100)
 #    print  aire.P, aire.rho, aire.mu, aire.k
 #    aire=D2O(T=500, P=0.1)
@@ -1132,10 +1123,3 @@ if __name__ == "__main__":
 
 #    water = IAPWS95(T=620, P=20)
 #    print(water.virialC)
-
-#    heavy = D2O()
-#    state = D2O(T=300, P=0.1)
-#    print state.k
-#    water=D2O(T=321.9235, rho=0.0716)
-#    print water.P, water.cv, water.w, water.s
-#    print water.a

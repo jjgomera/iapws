@@ -6,7 +6,7 @@
 ###############################################################################
 
 from __future__ import division
-from math import log, exp, tan, atan, acos, sin
+from math import log
 
 from iapws95 import IAPWS95
 
@@ -26,7 +26,8 @@ class IAPWS95_Revised(IAPWS95):
     """Revised IAPWS95 class with fi0 values upgrade to IAPWS08 standard"""
     Fi0 = IAPWS95.Fi0
     Fi0["ao_pow"] = [-8.320446483749693, 6.683210527593226]
-    
+
+
 class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
@@ -34,7 +35,7 @@ class SeaWater(object):
         T   -   Temperature, K
         P   -   Pressure, MPa
         S   -   Salinity, kg/kg
-        
+
     Calculated properties:
         T: Temperature, K
         P: Pressure, MPa
@@ -46,7 +47,7 @@ class SeaWater(object):
         g: Specific Gibbs free energy, kJ/kg
         a: Specific Helmholtz free energy, kJ/kg
         cp: Specific isobaric heat capacity, kJ/kg·K
-    
+
         gt: Derivative Gibbs energy with temperature, kJ/kg·K
         gp: Derivative Gibbs energy with pressure, m³/kg
         gtt: Derivative Gibbs energy with temperature square, kJ/kg·K²
@@ -54,13 +55,13 @@ class SeaWater(object):
         gpp: Derivative Gibbs energy with temperature square, m³/kg·MPa
         gs: Derivative Gibbs energy with salinity, kJ/kg
         gsp: Derivative Gibbs energy with salinity and pressure, m³/kg
-        
+
         alfa: Thermal expansion coefficient, 1/K
         betas: Isentropic temperature-pressure coefficient, K/MPa
         kt: Isothermal compressibility, 1/MPa
         ks: Isentropic compressibility, 1/MPa
         w: Sound Speed, m/s
-        
+
         mu: Relative chemical potential, kJ/kg
         muw: Chemical potential of H2O, kJ/kg
         mus: Chemical potential of sea salt, kJ/kg
@@ -93,16 +94,16 @@ class SeaWater(object):
         T = self.kwargs["T"]
         P = self.kwargs["P"]
         S = self.kwargs["S"]
-        
+
         m = S/(1-S)/Ms
         pw = self._water(T, P)
         ps = self._saline(T, P, S)
-        
+
         prop = {}
         for key in pw:
             prop[key] = pw[key]+ps[key]
             self.__setattr__(key, prop[key])
-            
+
         self.T = T
         self.P = P
         self.rho = 1./prop["gp"]
@@ -116,8 +117,9 @@ class SeaWater(object):
         self.betas = -prop["gtp"]/prop["gtt"]
         self.kt = -prop["gpp"]/prop["gp"]
         self.ks = (prop["gtp"]**2-prop["gt"]*prop["gpp"])/prop["gp"]/prop["gtt"]
-        self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2-prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
-        
+        self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
+                             prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
+
         self.mu = prop["gs"]
         self.muw = prop["g"]-S*prop["gs"]
         self.mus = prop["g"]+(1-S)*prop["gs"]
@@ -138,7 +140,7 @@ class SeaWater(object):
         prop["gs"] = 0
         prop["gsp"] = 0
         return prop
-    
+
     @classmethod
     def _saline(cls, T, P, S):
         """Eq 4"""
@@ -147,38 +149,38 @@ class SeaWater(object):
         tau = (T-273.15)/40
         pi = (P-0.101325)/100
 
-        I = [1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 2, 3, 4, 2, 3, 4, 2, 3, 4, 
-             2, 4, 2, 2, 3, 4, 5, 2, 3, 4, 2, 3, 2, 3, 2, 3, 2, 3, 4, 2, 3, 2, 
+        I = [1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 2, 3, 4, 2, 3, 4, 2, 3, 4,
+             2, 4, 2, 2, 3, 4, 5, 2, 3, 4, 2, 3, 2, 3, 2, 3, 2, 3, 4, 2, 3, 2,
              3, 2, 2, 2, 3, 4, 2, 3, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2]
-        J = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 
-             5, 5, 6, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 0, 1, 1, 2, 
+        J = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
+             5, 5, 6, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 0, 1, 1, 2,
              2, 3, 4, 0, 0, 0, 1, 1, 2, 2, 3, 4, 0, 0, 1, 2, 3, 0, 1, 2]
-        K = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-             0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 
+        K = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+             0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
              2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5]
-        G = [0.581281456626732e4, 0.141627648484197e4, -0.243214662381794e4, 
-             0.202580115603697e4, -0.109166841042967e4, 0.374601237877840e3, 
-             -0.485891069025409e2, 0.851226734946706e3, 0.168072408311545e3, 
-             -0.493407510141682e3, 0.543835333000098e3, -0.196028306689776e3, 
-             0.367571622995805e2, 0.880031352997204e3, -0.430664675978042e2, 
-             -0.685572509204491e2, -0.225267649263401e3, -0.100227370861875e2, 
-             0.493667694856254e2, 0.914260447751259e2, 0.875600661808945, 
-             -0.171397577419788e2, -0.216603240875311e2, 0.249697009569508e1, 
-             0.213016970847183e1, -0.331049154044839e4, 0.199459603073901e3, 
-             -0.547919133532887e2, 0.360284195611086e2, 0.729116529735046e3, 
-             -0.175292041186547e3, -0.226683558512829e2, -0.860764303783977e3, 
-             0.383058066002476e3, 0.694244814133268e3, -0.460319931801257e3, 
-             -0.297728741987187e3, 0.234565187611355e3, 0.384794152978599e3, 
-             -0.522940909281335e2, -0.408193978912261e1, -0.343956902961561e3, 
-             0.831923927801819e2, 0.337409530269367e3, -0.541917262517112e2, 
-             -0.204889641964903e3, 0.747261411387560e2, -0.965324320107458e2, 
-             0.680444942726459e2, -0.301755111971161e2, 0.124687671116248e3, 
-             -0.294830643494290e2, -0.178314556207638e3, 0.256398487389914e2, 
-             0.113561697840594e3, -0.364872919001588e2, 0.158408172766824e2, 
-             -0.341251932441282e1, -0.316569643860730e2, 0.442040358308000e2, 
-             -0.111282734326413e2, -0.262480156590992e1, 0.704658803315449e1, 
+        G = [0.581281456626732e4, 0.141627648484197e4, -0.243214662381794e4,
+             0.202580115603697e4, -0.109166841042967e4, 0.374601237877840e3,
+             -0.485891069025409e2, 0.851226734946706e3, 0.168072408311545e3,
+             -0.493407510141682e3, 0.543835333000098e3, -0.196028306689776e3,
+             0.367571622995805e2, 0.880031352997204e3, -0.430664675978042e2,
+             -0.685572509204491e2, -0.225267649263401e3, -0.100227370861875e2,
+             0.493667694856254e2, 0.914260447751259e2, 0.875600661808945,
+             -0.171397577419788e2, -0.216603240875311e2, 0.249697009569508e1,
+             0.213016970847183e1, -0.331049154044839e4, 0.199459603073901e3,
+             -0.547919133532887e2, 0.360284195611086e2, 0.729116529735046e3,
+             -0.175292041186547e3, -0.226683558512829e2, -0.860764303783977e3,
+             0.383058066002476e3, 0.694244814133268e3, -0.460319931801257e3,
+             -0.297728741987187e3, 0.234565187611355e3, 0.384794152978599e3,
+             -0.522940909281335e2, -0.408193978912261e1, -0.343956902961561e3,
+             0.831923927801819e2, 0.337409530269367e3, -0.541917262517112e2,
+             -0.204889641964903e3, 0.747261411387560e2, -0.965324320107458e2,
+             0.680444942726459e2, -0.301755111971161e2, 0.124687671116248e3,
+             -0.294830643494290e2, -0.178314556207638e3, 0.256398487389914e2,
+             0.113561697840594e3, -0.364872919001588e2, 0.158408172766824e2,
+             -0.341251932441282e1, -0.316569643860730e2, 0.442040358308000e2,
+             -0.111282734326413e2, -0.262480156590992e1, 0.704658803315449e1,
              -0.792001547211682e1]
-        
+
         g, gt, gp, gtt, gtp, gpp, gs, gsp = 0, 0, 0, 0, 0, 0, 0, 0
         for i, j, k, gi in zip(I, J, K, G):
             if i == 1:
@@ -201,7 +203,7 @@ class SeaWater(object):
                 gtp += j*k*gi*X**i*tau**(j-1)*pi**(k-1)
             if k >= 2:
                 gpp += k*(k-1)*gi*X**i*tau**j*pi**(k-2)
-                
+
         prop = {}
         prop["g"] = g*1e-3
         prop["gt"] = gt/40*1e-3
@@ -216,5 +218,3 @@ class SeaWater(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    
-    sea = IAPWS08(P=0.101325, T=353, S=0.1)

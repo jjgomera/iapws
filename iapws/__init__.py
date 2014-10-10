@@ -1,23 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__version__ = "1.0.5"
+__version__ = "1.1"
 
 import unittest
 
 from iapws97 import IAPWS97
-from iapws97 import (_Region1, _Region2, _Region3, _Region5, 
+from iapws97 import (_Region1, _Region2, _Region3, _Region5,
                      _Backward1_T_Ph, _Backward1_T_Ps, _Backward1_P_hs,
-                     _Backward2_T_Ph, _Backward2_T_Ps, _Backward2_P_hs, 
+                     _Backward2_T_Ph, _Backward2_T_Ps, _Backward2_P_hs,
                      _h_3ab, _Backward3_T_Ph, _Backward3_v_Ph, _Backward3_T_Ps,
-                     _Backward3_v_Ps, _PSat_h, _PSat_s, _Backward3_P_hs, _h1_s, 
+                     _Backward3_v_Ps, _PSat_h, _PSat_s, _Backward3_P_hs, _h1_s,
                      _h3a_s, _h2ab_s, _h2c3b_s, _PSat_T, _TSat_P, _h13_s,
-                     _t_hs, _Backward4_T_hs, _tab_P, _top_P, _twx_P, _tef_P, 
+                     _t_hs, _Backward4_T_hs, _tab_P, _top_P, _twx_P, _tef_P,
                      _txx_P, _Backward3_v_PT)
 from iapws95 import IAPWS95, D2O
 from iapws08 import SeaWater
-from _iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure, M, 
-                    _Viscosity, _ThCond, _Tension, _Dielectric)
+from _iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
+                    _Viscosity, _ThCond)
+
 
 # Test
 class Test(unittest.TestCase):
@@ -32,7 +33,7 @@ class Test(unittest.TestCase):
         fluid = IAPWS95()
         delta = rho/fluid.rhoc
         tau = fluid.Tc/T
-        
+
         fio, fiot, fiott, fiod, fiodd, fiodt = fluid._phi0(tau, delta)
         self.assertEqual(round(fio, 8), 2.04797733)
         self.assertEqual(round(fiod, 9), 0.384236747)
@@ -40,7 +41,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fiot, 8), 9.04611106)
         self.assertEqual(round(fiott, 8), -1.93249185)
         self.assertEqual(round(fiodt, 8), 0.0)
-        
+
         fir, firt, firtt, fird, firdd, firdt, firdtt, B, C = fluid._phir(tau, delta)
         self.assertEqual(round(fir, 8), -3.42693206)
         self.assertEqual(round(fird, 9), -0.364366650)
@@ -59,7 +60,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["cv"], 8), 4.13018112)
         self.assertEqual(round(state["w"], 5), 1501.51914)
         self.assertEqual(round(state["s"], 9), 0.393062643)
-        
+
         state = fluid._Helmholtz(1005.308, 300)
         self.assertEqual(round(state["P"], 4), 20002.2515)
         self.assertEqual(round(state["cv"], 8), 4.06798347)
@@ -123,7 +124,7 @@ class Test(unittest.TestCase):
     def test_saturation(self):
         """Table 8 from IAPWS95, pag 14"""
         fluid = IAPWS95()
-        
+
         rhol, rhov, Ps = fluid._saturation(275)
         liquid = fluid._Helmholtz(rhol, 275)
         vapor = fluid._Helmholtz(rhov, 275)
@@ -267,7 +268,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.epsilon, 5), 4.98281)
         fluid = IAPWS95(P=500, T=870)
         self.assertEqual(round(fluid.epsilon, 5), 15.09746)
-        
+
     def test_Refractive(self):
         """Selected values from table 3, pag 6"""
         fluid = IAPWS95(P=0.1, T=273.15, l=0.2265)
@@ -317,12 +318,12 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward1_T_Ph(3, 500), 6), 391.798509)
         self.assertEqual(round(_Backward1_T_Ph(80, 500), 6), 378.108626)
         self.assertEqual(round(_Backward1_T_Ph(80, 1500), 6), 611.041229)
-        
+
         # _Backward1_T_Ps Table 9 pag 12
         self.assertEqual(round(_Backward1_T_Ps(3, 0.5), 6), 307.842258)
         self.assertEqual(round(_Backward1_T_Ps(80, 0.5), 6), 309.979785)
         self.assertEqual(round(_Backward1_T_Ps(80, 3), 6), 565.899909)
-        
+
         # _Backward1_P_hs Table 3 pag 6 for supplementary p(h,s)
         self.assertEqual(round(_Backward1_P_hs(0.001, 0), 13), 0.0009800980612)
         self.assertEqual(round(_Backward1_P_hs(90, 0), 8), 91.92954727)
@@ -364,7 +365,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward2_T_Ph(40, 2700), 6), 743.056411)
         self.assertEqual(round(_Backward2_T_Ph(60, 2700), 6), 791.137067)
         self.assertEqual(round(_Backward2_T_Ph(60, 3200), 6), 882.756860)
-        
+
         # _Backward2_T_Ps Table 9 pag 12
         self.assertEqual(round(_Backward2_T_Ps(0.1, 7.5), 6), 399.517097)
         self.assertEqual(round(_Backward2_T_Ps(0.1, 8), 6), 514.127081)
@@ -415,7 +416,7 @@ class Test(unittest.TestCase):
 
         # _h_3ab   pag 7
         self.assertEqual(round(_h_3ab(25), 6), 2095.936454)
-        
+
     def test_IAPWS97_3_Sup03(self):
         """Test for supplementary 03 for region 3"""
         # _Backward3_T_Ph Table 5 pag 8
@@ -450,12 +451,12 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward3_v_Ps(50, 4.5), 12), 2.332634294e-3)
         self.assertEqual(round(_Backward3_v_Ps(100, 5.0), 12), 2.449610757e-3)
 
-        #_PSat_h Table 18 pag 18
+        # _PSat_h Table 18 pag 18
         self.assertEqual(round(_PSat_h(1700), 8), 17.24175718)
         self.assertEqual(round(_PSat_h(2000), 8), 21.93442957)
         self.assertEqual(round(_PSat_h(2400), 8), 20.18090839)
 
-        #_PSat_s Table 20 pag 19
+        # _PSat_s Table 20 pag 19
         self.assertEqual(round(_PSat_s(3.8), 8), 16.87755057)
         self.assertEqual(round(_PSat_s(4.2), 8), 21.64451789)
         self.assertEqual(round(_PSat_s(5.2), 8), 16.68968482)
@@ -477,7 +478,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_h3a_s(3.8), 6), 1685.025565)
         self.assertEqual(round(_h3a_s(4), 6), 1816.891476)
         self.assertEqual(round(_h3a_s(4.2), 6), 1949.352563)
-        
+
         # _h2ab_s _h2c3b_s Table 18 pag 21
         self.assertEqual(round(_h2ab_s(7), 6), 2723.729985)
         self.assertEqual(round(_h2ab_s(8), 6), 2599.047210)
@@ -485,7 +486,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_h2c3b_s(5.5), 6), 2687.693850)
         self.assertEqual(round(_h2c3b_s(5.0), 6), 2451.623609)
         self.assertEqual(round(_h2c3b_s(4.5), 6), 2144.360448)
-        
+
         # _h13_s Table 18 pag 21
         self.assertEqual(round(_h13_s(3.7), 6), 1632.525047)
         self.assertEqual(round(_h13_s(3.6), 6), 1593.027214)
@@ -500,7 +501,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward4_T_hs(1800, 5.3), 7), 346.8475498)
         self.assertEqual(round(_Backward4_T_hs(2400, 6.0), 7), 425.1373305)
         self.assertEqual(round(_Backward4_T_hs(2500, 5.5), 7), 522.5579013)
-        
+
     def test_IAPWS97_3_Sup05(self):
         """Test for supplementary 05 for region 3 v=f(T,P)"""
         # T=f(P) limit Table 3 pag 11
@@ -556,7 +557,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward3_v_PT(20, 638), 12), 1.985387227e-3)
         self.assertEqual(round(_Backward3_v_PT(17, 626), 12), 8.483262001e-3)
         self.assertEqual(round(_Backward3_v_PT(20, 640), 12), 6.227528101e-3)
-        
+
         # T=f(P) limit Table 11 pag 19
         self.assertEqual(round(_txx_P(22.3, "uv"), 7), 647.7996121)
         self.assertEqual(round(_twx_P(22.3), 7), 648.2049480)
@@ -574,7 +575,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward3_v_PT(22.064, 647.05), 12), 2.717655648e-3)
         self.assertEqual(round(_Backward3_v_PT(22, 646.89), 12), 3.798732962e-3)
         self.assertEqual(round(_Backward3_v_PT(22.064, 647.15), 11), 3.701940010e-3)
-        
+
     def test_IAPWS97_4(self):
         """Saturation line"""
         # _PSat_T Table 35 pag 34
@@ -814,7 +815,7 @@ class Test(unittest.TestCase):
 
     def test_SeaWater(self):
         """Table 8, pag 17-19"""
-        
+
         # Part a, pag 17
         fluid = SeaWater(T=273.15, P=0.101325, S=0.03516504)
         state = fluid._water(273.15, 0.101325)
@@ -836,7 +837,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtt"], 12), 0.000852861151)
         self.assertEqual(round(state["gtp"], 15), 0.119286787e-6)
         self.assertEqual(round(state["gpp"], 16), 0.581535172e-7)
-        
+
         self.assertEqual(round(fluid.g, 5), 0.0)
         self.assertEqual(round(fluid.gs, 7), 63.9974067)
         self.assertEqual(round(fluid.gt, 5), 0.0)
@@ -875,7 +876,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtt"], 11), 0.00127922649)
         self.assertEqual(round(state["gtp"], 15), 0.803061596e-6)
         self.assertEqual(round(state["gpp"], 15), 0.213086154e-6)
-        
+
         self.assertEqual(round(fluid.g, 7), -29.5243229)
         self.assertEqual(round(fluid.gs, 6), 251.957276)
         self.assertEqual(round(fluid.gt, 9), -0.917529024)
@@ -914,7 +915,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtt"], 12), 0.000488076974)
         self.assertEqual(round(state["gtp"], 16), 0.466284412e-7)
         self.assertEqual(round(state["gpp"], 16), 0.357345736e-7)
-        
+
         self.assertEqual(round(fluid.g, 7), 95.1294557)
         self.assertEqual(round(fluid.gs, 8), -5.45861581)
         self.assertEqual(round(fluid.gt, 10), 0.0160551219)
@@ -934,4 +935,4 @@ class Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=1)
+    unittest.main(verbosity=2)
