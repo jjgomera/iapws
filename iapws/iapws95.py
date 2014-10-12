@@ -276,35 +276,40 @@ class MEoS(_fase):
             rho = float(rho)
             T = float(T)
             propiedades = self._Helmholtz(rho, T)
-
             if T <= self.Tc:
                 rhol, rhov, Ps = self._saturation(T)
                 vapor = self._Helmholtz(rhov, T)
                 liquido = self._Helmholtz(rhol, T)
-                if rho > rhol:
-                    x = 0
-                elif rho < rhov:
+                if rho <= rhov:
                     x = 1
+                elif rho >= rhol:
+                    x = 0
                 else:
-                    x = (propiedades["s"]-liquido["s"])/(vapor["s"]-liquido["s"])
+                    x = (1/rho-1/rhol)/(1/rhov-1/rhol)
                     if x < 0:
                         x = 0
-                    elif x > 0:
+                    elif x > 1:
                         x = 1
+                P = Ps/1000
             elif T > self.Tc:
                 vapor = propiedades
                 x = 1
+                P = vapor["P"]
             else:
                 raise NotImplementedError("Incoming out of bound")
 
             if not P:
-                P = propiedades["P"]/1000.
+                if x == 0:
+                    P = liquido["P"]/1000.
+                elif x == 1:
+                    P = vapor["P"]/1000.
+                else:
+                    P = propiedades["P"]/1000.
 
         elif self._mode == "Tx":
             # Check input T in saturation range
-            if T and x is not None:
-                if self.Tt > T or self.Tc < T:
-                    raise ValueError("Wrong input values")
+            if self.Tt > T or self.Tc < T:
+                raise ValueError("Wrong input values")
 
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
@@ -601,7 +606,7 @@ class MEoS(_fase):
         return fio, fiot, fiott, fiod, fiodd, fiodt
 
     def _phir(self, tau, delta):
-        delta_0 = 1e-50
+        delta_0 = 1e-200
 
         fir = fird = firdd = firt = firtt = firdt = firdtt = B = C = 0
 
@@ -609,42 +614,36 @@ class MEoS(_fase):
         nr1 = self._constants.get("nr1", [])
         d1 = self._constants.get("d1", [])
         t1 = self._constants.get("t1", [])
-        for i in range(len(nr1)):
-            fir += nr1[i]*delta**d1[i]*tau**t1[i]
-            fird += nr1[i]*d1[i]*delta**(d1[i]-1)*tau**t1[i]
-            firdd += nr1[i]*d1[i]*(d1[i]-1)*delta**(d1[i]-2)*tau**t1[i]
-            firt += nr1[i]*t1[i]*delta**d1[i]*tau**(t1[i]-1)
-            firtt += nr1[i]*t1[i]*(t1[i]-1)*delta**d1[i]*tau**(t1[i]-2)
-            firdt += nr1[i]*t1[i]*d1[i]*delta**(d1[i]-1)*tau**(t1[i]-1)
-            firdtt += nr1[i]*t1[i]*d1[i]*(t1[i]-1)*delta**(d1[i]-1)*tau**(t1[i]-2)
-            B += nr1[i]*d1[i]*delta_0**(d1[i]-1)*tau**t1[i]
-            C += nr1[i]*d1[i]*(d1[i]-1)*delta_0**(d1[i]-2)*tau**t1[i]
-
+        for n, d, t in zip(nr1, d1, t1):
+            fir += n*delta**d*tau**t
+            fird += n*d*delta**(d-1)*tau**t
+            firdd += n*d*(d-1)*delta**(d-2)*tau**t
+            firt += n*t*delta**d*tau**(t-1)
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)
+            firdt += n*t*d*delta**(d-1)*tau**(t-1)
+            firdtt += n*t*d*(t-1)*delta**(d-1)*tau**(t-2)
+            B += n*d*delta_0**(d-1)*tau**t
+            C += n*d*(d-1)*delta_0**(d-2)*tau**t
+            
         # Exponential terms
         nr2 = self._constants.get("nr2", [])
         d2 = self._constants.get("d2", [])
         g2 = self._constants.get("gamma2", [])
         t2 = self._constants.get("t2", [])
         c2 = self._constants.get("c2", [])
-        for i in range(len(nr2)):
-            fir += nr2[i]*delta**d2[i]*tau**t2[i]*exp(-g2[i]*delta**c2[i])
-            fird += nr2[i]*exp(-g2[i]*delta**c2[i])*delta**(d2[i]-1) * \
-                tau**t2[i]*(d2[i]-g2[i]*c2[i]*delta**c2[i])
-            firdd += nr2[i]*exp(-g2[i]*delta**c2[i])*delta**(d2[i]-2) * \
-                tau**t2[i]*((d2[i]-g2[i]*c2[i]*delta**c2[i])*(d2[i]-1-g2[i] *
-                c2[i]*delta**c2[i])-g2[i]**2*c2[i]**2*delta**c2[i])
-            firt += nr2[i]*t2[i]*delta**d2[i]*tau**(t2[i]-1)*exp(-g2[i]*delta**c2[i])
-            firtt += nr2[i]*t2[i]*(t2[i]-1)*delta**d2[i]*tau**(t2[i]-2) * \
-                exp(-g2[i]*delta**c2[i])
-            firdt += nr2[i]*t2[i]*delta**(d2[i]-1)*tau**(t2[i]-1) * \
-                (d2[i]-g2[i]*c2[i]*delta**c2[i])*exp(-g2[i]*delta**c2[i])
-            firdtt += nr2[i]*t2[i]*(t2[i]-1)*delta**(d2[i]-1)*tau**(t2[i]-2) * \
-                (d2[i]-g2[i]*c2[i]*delta**c2[i])*exp(-g2[i]*delta**c2[i])
-            B += nr2[i]*exp(-g2[i]*delta_0**c2[i])*delta_0**(d2[i]-1) * \
-                tau**t2[i]*(d2[i]-g2[i]*c2[i]*delta_0**c2[i])
-            C += nr2[i]*exp(-g2[i]*delta_0**c2[i])*(delta_0**(d2[i]-2) *
-                tau**t2[i]*((d2[i]-g2[i]*c2[i]*delta_0**c2[i])*(d2[i]-1-g2[i] * \
-                c2[i]*delta_0**c2[i])-g2[i]**2*c2[i]**2*delta_0**c2[i]))
+        for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
+            fir += n*delta**d*tau**t*exp(-g*delta**c)
+            fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+            firdd += n*exp(-g*delta**c)*delta**(d-2)*tau**t * \
+                ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
+            firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-g*delta**c)
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(-g*delta**c)
+            firdtt += n*t*(t-1)*delta**(d-1)*tau**(t-2)*(d-g*c*delta**c) * \
+                exp(-g*delta**c)
+            B += n*exp(-g*delta_0**c)*delta_0**(d-1)*tau**t*(d-g*c*delta_0**c)
+            C += n*exp(-g*delta_0**c)*(delta_0**(d-2)*tau**t *
+                ((d-g*c*delta_0**c)*(d-1-g*c*delta_0**c)-g**2*c**2*delta_0**c))
 
         # Gaussian terms
         nr3 = self._constants.get("nr3", [])
@@ -739,27 +738,27 @@ class MEoS(_fase):
             firdtt += nr4[i]*((DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt) +
                 delta*(DeltaBdtt*F+DeltaBtt*Fd+2*DeltaBdt*Ft+2*DeltaBt*Fdt +
                 DeltaBt*Ftt+Delta**b[i]*Fdtt))
-
-            Tita_virial = (1-tau)+A[i]*((delta_0-1)**2)**(0.5/bt[i])
-            Delta_Virial = Tita_virial**2+Bi[i]*((delta_0-1)**2)**a4[i]
-            Deltad_Virial = (delta_0-1)*(A[i]*Tita_virial*2/bt[i]*((delta_0-1)**2) **
+                
+            Tita_ = (1-tau)+A[i]*((delta_0-1)**2)**(0.5/bt[i])
+            Delta_ = Tita_**2+Bi[i]*((delta_0-1)**2)**a4[i]
+            Deltad_ = (delta_0-1)*(A[i]*Tita_*2/bt[i]*((delta_0-1)**2) **
                 (0.5/bt[i]-1)+2*Bi[i]*a4[i]*((delta_0-1)**2)**(a4[i]-1))
-            Deltadd_Virial = Deltad_Virial/(delta_0-1)+(delta_0-1)**2 * \
+            Deltadd_ = Deltad_/(delta_0-1)+(delta_0-1)**2 * \
                 (4*Bi[i]*a4[i]*(a4[i]-1)*((delta_0-1)**2)**(a4[i]-2)+2*A[i]**2 /
-                bt[i]**2*(((delta_0-1)**2)**(0.5/bt[i]-1))**2+A[i]*Tita_virial *
+                bt[i]**2*(((delta_0-1)**2)**(0.5/bt[i]-1))**2+A[i]*Tita_ *
                 4/bt[i]*(0.5/bt[i]-1)*((delta_0-1)**2)**(0.5/bt[i]-2))
-            DeltaBd_Virial = b[i]*Delta_Virial**(b[i]-1)*Deltad_Virial
-            DeltaBdd_Virial = b[i]*(Delta_Virial**(b[i]-1)*Deltadd_Virial +
-                (b[i]-1)*Delta_Virial**(b[i]-2)*Deltad_Virial**2)
-            F_virial = exp(-Ci[i]*(delta_0-1)**2-D[i]*(tau-1)**2)
-            Fd_virial = -2*Ci[i]*F_virial*(delta_0-1)
-            Fdd_virial = 2*Ci[i]*F_virial*(2*Ci[i]*(delta_0-1)**2-1)
+            DeltaBd_ = b[i]*Delta_**(b[i]-1)*Deltad_
+            DeltaBdd_ = b[i]*(Delta_**(b[i]-1)*Deltadd_ +
+                (b[i]-1)*Delta_**(b[i]-2)*Deltad_**2)
+            F_ = exp(-Ci[i]*(delta_0-1)**2-D[i]*(tau-1)**2)
+            Fd_ = -2*Ci[i]*F_*(delta_0-1)
+            Fdd_ = 2*Ci[i]*F_*(2*Ci[i]*(delta_0-1)**2-1)
 
-            B += nr4[i]*(Delta_Virial**b[i]*(F_virial+delta_0*Fd_virial) +
-                DeltaBd_Virial*delta_0*F_virial)
-            C += nr4[i]*(Delta_Virial**b[i]*(2*Fd_virial+delta_0*Fdd_virial) +
-                2*DeltaBd_Virial*(F_virial+delta_0*Fd_virial) +
-                DeltaBdd_Virial*delta_0*F_virial)
+            B += nr4[i]*(Delta_**b[i]*(F_+delta_0*Fd_) +
+                DeltaBd_*delta_0*F_)
+            C += nr4[i]*(Delta_**b[i]*(2*Fd_+delta_0*Fdd_) +
+                2*DeltaBd_*(F_+delta_0*Fd_) +
+                DeltaBdd_*delta_0*F_)
 
         return fir, firt, firtt, fird, firdd, firdt, firdtt, B, C
 
@@ -1016,34 +1015,33 @@ class D2O(MEoS):
           "an": [-0.31123915e-3, 0.41173363e-5, -0.28943955e-8,
                  0.63278791e-12, 0.78728740],
           "pow": [1.00, 2.00, 3.00, 4.00, -0.99999999],
-          "ao_exp": [], "exp": [],
-          "ao_hyp": [], "hyp": []}
+          "ao_exp": [], "exp": []}
 
     _constants = {
         "R": 8.3143565,
-        "rhoref": 17.875414*M,
+        "rhoref": 358.,
 
-        "nr1": [-0.384820628204e3, 0.108213047259e4, -0.110768260635e4,
-                0.164668954246e4, -0.137959852228e4, 0.598964185629e3,
-                -0.100451752702e3, 0.419192736351e3, -0.107279987867e4,
-                0.653852283544e3, -0.984305985655e3, 0.845444459339e3,
-                -0.376799930490e3, 0.644512590492e2, -0.214911115714e3,
-                0.531113962967e3, -0.135454224420e3, 0.202814416558e3,
-                -0.178293865031e3, 0.818739394970e2, -0.143312594493e2,
-                0.651202383207e2, -0.171227351208e3, 0.100859921516e2,
-                -0.144684680657e2, 0.128871134847e2, -0.610605957134e1,
+        "nr1": [-0.384820628204e3, 0.108213047259e4, -0.110768260635e4, 
+                0.164668954246e4, -0.137959852228e4, 0.598964185629e3, 
+                -0.100451752702e3, 0.419192736351e3, -0.107279987867e4, 
+                0.653852283544e3, -0.984305985655e3, 0.845444459339e3, 
+                -0.376799930490e3, 0.644512590492e2, -0.214911115714e3, 
+                0.531113962967e3, -0.135454224420e3, 0.202814416558e3, 
+                -0.178293865031e3, 0.818739394970e2, -0.143312594493e2, 
+                0.651202383207e2, -0.171227351208e3, 0.100859921516e2, 
+                -0.144684680657e2, 0.128871134847e2, -0.610605957134e1, 
                 0.109663804408e1, -0.115734899702e2, 0.374970075409e2,
-                0.897967147669, -0.527005883203e1, 0.438084681795e-1,
+                0.897967147669, -0.527005883203e1, 0.438084681795e-1, 
                 0.406772082680, -0.965258571044e-2, -0.119044600379e-1],
         "d1": [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                4, 4, 4, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
         "t1": [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
                0, 1, 2, 3, 4, 5, 6, 0, 1, 0, 1, 0, 1, 0, 1],
 
-        "nr2": [0.382589102341e3, -0.106406466204e4, 0.105544952919e4,
-                -0.157579942855e4, 0.132703387531e4, -0.579348879870e3,
-                0.974163902526e2, 0.286799294226e3, -0.127543020847e4,
-                0.275802674911e4, -0.381284331492e4, 0.293755152012e4,
+        "nr2": [0.382589102341e3, -0.106406466204e4, 0.105544952919e4, 
+                -0.157579942855e4, 0.132703387531e4, -0.579348879870e3, 
+                0.974163902526e2, 0.286799294226e3, -0.127543020847e4, 
+                0.275802674911e4, -0.381284331492e4, 0.293755152012e4, 
                 -0.117858249946e4, 0.186261198012e3],
         "c2": [1]*14,
         "d2": [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
@@ -1116,10 +1114,18 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-#    aire=D2O(T=300, rho=1100)
-#    print  aire.P, aire.rho, aire.mu, aire.k
-#    aire=D2O(T=500, P=0.1)
+#    aire=D2O(T=300, rho=996)
+#    print aire.T, aire.P, aire.x
+#    print aire.rho, aire.Liquid.rho, aire.Gas.rho
+#    print aire.h, aire.Liquid.h, aire.Gas.h
+#    print aire.s, aire.Liquid.s, aire.Gas.s
+
+#    aire=D2O(T=500, P=10.)
 #    print  aire.T, aire.P, aire.rho, aire.x, aire.Liquid.cp, aire.Gas.cp
 
 #    water = IAPWS95(T=620, P=20)
 #    print(water.virialC)
+
+#    water=D2O()
+#    print water._Helmholtz(996.5560, 300)
+        
