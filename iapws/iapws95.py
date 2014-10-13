@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 ###############################################################################
 # Implemented multiparameter equation of state
 #   o   IAPWS-95  implementation
@@ -8,19 +9,12 @@
 ###############################################################################
 
 
-from scipy import exp, log, __version__
-if int(__version__.split(".")[1]) < 10:
-    from scipy.constants import Bolzmann as Boltzmann
-else:
-    from scipy.constants import Boltzmann
+from scipy import exp, log
 from scipy.optimize import fsolve
 
 from _iapws import _fase
 from _iapws import _Viscosity, _ThCond, _Dielectric, _Refractive
 from iapws97 import _TSat_P
-
-Tref = 298.15
-Pref = 101325.
 
 
 class MEoS(_fase):
@@ -222,31 +216,59 @@ class MEoS(_fase):
                 rho = fsolve(lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)
 
             elif self._mode == "Th":
-                rho = fsolve(lambda rho: self._Helmholtz(rho, T)["h"]-h, 200)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                hv = self._Helmholtz(rhov, T)["h"]
+                if h > hv:
+                    rhoo = rhov
+                else:
+                    rhoo = 1000
+                rho = fsolve(lambda rho: self._Helmholtz(rho, T)["h"]-h, rhoo)
 
             elif self._mode == "Ts":
-                rho = fsolve(lambda rho: self._Helmholtz(rho, T)["s"]-s, 200)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                sv = self._Helmholtz(rhov, T)["s"]
+                if s > sv:
+                    rhoo = rhov
+                else:
+                    rhoo = 1000
+                rho = fsolve(lambda rho: self._Helmholtz(rho, T)["s"]-s, rhoo)
 
             elif self._mode == "Tu":
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                uv = self._Helmholtz(rhov, T)["u"]
+                if u > uv:
+                    rhoo = rhov
+                else:
+                    rhoo = 1000
+
                 def funcion(rho):
                     par = self._Helmholtz(rho, T)
                     return par["h"]-par["P"]/1000*par["v"]-u
-                rho = fsolve(funcion, 200)[0]
+                rho = fsolve(funcion, rhoo)
 
             elif self._mode == "Prho":
                 T = fsolve(lambda T: self._Helmholtz(rho, T)["P"]-P*1000, 600)
 
             elif self._mode == "Ph":
-                rho, T = fsolve(lambda par: (self._Helmholtz(par[0], par[1])["P"]-P*1000, self._Helmholtz(par[0], par[1])["h"]-h), [200, 600])
+                def funcion(parr):
+                    par = self._Helmholtz(parr[0], parr[1])
+                    return par["P"]-P*1000, par["h"]-h
+                rho, T = fsolve(funcion, [1000, 300])
 
             elif self._mode == "Ps":
-                rho, T = fsolve(lambda par: (self._Helmholtz(par[0], par[1])["P"]-P*1000, self._Helmholtz(par[0], par[1])["s"]-s), [200, 600])
+                def funcion(parr):
+                    par = self._Helmholtz(parr[0], parr[1])
+                    return par["P"]-P*1000, par["s"]-s
+                rho, T = fsolve(funcion, [1000, 300])
 
             elif self._mode == "Pu":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["h"]-par["P"]/1000*par["v"]-u, par["P"]-P*1000
-                rho, T = fsolve(funcion, [200, 600])
+                rho, T = fsolve(funcion, [1000, 600])
 
             elif self._mode == "rhoh":
                 T = fsolve(lambda T: self._Helmholtz(rho, T)["h"]-h, 600)
@@ -261,13 +283,16 @@ class MEoS(_fase):
                 T = fsolve(funcion, 600)
 
             elif self._mode == "hs":
-                rho, T = fsolve(lambda par: (self._Helmholtz(par[0], par[1])["h"]-h, self._Helmholtz(par[0], par[1])["s"]-s), [200, 600])
+                def funcion(parr):
+                    par = self._Helmholtz(parr[0], parr[1])
+                    return par["h"]-h, par["s"]-s
+                rho, T = fsolve(funcion, [1000, 300])
 
             elif self._mode == "hu":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["h"]-par["P"]/1000*par["v"]-u, par["h"]-h
-                rho, T = fsolve(funcion, [200, 600])
+                rho, T = fsolve(funcion, [1000, 600])
 
             elif self._mode == "su":
                 def funcion(parr):
@@ -277,34 +302,31 @@ class MEoS(_fase):
             T = float(T)
             propiedades = self._Helmholtz(rho, T)
             if T <= self.Tc:
-                rhol, rhov, Ps = self._saturation(T)
-                vapor = self._Helmholtz(rhov, T)
-                liquido = self._Helmholtz(rhol, T)
-                if rho <= rhov:
-                    x = 1
-                elif rho >= rhol:
-                    x = 0
-                else:
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if rhol > rho > rhov:
+                    rhol, rhov, Ps = self._saturation(T)
                     x = (1/rho-1/rhol)/(1/rhov-1/rhol)
                     if x < 0:
                         x = 0
                     elif x > 1:
                         x = 1
-                P = Ps/1000
+                    P = Ps/1000
+                elif rho <= rhov:
+                    x = 1
+                elif rho >= rhol:
+                    x = 0
+
+                vapor = self._Helmholtz(rhov, T)
+                liquido = self._Helmholtz(rhol, T)
+
             elif T > self.Tc:
-                vapor = propiedades
                 x = 1
-                P = vapor["P"]
             else:
                 raise NotImplementedError("Incoming out of bound")
 
             if not P:
-                if x == 0:
-                    P = liquido["P"]/1000.
-                elif x == 1:
-                    P = vapor["P"]/1000.
-                else:
-                    P = propiedades["P"]/1000.
+                P = propiedades["P"]/1000.
 
         elif self._mode == "Tx":
             # Check input T in saturation range
@@ -314,6 +336,10 @@ class MEoS(_fase):
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
             liquido = self._Helmholtz(rhol, T)
+            if x == 0:
+                propiedades = liquido
+            elif x == 1:
+                propiedades = vapor
             P = Ps/1000.
 
         elif self._mode == "Px":
@@ -327,6 +353,10 @@ class MEoS(_fase):
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
             liquido = self._Helmholtz(rhol, T)
+            if x == 0:
+                propiedades = liquido
+            elif x == 1:
+                propiedades = vapor
 
         self.T = T
         self.Tr = T/self.Tc
@@ -369,9 +399,12 @@ class MEoS(_fase):
         else:
             self.sigma = None
 
-        self.virialB = vapor["B"]/self.rhoc
-        # FIXME: virial C dont work exactly
-        self.virialC = vapor["C"]/self.rhoc**2
+        if 0 < x < 1:
+            self.virialB = vapor["B"]/self.rhoc
+            self.virialC = vapor["C"]/self.rhoc**2
+        else:
+            self.virialB = propiedades["B"]/self.rhoc
+            self.virialC = propiedades["C"]/self.rhoc**2
 
         if self.Tt <= T <= self.Tc:
             self.Hvap = vapor["h"]-liquido["h"]
@@ -419,7 +452,6 @@ class MEoS(_fase):
         fase.Gruneisen = fase.v/fase.cv*self.derivative("P", "T", "v", fase)
         fase.alfav = self.derivative("v", "T", "P", fase)/fase.v
         fase.kappa = -self.derivative("v", "P", "T", fase)/fase.v*1e3
-        # TODO: Locate in refprop
         fase.betas = self.derivative("T", "P", "s", fase)
 
         fase.gamma = -fase.v/self.P*self.derivative("P", "v", "s", fase)*1e-3
@@ -455,7 +487,9 @@ class MEoS(_fase):
             fase.n = None
 
     def _saturation(self, T):
-        """Akasaka (2008) "A Reliable and Useful Method to Determine the Saturation State from Helmholtz Energy Equations of State", Journal of Thermal Science and Technology, 3, 442-451
+        """Akasaka (2008) "A Reliable and Useful Method to Determine the
+        Saturation State from Helmholtz Energy Equations of State", Journal of
+        Thermal Science and Technology, 3, 442-451
         http://dx.doi.org/10.1299/jtst.3.442"""
 
         rhoL = self._Liquid_Density(T)
@@ -481,7 +515,7 @@ class MEoS(_fase):
             Kdv = 2*vapor["fird"]+deltaG*vapor["firdd"]+1/deltaG
             Delta = Jdv*Kdl-Jdl*Kdv
             error = abs(Kv-Kl)+abs(Jv-Jl)
-            if error < 1e-12 or contador > 150:
+            if error < 1e-12 or contador > 100:
                 break
             elif error > erroro:
                 rhoL = rholo
@@ -493,14 +527,14 @@ class MEoS(_fase):
                 rhogo = rhoG
                 rhoL = rhoL+g/Delta*((Kv-Kl)*Jdv-(Jv-Jl)*Kdv)
                 rhoG = rhoG+g/Delta*((Kv-Kl)*Jdl-(Jv-Jl)*Kdl)
-        if error > 1e-7:
-            print("Iteration don´t converge")
+        if error > 1e-3:
+            print("Iteration don´t converge, residual error %g" % error)
 
         Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
     def _Helmholtz(self, rho, T):
-        """Implementación general de la ecuación de estado Setzmann-Wagner, ecuación de estado de multiparámetros basada en la energía libre de Helmholtz"""
+        """Calculated properties, table 3 pag 10"""
         rhoc = self._constants.get("rhoref", self.rhoc)
         Tc = self._constants.get("Tref", self.Tc)
         delta = rho/rhoc
@@ -519,16 +553,20 @@ class MEoS(_fase):
         propiedades["h"] = self.R*T*(1+tau*(fiot+firt)+delta*fird)
         propiedades["s"] = self.R*(tau*(fiot+firt)-fio-fir)
         propiedades["cv"] = -self.R*tau**2*(fiott+firtt)
-        propiedades["cp"] = self.R*(-tau**2*(fiott+firtt)+(1+delta*fird-delta*tau*firdt)**2/(1+2*delta*fird+delta**2*firdd))
-        propiedades["w"] = (self.R*1000*T*(1+2*delta*fird+delta**2*firdd-(1+delta*fird-delta*tau*firdt)**2/tau**2/(fiott+firtt)))**0.5
+        propiedades["cp"] = self.R*(-tau**2*(fiott+firtt) +
+            (1+delta*fird-delta*tau*firdt)**2/(1+2*delta*fird+delta**2*firdd))
+        propiedades["w"] = (self.R*1000*T*(1+2*delta*fird+delta**2*firdd -
+            (1+delta*fird-delta*tau*firdt)**2/tau**2/(fiott+firtt)))**0.5
         propiedades["alfap"] = (1-delta*tau*firdt/(1+delta*fird))/T
         propiedades["betap"] = rho*(1+(delta*fird+delta**2*firdd)/(1+delta*fird))
         propiedades["fugacity"] = exp(fir+delta*fird-log(1+delta*fird))
         propiedades["B"] = B
         propiedades["C"] = C
         propiedades["dpdrho"] = self.R*T*(1+2*delta*fird+delta**2*firdd)
-        propiedades["drhodt"] = -rho*(1+delta*fird-delta*tau*firdt)/(T*(1+2*delta*fird+delta**2*firdd))
-        propiedades["dhdrho"] = self.R*T/rho*(tau*delta*(fiodt+firdt)+delta*fird+delta**2*firdd)
+        propiedades["drhodt"] = -rho*(1+delta*fird-delta*tau*firdt) / \
+            (T*(1+2*delta*fird+delta**2*firdd))
+        propiedades["dhdrho"] = self.R*T/rho * \
+            (tau*delta*(fiodt+firdt)+delta*fird+delta**2*firdd)
 #        dbt=-phi11/rho/t
 #        propiedades["cps"] = propiedades["cv"] Add cps from Argon pag.27
 
@@ -553,35 +591,7 @@ class MEoS(_fase):
         return propiedades
 
     def _phi0(self, tau, delta):
-        if self.CP:
-            cp = self.CP
-            R = cp.get("R", self._constants["R"])/self.M*1000
-            rhoc = self._constants.get("rhoref", self.rhoc)
-            Tc = self._constants.get("Tref", self.Tc)
-            rho0 = Pref/R/Tref
-            tau0 = Tc/Tref
-            delta0 = rho0/rhoc
-            co = cp["ao"]-1
-            ti = [-x for x in cp["pow"]]
-            ci = [-n/(t*(t+1))*Tc**t for n, t in zip(cp["an"], cp["pow"])]
-            titao = [fi/Tc for fi in cp["exp"]]
-            cI = -(1+co)/tau0
-            cII = co*(1-log(tau0))-log(delta0)
-            for c, t in zip(ci, ti):
-                cI -= c*t*tau0**(t-1)
-                cII += c*(t-1)*tau0**t
-            for ao, tita in zip(cp["ao_exp"], titao):
-                cI -= ao*tita*(1/(1-exp(-tita*tau0))-1)
-                cII += ao*tita*(tau0*(1/(1-exp(-tita*tau0))-1)-log(1-exp(-tita*tau0)))
-
-            Fi0 = {"ao_log": [1,  co],
-                   "pow": [0, 1] + ti,
-                   "ao_pow": [cII, cI] + ci,
-                   "ao_exp": cp["ao_exp"],
-                   "titao": titao}
-
-        else:
-            Fi0 = self.Fi0
+        Fi0 = self.Fi0
 
         fio = Fi0["ao_log"][0]*log(delta)+Fi0["ao_log"][1]*log(tau)
         fiot = +Fi0["ao_log"][1]/tau
@@ -624,7 +634,7 @@ class MEoS(_fase):
             firdtt += n*t*d*(t-1)*delta**(d-1)*tau**(t-2)
             B += n*d*delta_0**(d-1)*tau**t
             C += n*d*(d-1)*delta_0**(d-2)*tau**t
-            
+
         # Exponential terms
         nr2 = self._constants.get("nr2", [])
         d2 = self._constants.get("d2", [])
@@ -738,7 +748,7 @@ class MEoS(_fase):
             firdtt += nr4[i]*((DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt) +
                 delta*(DeltaBdtt*F+DeltaBtt*Fd+2*DeltaBdt*Ft+2*DeltaBt*Fdt +
                 DeltaBt*Ftt+Delta**b[i]*Fdtt))
-                
+
             Tita_ = (1-tau)+A[i]*((delta_0-1)**2)**(0.5/bt[i])
             Delta_ = Tita_**2+Bi[i]*((delta_0-1)**2)**a4[i]
             Deltad_ = (delta_0-1)*(A[i]*Tita_*2/bt[i]*((delta_0-1)**2) **
@@ -995,8 +1005,8 @@ class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
     >>> water=D2O(T=300, rho=996.5560)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
-    0.0992418352 4.13018112 1501.51914 0.393062643
+    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.Liquid.cv, water.Liquid.w)
+    0.0030675947 4.21191157 5332.04871
     """
     name = "heavy water"
     CASNumber = "7789-20-0"
@@ -1011,37 +1021,37 @@ class D2O(MEoS):
     f_acent = 0.364
     momentoDipolar = 1.9
 
-    CP = {"ao": 0.39176485e1,
-          "an": [-0.31123915e-3, 0.41173363e-5, -0.28943955e-8,
-                 0.63278791e-12, 0.78728740],
-          "pow": [1.00, 2.00, 3.00, 4.00, -0.99999999],
-          "ao_exp": [], "exp": []}
+    Fi0 = {'ao_log': [1, 2.9176485],
+           'ao_pow': [-5.60420745, 5.4495718, 0.100195196505025,
+                      -0.2844660508898171, 0.06437609920676933, -0.005436994367359454],
+           'pow': [0, 1, -1.0, -2.0, -3.0, -4.0],
+           'ao_exp': [], 'titao': []}
 
     _constants = {
         "R": 8.3143565,
         "rhoref": 358.,
 
-        "nr1": [-0.384820628204e3, 0.108213047259e4, -0.110768260635e4, 
-                0.164668954246e4, -0.137959852228e4, 0.598964185629e3, 
-                -0.100451752702e3, 0.419192736351e3, -0.107279987867e4, 
-                0.653852283544e3, -0.984305985655e3, 0.845444459339e3, 
-                -0.376799930490e3, 0.644512590492e2, -0.214911115714e3, 
-                0.531113962967e3, -0.135454224420e3, 0.202814416558e3, 
-                -0.178293865031e3, 0.818739394970e2, -0.143312594493e2, 
-                0.651202383207e2, -0.171227351208e3, 0.100859921516e2, 
-                -0.144684680657e2, 0.128871134847e2, -0.610605957134e1, 
+        "nr1": [-0.384820628204e3, 0.108213047259e4, -0.110768260635e4,
+                0.164668954246e4, -0.137959852228e4, 0.598964185629e3,
+                -0.100451752702e3, 0.419192736351e3, -0.107279987867e4,
+                0.653852283544e3, -0.984305985655e3, 0.845444459339e3,
+                -0.376799930490e3, 0.644512590492e2, -0.214911115714e3,
+                0.531113962967e3, -0.135454224420e3, 0.202814416558e3,
+                -0.178293865031e3, 0.818739394970e2, -0.143312594493e2,
+                0.651202383207e2, -0.171227351208e3, 0.100859921516e2,
+                -0.144684680657e2, 0.128871134847e2, -0.610605957134e1,
                 0.109663804408e1, -0.115734899702e2, 0.374970075409e2,
-                0.897967147669, -0.527005883203e1, 0.438084681795e-1, 
+                0.897967147669, -0.527005883203e1, 0.438084681795e-1,
                 0.406772082680, -0.965258571044e-2, -0.119044600379e-1],
         "d1": [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                4, 4, 4, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
         "t1": [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
                0, 1, 2, 3, 4, 5, 6, 0, 1, 0, 1, 0, 1, 0, 1],
 
-        "nr2": [0.382589102341e3, -0.106406466204e4, 0.105544952919e4, 
-                -0.157579942855e4, 0.132703387531e4, -0.579348879870e3, 
-                0.974163902526e2, 0.286799294226e3, -0.127543020847e4, 
-                0.275802674911e4, -0.381284331492e4, 0.293755152012e4, 
+        "nr2": [0.382589102341e3, -0.106406466204e4, 0.105544952919e4,
+                -0.157579942855e4, 0.132703387531e4, -0.579348879870e3,
+                0.974163902526e2, 0.286799294226e3, -0.127543020847e4,
+                0.275802674911e4, -0.381284331492e4, 0.293755152012e4,
                 -0.117858249946e4, 0.186261198012e3],
         "c2": [1]*14,
         "d2": [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
@@ -1064,7 +1074,6 @@ class D2O(MEoS):
 
     @classmethod
     def _visco(cls, rho, T, fase=None):
-        """International Association for the Properties of Water and Steam, "Viscosity and Thermal Conductivity of Heavy Water Substance," Physical Chemistry of Aqueous Systems:  Proceedings of the 12th International Conference on the Properties of Water and Steam, Orlando, Florida, September 11-16, A107-A138, 1994"""
         Tr = T/643.847
         rhor = rho/358.0
 
@@ -1088,7 +1097,6 @@ class D2O(MEoS):
 
     @classmethod
     def _thermo(cls, rho, T, fase=None):
-        """International Association for the Properties of Water and Steam, "Viscosity and Thermal Conductivity of Heavy Water Substance," Physical Chemistry of Aqueous Systems:  Proceedings of the 12th International Conference on the Properties of Water and Steam, Orlando, Florida, September 11-16, A107-A138, 1994."""
         rhor = rho/358
         Tr = T/643.847
         tau = Tr/(abs(Tr-1.1)+1.1)
@@ -1113,19 +1121,3 @@ class D2O(MEoS):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
-#    aire=D2O(T=300, rho=996)
-#    print aire.T, aire.P, aire.x
-#    print aire.rho, aire.Liquid.rho, aire.Gas.rho
-#    print aire.h, aire.Liquid.h, aire.Gas.h
-#    print aire.s, aire.Liquid.s, aire.Gas.s
-
-#    aire=D2O(T=500, P=10.)
-#    print  aire.T, aire.P, aire.rho, aire.x, aire.Liquid.cp, aire.Gas.cp
-
-#    water = IAPWS95(T=620, P=20)
-#    print(water.virialC)
-
-#    water=D2O()
-#    print water._Helmholtz(996.5560, 300)
-        
