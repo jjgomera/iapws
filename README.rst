@@ -31,7 +31,7 @@ In other SO you can download from its webpage in `pypi <http://pypi.python.org/p
 TODO
 --------------------
 
-Improve convergence in not T-rho input for IAPWS95 and D2O class
+Improve convergence in two phase region for IAPWS95 and D2O class
 
 
 IAPWS-IF97
