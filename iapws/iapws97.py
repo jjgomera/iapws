@@ -2943,12 +2943,12 @@ class IAPWS97(object):
             vapor = _Region2(self.T, self.P)
             self.fill(self.Vapor, vapor)
 
-        self.h = propiedades["h"]
-        self.u = self.h-self.P*1000*self.v
-        self.s = propiedades["s"]
-        self.a = self.u-self.T*self.s
-        self.g = self.h-self.T*self.s
-        self.sigma = _Tension(self.T)
+            self.h = propiedades["h"]
+            self.u = self.h-self.P*1000*self.v
+            self.s = propiedades["s"]
+            self.a = self.u-self.T*self.s
+            self.g = self.h-self.T*self.s
+            self.sigma = _Tension(self.T)
 
     def fill(self, fase, estado):
         fase.v = estado["v"]
@@ -2962,6 +2962,7 @@ class IAPWS97(object):
 
         fase.cv = estado["cv"]
         fase.cp = estado["cp"]
+        fase.cp_cv = fase.cp/fase.cv
         fase.w = estado["w"]
 
         fase.Z = self.P*fase.v/R*self.M/self.T

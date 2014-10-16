@@ -193,7 +193,6 @@ def _Viscosity(rho, T, fase=None, drho=None):
     '0.000890022551'
     >>> "%.13f" % _Viscosity(54.9921814,873.15)
     '0.0000339743835'
-
     """
     Tr = T/Tc
     Dr = rho/rhoc
@@ -243,9 +242,9 @@ def _ThCond(rho, T, fase=None, drho=None):
     """Equation for the thermal conductivity
 
     >>> "%.9f" % _ThCond(997.047435,298.15)
-    '0.607509806'
+    '0.606515826'
     >>> "%.10f" % _ThCond(26.0569558,873.15)
-    '0.0867570353'
+    '0.0870480934'
     """
     d = rho/322.
     Tr = T/647.096

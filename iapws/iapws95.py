@@ -238,7 +238,9 @@ class MEoS(_fase):
             elif self._mode == "Tu":
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
-                uv = self._Helmholtz(rhov, T)["u"]
+                Ps = self._Vapor_Pressure(T)
+                vapor = self._Helmholtz(rhov, T)
+                uv = vapor["h"]-Ps*vapor["v"]
                 if u > uv:
                     rhoo = rhov
                 else:
@@ -246,58 +248,173 @@ class MEoS(_fase):
 
                 def funcion(rho):
                     par = self._Helmholtz(rho, T)
-                    return par["h"]-par["P"]/1000*par["v"]-u
+                    return par["h"]-par["P"]*par["v"]-u
                 rho = fsolve(funcion, rhoo)
 
             elif self._mode == "Prho":
                 T = fsolve(lambda T: self._Helmholtz(rho, T)["P"]-P*1000, 600)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T[0] == 600 or rhov <= rho <= rhol:
+                    def funcion(T):
+                        rhol, rhov, Ps = self._saturation(T)
+                        return Ps-P*1000
+                    T = fsolve(funcion, 600)
 
             elif self._mode == "Ph":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["P"]-P*1000, par["h"]-h
                 rho, T = fsolve(funcion, [1000, 300])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if rho == 1000 or rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return Ps-P*1000, vapor["h"]*x+liquido["h"]*(1-x)-h
+                    rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "Ps":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["P"]-P*1000, par["s"]-s
-                rho, T = fsolve(funcion, [1000, 300])
+                rho, T = fsolve(funcion, [2., 400])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if rho == 2. or rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return Ps-P*1000, vapor["s"]*x+liquido["s"]*(1-x)-s
+                    rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "Pu":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
-                    return par["h"]-par["P"]/1000*par["v"]-u, par["P"]-P*1000
+                    return par["h"]-par["P"]*par["v"]-u, par["P"]-P*1000
                 rho, T = fsolve(funcion, [1000, 600])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if rho == 1000 or rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        vu = vapor["h"]-Ps/rhov
+                        lu = liquido["h"]-Ps/rhol
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return Ps-P*1000, vu*x+lu*(1-x)-u
+                    rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "rhoh":
-                T = fsolve(lambda T: self._Helmholtz(rho, T)["h"]-h, 600)
+                f = lambda T: self._Helmholtz(rho, T)["h"]-h
+                T = fsolve(f, 600)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T[0] == 600 or rhov <= rho <= rhol:
+                    def funcion(T):
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vapor["h"]*x+liquido["h"]*(1-x)-h
+                    T = fsolve(funcion, 500.)
 
             elif self._mode == "rhos":
-                T = fsolve(lambda T: self._Helmholtz(rho, T)["s"]-s, 600)
+                f = lambda T: self._Helmholtz(rho, T)["s"]-s
+                T = fsolve(f, 600)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T[0] == 600 or rhov <= rho <= rhol:
+                    def funcion(T):
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vapor["s"]*x+liquido["s"]*(1-x)-s
+                    T = fsolve(funcion, 500.)
 
             elif self._mode == "rhou":
                 def funcion(T):
                     par = self._Helmholtz(rho, T)
                     return par["h"]-par["P"]/1000*par["v"]-u
                 T = fsolve(funcion, 600)
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T[0] == 600 or rhov <= rho <= rhol:
+                    def funcion(T):
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        vu = vapor["h"]-Ps/rhov
+                        lu = liquido["h"]-Ps/rhol
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vu*x+lu*(1-x)-u
+                    T = fsolve(funcion, 500.)
 
             elif self._mode == "hs":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["h"]-h, par["s"]-s
                 rho, T = fsolve(funcion, [1000, 300])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vapor["h"]*x+liquido["h"]*(1-x)-h, vapor["s"]*x+liquido["s"]*(1-x)-s
+                    rho, T = fsolve(funcion, [0.5, 400.])
 
             elif self._mode == "hu":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["h"]-par["P"]/1000*par["v"]-u, par["h"]-h
                 rho, T = fsolve(funcion, [1000, 600])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T == 600 or rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        vu = vapor["h"]-Ps/rhov
+                        lu = liquido["h"]-Ps/rhol
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vapor["h"]*x+liquido["h"]*(1-x)-h, vu*x+lu*(1-x)-u
+                    rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "su":
                 def funcion(parr):
                     par = self._Helmholtz(parr[0], parr[1])
                     return par["h"]-par["P"]/1000*par["v"]-u, par["s"]-s
+                rho, T = fsolve(funcion, [1000, 600])
+                rhol = self._Liquid_Density(T)
+                rhov = self._Vapor_Density(T)
+                if T == 600 or rhov <= rho <= rhol:
+                    def funcion(parr):
+                        rho, T = parr
+                        rhol, rhov, Ps = self._saturation(T)
+                        vapor = self._Helmholtz(rhov, T)
+                        liquido = self._Helmholtz(rhol, T)
+                        vu = vapor["h"]-Ps/rhov
+                        lu = liquido["h"]-Ps/rhol
+                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                        return vapor["s"]*x+liquido["s"]*(1-x)-s, vu*x+lu*(1-x)-u
+                    rho, T = fsolve(funcion, [2., 500.])
+
             rho = float(rho)
             T = float(T)
             propiedades = self._Helmholtz(rho, T)
@@ -433,7 +550,7 @@ class MEoS(_fase):
 
         fase.h = estado["h"]
         fase.s = estado["s"]
-        fase.u = fase.h-self.P*fase.v
+        fase.u = fase.h-self.P*1000*fase.v
         fase.a = fase.u-self.T*fase.s
         fase.g = fase.h-self.T*fase.s
 
@@ -859,16 +976,93 @@ class IAPWS95(MEoS):
     """Multiparameter equation of state for water (including IAPWS95)
 
     >>> water=IAPWS95(T=300, rho=996.5560)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
+    >>> print("%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s))
     0.0992418350 4.13018112 1501.51914 0.393062643
 
     >>> water=IAPWS95(T=500, rho=0.435)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s)
+    >>> print("%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s))
     0.0999679423 1.50817541 548.31425 7.944882714
 
     >>> water=IAPWS95(T=900., P=700)
-    >>> print "%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv, water.w, water.s)
+    >>> print("%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv, water.w, water.s))
     870.7690 2.66422350 2019.33608 4.17223802
+
+    >>> water=IAPWS95(T=300., P=0.1)
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    300.00 0.10000 996.56 112.65 0.39306 4.1806 1501.5 -0.066682
+
+    >>> water=IAPWS95(T=500., P=0.1)
+    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    500.00 0.10000 0.43514 2928.6 7.9447 1.9813 548.31 -0.0094137
+
+    >>> water=IAPWS95(T=450., x=0.5)
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.virialB))
+    450.00 0.93220 9.5723 1761.8 4.3589 -0.013028
+
+    >>> water=IAPWS95(P=1.5, rho=1000.)
+    >>> print("%0.2f %0.4f %0.1f %0.3f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    286.44 1.5000 1000.0 57.253 0.19931 4.1855 1462.1 -0.085566
+
+    >>> water=IAPWS95(h=3000, s=8.)
+    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    536.24 0.11970 0.48547 3000.0 8.0000 1.9984 567.04 -0.0076606
+
+    >>> water=IAPWS95(h=150, s=0.4)
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    301.27 35.50549 1011.48 150.00 0.40000 4.0932 1564.1 -0.065238
+
+    >>> water=IAPWS95(T=450., rho=300)
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.6f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    450.00 0.93220 300.00 770.82 2.1568 0.010693 -0.013028
+
+    >>> water=IAPWS95(rho=300., P=0.1)
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.7f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    372.76 0.10000 300.00 420.56 1.3110 0.0013528 -0.025144
+
+    >>> water=IAPWS95(h=1500., P=0.1)
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    372.76 0.10000 1.2303 1500.0 4.2068 0.47952 -0.025144
+
+    >>> water=IAPWS95(s=5., P=3.5)
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    515.71 3.5000 25.912 2222.8 5.0000 0.66921 -0.0085877
+
+    >>> water=IAPWS95(T=500., u=900)
+    >>> print("%0.2f %0.2f %0.2f %0.2f %0.1f %0.4f %0.4f %0.1f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, water.w, water.virialB))
+    500.00 108.21 903.62 900.00 1019.8 2.4271 4.1751 1576.0 -0.0094137
+
+    >>> water=IAPWS95(P=0.3, u=1550.)
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    406.67 0.30000 3.3029 1550.0 1640.8 4.3260 0.49893 -0.018263
+
+    >>> water=IAPWS95(rho=300, h=1000.)
+    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.6f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    494.92 2.3991 300.00 992.00 1000.0 2.6315 0.026071 -0.0097064
+
+    >>> water=IAPWS95(rho=30, s=8.)
+    >>> print("%0.2f %0.3f %0.3f %0.1f %0.1f %0.4f %0.4f %0.2f %0.9f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, water.w, water.virialB))
+    1562.42 21.671 30.000 4628.5 5350.9 8.0000 2.7190 943.53 0.000047165
+
+    >>> water=IAPWS95(rho=30, s=4.)
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    495.00 2.4029 30.000 1597.3 1677.4 4.0000 0.39218 -0.0097015
+
+    >>> water=IAPWS95(rho=300, u=1000.)
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    496.44 2.4691 300.000 1000.0 1008.2 2.6476 0.02680 -0.0096173
+
+    >>> water=IAPWS95(s=3., h=1000.)
+    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    345.73 0.034850 0.73526 952.60 1000.0 3.0000 0.29920 -0.034124
+
+    >>> water=IAPWS95(u=995., h=1000.)
+    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    501.89 2.7329 546.58 995.00 1000.0 2.6298 0.00866 -0.009308
+
+    >>> water=IAPWS95(u=1000., s=3.)
+    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    371.24 0.094712 1.99072 1000.00 1047.6 3.0000 0.28144 -0.025543
+
     """
     name = "water"
     CASNumber = "7732-18-5"
@@ -1005,7 +1199,7 @@ class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
     >>> water=D2O(T=300, rho=996.5560)
-    >>> print "%0.10f %0.8f %0.5f %0.9f" % (water.P, water.Liquid.cv, water.Liquid.w)
+    >>> print("%0.10f %0.8f %0.5f" % (water.P, water.Liquid.cv, water.Liquid.w))
     0.0030675947 4.21191157 5332.04871
     """
     name = "heavy water"
