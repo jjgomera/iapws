@@ -22,12 +22,6 @@ Po = 0.101325
 To = 273.15
 
 
-class IAPWS95_Revised(IAPWS95):
-    """Revised IAPWS95 class with fi0 values upgrade to IAPWS08 standard"""
-    Fi0 = IAPWS95.Fi0
-    Fi0["ao_pow"] = [-8.320446483749693, 6.683210527593226]
-
-
 class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
@@ -129,7 +123,7 @@ class SeaWater(object):
     @classmethod
     def _water(cls, T, P):
         """Get properties of pure water, Table4 pag 8"""
-        water = IAPWS95_Revised(P=P, T=T)
+        water = IAPWS95(P=P, T=T)
         prop = {}
         prop["g"] = water.h-T*water.s
         prop["gt"] = -water.s

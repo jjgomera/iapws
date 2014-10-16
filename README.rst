@@ -268,6 +268,7 @@ IAPWS-05 for Heavy water
 --------------------------------------------
 
 Same properties as for  IAPWS-95
+Reference state set at liquid at normal boiling point (1 atm)
 
 Usage::
 
