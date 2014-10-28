@@ -8,7 +8,7 @@
 from __future__ import division
 from math import log
 
-from iapws95 import IAPWS95
+from .iapws95 import IAPWS95
 
 
 # Constants

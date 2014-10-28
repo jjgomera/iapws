@@ -5,8 +5,8 @@ __version__ = "1.1"
 
 import unittest
 
-from iapws97 import IAPWS97
-from iapws97 import (_Region1, _Region2, _Region3, _Region5,
+from .iapws97 import IAPWS97
+from .iapws97 import (_Region1, _Region2, _Region3, _Region5,
                      _Backward1_T_Ph, _Backward1_T_Ps, _Backward1_P_hs,
                      _Backward2_T_Ph, _Backward2_T_Ps, _Backward2_P_hs,
                      _h_3ab, _Backward3_T_Ph, _Backward3_v_Ph, _Backward3_T_Ps,
@@ -14,9 +14,9 @@ from iapws97 import (_Region1, _Region2, _Region3, _Region5,
                      _h3a_s, _h2ab_s, _h2c3b_s, _PSat_T, _TSat_P, _h13_s,
                      _t_hs, _Backward4_T_hs, _tab_P, _top_P, _twx_P, _tef_P,
                      _txx_P, _Backward3_v_PT)
-from iapws95 import IAPWS95, D2O
-from iapws08 import SeaWater
-from _iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
+from .iapws95 import IAPWS95, D2O
+from .iapws08 import SeaWater
+from ._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                     _Viscosity, _ThCond)
 
 

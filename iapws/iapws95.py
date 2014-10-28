@@ -12,9 +12,9 @@
 from scipy import exp, log
 from scipy.optimize import fsolve
 
-from _iapws import _fase
-from _iapws import _Viscosity, _ThCond, _Dielectric, _Refractive
-from iapws97 import _TSat_P
+from ._iapws import _fase
+from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive
+from .iapws97 import _TSat_P
 
 
 class MEoS(_fase):
