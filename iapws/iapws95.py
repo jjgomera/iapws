@@ -603,52 +603,84 @@ class MEoS(_fase):
             fase.epsilon = None
             fase.n = None
 
-    def _saturation(self, T):
-        """Akasaka (2008) "A Reliable and Useful Method to Determine the
-        Saturation State from Helmholtz Energy Equations of State", Journal of
-        Thermal Science and Technology, 3, 442-451
-        http://dx.doi.org/10.1299/jtst.3.442"""
+    def _saturation(self, T=None):
+        """Saturation calculation for two phase search"""
+        if not T:
+            T = self.T
 
-        rhoL = self._Liquid_Density(T)
-        rhoG = self._Vapor_Density(T)
-        g = 500.
-        erroro = 1e6
-        rholo = rhoL
-        rhogo = rhoG
-        contador = 0
-        while True:
-            contador += 1
-            deltaL = rhoL/self.rhoc
-            deltaG = rhoG/self.rhoc
-            liquido = self._Helmholtz(rhoL, T)
-            vapor = self._Helmholtz(rhoG, T)
+        rhoLo = self._Liquid_Density(T)
+        rhoGo = self._Vapor_Density(T)
+        
+        def f(parr):
+            rhol, rhog = parr
+            deltaL = rhol/self.rhoc
+            deltaG = rhog/self.rhoc
+            liquido = self._Helmholtz(rhol, T)
+            vapor = self._Helmholtz(rhog, T)
             Jl = deltaL*(1+deltaL*liquido["fird"])
             Jv = deltaG*(1+deltaG*vapor["fird"])
             Kl = deltaL*liquido["fird"]+liquido["fir"]+log(deltaL)
             Kv = deltaG*vapor["fird"]+vapor["fir"]+log(deltaG)
-            Jdl = 1+2*deltaL*liquido["fird"]+deltaL**2*liquido["firdd"]
-            Jdv = 1+2*deltaG*vapor["fird"]+deltaG**2*vapor["firdd"]
-            Kdl = 2*liquido["fird"]+deltaL*liquido["firdd"]+1/deltaL
-            Kdv = 2*vapor["fird"]+deltaG*vapor["firdd"]+1/deltaG
-            Delta = Jdv*Kdl-Jdl*Kdv
-            error = abs(Kv-Kl)+abs(Jv-Jl)
-            if error < 1e-12 or contador > 100:
-                break
-            elif error > erroro:
-                rhoL = rholo
-                rhoG = rhogo
-                g = g*0.5
-            else:
-                erroro = error
-                rholo = rhoL
-                rhogo = rhoG
-                rhoL = rhoL+g/Delta*((Kv-Kl)*Jdv-(Jv-Jl)*Kdv)
-                rhoG = rhoG+g/Delta*((Kv-Kl)*Jdl-(Jv-Jl)*Kdl)
-        if error > 1e-3:
-            print("Iteration don´t converge, residual error %g" % error)
+            return Kv-Kl, Jv-Jl
 
-        Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+        rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
+        if rhoL == rhoG:
+            Ps = self.Pc
+        else:
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            deltaL = rhoL/self.rhoc
+            deltaG = rhoG/self.rhoc
+
+            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
+
+#    def _saturation(self, T):
+#        """Akasaka (2008) "A Reliable and Useful Method to Determine the
+#        Saturation State from Helmholtz Energy Equations of State", Journal of
+#        Thermal Science and Technology, 3, 442-451
+#        http://dx.doi.org/10.1299/jtst.3.442"""
+#
+#        rhoL = self._Liquid_Density(T)
+#        rhoG = self._Vapor_Density(T)
+#        g = 500.
+#        erroro = 1e6
+#        rholo = rhoL
+#        rhogo = rhoG
+#        contador = 0
+#        while True:
+#            contador += 1
+#            deltaL = rhoL/self.rhoc
+#            deltaG = rhoG/self.rhoc
+#            liquido = self._Helmholtz(rhoL, T)
+#            vapor = self._Helmholtz(rhoG, T)
+#            Jl = deltaL*(1+deltaL*liquido["fird"])
+#            Jv = deltaG*(1+deltaG*vapor["fird"])
+#            Kl = deltaL*liquido["fird"]+liquido["fir"]+log(deltaL)
+#            Kv = deltaG*vapor["fird"]+vapor["fir"]+log(deltaG)
+#            Jdl = 1+2*deltaL*liquido["fird"]+deltaL**2*liquido["firdd"]
+#            Jdv = 1+2*deltaG*vapor["fird"]+deltaG**2*vapor["firdd"]
+#            Kdl = 2*liquido["fird"]+deltaL*liquido["firdd"]+1/deltaL
+#            Kdv = 2*vapor["fird"]+deltaG*vapor["firdd"]+1/deltaG
+#            Delta = Jdv*Kdl-Jdl*Kdv
+#            error = abs(Kv-Kl)+abs(Jv-Jl)
+#            if error < 1e-12 or contador > 100:
+#                break
+#            elif error > erroro:
+#                rhoL = rholo
+#                rhoG = rhogo
+#                g = g*0.5
+#            else:
+#                erroro = error
+#                rholo = rhoL
+#                rhogo = rhoG
+#                rhoL = rhoL+g/Delta*((Kv-Kl)*Jdv-(Jv-Jl)*Kdv)
+#                rhoG = rhoG+g/Delta*((Kv-Kl)*Jdl-(Jv-Jl)*Kdl)
+#        if error > 1e-3:
+#            print("Iteration don´t converge, residual error %g" % error)
+#
+#        Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+#        return rhoL, rhoG, Ps
 
     def _Helmholtz(self, rho, T):
         """Calculated properties, table 3 pag 10"""
