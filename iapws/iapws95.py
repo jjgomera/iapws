@@ -461,7 +461,6 @@ class MEoS(_fase):
 
         elif self._mode == "Px":
             # Iterate over saturation routine to get T
-            # FIXME: Too slow, it need find any other algorithm
             def funcion(T):
                 rhol, rhov, Ps = self._saturation(T)
                 return Ps/1000-P
@@ -610,7 +609,7 @@ class MEoS(_fase):
 
         rhoLo = self._Liquid_Density(T)
         rhoGo = self._Vapor_Density(T)
-        
+
         def f(parr):
             rhol, rhog = parr
             deltaL = rhol/self.rhoc
@@ -1347,4 +1346,4 @@ class D2O(MEoS):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    
+
