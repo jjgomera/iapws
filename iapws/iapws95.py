@@ -474,6 +474,7 @@ class MEoS(_fase):
             elif x == 1:
                 propiedades = vapor
 
+    
         self.T = T
         self.Tr = T/self.Tc
         self.P = P
@@ -510,7 +511,7 @@ class MEoS(_fase):
             self.IntP = x*self.Gas.IntP+(1-x)*self.Liquid.IntP
 
         # Calculate special properties useful only for one phase
-        if x < 1 and self.Tt <= T <= self.Tc:
+        if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self.Tc):
             self.sigma = self._Tension(T)
         else:
             self.sigma = None
