@@ -2882,6 +2882,7 @@ class IAPWS97(object):
                 propiedades = _Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
+            self.sigma = _Tension(T)
 
         elif self._thermo == "Tx":
             T, x = args
@@ -2899,6 +2900,7 @@ class IAPWS97(object):
                 propiedades = _Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
+            self.sigma = _Tension(T)
 
         else:
             raise NotImplementedError("Bad incoming variables")
@@ -2929,7 +2931,7 @@ class IAPWS97(object):
         self.Liquid = _fase()
         self.Vapor = _fase()
         if self.x == 0:
-            # only lilquid phase
+            # only liquid phase
             self.fill(self, propiedades)
             self.fill(self.Liquid, propiedades)
         elif self.x == 1:
