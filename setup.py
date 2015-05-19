@@ -3,7 +3,7 @@ from setuptools import setup
 from iapws import __version__
 
 
-with open('README.rst') as file:
+with open('README.rst', encoding="utf8") as file:
     long_description = file.read()
 
 setup(
@@ -30,5 +30,5 @@ setup(
         "Topic :: Scientific/Engineering :: Chemistry",
         "Topic :: Scientific/Engineering :: Physics",
         "Topic :: Software Development :: Libraries :: Python Modules"
-        ]
-    )
+    ]
+)
