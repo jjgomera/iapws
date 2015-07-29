@@ -2868,17 +2868,15 @@ class IAPWS97(object):
 
         elif self._thermo == "Px":
             P, x = args
+            T = _TSat_P(P)
             if Pt <= P <= Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif P > 16.529:
-                T = _TSat_P(P)
                 rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
             elif x == 0:
-                T = _TSat_P(P)
                 propiedades = _Region1(T, P)
             elif x == 1:
-                T = _TSat_P(P)
                 propiedades = _Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
