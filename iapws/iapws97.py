@@ -2735,7 +2735,7 @@ class IAPWS97(object):
             elif region == 3:
                 vo = _Backward3_v_PT(P, T)
                 funcion = lambda rho: _Region3(rho, self.kwargs["T"])["P"]-P
-                rho = fsolve(funcion, 1/vo)
+                rho = fsolve(funcion, 1/vo)[0]
                 propiedades = _Region3(rho, T)
             elif region == 5:
                 propiedades = _Region5(T, P)
@@ -2748,12 +2748,12 @@ class IAPWS97(object):
             if region == 1:
                 To = _Backward1_T_Ph(P, h)
                 funcion = lambda T: _Region1(T, P)["h"]-h
-                T = fsolve(funcion, To)
+                T = fsolve(funcion, To)[0]
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ph(P, h)
                 funcion = lambda T: _Region2(T, P)["h"]-h
-                T = fsolve(funcion, To)
+                T = fsolve(funcion, To)[0]
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ph(P, h)
@@ -2762,7 +2762,7 @@ class IAPWS97(object):
                                        _Region3(par[0], par[1])["P"]-P)
 #                print 1/vo, To, type(vo), type(To)
                 rho, T = fsolve(funcion, [1/vo, To])
-                propiedades = _Region3(rho, T)
+                propiedades = _Region3(rho[0], T[0])
             elif region == 4:
                 # FIXME: Bad region interpretation
                 T = _TSat_P(P)
@@ -2777,10 +2777,10 @@ class IAPWS97(object):
                     funcion = lambda par: (_Region3(par[0], par[1])["h"]-h,
                                            _Region3(par[0], par[1])["P"]-P)
                     rho, T = fsolve(funcion, [1/vo, To])
-                    propiedades = _Region3(rho, T)
+                    propiedades = _Region3(rho[0], T[0])
             elif region == 5:
                 funcion = lambda T: _Region5(T, P)["h"]-h
-                T = fsolve(funcion, 1500)
+                T = fsolve(funcion, 1500)[0]
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -2791,12 +2791,12 @@ class IAPWS97(object):
             if region == 1:
                 To = _Backward1_T_Ps(P, s)
                 funcion = lambda T: _Region1(T, P)["s"]-s
-                T = fsolve(funcion, To)
+                T = fsolve(funcion, To)[0]
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ps(P, s)
                 funcion = lambda T: _Region2(T, P)["s"]-s
-                T = fsolve(funcion, To)
+                T = fsolve(funcion, To)[0]
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ps(P, s)
@@ -2804,7 +2804,7 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region3(par[0], par[1])["s"]-s,
                                        _Region3(par[0], par[1])["P"]-P)
                 rho, T = fsolve(funcion, [1/vo, To])
-                propiedades = _Region3(rho, T)
+                propiedades = _Region3(rho[0], T[0])
             elif region == 4:
                 T = _TSat_P(P)
                 if T <= 623.15:
@@ -2821,7 +2821,7 @@ class IAPWS97(object):
                     propiedades = _Region3(rho, T)
             elif region == 5:
                 funcion = lambda T: _Region5(T, P)["s"]-s
-                T = fsolve(funcion, 1500)
+                T = fsolve(funcion, 1500)[0]
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -2835,14 +2835,14 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region1(par[0], par[1])["h"]-h,
                                        _Region1(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [To, Po])
-                propiedades = _Region1(T, P)
+                propiedades = _Region1(T[0], P[0])
             elif region == 2:
                 Po = _Backward2_P_hs(h, s)
                 To = _Backward2_T_Ph(Po, h)
                 funcion = lambda par: (_Region2(par[0], par[1])["h"]-h,
                                        _Region2(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [To, Po])
-                propiedades = _Region2(T, P)
+                propiedades = _Region2(T[0], P[0])
             elif region == 3:
                 P = _Backward3_P_hs(h, s)
                 vo = _Backward3_v_Ps(P, s)
@@ -2850,7 +2850,7 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region3(par[0], par[1])["h"]-h,
                                        _Region3(par[0], par[1])["s"]-s)
                 rho, T = fsolve(funcion, [1/vo, T])
-                propiedades = _Region3(rho, T)
+                propiedades = _Region3(rho[0], T[0])
             elif region == 4:
                 T = _Backward4_T_hs(h, s)
                 P = _PSat_T(T)
@@ -2862,7 +2862,7 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region5(par[0], par[1])["h"]-h,
                                        _Region5(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [1400, 1])
-                propiedades = _Region5(T, P)
+                propiedades = _Region5(T[0], P[0])
             else:
                 raise NotImplementedError("Incoming out of bound")
 
@@ -2871,13 +2871,13 @@ class IAPWS97(object):
             T = _TSat_P(P)
             if Pt <= P <= Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
-            elif P > 16.529:
-                rho = 1./_Backward3_v_PT(P, T)
-                propiedades = _Region3(rho, T)
             elif x == 0:
                 propiedades = _Region1(T, P)
             elif x == 1:
                 propiedades = _Region2(T, P)
+            elif P > 16.529:
+                rho = 1./_Backward3_v_PT(P, T)
+                propiedades = _Region3(rho, T)
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
@@ -2887,15 +2887,13 @@ class IAPWS97(object):
             P = _PSat_T(T)
             if Tt <= T <= Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
+            elif Tt <= T <= Tc and x == 0:
+                propiedades = _Region1(T, P)
+            elif Tt <= T <= Tc and x == 1:
+                propiedades = _Region2(T, P)
             elif P > 16.529:
                 rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
-            elif x == 0:
-                T = _TSat_P(P)
-                propiedades = _Region1(T, P)
-            elif x == 1:
-                T = _TSat_P(P)
-                propiedades = _Region2(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
@@ -3082,5 +3080,10 @@ class IAPWS97_Tx(IAPWS97):
 
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+#    import doctest
+#    doctest.testmod()
+
+    liquido = IAPWS97(P=18, T=626)
+    print(liquido.h, liquido.T, liquido.region, liquido.x)
+    vapor = IAPWS97(P=17, x=1)
+    print(vapor.h)
