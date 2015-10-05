@@ -136,7 +136,7 @@ class MEoS(_fase):
     def __call__(self, **kwargs):
         """Make instance callable to can add input parameter one to one"""
         if kwargs.get("v", 0):
-            kwargs["rho"] = kwargs["v"]
+            kwargs["rho"] = 1./kwargs["v"]
             del kwargs["v"]
         self.kwargs.update(kwargs)
 
