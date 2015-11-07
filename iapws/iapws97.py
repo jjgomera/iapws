@@ -2871,11 +2871,14 @@ class IAPWS97(object):
             T = _TSat_P(P)
             if Pt <= P <= Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
+            elif P > Ps_623 and x in (0, 1):
+                rho = 1./_Backward3_v_PT(P, T)
+                propiedades = _Region3(rho, T)
             elif x == 0:
                 propiedades = _Region1(T, P)
             elif x == 1:
                 propiedades = _Region2(T, P)
-            elif P > 16.529:
+            elif P > Ps_623:
                 rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
             else:
@@ -2887,11 +2890,14 @@ class IAPWS97(object):
             P = _PSat_T(T)
             if Tt <= T <= Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
+            elif P > Ps_623 and x in (0, 1):
+                rho = 1./_Backward3_v_PT(P, T)
+                propiedades = _Region3(rho, T)
             elif Tt <= T <= Tc and x == 0:
                 propiedades = _Region1(T, P)
             elif Tt <= T <= Tc and x == 1:
                 propiedades = _Region2(T, P)
-            elif P > 16.529:
+            elif P > Ps_623:
                 rho = 1./_Backward3_v_PT(P, T)
                 propiedades = _Region3(rho, T)
             else:
