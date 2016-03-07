@@ -13,7 +13,7 @@ from scipy import exp, log
 from scipy.optimize import fsolve
 
 from ._iapws import _fase
-from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive
+from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from .iapws97 import _TSat_P
 
 
@@ -474,7 +474,7 @@ class MEoS(_fase):
             elif x == 1:
                 propiedades = vapor
 
-    
+
         self.T = T
         self.Tr = T/self.Tc
         self.P = P
@@ -512,7 +512,10 @@ class MEoS(_fase):
 
         # Calculate special properties useful only for one phase
         if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self.Tc):
-            self.sigma = self._Tension(T)
+            if self.name == "water":
+                self.sigma = _Tension(T)
+            else:
+                self.sigma = self._Tension(T)
         else:
             self.sigma = None
 
@@ -1167,7 +1170,6 @@ class IAPWS95(MEoS):
         "A": [0.32, .32],
         "beta4": [0.3, 0.3]}
 
-    _surface = {"sigma": [0.2358, -0.147375], "exp": [1.256, 2.256]}
     _vapor_Pressure = {
         "eq": 6,
         "ao": [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,

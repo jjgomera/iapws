@@ -16,7 +16,7 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
 from iapws.iapws95 import IAPWS95, D2O
 from iapws.iapws08 import SeaWater
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
-                          _Viscosity, _ThCond)
+                          _Viscosity, _ThCond, _Tension)
 
 
 # Test
@@ -224,26 +224,26 @@ class Test(unittest.TestCase):
     def test_Tension(self):
         """Selected values from table 1"""
         fluid = IAPWS95()
-        self.assertEqual(round(fluid._Tension(273.16)*1000, 2), 75.65)
-        self.assertEqual(round(fluid._Tension(283.15)*1000, 2), 74.22)
-        self.assertEqual(round(fluid._Tension(293.15)*1000, 2), 72.74)
-        self.assertEqual(round(fluid._Tension(303.15)*1000, 2), 71.19)
-        self.assertEqual(round(fluid._Tension(313.15)*1000, 2), 69.60)
-        self.assertEqual(round(fluid._Tension(323.15)*1000, 2), 67.94)
-        self.assertEqual(round(fluid._Tension(333.15)*1000, 2), 66.24)
-        self.assertEqual(round(fluid._Tension(343.15)*1000, 2), 64.48)
-        self.assertEqual(round(fluid._Tension(353.15)*1000, 2), 62.67)
-        self.assertEqual(round(fluid._Tension(363.15)*1000, 2), 60.82)
-        self.assertEqual(round(fluid._Tension(373.15)*1000, 2), 58.91)
-        self.assertEqual(round(fluid._Tension(393.15)*1000, 2), 54.97)
-        self.assertEqual(round(fluid._Tension(413.15)*1000, 2), 50.86)
-        self.assertEqual(round(fluid._Tension(433.15)*1000, 2), 46.59)
-        self.assertEqual(round(fluid._Tension(453.15)*1000, 2), 42.19)
-        self.assertEqual(round(fluid._Tension(473.15)*1000, 2), 37.67)
-        self.assertEqual(round(fluid._Tension(523.15)*1000, 2), 26.04)
-        self.assertEqual(round(fluid._Tension(573.15)*1000, 2), 14.36)
-        self.assertEqual(round(fluid._Tension(623.15)*1000, 2), 3.67)
-        self.assertEqual(round(fluid._Tension(643.15)*1000, 2), 0.39)
+        self.assertEqual(round(_Tension(273.16)*1000, 2), 75.65)
+        self.assertEqual(round(_Tension(283.15)*1000, 2), 74.22)
+        self.assertEqual(round(_Tension(293.15)*1000, 2), 72.74)
+        self.assertEqual(round(_Tension(303.15)*1000, 2), 71.19)
+        self.assertEqual(round(_Tension(313.15)*1000, 2), 69.60)
+        self.assertEqual(round(_Tension(323.15)*1000, 2), 67.94)
+        self.assertEqual(round(_Tension(333.15)*1000, 2), 66.24)
+        self.assertEqual(round(_Tension(343.15)*1000, 2), 64.48)
+        self.assertEqual(round(_Tension(353.15)*1000, 2), 62.67)
+        self.assertEqual(round(_Tension(363.15)*1000, 2), 60.82)
+        self.assertEqual(round(_Tension(373.15)*1000, 2), 58.91)
+        self.assertEqual(round(_Tension(393.15)*1000, 2), 54.97)
+        self.assertEqual(round(_Tension(413.15)*1000, 2), 50.86)
+        self.assertEqual(round(_Tension(433.15)*1000, 2), 46.59)
+        self.assertEqual(round(_Tension(453.15)*1000, 2), 42.19)
+        self.assertEqual(round(_Tension(473.15)*1000, 2), 37.67)
+        self.assertEqual(round(_Tension(523.15)*1000, 2), 26.04)
+        self.assertEqual(round(_Tension(573.15)*1000, 2), 14.36)
+        self.assertEqual(round(_Tension(623.15)*1000, 2), 3.67)
+        self.assertEqual(round(_Tension(643.15)*1000, 2), 0.39)
 
     def test_Dielect(self):
         """Table 4, pag 8"""
