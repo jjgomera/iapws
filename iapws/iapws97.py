@@ -2760,9 +2760,8 @@ class IAPWS97(object):
                 To = _Backward3_T_Ph(P, h)
                 funcion = lambda par: (_Region3(par[0], par[1])["h"]-h,
                                        _Region3(par[0], par[1])["P"]-P)
-#                print 1/vo, To, type(vo), type(To)
                 rho, T = fsolve(funcion, [1/vo, To])
-                propiedades = _Region3(rho[0], T[0])
+                propiedades = _Region3(rho, T)
             elif region == 4:
                 # FIXME: Bad region interpretation
                 T = _TSat_P(P)
@@ -2804,7 +2803,7 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region3(par[0], par[1])["s"]-s,
                                        _Region3(par[0], par[1])["P"]-P)
                 rho, T = fsolve(funcion, [1/vo, To])
-                propiedades = _Region3(rho[0], T[0])
+                propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _TSat_P(P)
                 if T <= 623.15:
@@ -2835,22 +2834,22 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region1(par[0], par[1])["h"]-h,
                                        _Region1(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [To, Po])
-                propiedades = _Region1(T[0], P[0])
+                propiedades = _Region1(T, P)
             elif region == 2:
                 Po = _Backward2_P_hs(h, s)
                 To = _Backward2_T_Ph(Po, h)
                 funcion = lambda par: (_Region2(par[0], par[1])["h"]-h,
                                        _Region2(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [To, Po])
-                propiedades = _Region2(T[0], P[0])
+                propiedades = _Region2(T, P)
             elif region == 3:
                 P = _Backward3_P_hs(h, s)
                 vo = _Backward3_v_Ps(P, s)
                 To = _Backward3_T_Ps(P, s)
                 funcion = lambda par: (_Region3(par[0], par[1])["h"]-h,
                                        _Region3(par[0], par[1])["s"]-s)
-                rho, T = fsolve(funcion, [1/vo, T])
-                propiedades = _Region3(rho[0], T[0])
+                rho, T = fsolve(funcion, [1/vo, To])
+                propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _Backward4_T_hs(h, s)
                 P = _PSat_T(T)
@@ -2862,7 +2861,7 @@ class IAPWS97(object):
                 funcion = lambda par: (_Region5(par[0], par[1])["h"]-h,
                                        _Region5(par[0], par[1])["s"]-s)
                 T, P = fsolve(funcion, [1400, 1])
-                propiedades = _Region5(T[0], P[0])
+                propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
 
