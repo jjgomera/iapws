@@ -461,9 +461,18 @@ class MEoS(_fase):
 
         elif self._mode == "Px":
             # Iterate over saturation routine to get T
+
             def funcion(T):
-                rhol, rhov, Ps = self._saturation(T)
+                rhol = self._Liquid_Density(T)
+                rhog = self._Vapor_Density(T)
+
+                deltaL = rhol/self.rhoc
+                deltaG = rhog/self.rhoc
+                liquido = self._Helmholtz(rhol, T)
+                vapor = self._Helmholtz(rhog, T)
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
                 return Ps/1000-P
+
             To = _TSat_P(P)
             T = fsolve(funcion, To)[0]
             rhol, rhov, Ps = self._saturation(T)
@@ -473,7 +482,6 @@ class MEoS(_fase):
                 propiedades = liquido
             elif x == 1:
                 propiedades = vapor
-
 
         self.T = T
         self.Tr = T/self.Tc
@@ -638,7 +646,7 @@ class MEoS(_fase):
             Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
-#    def _saturation(self, T):
+#    def _saturation2(self, T):
 #        """Akasaka (2008) "A Reliable and Useful Method to Determine the
 #        Saturation State from Helmholtz Energy Equations of State", Journal of
 #        Thermal Science and Technology, 3, 442-451
