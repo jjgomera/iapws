@@ -143,8 +143,8 @@ def _PSat_h(h):
     >>> "%.8f" % _PSat_h(2400)
     '20.18090839'
     """
-    hmin_Ps3 = _Region1(623.15, _PSat_T(623.15))["h"]
-    hmax_Ps3 = _Region2(623.15, _PSat_T(623.15))["h"]
+    hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
+    hmax_Ps3 = _Region2(623.15, Ps_623)["h"]
     if h < hmin_Ps3:
         h = hmin_Ps3
     if h > hmax_Ps3:
@@ -1478,6 +1478,31 @@ def _Backward3_P_hs(h, s):
         return _Backward3b_P_hs(h, s)
 
 
+def _Backward3_sat_v_P(P, T, x):
+    """Backward equation for region 3 for saturated state, vs=f(P,x)
+    x 0,1 vapor quality"""
+    if x == 0:
+        if P < 19.00881189:
+            region = "c"
+        elif P < 21.0434:
+            region = "s"
+        elif P < 21.9316:
+            region = "u"
+        else:
+            region = "y"
+    else:
+        if P < 20.5:
+            region = "t"
+        elif P < 21.0434:
+            region = "r"
+        elif P < 21.9009:
+            region = "x"
+        else:
+            region = "z"
+
+    return _Backward3x_v_PT(T, P, region)
+
+
 def _Backward3_v_PT(P, T):
     """Backward equation for region 3, v=f(P,T)"""
     if P > 40:
@@ -1629,7 +1654,7 @@ def _Backward3_v_PT(P, T):
             region = "s"
         else:
             region = "t"
-    elif _PSat_T(623.15) < P <= 19.00881189:
+    elif Ps_623 < P <= 19.00881189:
         Ts = _TSat_P(P)
         if T <= Ts:
             region = "c"
@@ -2211,8 +2236,14 @@ def _Backward3x_v_PT(T, P, x):
 def _Region4(P, x):
     """Basic equation for region 4"""
     T = _TSat_P(P)
-    P1 = _Region1(T, P)
-    P2 = _Region2(T, P)
+    if T > 623.15:
+        rhol = 1./_Backward3_sat_v_P(P, T, 0)
+        P1 = _Region3(rhol, T)
+        rhov = 1./_Backward3_sat_v_P(P, T, 1)
+        P2 = _Region3(rhov, T)
+    else:
+        P1 = _Region1(T, P)
+        P2 = _Region2(T, P)
 
     propiedades = {}
     propiedades["T"] = T
@@ -2475,7 +2506,7 @@ def _Bound_hs(h, s):
     smin = _Region1(273.15, 100)["s"]
     hmin = _Region1(273.15, 100)["h"]
     s13 = _Region1(623.15, 100)["s"]
-    s13s = _Region1(623.15, _PSat_T(623.15))["s"]
+    s13s = _Region1(623.15,  Ps_623)["s"]
     smax = _Region2(1073.15, _PSat_T(273.15))["s"]
     hmax = _Region2(1073.15, _PSat_T(273.15))["h"]
 
@@ -2871,7 +2902,7 @@ class IAPWS97(object):
             if Pt <= P <= Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif P > Ps_623 and x in (0, 1):
-                rho = 1./_Backward3_v_PT(P, T)
+                rho = 1./_Backward3_sat_v_P(P, T, x)
                 propiedades = _Region3(rho, T)
             elif x == 0:
                 propiedades = _Region1(T, P)
@@ -2887,7 +2918,7 @@ class IAPWS97(object):
             if Tt <= T <= Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif T > 623.15 and x in (0, 1):
-                rho = 1./_Backward3_v_PT(P, T)
+                rho = 1./_Backward3_sat_v_P(P, T, x)
                 propiedades = _Region3(rho, T)
             elif Tt <= T <= 623.15 and x == 0:
                 propiedades = _Region1(T, P)
