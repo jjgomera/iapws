@@ -3138,10 +3138,10 @@ class IAPWS97_Ps(IAPWS97):
         IAPWS97.__init__(self, P=P, s=s)
 
 
-class IAPWS97_Pv(IAPWS97):
-    """Derivated class for direct P and v input"""
-    def __init__(self, P, v):
-        IAPWS97.__init__(self, P=P, v=v)
+class IAPWS97_Px(IAPWS97):
+    """Derivated class for direct P and x input"""
+    def __init__(self, P, x):
+        IAPWS97.__init__(self, P=P, x=x)
 
 
 class IAPWS97_Tx(IAPWS97):
