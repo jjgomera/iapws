@@ -2850,11 +2850,11 @@ class IAPWS97(object):
             region = _Bound_Ps(P, s)
             if region == 1:
                 To = _Backward1_T_Ps(P, s)
-                T = newton(_Region1(T, P)["s"]-s, To)
+                T = newton(lambda T: _Region1(T, P)["s"]-s, To)
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ps(P, s)
-                T = newton(_Region2(T, P)["s"]-s, To)
+                T = newton(lambda T: _Region2(T, P)["s"]-s, To)
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ps(P, s)
@@ -2882,7 +2882,7 @@ class IAPWS97(object):
                     rho, T = fsolve(funcion, [1/vo, To])
                     propiedades = _Region3(rho, T)
             elif region == 5:
-                T = newton(_Region5(T, P)["s"]-s, 1500)
+                T = newton(lambda T: _Region5(T, P)["s"]-s, 1500)
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
