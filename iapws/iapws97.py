@@ -2640,19 +2640,16 @@ def prop0(T, P):
         Pr = P/1.
         go, gop, gopp, got, gott, gopt = Region5_cp0(Tr, Pr)
 
-    prop0 = _fase()
-    prop0.v = Pr*gop*R*T/P/1000
-    prop0.h = Tr*got*R*T
-    prop0.s = R*(Tr*got-go)
-    prop0.cp = -R*Tr**2*gott
-    prop0.cv = R*(-Tr**2*gott+(gop-Tr*gopt)**2/gopp)
+    prop0 = {}
+    prop0["v"] = Pr*gop*R*T/P/1000
+    prop0["h"] = Tr*got*R*T
+    prop0["s"] = R*(Tr*got-go)
+    prop0["cp"] = -R*Tr**2*gott
+    prop0["cv"] = R*(-Tr**2*gott+(gop-Tr*gopt)**2/gopp)
 
-    prop0.w = (R*T*1000/(1+1/Tr**2/gott))**0.5
-    prop0.alfav = 1/T
-    prop0.xkappa = 1/P
-    # FIXME: Ideal Isentropic exponent dont work
-    prop0.gamma = 0
-    # prop0.gamma = -prop0.v/P/1000*prop0.derivative("P", "v", "s", prop0)
+    prop0["w"] = (R*T*1000/(1+1/Tr**2/gott))**0.5
+    prop0["alfav"] = 1/T
+    prop0["xkappa"] = 1/P
     return prop0
 
 
@@ -2999,6 +2996,21 @@ class IAPWS97(object):
         self.Tr = self.T/self.Tc
         self.Pr = self.P/self.Pc
 
+        # Ideal properties
+        cp0 = prop0(self.T, self.P)
+        self.v0 = cp0["v"]
+        self.h0 = cp0["h"]
+        self.u0 = self.h0-self.P*1000*self.v0
+        self.s0 = cp0["s"]
+        self.a0 = self.u0-self.T*self.s0
+        self.g0 = self.h0-self.T*self.s0
+
+        self.cp0 = cp0["cp"]
+        self.cv0 = cp0["cv"]
+        self.cp0_cv = self.cp0/self.cv0
+        self.w0 = cp0["w"]
+        self.gamma0 = self.cp0_cv
+
         self.Liquid = _fase()
         self.Vapor = _fase()
         if self.x == 0:
@@ -3066,20 +3078,7 @@ class IAPWS97(object):
             fase.alfap = fase.alfav/self.P/fase.xkappa
             fase.betap = -1/self.P/1000*self.derivative("P", "v", "T", fase)
 
-        cp0 = prop0(self.T, self.P)
-        fase.v0 = cp0.v
-        fase.h0 = cp0.h
-        fase.u0 = fase.h0-self.P*1000*fase.v0
-        fase.s0 = cp0.s
-        fase.a0 = fase.u0-self.T*fase.s0
-        fase.g0 = fase.h0-self.T*fase.s0
-
-        fase.cp0 = cp0.cp
-        fase.cv0 = cp0.cv
-        fase.cp0_cv = fase.cp0/fase.cv0
-        fase.w0 = cp0.w
-        fase.gamma0 = cp0.gamma
-        fase.fi = exp((fase.g-fase.g0)/R/self.T)
+        fase.fi = exp((fase.g-self.g0)/R/self.T)
         fase.f = self.P*fase.fi
 
     def getphase(self, fld):
