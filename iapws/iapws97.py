@@ -2688,13 +2688,16 @@ class IAPWS97(object):
     h        -   Specific enthalpy, kJ/kg
     u        -   Specific internal energy, kJ/kg
     s        -   Specific entropy, kJ/kg·K
-    c        -   Specific isobaric heat capacity, kJ/kg·K
-    c        -   Specific isochoric heat capacity, kJ/kg·K
+    cp       -   Specific isobaric heat capacity, kJ/kg·K
+    cv       -   Specific isochoric heat capacity, kJ/kg·K
     Z        -   Compression factor
+    fi       -   Fugacity coefficient
     f        -   Fugacity, MPa
+
     gamma    -   Isoentropic exponent
     alfav    -   Isobaric cubic expansion coefficient, 1/K
     xkappa   -   Isothermal compressibility, 1/MPa
+    kappas   -   Adiabatic compresibility, 1/MPa
     alfap    -   Relative pressure coefficient, 1/K
     betap    -   Isothermal stress coefficient, kg/m³
     joule    -   Joule-Thomson coefficient, K/MPa
@@ -2723,6 +2726,8 @@ class IAPWS97(object):
     Prandt   -   Prandtl number
     Pr       -   Reduced Pressure
     Tr       -   Reduced Temperature
+    Hvap     -   Vaporization heat, kJ/kg
+    Svap     -   Vaporization entropy, kJ/kg·K
 
     Usage:
     >>> water=IAPWS97(T=170+273.15,x=0.5)
@@ -2823,7 +2828,6 @@ class IAPWS97(object):
                 rho, T = fsolve(funcion, [1/vo, To])
                 propiedades = _Region3(rho, T)
             elif region == 4:
-                # FIXME: Bad region interpretation
                 T = _TSat_P(P)
                 if T <= 623.15:
                     h1 = _Region1(T, P)["h"]
@@ -2953,14 +2957,14 @@ class IAPWS97(object):
         elif self._thermo == "Tx":
             T, x = args
             P = _PSat_T(T)
-            if Tt <= T <= Tc and 0 < x < 1:
+            if 273.15 <= T <= Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
             elif T > 623.15 and x in (0, 1):
                 rho = 1./_Backward3_sat_v_P(P, T, x)
                 propiedades = _Region3(rho, T)
-            elif Tt <= T <= 623.15 and x == 0:
+            elif 273.15 <= T <= 623.15 and x == 0:
                 propiedades = _Region1(T, P)
-            elif Tt <= T <= 623.15 and x == 1:
+            elif 273.15 <= T <= 623.15 and x == 1:
                 propiedades = _Region2(T, P)
             elif P > Ps_623:
                 rho = 1./_Backward3_v_PT(P, T)
@@ -3001,6 +3005,7 @@ class IAPWS97(object):
             # only liquid phase
             self.fill(self, propiedades)
             self.fill(self.Liquid, propiedades)
+            self.sigma = _Tension(self.T)
         elif self.x == 1:
             # only vapor phase
             self.fill(self, propiedades)
@@ -3018,6 +3023,9 @@ class IAPWS97(object):
             self.a = self.u-self.T*self.s
             self.g = self.h-self.T*self.s
             self.sigma = _Tension(self.T)
+
+            self.Hvap = vapor["h"]-liquido["h"]
+            self.Svap = vapor["s"]-liquido["s"]
 
     def fill(self, fase, estado):
         fase.v = estado["v"]
@@ -3037,6 +3045,7 @@ class IAPWS97(object):
         fase.Z = self.P*fase.v/R*self.M/self.T
         fase.alfav = estado["alfav"]
         fase.xkappa = estado["kt"]
+        fase.kappas = -1/fase.v*self.derivative("v", "P", "s", fase)
 
         fase.mu = _Viscosity(fase.rho, self.T)
         fase.k = _ThCond(fase.rho, self.T)
@@ -3070,7 +3079,8 @@ class IAPWS97(object):
         fase.cp0_cv = fase.cp0/fase.cv0
         fase.w0 = cp0.w
         fase.gamma0 = cp0.gamma
-        fase.f = self.P*exp((fase.g-fase.g0)/R/self.T)
+        fase.fi = exp((fase.g-fase.g0)/R/self.T)
+        fase.f = self.P*fase.fi
 
     def getphase(self, fld):
         """Return fluid phase"""
