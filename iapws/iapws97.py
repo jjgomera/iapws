@@ -3054,7 +3054,7 @@ class IAPWS97(object):
         fase.cp_cv = fase.cp/fase.cv
         fase.w = estado["w"]
 
-        fase.Z = self.P*fase.v/R*self.M/self.T
+        fase.Z = self.P*fase.v/R*1000/self.T
         fase.alfav = estado["alfav"]
         fase.xkappa = estado["kt"]
         fase.kappas = -1/fase.v*self.derivative("v", "P", "s", fase)
