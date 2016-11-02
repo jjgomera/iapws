@@ -2728,13 +2728,16 @@ class IAPWS97(object):
 
     Usage:
     >>> water=IAPWS97(T=170+273.15,x=0.5)
-    >>> "%0.4f %0.4f %0.1f %0.2f" %(water.Liquid.cp, water.Vapor.cp, water.Liquid.w, water.Vapor.w)
+    >>> "%0.4f %0.4f %0.1f %0.2f" %(water.Liquid.cp, water.Vapor.cp, \
+        water.Liquid.w, water.Vapor.w)
     '4.3695 2.5985 1418.3 498.78'
     >>> water=IAPWS97(T=325+273.15,x=0.5)
-    >>> "%0.4f %0.8f %0.7f %0.2f %0.2f" %(water.P, water.Liquid.v, water.Vapor.v, water.Liquid.h, water.Vapor.h)
+    >>> "%0.4f %0.8f %0.7f %0.2f %0.2f" %(water.P, water.Liquid.v, \
+        water.Vapor.v, water.Liquid.h, water.Vapor.h)
     '12.0505 0.00152830 0.0141887 1493.37 2684.48'
     >>> water=IAPWS97(T=50+273.15,P=0.0006112127)
-    >>> "%0.4f %0.4f %0.2f %0.3f %0.2f" %(water.cp0, water.cv0, water.h0, water.s0, water.w0)
+    >>> "%0.4f %0.4f %0.2f %0.3f %0.2f" %(water.cp0, water.cv0, water.h0, \
+        water.s0, water.w0)
     '1.8714 1.4098 2594.66 9.471 444.93'
     """
     kwargs = {"T": 0.0,
@@ -3076,36 +3079,34 @@ class IAPWS97(object):
             fase.betap = estado["betap"]
         else:
             fase.alfap = fase.alfav/self.P/fase.xkappa
-            fase.betap = -1/self.P/1000*self.derivative("P", "v", "T", fase)
+            fase.betap = -1/self.P*self.derivative("P", "v", "T", fase)
 
         fase.fi = exp((fase.g-self.g0)/R/self.T)
         fase.f = self.P*fase.fi
 
     def getphase(self, fld):
         """Return fluid phase"""
-        # check if fld above critical pressure
-        if fld["P"] > self.Pc:
-            # check if fld above critical pressure
-            if fld["T"] > self.Tc:
-                return "Supercritical fluid"
-            else:
-                return "Compressible liquid"
-        # check if fld above critical pressure
+        if fld["P"] > self.Pc and fld["T"] > self.Tc:
+            phase = "Supercritical fluid"
         elif fld["T"] > self.Tc:
-            return "Gas"
-        # check quality
-        if fld["x"] >= 1.:
-            if self.kwargs["x"] == 1.:
-                return "Saturated vapor"
-            else:
-                return "Vapor"
-        elif 0 < fld["x"] < 1:
-            return "Two phases"
-        elif fld["x"] <= 0.:
-            if self.kwargs["x"] == 0.:
-                return "Saturated liquid"
-            else:
-                return "Liquid"
+            phase = "Gas"
+        elif fld["P"] > self.Pc:
+            phase = "Compressible liquid"
+        elif fld["P"] == self.Pc and fld["T"] == self.Tc:
+            phase = "Critical point"
+        elif fld["region"] == 4 and fld["x"] == 1:
+            phase = "Saturated vapor"
+        elif fld["region"] == 4 and fld["x"] == 0:
+            phase = "Saturated liquid"
+        elif fld["region"] == 4:
+            phase = "Two phases"
+        elif fld["x"] == 1:
+            phase = "Vapour"
+        elif fld["x"] == 0:
+            phase = "Liquid"
+        else:
+            phase = "Unknown"
+        return phase
 
     def derivative(self, z, x, y, fase):
         """Calculate generic partial derivative: (δz/δx)y
