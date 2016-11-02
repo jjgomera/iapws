@@ -10,6 +10,7 @@ from scipy.optimize import fsolve, newton
 
 from ._iapws import M, R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent, _fase
 from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
+from ._iapws import getphase
 
 
 sc = 4.41202148223476     # Critic entropy
@@ -2987,7 +2988,6 @@ class IAPWS97(object):
 
         self.x = propiedades["x"]
         self.region = propiedades["region"]
-        self.phase = self.getphase(propiedades)
         self.name = "water"
         self.synonim = "R-718"
         self.CAS = "7732-18-5"
@@ -2996,6 +2996,8 @@ class IAPWS97(object):
         self.P = propiedades["P"]
         self.v = propiedades["v"]
         self.rho = 1/self.v
+        self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x,
+                              self.region)
         self.Tr = self.T/self.Tc
         self.Pr = self.P/self.Pc
 
@@ -3083,30 +3085,6 @@ class IAPWS97(object):
 
         fase.fi = exp((fase.g-self.g0)/R/self.T)
         fase.f = self.P*fase.fi
-
-    def getphase(self, fld):
-        """Return fluid phase"""
-        if fld["P"] > self.Pc and fld["T"] > self.Tc:
-            phase = "Supercritical fluid"
-        elif fld["T"] > self.Tc:
-            phase = "Gas"
-        elif fld["P"] > self.Pc:
-            phase = "Compressible liquid"
-        elif fld["P"] == self.Pc and fld["T"] == self.Tc:
-            phase = "Critical point"
-        elif fld["region"] == 4 and fld["x"] == 1:
-            phase = "Saturated vapor"
-        elif fld["region"] == 4 and fld["x"] == 0:
-            phase = "Saturated liquid"
-        elif fld["region"] == 4:
-            phase = "Two phases"
-        elif fld["x"] == 1:
-            phase = "Vapour"
-        elif fld["x"] == 0:
-            phase = "Liquid"
-        else:
-            phase = "Unknown"
-        return phase
 
     def derivative(self, z, x, y, fase):
         """Calculate generic partial derivative: (δz/δx)y

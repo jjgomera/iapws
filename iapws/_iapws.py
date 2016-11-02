@@ -353,6 +353,31 @@ def _Refractive(rho, T, l=0.5893):
     return ((2*A+1)/(1-A))**0.5
 
 
+def getphase(Tc, Pc, T, P, x, region):
+    """Return fluid phase"""
+    if P > Pc and T > Tc:
+        phase = "Supercritical fluid"
+    elif T > Tc:
+        phase = "Gas"
+    elif P > Pc:
+        phase = "Compressible liquid"
+    elif P == Pc and T == Tc:
+        phase = "Critical point"
+    elif region == 4 and x == 1:
+        phase = "Saturated vapor"
+    elif region == 4 and x == 0:
+        phase = "Saturated liquid"
+    elif region == 4:
+        phase = "Two phases"
+    elif x == 1:
+        phase = "Vapour"
+    elif x == 0:
+        phase = "Liquid"
+    else:
+        phase = "Unknown"
+    return phase
+
+
 class _fase(object):
     """Class to implement a null phase"""
     v = None

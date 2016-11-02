@@ -12,7 +12,7 @@
 from scipy import exp, log
 from scipy.optimize import fsolve
 
-from ._iapws import _fase
+from ._iapws import _fase, getphase
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from .iapws97 import _TSat_P
 
@@ -488,6 +488,11 @@ class MEoS(_fase):
         self.P = P
         self.Pr = self.P/self.Pc
         self.x = x
+        if self._mode in ["Tx", "Px"] or 0 < x < 1:
+            region = 4
+        else:
+            region = 0
+        self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x, region)
 
         self.Liquid = _fase()
         self.Gas = _fase()
