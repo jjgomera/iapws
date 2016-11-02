@@ -52,3 +52,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# eric project
+.eric4project/
+.eric5project/
+.eric6project/
+*.e4p

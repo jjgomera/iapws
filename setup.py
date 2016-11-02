@@ -2,7 +2,7 @@ from setuptools import setup
 
 from iapws import __version__
 
-import io # for backwards compatibility with Python 2
+import io  # for backwards compatibility with Python 2
 
 
 with io.open('README.rst', encoding="utf8") as file:
@@ -17,7 +17,8 @@ setup(
     author_email='jjgomera@gmail.com',
     url='https://github.com/jjgomera/iapws',
     download_url='https://github.com/jjgomera/iapws/tarball/v' + __version__,
-    description='Python implementation of standards from The International Association for the Properties of Water and Steam',
+    description='Python implementation of standards from The International'
+                'Association for the Properties of Water and Steam',
     long_description=long_description,
     license="gpl v3",
     install_requires=["scipy"],
