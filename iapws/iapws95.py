@@ -213,7 +213,8 @@ class MEoS(_fase):
                     rhoo = self._Vapor_Density(T)
                 else:
                     rhoo = self.rhoc*3
-                rho = fsolve(lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)
+                rho = fsolve(
+                    lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)
 
             elif self._mode == "Th":
                 rhol = self._Liquid_Density(T)
@@ -315,8 +316,7 @@ class MEoS(_fase):
                     rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "rhoh":
-                f = lambda T: self._Helmholtz(rho, T)["h"]-h
-                T = fsolve(f, 600)
+                T = fsolve(lambda T: self._Helmholtz(rho, T)["h"]-h, 600)
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T[0] == 600 or rhov <= rho <= rhol:
@@ -329,8 +329,7 @@ class MEoS(_fase):
                     T = fsolve(funcion, 500.)
 
             elif self._mode == "rhos":
-                f = lambda T: self._Helmholtz(rho, T)["s"]-s
-                T = fsolve(f, 600)
+                T = fsolve(lambda T: self._Helmholtz(rho, T)["s"]-s, 600)
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T[0] == 600 or rhov <= rho <= rhol:
@@ -374,7 +373,8 @@ class MEoS(_fase):
                         vapor = self._Helmholtz(rhov, T)
                         liquido = self._Helmholtz(rhol, T)
                         x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return vapor["h"]*x+liquido["h"]*(1-x)-h, vapor["s"]*x+liquido["s"]*(1-x)-s
+                        return (vapor["h"]*x+liquido["h"]*(1-x)-h,
+                                vapor["s"]*x+liquido["s"]*(1-x)-s)
                     rho, T = fsolve(funcion, [0.5, 400.])
 
             elif self._mode == "hu":
@@ -393,7 +393,8 @@ class MEoS(_fase):
                         vu = vapor["h"]-Ps/rhov
                         lu = liquido["h"]-Ps/rhol
                         x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return vapor["h"]*x+liquido["h"]*(1-x)-h, vu*x+lu*(1-x)-u
+                        return (vapor["h"]*x+liquido["h"]*(1-x)-h,
+                                vu*x+lu*(1-x)-u)
                     rho, T = fsolve(funcion, [2., 500.])
 
             elif self._mode == "su":
@@ -412,7 +413,8 @@ class MEoS(_fase):
                         vu = vapor["h"]-Ps/rhov
                         lu = liquido["h"]-Ps/rhol
                         x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return vapor["s"]*x+liquido["s"]*(1-x)-s, vu*x+lu*(1-x)-u
+                        return (vapor["s"]*x+liquido["s"]*(1-x)-s,
+                                vu*x+lu*(1-x)-u)
                     rho, T = fsolve(funcion, [2., 500.])
 
             rho = float(rho)
@@ -470,7 +472,8 @@ class MEoS(_fase):
                 deltaG = rhog/self.rhoc
                 liquido = self._Helmholtz(rhol, T)
                 vapor = self._Helmholtz(rhog, T)
-                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
+                    liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
                 return Ps/1000-P
 
             To = _TSat_P(P)
@@ -648,7 +651,8 @@ class MEoS(_fase):
             deltaL = rhoL/self.rhoc
             deltaG = rhoG/self.rhoc
 
-            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
 #    def _saturation2(self, T):
@@ -695,7 +699,8 @@ class MEoS(_fase):
 #        if error > 1e-3:
 #            print("Iteration don´t converge, residual error %g" % error)
 #
-#        Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+#        Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+#            liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
 #        return rhoL, rhoG, Ps
 
     def _Helmholtz(self, rho, T):
@@ -705,7 +710,8 @@ class MEoS(_fase):
         delta = rho/rhoc
         tau = Tc/T
         fio, fiot, fiott, fiod, fiodd, fiodt = self._phi0(tau, delta)
-        fir, firt, firtt, fird, firdd, firdt, firdtt, B, C = self._phir(tau, delta)
+        fir, firt, firtt, fird, firdd, firdt, firdtt, B, C = self._phir(
+            tau, delta)
 
         propiedades = {}
         propiedades["fir"] = fir
@@ -718,12 +724,15 @@ class MEoS(_fase):
         propiedades["h"] = self.R*T*(1+tau*(fiot+firt)+delta*fird)
         propiedades["s"] = self.R*(tau*(fiot+firt)-fio-fir)
         propiedades["cv"] = -self.R*tau**2*(fiott+firtt)
-        propiedades["cp"] = self.R*(-tau**2*(fiott+firtt) +
-            (1+delta*fird-delta*tau*firdt)**2/(1+2*delta*fird+delta**2*firdd))
-        propiedades["w"] = (self.R*1000*T*(1+2*delta*fird+delta**2*firdd -
-            (1+delta*fird-delta*tau*firdt)**2/tau**2/(fiott+firtt)))**0.5
+        propiedades["cp"] = self.R*(
+            -tau**2*(fiott+firtt) + (1+delta*fird-delta*tau*firdt)**2/(
+                1+2*delta*fird+delta**2*firdd))
+        propiedades["w"] = (
+            self.R*1000*T*(1+2*delta*fird+delta**2*firdd - (
+                1+delta*fird-delta*tau*firdt)**2/tau**2/(fiott+firtt)))**0.5
         propiedades["alfap"] = (1-delta*tau*firdt/(1+delta*fird))/T
-        propiedades["betap"] = rho*(1+(delta*fird+delta**2*firdd)/(1+delta*fird))
+        propiedades["betap"] = rho*(
+            1+(delta*fird+delta**2*firdd)/(1+delta*fird))
         propiedades["fugacity"] = exp(fir+delta*fird-log(1+delta*fird))
         propiedades["B"] = B
         propiedades["C"] = C
@@ -813,12 +822,13 @@ class MEoS(_fase):
                 ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
             firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
             firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-g*delta**c)
-            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(-g*delta**c)
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(
+                -g*delta**c)
             firdtt += n*t*(t-1)*delta**(d-1)*tau**(t-2)*(d-g*c*delta**c) * \
                 exp(-g*delta**c)
             B += n*exp(-g*delta_0**c)*delta_0**(d-1)*tau**t*(d-g*c*delta_0**c)
-            C += n*exp(-g*delta_0**c)*(delta_0**(d-2)*tau**t *
-                ((d-g*c*delta_0**c)*(d-1-g*c*delta_0**c)-g**2*c**2*delta_0**c))
+            C += n*exp(-g*delta_0**c)*(delta_0**(d-2)*tau**t*(
+                (d-g*c*delta_0**c)*(d-1-g*c*delta_0**c)-g**2*c**2*delta_0**c))
 
         # Gaussian terms
         nr3 = self._constants.get("nr3", [])
@@ -831,36 +841,39 @@ class MEoS(_fase):
         for i in range(len(nr3)):
             exp1 = self._constants.get("exp1", [2]*len(nr3))
             exp2 = self._constants.get("exp2", [2]*len(nr3))
-            fir += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])
-            fird += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                (d3[i]/delta-2*a3[i]*(delta-e3[i]))
-            firdd += nr3[i]*tau**t3[i]*exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i] *
-                (tau-g3[i])**exp2[i])*(-2*a3[i]*delta**d3[i]+4*a3[i]**2 *
-                delta**d3[i]*(delta-e3[i])**exp1[i]-4*d3[i]*a3[i]*delta**2 *
-                (delta-e3[i])+d3[i]*2*delta)
-            firt += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                (t3[i]/tau-2*b3[i]*(tau-g3[i]))
-            firtt += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                ((t3[i]/tau-2*b3[i]*(tau-g3[i]))**exp2[i]-t3[i]/tau**2-2*b3[i])
-            firdt += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                (t3[i]/tau-2*b3[i]*(tau-g3[i]))*(d3[i]/delta-2*a3[i]*(delta-e3[i]))
-            firdtt += nr3[i]*delta**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                ((t3[i]/tau-2*b3[i]*(tau-g3[i]))**exp2[i]-t3[i]/tau**2-2*b3[i]) * \
-                (d3[i]/delta-2*a3[i]*(delta-e3[i]))
-            B += nr3[i]*delta_0**d3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta_0-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                (d3[i]/delta_0-2*a3[i]*(delta_0-e3[i]))
-            C += nr3[i]*tau**t3[i] * \
-                exp(-a3[i]*(delta_0-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i]) * \
-                (-2*a3[i]*delta_0**d3[i]+4*a3[i]**2*delta_0**d3[i] *
-                (delta_0-e3[i])**exp1[i]-4*d3[i]*a3[i]*delta_0**2*(delta_0-e3[i]) +
-                d3[i]*2*delta_0)
+            fir += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])
+            fird += nr3[i]*delta**d3[i]*tau**t3[i]*exp(
+                -a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    d3[i]/delta-2*a3[i]*(delta-e3[i]))
+            firdd += nr3[i]*tau**t3[i]*exp(
+                -a3[i]*(delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    -2*a3[i]*delta**d3[i]+4*a3[i]**2*delta**d3[i]*(
+                        delta-e3[i])**exp1[i]-4*d3[i]*a3[i]*delta**2*(
+                            delta-e3[i])+d3[i]*2*delta)
+            firt += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    t3[i]/tau-2*b3[i]*(tau-g3[i]))
+            firtt += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    (t3[i]/tau-2*b3[i]*(tau-g3[i]))**exp2[i]-t3[i]/tau**2 -
+                    2*b3[i])
+            firdt += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    t3[i]/tau-2*b3[i]*(tau-g3[i]))*(d3[i]/delta-2*a3[i]*(
+                        delta-e3[i]))
+            firdtt += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*((
+                    t3[i]/tau-2*b3[i]*(tau-g3[i]))**exp2[i]-t3[i]/tau**2-2 *
+                    b3[i])*(d3[i]/delta-2*a3[i]*(delta-e3[i]))
+            B += nr3[i]*delta_0**d3[i]*tau**t3[i]*exp(-a3[i]*(
+                delta_0-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
+                    d3[i]/delta_0-2*a3[i]*(delta_0-e3[i]))
+            C += nr3[i]*tau**t3[i]*exp(-a3[i]*(delta_0-e3[i])**exp1[i]-b3[i]*(
+                tau-g3[i])**exp2[i])*(
+                    -2*a3[i]*delta_0**d3[i]+4*a3[i]**2*delta_0**d3[i]*(
+                        delta_0-e3[i])**exp1[i]-4*d3[i]*a3[i]*delta_0**2*(
+                            delta_0-e3[i])+d3[i]*2*delta_0)
 
         # Non analitic terms
         nr4 = self._constants.get("nr4", [])
@@ -882,58 +895,60 @@ class MEoS(_fase):
             Fdtt = 4*Ci[i]*D[i]*F*(delta-1)*(2*D[i]*(tau-1)**2-1)
 
             Delta = Tita**2+Bi[i]*((delta-1)**2)**a4[i]
-            Deltad = (delta-1)*(A[i]*Tita*2/bt[i]*((delta-1)**2)**(0.5/bt[i]-1) \
-                + 2*Bi[i]*a4[i]*((delta-1)**2)**(a4[i]-1))
+            Deltad = (delta-1)*(A[i]*Tita*2/bt[i]*((delta-1)**2)**(
+                0.5/bt[i]-1)+2*Bi[i]*a4[i]*((delta-1)**2)**(a4[i]-1))
             if delta == 1:
                 Deltadd = 0
             else:
-                Deltadd = Deltad/(delta-1)+(delta-1)**2 * \
-                    (4*Bi[i]*a4[i]*(a4[i]-1)*((delta-1)**2)**(a4[i]-2) +
-                    2*A[i]**2/bt[i]**2*(((delta-1)**2)**(0.5/bt[i]-1))**2 +
-                    A[i]*Tita*4/bt[i]*(0.5/bt[i]-1)*((delta-1)**2)**(0.5/bt[i]-2))
+                Deltadd = Deltad/(delta-1)+(delta-1)**2*(4*Bi[i]*a4[i]*(
+                    a4[i]-1)*((delta-1)**2)**(a4[i]-2)+2*A[i]**2/bt[i]**2*(((
+                        delta-1)**2)**(0.5/bt[i]-1))**2+A[i]*Tita*4/bt[i]*(
+                            0.5/bt[i]-1)*((delta-1)**2)**(0.5/bt[i]-2))
 
             DeltaBd = b[i]*Delta**(b[i]-1)*Deltad
-            DeltaBdd = b[i]*(Delta**(b[i]-1)*Deltadd+(b[i]-1)*Delta**(b[i]-2)*Deltad**2)
+            DeltaBdd = b[i]*(Delta**(b[i]-1)*Deltadd+(b[i]-1)*Delta**(
+                b[i]-2)*Deltad**2)
             DeltaBt = -2*Tita*b[i]*Delta**(b[i]-1)
-            DeltaBtt = 2*b[i]*Delta**(b[i]-1)+4*Tita**2*b[i]*(b[i]-1)*Delta**(b[i]-2)
-            DeltaBdt = -A[i]*b[i]*2/bt[i]*Delta**(b[i]-1)*(delta-1)*((delta-1)**2) ** \
-                (0.5/bt[i]-1)-2*Tita*b[i]*(b[i]-1)*Delta**(b[i]-2)*Deltad
-            DeltaBdtt = 2*b[i]*(b[i]-1)*Delta**(b[i]-2) * \
-                (Deltad*(1+2*Tita**2*(b[i]-2)/Delta)+4*Tita*A[i] *
-                (delta-1)/bt[i]*((delta-1)**2)**(0.5/bt[i]-1))
+            DeltaBtt = 2*b[i]*Delta**(b[i]-1)+4*Tita**2*b[i]*(
+                b[i]-1)*Delta**(b[i]-2)
+            DeltaBdt = -A[i]*b[i]*2/bt[i]*Delta**(b[i]-1)*(delta-1)*((
+                delta-1)**2)**(0.5/bt[i]-1)-2*Tita*b[i]*(b[i]-1)*Delta**(
+                    b[i]-2)*Deltad
+            DeltaBdtt = 2*b[i]*(b[i]-1)*Delta**(b[i]-2)*(Deltad*(
+                1+2*Tita**2*(b[i]-2)/Delta)+4*Tita*A[i]*(delta-1)/bt[i]*((
+                    delta-1)**2)**(0.5/bt[i]-1))
 
             fir += nr4[i]*Delta**b[i]*delta*F
             fird += nr4[i]*(Delta**b[i]*(F+delta*Fd)+DeltaBd*delta*F)
-            firdd += nr4[i]*(Delta**b[i]*(2*Fd+delta*Fdd)+2*DeltaBd *
-                (F+delta*Fd)+DeltaBdd*delta*F)
+            firdd += nr4[i]*(Delta**b[i]*(2*Fd+delta*Fdd)+2*DeltaBd*(
+                F+delta*Fd)+DeltaBdd*delta*F)
             firt += nr4[i]*delta*(DeltaBt*F+Delta**b[i]*Ft)
             firtt += nr4[i]*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt)
             firdt += nr4[i]*(Delta**b[i]*(Ft+delta*Fdt)+delta*DeltaBd*Ft +
-                DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
-            firdtt += nr4[i]*((DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt) +
-                delta*(DeltaBdtt*F+DeltaBtt*Fd+2*DeltaBdt*Ft+2*DeltaBt*Fdt +
-                DeltaBt*Ftt+Delta**b[i]*Fdtt))
+                             DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
+            firdtt += nr4[i]*((DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt)+delta*(
+                DeltaBdtt*F+DeltaBtt*Fd+2*DeltaBdt*Ft+2*DeltaBt*Fdt+DeltaBt *
+                Ftt+Delta**b[i]*Fdtt))
 
             Tita_ = (1-tau)+A[i]*((delta_0-1)**2)**(0.5/bt[i])
             Delta_ = Tita_**2+Bi[i]*((delta_0-1)**2)**a4[i]
-            Deltad_ = (delta_0-1)*(A[i]*Tita_*2/bt[i]*((delta_0-1)**2) **
-                (0.5/bt[i]-1)+2*Bi[i]*a4[i]*((delta_0-1)**2)**(a4[i]-1))
-            Deltadd_ = Deltad_/(delta_0-1)+(delta_0-1)**2 * \
-                (4*Bi[i]*a4[i]*(a4[i]-1)*((delta_0-1)**2)**(a4[i]-2)+2*A[i]**2 /
-                bt[i]**2*(((delta_0-1)**2)**(0.5/bt[i]-1))**2+A[i]*Tita_ *
-                4/bt[i]*(0.5/bt[i]-1)*((delta_0-1)**2)**(0.5/bt[i]-2))
+            Deltad_ = (delta_0-1)*(A[i]*Tita_*2/bt[i]*((delta_0-1)**2)**(
+                0.5/bt[i]-1)+2*Bi[i]*a4[i]*((delta_0-1)**2)**(a4[i]-1))
+            Deltadd_ = Deltad_/(delta_0-1)+(delta_0-1)**2*(
+                4*Bi[i]*a4[i]*(a4[i]-1)*((delta_0-1)**2)**(
+                    a4[i]-2)+2*A[i]**2/bt[i]**2*(((delta_0-1)**2)**(
+                        0.5/bt[i]-1))**2+A[i]*Tita_*4/bt[i]*(0.5/bt[i]-1)*((
+                            delta_0-1)**2)**(0.5/bt[i]-2))
             DeltaBd_ = b[i]*Delta_**(b[i]-1)*Deltad_
-            DeltaBdd_ = b[i]*(Delta_**(b[i]-1)*Deltadd_ +
-                (b[i]-1)*Delta_**(b[i]-2)*Deltad_**2)
+            DeltaBdd_ = b[i]*(Delta_**(b[i]-1)*Deltadd_+(b[i]-1)*Delta_**(
+                b[i]-2)*Deltad_**2)
             F_ = exp(-Ci[i]*(delta_0-1)**2-D[i]*(tau-1)**2)
             Fd_ = -2*Ci[i]*F_*(delta_0-1)
             Fdd_ = 2*Ci[i]*F_*(2*Ci[i]*(delta_0-1)**2-1)
 
-            B += nr4[i]*(Delta_**b[i]*(F_+delta_0*Fd_) +
-                DeltaBd_*delta_0*F_)
-            C += nr4[i]*(Delta_**b[i]*(2*Fd_+delta_0*Fdd_) +
-                2*DeltaBd_*(F_+delta_0*Fd_) +
-                DeltaBdd_*delta_0*F_)
+            B += nr4[i]*(Delta_**b[i]*(F_+delta_0*Fd_)+DeltaBd_*delta_0*F_)
+            C += nr4[i]*(Delta_**b[i]*(2*Fd_+delta_0*Fdd_)+2*DeltaBd_*(
+                F_+delta_0*Fd_)+DeltaBdd_*delta_0*F_)
 
         return fir, firt, firtt, fird, firdd, firdt, firdtt, B, C
 
@@ -1024,91 +1039,127 @@ class IAPWS95(MEoS):
     """Multiparameter equation of state for water (including IAPWS95)
 
     >>> water=IAPWS95(T=300, rho=996.5560)
-    >>> print("%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s))
+    >>> print("%0.10f %0.8f %0.5f %0.9f" % ( \
+        water.P, water.cv, water.w, water.s))
     0.0992418350 4.13018112 1501.51914 0.393062643
 
     >>> water=IAPWS95(T=500, rho=0.435)
-    >>> print("%0.10f %0.8f %0.5f %0.9f" % (water.P, water.cv, water.w, water.s))
+    >>> print("%0.10f %0.8f %0.5f %0.9f" % ( \
+        water.P, water.cv, water.w, water.s))
     0.0999679423 1.50817541 548.31425 7.944882714
 
     >>> water=IAPWS95(T=900., P=700)
-    >>> print("%0.4f %0.8f %0.5f %0.8f" % (water.rho, water.cv, water.w, water.s))
+    >>> print("%0.4f %0.8f %0.5f %0.8f" % ( \
+        water.rho, water.cv, water.w, water.s))
     870.7690 2.66422350 2019.33608 4.17223802
 
     >>> water=IAPWS95(T=300., P=0.1)
-    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, \
+        water.virialB))
     300.00 0.10000 996.56 112.65 0.39306 4.1806 1501.5 -0.066682
 
     >>> water=IAPWS95(T=500., P=0.1)
-    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, \
+        water.virialB))
     500.00 0.10000 0.43514 2928.6 7.9447 1.9813 548.31 -0.0094137
 
     >>> water=IAPWS95(T=450., x=0.5)
-    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.virialB))
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.virialB))
     450.00 0.93220 9.5723 1761.8 4.3589 -0.013028
 
     >>> water=IAPWS95(P=1.5, rho=1000.)
-    >>> print("%0.2f %0.4f %0.1f %0.3f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.4f %0.1f %0.3f %0.5f %0.4f %0.1f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, \
+        water.virialB))
     286.44 1.5000 1000.0 57.253 0.19931 4.1855 1462.1 -0.085566
 
     >>> water=IAPWS95(h=3000, s=8.)
-    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.5f %0.5f %0.1f %0.4f %0.4f %0.2f %0.7f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, \
+        water.virialB))
     536.24 0.11970 0.48547 3000.0 8.0000 1.9984 567.04 -0.0076606
 
     >>> water=IAPWS95(h=150, s=0.4)
-    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.5f %0.4f %0.1f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.cp, water.w, \
+        water.virialB))
     301.27 35.50549 1011.48 150.00 0.40000 4.0932 1564.1 -0.065238
 
     >>> water=IAPWS95(T=450., rho=300)
-    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.6f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.6f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
     450.00 0.93220 300.00 770.82 2.1568 0.010693 -0.013028
 
     >>> water=IAPWS95(rho=300., P=0.1)
-    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.7f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.5f %0.2f %0.2f %0.4f %0.7f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
     372.76 0.10000 300.00 420.56 1.3110 0.0013528 -0.025144
 
     >>> water=IAPWS95(h=1500., P=0.1)
-    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.4f %0.5f %0.6f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
     372.76 0.10000 1.2303 1500.0 4.2068 0.47952 -0.025144
 
     >>> water=IAPWS95(s=5., P=3.5)
-    >>> print("%0.2f %0.4f %0.3f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.4f %0.5f %0.7f" % ( \
+        water.T, water.P, water.rho, water.h, water.s, water.x, water.virialB))
     515.71 3.5000 25.912 2222.8 5.0000 0.66921 -0.0085877
 
     >>> water=IAPWS95(T=500., u=900)
-    >>> print("%0.2f %0.2f %0.2f %0.2f %0.1f %0.4f %0.4f %0.1f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.2f %0.2f %0.2f %0.1f %0.4f %0.4f %0.1f %0.7f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, \
+        water.w, water.virialB))
     500.00 108.21 903.62 900.00 1019.8 2.4271 4.1751 1576.0 -0.0094137
 
     >>> water=IAPWS95(P=0.3, u=1550.)
-    >>> print("%0.2f %0.5f %0.4f %0.1f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.5f %0.4f %0.1f %0.1f %0.4f %0.5f %0.6f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     406.67 0.30000 3.3029 1550.0 1640.8 4.3260 0.49893 -0.018263
 
     >>> water=IAPWS95(rho=300, h=1000.)
-    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.6f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.6f %0.7f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     494.92 2.3991 300.00 992.00 1000.0 2.6315 0.026071 -0.0097064
 
     >>> water=IAPWS95(rho=30, s=8.)
-    >>> print("%0.2f %0.3f %0.3f %0.1f %0.1f %0.4f %0.4f %0.2f %0.9f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, water.w, water.virialB))
+    >>> print("%0.2f %0.3f %0.3f %0.1f %0.1f %0.4f %0.4f %0.2f %0.9f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.cp, \
+        water.w, water.virialB))
     1562.42 21.671 30.000 4628.5 5350.9 8.0000 2.7190 943.53 0.000047165
 
     >>> water=IAPWS95(rho=30, s=4.)
-    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     495.00 2.4029 30.000 1597.3 1677.4 4.0000 0.39218 -0.0097015
 
     >>> water=IAPWS95(rho=300, u=1000.)
-    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.4f %0.3f %0.1f %0.1f %0.4f %0.5f %0.7f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     496.44 2.4691 300.000 1000.0 1008.2 2.6476 0.02680 -0.0096173
 
     >>> water=IAPWS95(s=3., h=1000.)
-    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     345.73 0.034850 0.73526 952.60 1000.0 3.0000 0.29920 -0.034124
 
     >>> water=IAPWS95(u=995., h=1000.)
-    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.4f %0.2f %0.2f %0.1f %0.4f %0.5f %0.6f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     501.89 2.7329 546.58 995.00 1000.0 2.6298 0.00866 -0.009308
 
     >>> water=IAPWS95(u=1000., s=3.)
-    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % (water.T, water.P, water.rho, water.u, water.h, water.s, water.x, water.virialB))
+    >>> print("%0.2f %0.6f %0.5f %0.2f %0.1f %0.4f %0.5f %0.6f" % ( \
+        water.T, water.P, water.rho, water.u, water.h, water.s, water.x, \
+        water.virialB))
     371.24 0.094712 1.99072 1000.00 1047.6 3.0000 0.28144 -0.025543
 
     """
@@ -1129,7 +1180,8 @@ class IAPWS95(MEoS):
            "pow": [0, 1],
            "ao_pow": [-8.3204464837497, 6.6832105275932],
            "ao_exp": [0.012436, 0.97315, 1.2795, 0.96956, 0.24873],
-           "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796, 27.5075105]}
+           "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796,
+                     27.5075105]}
 
     _constants = {
         "R": 8.314371357587,
@@ -1144,13 +1196,13 @@ class IAPWS95(MEoS):
                 -0.19232721156002, -0.25709043003438, 0.16074868486251,
                 -0.4009282892587e-1, 0.39343422603254e-6, -0.75941377088144e-5,
                 0.56250979351888e-3, -0.15608652257135e-4, 0.11537996422951e-8,
-                0.36582165144204e-6, -0.13251180074668e-11, -0.62639586912454e-9,
+                .36582165144204e-6, -.13251180074668e-11, -.62639586912454e-9,
                 -0.10793600908932, 0.17611491008752e-1, 0.22132295167546,
                 -0.40247669763528, 0.58083399985759, 0.49969146990806e-2,
                 -0.31358700712549e-1, -0.74315929710341, 0.47807329915480,
                 0.20527940895948e-1, -0.13636435110343, 0.14180634400617e-1,
                 0.83326504880713e-2, -0.29052336009585e-1, 0.38615085574206e-1,
-                -0.20393486513704e-1, -0.16554050063734e-2, 0.19955571979541e-2,
+                -0.20393486513704e-1, -0.16554050063734e-2, .19955571979541e-2,
                 0.15870308324157e-3, -0.16388568342530e-4, 0.43613615723811e-1,
                 0.34994005463765e-1, -0.76788197844621e-1, 0.22446277332006e-1,
                 -0.62689710414685e-4, -0.55711118565645e-9, -0.19905718354408,
@@ -1246,7 +1298,8 @@ class D2O(MEoS):
     """Multiparameter equation of state for heavy water
 
     >>> water=D2O(T=300, rho=996.5560)
-    >>> print("%0.10f %0.8f %0.5f" % (water.P, water.Liquid.cv, water.Liquid.w))
+    >>> print("%0.10f %0.8f %0.5f" % ( \
+        water.P, water.Liquid.cv, water.Liquid.w))
     0.0030675947 4.21191157 5332.04871
     """
     name = "heavy water"
@@ -1264,7 +1317,8 @@ class D2O(MEoS):
 
     Fi0 = {'ao_log': [1, 2.9176485],
            'ao_pow': [-5.60420745, 5.4495718, 0.100195196505025,
-                      -0.2844660508898171, 0.06437609920676933, -0.005436994367359454],
+                      -0.2844660508898171, 0.06437609920676933,
+                      -0.005436994367359454],
            'pow': [0, 1, -1.0, -2.0, -3.0, -4.0],
            'ao_exp': [], 'titao': []}
 
@@ -1310,7 +1364,8 @@ class D2O(MEoS):
         "exp": [0.3678, 1.9, 2.2, 2.63, 7.3]}
     _vapor_Density = {
         "eq": 3,
-        "ao": [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2, -0.70412e2],
+        "ao": [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2,
+               -0.70412e2],
         "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
 
     @classmethod
@@ -1329,10 +1384,10 @@ class D2O(MEoS):
                0.3458395, 0.3509007, 1.315436, 1.297752, 1.353448, -0.2847572,
                -1.037026, -1.287846, -0.02148229, 0.07013759, 0.4660127,
                0.2292075, -0.4857462, 0.01641220, -0.02884911, 0.1607171,
-               -0.009603846, -0.01163815, -0.008239587, 0.004559914, -0.003886659]
+               -.009603846, -.01163815, -.008239587, 0.004559914, -0.003886659]
 
-        array = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
-        fi1 = exp(rhor*sum(array))
+        arr = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
+        fi1 = exp(rhor*sum(arr))
 
         return 55.2651e-6*fi0*fi1
 
@@ -1346,7 +1401,8 @@ class D2O(MEoS):
         Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
 
         nr = [483.656, -191.039, 73.0358, -7.57467]
-        Lr = -167.31*(1-exp(-2.506*rhor))+sum([Li*rhor**(i+1) for i, Li in enumerate(nr)])
+        Lr = -167.31*(1-exp(-2.506*rhor))+sum(
+            [Li*rhor**(i+1) for i, Li in enumerate(nr)])
 
         f1 = exp(0.144847*Tr-5.64493*Tr**2)
         f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
@@ -1362,4 +1418,3 @@ class D2O(MEoS):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
