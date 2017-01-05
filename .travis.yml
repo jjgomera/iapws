@@ -14,4 +14,5 @@ install:
   - "pip install --only-binary=scipy scipy"
 
 # command to run tests
-script: test.py
+script:
+  - "python test.py"
