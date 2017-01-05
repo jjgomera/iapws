@@ -9,7 +9,9 @@ python:
   - "3.6"
 
 # command to install dependencies
-install: "pip install --only-binary=scipy scipy"
+install:
+  - "pip install --upgrade pip setuptools wheel"
+  - "pip install --only-binary=scipy scipy"
 
 # command to run tests
 script: test.py
