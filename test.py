@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 
 from iapws.iapws97 import IAPWS97
@@ -976,4 +977,9 @@ class Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    major = sys.version_info[0]
+    minor = sys.version_info[1]
+    if major == 2 and minor == 6:
+        unittest.main()
+    else:
+        unittest.main(verbosity=2)
