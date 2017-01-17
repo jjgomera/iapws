@@ -1,3 +1,12 @@
+.. image:: https://api.travis-ci.org/jjgomera/iapws.svg?branch=master
+    :target: https://travis-ci.org/jjgomera/iapws
+    :alt: Build Status
+
+.. image:: https://ci.appveyor.com/api/projects/status/a128sh8e50cjsiya?svg=true
+    :target: https://ci.appveyor.com/project/jjgomera/iapws
+    :alt: Windows Build Status
+
+
 iapws
 =====
 
