@@ -15,7 +15,7 @@ install:
 
 # command to run tests
 script:
-  - python test.py
+  - coverage run --source=iapws test.py
 
 # Add coverall support
 after_success:
