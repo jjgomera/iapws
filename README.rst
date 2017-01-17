@@ -6,6 +6,9 @@
     :target: https://ci.appveyor.com/project/jjgomera/iapws
     :alt: Windows Build Status
 
+.. image:: https://coveralls.io/repos/github/jjgomera/iapws/badge.svg?branch=master
+    :target: https://coveralls.io/github/jjgomera/iapws?branch=master
+    :alt: coveralls.io analysis
 
 iapws
 =====
