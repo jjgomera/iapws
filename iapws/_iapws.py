@@ -41,23 +41,23 @@ def _Ice(T, P):
     prop : dict
         Dict with calculated properties of ice
         The available properties are:
-            rho: Density [kg/m³]
-            h: Specific enthalpy [kJ/kg]
-            u: Specific internal energy [kJ/kg]
-            a: Specific Helmholtz energy [kJ/kg]
-            g: Specific Gibbs energy [kJ/kg]
-            s: Specific entropy [kJ/kgK]
-            cp: Specific isobaric heat capacity [kJ/kgK]
-            alfav: Cubic expansion coefficient [1/K]
-            beta: Pressure coefficient [MPa/K]
-            kt: Isothermal compressibility [1/MPa]
-            ks: Isentropic compressibility [1/MPa]
-            gt: [∂g/∂T]P
-            gtt: [∂²g/∂T²]P
-            gp: [∂g/∂P]T
-            gpp: [∂²g/∂P²]T
-            gtp: [∂²g/∂T∂P]
 
+            * rho: Density [kg/m³]
+            * h: Specific enthalpy [kJ/kg]
+            * u: Specific internal energy [kJ/kg]
+            * a: Specific Helmholtz energy [kJ/kg]
+            * g: Specific Gibbs energy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * alfav: Cubic expansion coefficient [1/K]
+            * beta: Pressure coefficient [MPa/K]
+            * kt: Isothermal compressibility [1/MPa]
+            * ks: Isentropic compressibility [1/MPa]
+            * gt: [∂g/∂T]P
+            * gtt: [∂²g/∂T²]P
+            * gp: [∂g/∂P]T
+            * gpp: [∂²g/∂P²]T
+            * gtp: [∂²g/∂T∂P]
 
     Examples
     --------
@@ -73,7 +73,7 @@ def _Ice(T, P):
 
     References
     ----------
-    .. `IAPWS <http://iapws.org/relguide/Ice-2009.html>`_, Revised Release on
+    .. `IAPWS <http://iapws.org/relguide/Ice-2009.html/>`_, Revised Release on
     the Equation of State 2006 for H2O Ice Ih September 2009
     """
     # Check input in range of validity
@@ -86,7 +86,7 @@ def _Ice(T, P):
         # Ice Ih limit upper pressure
         raise NotImplementedError("Incoming out of bound")
     else:
-        Pmel = _Melting_Pressure(T, P)
+        Pmel = _Melting_Pressure(T)
         if Pmel < P:
             # Zone Liquid
             raise NotImplementedError("Incoming out of bound")
@@ -162,19 +162,70 @@ def _Ice(T, P):
 
 
 def _Sublimation_Pressure(T):
-    """Sublimation Pressure correlation"""
-    Tita = T/Tt
-    suma = 0
-    a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
-    expo = [0.333333333e-2, 1.20666667, 1.70333333]
-    for ai, expi in zip(a, expo):
-        suma += ai*Tita**expi
-    return exp(suma/Tita)*Pt
+    """Sublimation Pressure correlation
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    P : float
+        Pressure at sublimation line [MPa]
+
+    Examples
+    --------
+    >>> _Sublimation_Pressure(230)
+    8.947352740189152e-06
+
+    References
+    ----------
+    .. `IAPWS <http://iapws.org/relguide/MeltSub.html/>`_, Revised Release on
+    the Pressure along the Melting and Sublimation Curves of Ordinary Water
+    Substance
+    """
+    if 50 <= T <= 273.16:
+        Tita = T/Tt
+        suma = 0
+        a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
+        expo = [0.333333333e-2, 1.20666667, 1.70333333]
+        for ai, expi in zip(a, expo):
+            suma += ai*Tita**expi
+        return exp(suma/Tita)*Pt
+    else:
+        raise NotImplementedError("Incoming out of bound")
 
 
-def _Melting_Pressure(T, P):
-    """Melting Pressure correlation"""
-    if P < 208.566 and 251.165 <= T <= 273.16:
+def _Melting_Pressure(T, ice="Ih"):
+    """Melting Pressure correlation
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    ice: string
+        Type of ice: Ih, III, V, VI, VII
+
+    Returns
+    -------
+    P : float
+        Pressure at sublimation line [MPa]
+
+    Examples
+    --------
+    >>> _Melting_Pressure(260)
+    8.947352740189152e-06
+    >>> _Melting_Pressure(254, "III")
+    268.6846466336108
+
+    References
+    ----------
+    .. `IAPWS <http://iapws.org/relguide/MeltSub.html/>`_, Revised Release on
+    the Pressure along the Melting and Sublimation Curves of Ordinary Water
+    Substance
+    """
+    if ice == "Ih" and 251.165 <= T <= 273.16:
         # Ice Ih
         Tref = Tt
         Pref = Pt
@@ -185,32 +236,33 @@ def _Melting_Pressure(T, P):
         for ai, expi in zip(a, expo):
             suma += ai*(1-Tita**expi)
         P = suma*Pref
-    elif 208.566 < P < 350.1 and 251.165 < T <= 256.164:
+    elif ice == "III" and 251.165 < T <= 256.164:
         # Ice III
         Tref = 251.165
         Pref = 208.566
         Tita = T/Tref
         P = Pref*(1-0.299948*(1-Tita**60.))
-    elif 350.1 < P < 632.4 and 256.164 < T <= 273.31:
+    elif (ice == "V" and 256.164 < T <= 273.15) or 273.15 < T <= 273.31:
         # Ice V
         Tref = 256.164
         Pref = 350.100
         Tita = T/Tref
         P = Pref*(1-1.18721*(1-Tita**8.))
-    elif 632.4 < P < 2216 and 273.31 < T <= 355:
+    elif 273.31 < T <= 355:
         # Ice VI
         Tref = 273.31
         Pref = 632.400
         Tita = T/Tref
         P = Pref*(1-1.07476*(1-Tita**4.6))
-    elif 2216 < P and 355. < T <= 715:
+    elif 355. < T <= 715:
         # Ice VII
         Tref = 355
         Pref = 2216.000
         Tita = T/Tref
         P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5) +
                      0.806106e-7*(1-Tita**22))
-
+    else:
+        raise NotImplementedError("Incoming out of bound")
     return P
 
 

@@ -160,6 +160,8 @@ class Test(unittest.TestCase):
 
     def test_Melting(self):
         """Table 3, pag 7"""
+        self.assertRaises(NotImplementedError, _Sublimation_Pressure, 49)
+        self.assertRaises(NotImplementedError, _Sublimation_Pressure, 274)
         self.assertEqual(round(_Sublimation_Pressure(230), 11), 8.94735e-6)
         self.assertEqual(round(_Melting_Pressure(260, 200), 3), 138.268)
         self.assertEqual(round(_Melting_Pressure(254, 350), 3), 268.685)
