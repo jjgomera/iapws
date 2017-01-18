@@ -27,28 +27,54 @@ f_acent = 0.3443
 
 # IAPWS-06 for Ice
 def _Ice(T, P):
-    """Basic equation for Ice Ih
+    """Basic state equation for Ice Ih
 
-    >>> "%.9f" % _Ice(100,100)["rho"]
-    '941.678203297'
-    >>> "%.9f" % _Ice(100,100)["h"]
-    '-483.491635676'
-    >>> "%.11f" % _Ice(100,100)["s"]
-    '-2.61195122589'
-    >>> "%.11f" % _Ice(273.152519,0.101325)["a"]
-    '-0.00918701567'
-    >>> "%.9f" % _Ice(273.152519,0.101325)["u"]
-    '-333.465403393'
-    >>> "%.11f" % _Ice(273.152519,0.101325)["cp"]
-    '2.09671391024'
-    >>> "%.15f" % _Ice(273.16,611.657e-6)["alfav"]
-    '0.000159863102566'
-    >>> "%.11f" % _Ice(273.16,611.657e-6)["beta"]
-    '1.35714764659'
-    >>> "%.11e" % _Ice(273.16,611.657e-6)["kt"]
-    '1.17793449348e-04'
-    >>> "%.11e" % _Ice(273.16,611.657e-6)["ks"]
-    '1.14161597779e-04'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties of ice
+        The available properties are:
+            rho: Density [kg/m³]
+            h: Specific enthalpy [kJ/kg]
+            u: Specific internal energy [kJ/kg]
+            a: Specific Helmholtz energy [kJ/kg]
+            g: Specific Gibbs energy [kJ/kg]
+            s: Specific entropy [kJ/kgK]
+            cp: Specific isobaric heat capacity [kJ/kgK]
+            alfav: Cubic expansion coefficient [1/K]
+            beta: Pressure coefficient [MPa/K]
+            kt: Isothermal compressibility [1/MPa]
+            ks: Isentropic compressibility [1/MPa]
+            gt: [∂g/∂T]P
+            gtt: [∂²g/∂T²]P
+            gp: [∂g/∂P]T
+            gpp: [∂²g/∂P²]T
+            gtp: [∂²g/∂T∂P]
+
+
+    Examples
+    --------
+    >>> st1 = _Ice(100, 100)
+    >>> st1["rho"], st1["h"], st1["s"]
+    941.678203297 -483.491635676 -2.61195122589
+    >>> st2 = _Ice(273.152519,0.101325)
+    >>> st2["a"], st2["u"], st2["cp"]
+    -0.00918701567 -333.465403393 2.09671391024
+    >>> st3 = _Ice(273.16,611.657e-6)
+    >>> st3["alfav"], st3["beta"], st3["kt"], st3["ks"]
+    0.000159863102566 1.35714764659 1.17793449348e-04 1.14161597779e-04
+
+    References
+    ----------
+    .. `IAPWS <http://iapws.org/relguide/Ice-2009.html>`_, Revised Release on
+    the Equation of State 2006 for H2O Ice Ih September 2009
     """
     # Check input in range of validity
     if P < Pt:
@@ -441,3 +467,7 @@ class _fase(object):
     Z_rho = None
     IntP = None
     hInput = None
+
+
+__all__ = [_Ice, _Dielectric, _Refractive, _Tension, _ThCond, _Viscosity,
+           _Sublimation_Pressure, _Melting_Pressure, getphase, _fase]

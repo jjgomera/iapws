@@ -800,7 +800,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid._Tension(643.15)*1000, 2), 0.05)
 
     def test_Ice(self):
-        """Table, pag 12"""
+        """Table 6, pag 12"""
         ice = _Ice(273.16, 0.000611657)
         self.assertEqual(round(ice["g"], 12), 0.000611784135)
         self.assertEqual(round(ice["gp"], 11), 1.09085812737)
