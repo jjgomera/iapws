@@ -3136,13 +3136,3 @@ class IAPWS97_Tx(IAPWS97):
     """Derivated class for direct T and x input"""
     def __init__(self, T, x):
         IAPWS97.__init__(self, T=T, x=x)
-
-
-if __name__ == "__main__":
-    # import doctest
-    # doctest.testmod()
-
-    liquido = IAPWS97(P=18, T=626)
-    print(liquido.h, liquido.T, liquido.region, liquido.x)
-    vapor = IAPWS97(P=17, x=1)
-    print(vapor.h)

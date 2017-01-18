@@ -1442,8 +1442,3 @@ class D2O(MEoS):
         Ll = -741.112*f1**1.2*(1-exp(-(rhor/2.5)**10))
 
         return 0.742128e-3*(Lo+Lr+Lc+Ll)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

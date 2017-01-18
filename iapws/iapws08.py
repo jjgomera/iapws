@@ -110,7 +110,8 @@ class SeaWater(object):
         self.alfa = prop["gtp"]/prop["gp"]
         self.betas = -prop["gtp"]/prop["gtt"]
         self.kt = -prop["gpp"]/prop["gp"]
-        self.ks = (prop["gtp"]**2-prop["gt"]*prop["gpp"])/prop["gp"]/prop["gtt"]
+        self.ks = (prop["gtp"]**2-prop["gt"]*prop["gpp"])/prop["gp"] / \
+            prop["gtt"]
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
 
@@ -208,7 +209,3 @@ class SeaWater(object):
         prop["gs"] = gs/S_/2*1e-3
         prop["gsp"] = gsp/S_/2/100*1e-6
         return prop
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

@@ -441,8 +441,3 @@ class _fase(object):
     Z_rho = None
     IntP = None
     hInput = None
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
