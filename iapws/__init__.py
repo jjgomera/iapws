@@ -8,4 +8,5 @@ from .iapws08 import SeaWater
 from ._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                      _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive)
 
+__all__ = ['iapws97', 'iapws95', 'iapws08', '_iapws']
 __version__ = "1.1.3"
