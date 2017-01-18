@@ -441,7 +441,3 @@ class _fase(object):
     Z_rho = None
     IntP = None
     hInput = None
-
-
-__all__ = [_Ice, _Dielectric, _Refractive, _Tension, _ThCond, _Viscosity,
-           _Sublimation_Pressure, _Melting_Pressure, getphase, _fase]
