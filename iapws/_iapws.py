@@ -39,8 +39,7 @@ def _Ice(T, P):
     Returns
     -------
     prop : dict
-        Dict with calculated properties of ice
-        The available properties are:
+        Dict with calculated properties of ice. The available properties are:
 
             * rho: Density [kg/m³]
             * h: Specific enthalpy [kJ/kg]
@@ -73,8 +72,8 @@ def _Ice(T, P):
 
     References
     ----------
-    .. `IAPWS <http://iapws.org/relguide/Ice-2009.html/>`_, Revised Release on
-    the Equation of State 2006 for H2O Ice Ih September 2009
+    .. IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
+    September 2009, http://iapws.org/relguide/Ice-2009.html
     """
     # Check input in range of validity
     if P < Pt:
@@ -181,9 +180,8 @@ def _Sublimation_Pressure(T):
 
     References
     ----------
-    .. `IAPWS <http://iapws.org/relguide/MeltSub.html/>`_, Revised Release on
-    the Pressure along the Melting and Sublimation Curves of Ordinary Water
-    Substance
+    .. IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if 50 <= T <= 273.16:
         Tita = T/Tt
@@ -206,6 +204,8 @@ def _Melting_Pressure(T, ice="Ih"):
         Temperature [K]
     ice: string
         Type of ice: Ih, III, V, VI, VII
+        Below 273.15 is a mandatory input, the ice Ih is the default value
+        Above 273.15, the ice type is unnecesary
 
     Returns
     -------
@@ -221,9 +221,8 @@ def _Melting_Pressure(T, ice="Ih"):
 
     References
     ----------
-    .. `IAPWS <http://iapws.org/relguide/MeltSub.html/>`_, Revised Release on
-    the Pressure along the Melting and Sublimation Curves of Ordinary Water
-    Substance
+    .. IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if ice == "Ih" and 251.165 <= T <= 273.16:
         # Ice Ih

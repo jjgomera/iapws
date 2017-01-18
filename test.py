@@ -163,11 +163,11 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 49)
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 274)
         self.assertEqual(round(_Sublimation_Pressure(230), 11), 8.94735e-6)
-        self.assertEqual(round(_Melting_Pressure(260, 200), 3), 138.268)
-        self.assertEqual(round(_Melting_Pressure(254, 350), 3), 268.685)
-        self.assertEqual(round(_Melting_Pressure(265, 500), 3), 479.640)
-        self.assertEqual(round(_Melting_Pressure(320, 1200), 2), 1356.76)
-        self.assertEqual(round(_Melting_Pressure(550, 3000), 2), 6308.71)
+        self.assertEqual(round(_Melting_Pressure(260, "Ih"), 3), 138.268)
+        self.assertEqual(round(_Melting_Pressure(254, "III"), 3), 268.685)
+        self.assertEqual(round(_Melting_Pressure(265, "V"), 3), 479.640)
+        self.assertEqual(round(_Melting_Pressure(320, "VI"), 2), 1356.76)
+        self.assertEqual(round(_Melting_Pressure(550, "VII"), 2), 6308.71)
 
     def test_Viscosity_1(self):
         """Table 4, pag 8"""
