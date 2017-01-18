@@ -14,7 +14,6 @@
 
 # import sys
 # import os
-from ..iapws import __version__
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -64,6 +63,7 @@ author = u'Juan José Gómez Romera'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
+__version__ = "1.1.3"
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.
