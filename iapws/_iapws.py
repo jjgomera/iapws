@@ -72,7 +72,7 @@ def _Ice(T, P):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
+    IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
     September 2009, http://iapws.org/relguide/Ice-2009.html
     """
     # Check input in range of validity
@@ -180,9 +180,8 @@ def _Sublimation_Pressure(T):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Pressure along the Melting and
-    Sublimation Curves of Ordinary Water Substance,
-    http://iapws.org/relguide/MeltSub.html.
+    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if 50 <= T <= 273.16:
         Tita = T/Tt
@@ -204,9 +203,9 @@ def _Melting_Pressure(T, ice="Ih"):
     T : float
         Temperature [K]
     ice: string
-        Type of ice: Ih, III, V, VI, VII
-        Below 273.15 is a mandatory input, the ice Ih is the default value
-        Above 273.15, the ice type is unnecesary
+        Type of ice: Ih, III, V, VI, VII.
+        Below 273.15 is a mandatory input, the ice Ih is the default value.
+        Above 273.15, the ice type is unnecesary.
 
     Returns
     -------
@@ -222,9 +221,8 @@ def _Melting_Pressure(T, ice="Ih"):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Pressure along the Melting and
-    Sublimation Curves of Ordinary Water Substance,
-    http://iapws.org/relguide/MeltSub.html.
+    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if ice == "Ih" and 251.165 <= T <= 273.16:
         # Ice Ih
@@ -280,7 +278,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
     fase: dict
         phase properties
     drho: float
-        [∂ρ/∂P]T at reference state
+        [∂ρ/∂P]T at reference state,
         optional for calculate critical enhancement
 
     Returns
@@ -297,8 +295,8 @@ def _Viscosity(rho, T, fase=None, drho=None):
 
     References
     ----------
-    .. [1] IAPWS, Release on the IAPWS Formulation 2008 for the Viscosity of
-    Ordinary Water Substance, http://www.iapws.org/relguide/viscosity.html
+    IAPWS, Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary
+    Water Substance, http://www.iapws.org/relguide/viscosity.html
     """
     Tr = T/Tc
     Dr = rho/rhoc
@@ -357,7 +355,7 @@ def _ThCond(rho, T, fase=None, drho=None):
     fase: dict
         phase properties
     drho: float
-        [∂ρ/∂P]T at reference state
+        [∂ρ/∂P]T at reference state,
         optional for calculate critical enhancement
 
     Returns
@@ -374,9 +372,8 @@ def _ThCond(rho, T, fase=None, drho=None):
 
     References
     ----------
-    .. [1] IAPWS, Release on the IAPWS Formulation 2011 for the Thermal
-    Conductivity of Ordinary Water Substance,
-    http://www.iapws.org/relguide/ThCond.html
+    IAPWS, Release on the IAPWS Formulation 2011 for the Thermal Conductivity
+    of Ordinary Water Substance, http://www.iapws.org/relguide/ThCond.html
     """
     d = rho/322.
     Tr = T/647.096
@@ -445,8 +442,8 @@ def _Tension(T):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on Surface Tension of Ordinary Water
-    Substance June 2014, http://www.iapws.org/relguide/Surf-H2O.html
+    IAPWS, Revised Release on Surface Tension of Ordinary Water Substance
+    June 2014, http://www.iapws.org/relguide/Surf-H2O.html
     """
     Tr = T/Tc
     if 273.15 <= T < Tc:
@@ -534,8 +531,8 @@ def _Refractive(rho, T, l=0.5893):
 
     References
     ----------
-    IAPWS, Release on the Refractive Index of Ordinary Water Substance
-    as a Function of Wavelength, Temperature and Pressure,
+    IAPWS, Release on the Refractive Index of Ordinary Water Substance as a
+    Function of Wavelength, Temperature and Pressure,
     http://www.iapws.org/relguide/rindex.pdf
     """
     Lir = 5.432937
@@ -551,7 +548,28 @@ def _Refractive(rho, T, l=0.5893):
 
 
 def getphase(Tc, Pc, T, P, x, region):
-    """Return fluid phase"""
+    """Return fluid phase string name
+
+    Parameters
+    ----------
+    Tc : float
+        Critical temperature [K]
+    Pc : float
+        Critical pressure [MPa]
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    x : float
+        Quality [-]
+    region: integer
+        Region number, specific to IAPWS97 region definition
+
+    Returns
+    -------
+    phase : string
+        Phase name
+    """
     if P > Pc and T > Tc:
         phase = "Supercritical fluid"
     elif T > Tc:
