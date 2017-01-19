@@ -458,10 +458,30 @@ def _Tension(T):
 def _Dielectric(rho, T):
     """Equation for the Dielectric constant
 
-    >>> "%.7f" % _Dielectric(999.242866, 298.15)
-    '78.5907250'
-    >>> "%.8f" % _Dielectric(26.0569558, 873.15)
-    '1.12620970'
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    epsilon : float
+        Dielectric constant [-]
+
+    Examples
+    --------
+    >>> _Dielectric(999.242866, 298.15)
+    78.5907250
+    >>> _Dielectric(26.0569558, 873.15)
+    1.12620970
+
+    References
+    ----------
+    .. [1] IAPWS, Release on the Static Dielectric Constant of Ordinary Water
+    Substance for Temperatures from 238 K to 873 K and Pressures up to 1000
+    MPa, http://www.iapws.org/relguide/Dielec.html
     """
     k = 1.380658e-23
     Na = 6.0221367e23
