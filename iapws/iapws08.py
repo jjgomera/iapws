@@ -26,48 +26,76 @@ class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
 
-    Incoming properties:
-        *T   -   Temperature, K
-        *P   -   Pressure, MPa
-        *S   -   Salinity, kg/kg
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    S : float
+        Salinity [kg/kg]
 
-    Calculated properties:
-        *T: Temperature, K
-        *P: Pressure, MPa
-        *rho: Density, kg/m³
-        *v: Specific volume, m³/kg
-        *h: Specific enthalpy, kJ/kg
-        *s: Specific entropy, kJ/kg·K
-        *u: Specific internal energy, kJ/kg
-        *g: Specific Gibbs free energy, kJ/kg
-        *a: Specific Helmholtz free energy, kJ/kg
-        *cp: Specific isobaric heat capacity, kJ/kg·K
+    Returns
+    -------
+    rho : float
+        Density [kg/m³]
+    v : float
+        Specific volume [m³/kg]
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kg·K]
+    u : float
+        Specific internal energy [kJ/kg]
+    g : float
+        Specific Gibbs free energy [kJ/kg]
+    a : float
+        Specific Helmholtz free energy [kJ/kg]
+    cp : float
+        Specific isobaric heat capacity [kJ/kg·K]
+    gt : float
+        Derivative Gibbs energy with temperature [kJ/kg·K]
+    gp : float
+        Derivative Gibbs energy with pressure [m³/kg]
+    gtt : float
+        Derivative Gibbs energy with temperature square [kJ/kg·K²]
+    gtp : float
+        Derivative Gibbs energy with pressure and temperature [m³/kg·K]
+    gpp : float
+        Derivative Gibbs energy with temperature square [m³/kg·MPa]
+    gs : float
+        Derivative Gibbs energy with salinity [kJ/kg]
+    gsp : float
+        Derivative Gibbs energy with salinity and pressure [m³/kg]
+    alfa : float
+        Thermal expansion coefficient [1/K]
+    betas : float
+        Isentropic temperature-pressure coefficient [K/MPa]
+    kt : float
+        Isothermal compressibility [1/MPa]
+    ks : float
+        Isentropic compressibility [1/MPa]
+    w : float
+        Sound Speed [m/s]
 
-        *gt: Derivative Gibbs energy with temperature, kJ/kg·K
-        *gp: Derivative Gibbs energy with pressure, m³/kg
-        *gtt: Derivative Gibbs energy with temperature square, kJ/kg·K²
-        *gtp: Derivative Gibbs energy with pressure and temperature, m³/kg·K
-        *gpp: Derivative Gibbs energy with temperature square, m³/kg·MPa
-        *gs: Derivative Gibbs energy with salinity, kJ/kg
-        *gsp: Derivative Gibbs energy with salinity and pressure, m³/kg
+    mu : float
+        Relative chemical potential [kJ/kg]
+    muw : float
+        Chemical potential of H2O [kJ/kg]
+    mus : float
+        Chemical potential of sea salt [kJ/kg]
+    osm : float
+        Osmotic coefficient, [-]
+    haline : float
+        Haline contraction coefficient [kg/kg]
 
-        *alfa: Thermal expansion coefficient, 1/K
-        *betas: Isentropic temperature-pressure coefficient, K/MPa
-        *kt: Isothermal compressibility, 1/MPa
-        *ks: Isentropic compressibility, 1/MPa
-        *w: Sound Speed, m/s
-
-        *mu: Relative chemical potential, kJ/kg
-        *muw: Chemical potential of H2O, kJ/kg
-        *mus: Chemical potential of sea salt, kJ/kg
-        *osm: Osmotic coefficient, [-]
-        *haline: Haline contraction coefficient, kg/kg
-
-    References:
+    References
+    ----------
     IAPWS, Release on the IAPWS Formulation 2008 for the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Seawater.html
 
-    Example:
+    Examples
+    --------
     >>> salt = iapws.SeaWater(T=300, P=1, S=0.04)
     >>> salt.rho
     1026.7785717245113
