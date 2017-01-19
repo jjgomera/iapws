@@ -511,10 +511,32 @@ def _Dielectric(rho, T):
 def _Refractive(rho, T, l=0.5893):
     """Equation for the refractive index
 
-    >>> "%.8f" % _Refractive(997.047435, 298.15, 0.2265)
-    '1.39277824'
-    >>> "%.8f" % _Refractive(30.4758534, 773.15, 0.5893)
-    '1.00949307'
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+    l : float, optional
+        Light Wavelength [μm]
+
+    Returns
+    -------
+    n : float
+        Refractive index [-]
+
+    Examples
+    --------
+    >>> _Refractive(997.047435, 298.15, 0.2265)
+    1.39277824
+    >>> _Refractive(30.4758534, 773.15, 0.5893)
+    1.00949307
+
+    References
+    ----------
+    .. [1] IAPWS, Release on the Refractive Index of Ordinary Water Substance
+    as a Function of Wavelength, Temperature and Pressure,
+    http://www.iapws.org/relguide/rindex.pdf
     """
     Lir = 5.432937
     Luv = 0.229202
@@ -609,4 +631,4 @@ class _fase(object):
 
 
 __all__ = [_Ice, _Dielectric, _Refractive, _Tension, _ThCond, _Viscosity,
-           _Sublimation_Pressure, _Melting_Pressure, getphase, _fase]
+           _Sublimation_Pressure, _Melting_Pressure]
