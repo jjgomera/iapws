@@ -72,7 +72,7 @@ def _Ice(T, P):
 
     References
     ----------
-    IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
+    .. [1] IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
     September 2009, http://iapws.org/relguide/Ice-2009.html
     """
     # Check input in range of validity
@@ -180,8 +180,9 @@ def _Sublimation_Pressure(T):
 
     References
     ----------
-    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
-    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
+    .. [1] IAPWS, Revised Release on the Pressure along the Melting and
+    Sublimation Curves of Ordinary Water Substance,
+    http://iapws.org/relguide/MeltSub.html.
     """
     if 50 <= T <= 273.16:
         Tita = T/Tt
@@ -221,8 +222,9 @@ def _Melting_Pressure(T, ice="Ih"):
 
     References
     ----------
-    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
-    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
+    .. [1] IAPWS, Revised Release on the Pressure along the Melting and
+    Sublimation Curves of Ordinary Water Substance,
+    http://iapws.org/relguide/MeltSub.html.
     """
     if ice == "Ih" and 251.165 <= T <= 273.16:
         # Ice Ih
@@ -269,10 +271,34 @@ def _Melting_Pressure(T, ice="Ih"):
 def _Viscosity(rho, T, fase=None, drho=None):
     """Equation for the Viscosity
 
-    >>> "%.12f" % _Viscosity(997.047435,298.15)
-    '0.000890022551'
-    >>> "%.13f" % _Viscosity(54.9921814,873.15)
-    '0.0000339743835'
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    fase: dict with phase properties
+    drho: float
+        [∂ρ/∂P]T at reference state
+        optional for calculate critical enhancement
+
+    Returns
+    -------
+    mu : float
+        Viscosity [Pa·s]
+
+    Examples
+    --------
+    >>> _Viscosity(998, 298.15)
+    0.0008897351001498108
+    >>> _Viscosity(600, 873.15)
+    7.743019522728247e-05
+
+    References
+    ----------
+    .. [1] IAPWS, Release on the IAPWS Formulation 2008 for the Viscosity of
+    Ordinary Water Substance, http://www.iapws.org/relguide/viscosity.html
     """
     Tr = T/Tc
     Dr = rho/rhoc
