@@ -277,8 +277,8 @@ def _Viscosity(rho, T, fase=None, drho=None):
         Density [kg/m³]
     T : float
         Temperature [K]
-
-    fase: dict with phase properties
+    fase: dict
+        phase properties
     drho: float
         [∂ρ/∂P]T at reference state
         optional for calculate critical enhancement
@@ -354,8 +354,8 @@ def _ThCond(rho, T, fase=None, drho=None):
         Density [kg/m³]
     T : float
         Temperature [K]
-
-    fase: dict with phase properties
+    fase: dict
+        phase properties
     drho: float
         [∂ρ/∂P]T at reference state
         optional for calculate critical enhancement
@@ -479,7 +479,7 @@ def _Dielectric(rho, T):
 
     References
     ----------
-    .. [1] IAPWS, Release on the Static Dielectric Constant of Ordinary Water
+    IAPWS, Release on the Static Dielectric Constant of Ordinary Water
     Substance for Temperatures from 238 K to 873 K and Pressures up to 1000
     MPa, http://www.iapws.org/relguide/Dielec.html
     """
@@ -534,7 +534,7 @@ def _Refractive(rho, T, l=0.5893):
 
     References
     ----------
-    .. [1] IAPWS, Release on the Refractive Index of Ordinary Water Substance
+    IAPWS, Release on the Refractive Index of Ordinary Water Substance
     as a Function of Wavelength, Temperature and Pressure,
     http://www.iapws.org/relguide/rindex.pdf
     """
@@ -628,7 +628,3 @@ class _fase(object):
     Z_rho = None
     IntP = None
     hInput = None
-
-
-__all__ = [_Ice, _Dielectric, _Refractive, _Tension, _ThCond, _Viscosity,
-           _Sublimation_Pressure, _Melting_Pressure]
