@@ -76,15 +76,18 @@ def _Ice(T, P):
     September 2009, http://iapws.org/relguide/Ice-2009.html
     """
     # Check input in range of validity
-    if P < Pt:
+    if T > 273.16:
+        # No Ice Ih stable
+        raise NotImplementedError("Incoming out of bound")
+    elif P > 208.566:
+        # Ice Ih limit upper pressure
+        raise NotImplementedError("Incoming out of bound")
+    elif P < Pt:
         Psub = _Sublimation_Pressure(T)
         if Psub > P:
             # Zone Gas
             raise NotImplementedError("Incoming out of bound")
-    elif P > 208.566:
-        # Ice Ih limit upper pressure
-        raise NotImplementedError("Incoming out of bound")
-    elif T > 251.165:
+    elif 251.165 < T:
         Pmel = _Melting_Pressure(T)
         if Pmel < P:
             # Zone Liquid

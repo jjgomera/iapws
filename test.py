@@ -857,9 +857,14 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ice["kt"], 16), 0.0000886880048115)
         self.assertEqual(round(ice["ks"], 16), 0.0000886060982687)
 
+        # Test check input
+        self.assertRaises(NotImplementedError, _Ice, *(270, 300))
+        self.assertRaises(NotImplementedError, _Ice, *(300, 1))
+        self.assertRaises(NotImplementedError, _Ice, *(273, 3))
+        self.assertRaises(NotImplementedError, _Ice, *(272, 1e-4))
+
     def test_SeaWater(self):
         """Table 8, pag 17-19"""
-
         # Part a, pag 17
         fluid = SeaWater(T=273.15, P=0.101325, S=0.03516504)
         state = fluid._water(273.15, 0.101325)
