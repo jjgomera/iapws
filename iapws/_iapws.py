@@ -426,16 +426,33 @@ def _ThCond(rho, T, fase=None, drho=None):
 def _Tension(T):
     """Equation for the surface tension
 
-    >>> "%.10f" % _Tension(300)
-    '0.0716859625'
-    >>> "%.10f" % _Tension(450)
-    '0.0428914992'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    sigma : float
+        Surface tension [N/m]
+
+    Examples
+    --------
+    >>> _Tension(300)
+    0.0716859625
+    >>> _Tension(450)
+    0.0428914992
+
+    References
+    ----------
+    .. [1] IAPWS, Revised Release on Surface Tension of Ordinary Water
+    Substance June 2014, http://www.iapws.org/relguide/Surf-H2O.html
     """
     Tr = T/Tc
     if 273.15 <= T < Tc:
         return 1e-3*(235.8*(1-Tr)**1.256*(1-0.625*(1-Tr)))
     else:
-        return 0
+        raise NotImplementedError("Incoming out of bound")
 
 
 def _Dielectric(rho, T):
