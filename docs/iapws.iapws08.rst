@@ -1,4 +1,5 @@
 iapws.iapws08 module
 ======================
 
-.. autoclass:: SeaWater
+.. automodule:: iapws.iapws08
+    :members:

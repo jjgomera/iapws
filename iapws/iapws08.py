@@ -26,7 +26,7 @@ class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
 
-    Parameters
+    Keyword Args
     ----------
     T : float
         Temperature [K]
@@ -35,7 +35,7 @@ class SeaWater(object):
     S : float
         Salinity [kg/kg]
 
-    Returns
+    Attributes
     -------
     rho : float
         Density [kg/m³]
@@ -126,7 +126,6 @@ class SeaWater(object):
             self.msg = ""
 
     def calculo(self):
-        """Calculate procedure"""
         T = self.kwargs["T"]
         P = self.kwargs["P"]
         S = self.kwargs["S"]
