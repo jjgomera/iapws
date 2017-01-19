@@ -72,7 +72,7 @@ def _Ice(T, P):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
+    IAPWS, Revised Release on the Equation of State 2006 for H2O Ice Ih
     September 2009, http://iapws.org/relguide/Ice-2009.html
     """
     # Check input in range of validity
@@ -84,7 +84,7 @@ def _Ice(T, P):
     elif P > 208.566:
         # Ice Ih limit upper pressure
         raise NotImplementedError("Incoming out of bound")
-    else:
+    elif T > 251.165:
         Pmel = _Melting_Pressure(T)
         if Pmel < P:
             # Zone Liquid
@@ -180,7 +180,7 @@ def _Sublimation_Pressure(T):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
     Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if 50 <= T <= 273.16:
@@ -221,7 +221,7 @@ def _Melting_Pressure(T, ice="Ih"):
 
     References
     ----------
-    .. [1] IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
     Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
     """
     if ice == "Ih" and 251.165 <= T <= 273.16:
