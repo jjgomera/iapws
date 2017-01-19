@@ -348,10 +348,35 @@ def _Viscosity(rho, T, fase=None, drho=None):
 def _ThCond(rho, T, fase=None, drho=None):
     """Equation for the thermal conductivity
 
-    >>> "%.9f" % _ThCond(997.047435,298.15)
-    '0.606515826'
-    >>> "%.10f" % _ThCond(26.0569558,873.15)
-    '0.0870480934'
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    fase: dict with phase properties
+    drho: float
+        [∂ρ/∂P]T at reference state
+        optional for calculate critical enhancement
+
+    Returns
+    -------
+    k : float
+        Thermal conductivity [W/mK]
+
+    Examples
+    --------
+    >>> _ThCond(998, 298.15)
+    0.6077128675880629
+    >>> _ThCond(0, 873.15)
+    0.07910346589648833
+
+    References
+    ----------
+    .. [1] IAPWS, Release on the IAPWS Formulation 2011 for the Thermal
+    Conductivity of Ordinary Water Substance,
+    http://www.iapws.org/relguide/ThCond.html
     """
     d = rho/322.
     Tr = T/647.096
