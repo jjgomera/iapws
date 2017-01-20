@@ -17,7 +17,7 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
 from iapws.iapws95 import IAPWS95, D2O
 from iapws.iapws08 import SeaWater
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
-                          _Viscosity, _ThCond, _Tension)
+                          _Viscosity, _ThCond, _Tension, _Kw)
 
 
 # Test
@@ -290,6 +290,15 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.n, 6), 1.327710)
         fluid = IAPWS95(P=100., T=473.15, l=1.01398)
         self.assertEqual(round(fluid.n, 6), 1.298369)
+
+    def test_kw(self):
+        """Table 3, pag 5"""
+        self.assertRaises(NotImplementedError, _Kw, *(1000, 270))
+        self.assertEqual(round(_Kw(1000, 300), 6), 13.906565)
+        self.assertEqual(round(_Kw(70, 600), 6), 21.048874)
+        self.assertEqual(round(_Kw(700, 600), 6), 11.203153)
+        self.assertEqual(round(_Kw(200, 800), 6), 15.089765)
+        self.assertEqual(round(_Kw(1200, 800), 6), 6.438330)
 
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""

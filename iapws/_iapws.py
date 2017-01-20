@@ -6,7 +6,7 @@ Miscelaneous IAPWS standards
 
 from __future__ import division
 
-from math import log, exp, tan, atan, acos, sin, pi
+from math import log, exp, tan, atan, acos, sin, pi, log10
 from cmath import log as log_c
 
 
@@ -547,6 +547,57 @@ def _Refractive(rho, T, l=0.5893):
     A = d*(a[0]+a[1]*d+a[2]*Tr+a[3]*L**2*Tr+a[4]/L**2+a[5]/(L**2-Luv**2)+a[6]/(
         L**2-Lir**2)+a[7]*d**2)
     return ((2*A+1)/(1-A))**0.5
+
+
+def _Kw(rho, T):
+    """Equation for the ionization constant of ordinary water
+
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    pKw : float
+        Ionization constant in -log10(kw) [-]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        0 < rho < 1250, 273.15 < T < 1073.15
+
+    Examples
+    --------
+    >>> _Kw(1000, 300)
+    13.906565
+
+    References
+    ----------
+    IAPWS, Release on the Ionization Constant of H2O,
+    http://www.iapws.org/relguide/Ionization.pdf
+    """
+    # Check input parameters
+    if rho < 0 or rho > 1250 or T < 273.15 or T > 1073.15:
+        raise NotImplementedError("Incoming out of bound")
+
+    # The internal method of calculation use rho in g/cm³
+    d = rho/1000.
+
+    # Water molecular weight different
+    Mw = 18.015268
+
+    gamma = [6.1415e-1, 4.825133e4, -6.770793e4, 1.01021e7]
+    pKg = 0
+    for i, g in enumerate(gamma):
+        pKg += g/T**i
+
+    Q = d*exp(-0.864671+8659.19/T-22786.2/T**2*d**(2./3))
+    pKw = -12*(log10(1+Q)-Q/(Q+1)*d*(0.642044-56.8534/T-0.375754*d)) + \
+        pKg+2*log10(Mw/1000)
+    return pKw
 
 
 def getphase(Tc, Pc, T, P, x, region):
