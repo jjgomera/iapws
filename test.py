@@ -163,6 +163,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 49)
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 274)
         self.assertEqual(round(_Sublimation_Pressure(230), 11), 8.94735e-6)
+        self.assertRaises(NotImplementedError, _Melting_Pressure, 250)
         self.assertEqual(round(_Melting_Pressure(260, "Ih"), 3), 138.268)
         self.assertEqual(round(_Melting_Pressure(254, "III"), 3), 268.685)
         self.assertEqual(round(_Melting_Pressure(265, "V"), 3), 479.640)
@@ -226,7 +227,7 @@ class Test(unittest.TestCase):
 
     def test_Tension(self):
         """Selected values from table 1"""
-        fluid = IAPWS95()
+        self.assertRaises(NotImplementedError, _Tension, 270)
         self.assertEqual(round(_Tension(273.16)*1000, 2), 75.65)
         self.assertEqual(round(_Tension(283.15)*1000, 2), 74.22)
         self.assertEqual(round(_Tension(293.15)*1000, 2), 72.74)

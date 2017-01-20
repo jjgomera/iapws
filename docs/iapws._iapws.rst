@@ -5,4 +5,3 @@ iapws._iapws module
     :members:
     :private-members: 
     :undoc-members:
-    :show-inheritance:

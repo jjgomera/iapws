@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-###############################################################################
-# Several IAPWS standards
-###############################################################################
+"""
+Miscelaneous IAPWS standards
+"""
 
 from __future__ import division
 
