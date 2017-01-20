@@ -1,7 +1,33 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""IAPWS-IF97 standard implementation
 
-"IAPWS-IF97 Steam Tables implementation"
+References
+----------
+.. [1] IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+Thermodynamic Properties of Water and Steam August 2007,
+http://www.iapws.org/relguide/IF97-Rev.html
+.. [2] IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the IAPWS
+Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf
+.. [3] IAPWS, Revised Supplementary Release on Backward Equations for the
+Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf
+.. [4] IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+Region 3, Equations as a Function of h and s for the Region Boundaries, and an
+Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997 for
+the Thermodynamic Properties of Water and Steam,
+http://www.iapws.org/relguide/Supp-phs3-2014.pdf
+.. [5] IAPWS, Revised Supplementary Release on Backward Equations for Specific
+Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf
+.. [6] Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer, 2008;
+doi: 10.1007/978-3-540-74234-0
+"""
 
 from __future__ import division
 from math import sqrt, log, exp
@@ -24,10 +50,22 @@ Ps_623 = 16.5291642526
 def _h13_s(s):
     """Define the boundary between Region 1 and 3, h=f(s)
 
-    >>> "%.6f" % _h13_s(3.7)
-    '1632.525047'
-    >>> "%.6f" % _h13_s(3.5)
-    '1566.104611'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h13_s(3.7)
+    1632.525047
+    >>> _h13_s(3.5)
+    1566.104611
     """
     sigma = s/3.8
     I = [0, 1, 1, 3, 5, 6]
@@ -45,8 +83,20 @@ def _h13_s(s):
 def _P23_T(T):
     """Define the boundary between Region 2 and 3, P=f(T)
 
-    >>> "%.8f" % _P23_T(623.15)
-    '16.52916425'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _P23_T(623.15)
+    16.52916425
     """
     n = [0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2]
     return n[0]+n[1]*T+n[2]*T**2
@@ -55,8 +105,20 @@ def _P23_T(T):
 def _t_P(P):
     """Define the boundary between Region 2 and 3, T=f(P)
 
-    >>> "%.2f" % _t_P(16.52916425)
-    '623.15'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _t_P(16.52916425)
+    623.15
     """
     n = [0.10192970039326e-2, 0.57254459862746e3, 0.1391883977870e2]
     return n[1]+((P-n[2])/n[0])**0.5
@@ -65,10 +127,24 @@ def _t_P(P):
 def _t_hs(h, s):
     """Define the boundary between Region 2 and 3, T=f(h,s)
 
-    >>> "%.7f" % _t_hs(2600, 5.1)
-    '713.5259364'
-    >>> "%.7f" % _t_hs(2800, 5.2)
-    '817.6202120'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _t_hs(2600, 5.1)
+    713.5259364
+    >>> _t_hs(2800, 5.2)
+    817.6202120
     """
     nu = h/3000
     sigma = s/5.3
@@ -96,8 +172,20 @@ def _t_hs(h, s):
 def _PSat_T(T):
     """Define the saturated line, P=f(T)
 
-    >>> "%.8f" % _PSat_T(500)
-    '2.63889776'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _PSat_T(500)
+    2.63889776
     """
     if T < 273.15:
         T = 273.15
@@ -117,8 +205,20 @@ def _PSat_T(T):
 def _TSat_P(P):
     """Define the saturated line, T=f(P)
 
-    >>> "%.6f" % _TSat_P(10)
-    '584.149488'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _TSat_P(10)
+    584.149488
     """
     if P < 611.212677/1e6:
         P = 611.212677/1e6
@@ -139,10 +239,22 @@ def _TSat_P(P):
 def _PSat_h(h):
     """Define the saturated line, P=f(h) for region 3
 
-    >>> "%.8f" % _PSat_h(1700)
-    '17.24175718'
-    >>> "%.8f" % _PSat_h(2400)
-    '20.18090839'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _PSat_h(1700)
+    17.24175718
+    >>> _PSat_h(2400)
+    20.18090839
     """
     hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
     hmax_Ps3 = _Region2(623.15, Ps_623)["h"]
@@ -168,10 +280,22 @@ def _PSat_h(h):
 def _PSat_s(s):
     """Define the saturated line, P=f(s) for region 3
 
-    >>> "%.8f" % _PSat_s(3.8)
-    '16.87755057'
-    >>> "%.8f" % _PSat_s(5.2)
-    '16.68968482'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _PSat_s(3.8)
+    16.87755057
+    >>> _PSat_s(5.2)
+    16.68968482
     """
     sigma = s/5.2
     I = [0, 1, 1, 4, 12, 12, 16, 24, 28, 32]
@@ -190,10 +314,22 @@ def _PSat_s(s):
 def _h1_s(s):
     """Define the saturated line boundary between Region 1 and 4, h=f(s)
 
-    >>> "%.7f" % _h1_s(1)
-    '308.5509647'
-    >>> "%.6f" % _h1_s(3)
-    '1198.359754'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h1_s(1)
+    308.5509647
+    >>> _h1_s(3)
+    1198.359754
     """
     sigma = s/3.8
     I = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 7, 8, 12, 12, 14, 14, 16, 20,
@@ -219,10 +355,22 @@ def _h1_s(s):
 def _h3a_s(s):
     """Define the saturated line boundary between Region 4 and 3a, h=f(s)
 
-    >>> "%.6f" % _h3a_s(3.8)
-    '1685.025565'
-    >>> "%.6f" % _h3a_s(4.2)
-    '1949.352563'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h3a_s(3.8)
+    1685.025565
+    >>> _h3a_s(4.2)
+    1949.352563
     """
     sigma = s/3.8
     I = [0, 0, 0, 0, 2, 3, 4, 4, 5, 5, 6, 7, 7, 7, 10, 10, 10, 32, 32]
@@ -244,10 +392,22 @@ def _h3a_s(s):
 def _h2ab_s(s):
     """Define the saturated line boundary between Region 4 and 2a-2b, h=f(s)
 
-    >>> "%.6f" % _h2ab_s(7)
-    '2723.729985'
-    >>> "%.6f" % _h2ab_s(9)
-    '2511.861477'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h2ab_s(7)
+    2723.729985
+    >>> _h2ab_s(9)
+    2511.861477
     """
     sigma1 = s/5.21
     sigma2 = s/9.2
@@ -275,10 +435,22 @@ def _h2ab_s(s):
 def _h2c3b_s(s):
     """Define the saturated line boundary between Region 4 and 2c-3b, h=f(s)
 
-    >>> "%.6f" % _h2c3b_s(5.5)
-    '2687.693850'
-    >>> "%.6f" % _h2c3b_s(4.5)
-    '2144.360448'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h2c3b_s(5.5)
+    2687.693850
+    >>> _h2c3b_s(4.5)
+    2144.360448
     """
     sigma = s/5.9
     I = [0, 0, 0, 1, 1, 5, 6, 7, 8, 8, 12, 16, 22, 22, 24, 36]
@@ -300,24 +472,47 @@ def _h2c3b_s(s):
 def _Region1(T, P):
     """Basic equation for region 1
 
-    >>> "%.11f" % _Region1(300,3)["v"]
-    '0.00100215168'
-    >>> "%.6f" % _Region1(300,3)["h"]
-    '115.331273'
-    >>> "%.6f" % (_Region1(300,3)["h"]-3000*_Region1(300,3)["v"], )
-    '112.324818'
-    >>> "%.9f" % _Region1(300,80)["s"]
-    '0.368563852'
-    >>> "%.8f" % _Region1(300,80)["cp"]
-    '4.01008987'
-    >>> "%.8f" % _Region1(300,80)["cv"]
-    '3.91736606'
-    >>> "%.5f" % _Region1(500,3)["w"]
-    '1240.71337'
-    >>> "%.11f" % _Region1(500,3)["alfav"]
-    '0.00164118128'
-    >>> "%.11f" % _Region1(500,3)["kt"]
-    '0.00112892188'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isocoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+
+    Examples
+    --------
+    >>> _Region1(300,3)["v"]
+    0.00100215168
+    >>> _Region1(300,3)["h"]
+    115.331273
+    >>> _Region1(300,3)["h"]-3000*_Region1(300,3)["v"]
+    112.324818
+    >>> _Region1(300,80)["s"]
+    0.368563852
+    >>> _Region1(300,80)["cp"]
+    4.01008987
+    >>> _Region1(300,80)["cv"]
+    3.91736606
+    >>> _Region1(500,3)["w"]
+    1240.71337
+    >>> _Region1(500,3)["alfav"]
+    0.00164118128
+    >>> _Region1(500,3)["kt"]
+    0.00112892188
     """
     I = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4,
          4, 4, 5, 8, 8, 21, 23, 29, 30, 31, 32]
@@ -365,10 +560,24 @@ def _Region1(T, P):
 def _Backward1_T_Ph(P, h):
     """Backward equation for region 1, T=f(P,h)
 
-    >>> "%.6f" % _Backward1_T_Ph(3,500)
-    '391.798509'
-    >>> "%.6f" % _Backward1_T_Ph(80,1500)
-    '611.041229'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward1_T_Ph(3,500)
+    391.798509
+    >>> _Backward1_T_Ph(80,1500)
+    611.041229
     """
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 5, 6]
     J = [0, 1, 2, 6, 22, 32, 0, 1, 2, 3, 4, 10, 32, 10, 32, 10, 32, 32, 32, 32]
@@ -391,10 +600,24 @@ def _Backward1_T_Ph(P, h):
 def _Backward1_T_Ps(P, s):
     """Backward equation for region 1, T=f(P,s)
 
-    >>> "%.6f" % _Backward1_T_Ps(3,0.5)
-    '307.842258'
-    >>> "%.6f" % _Backward1_T_Ps(80,3)
-    '565.899909'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward1_T_Ps(3,0.5)
+    307.842258
+    >>> _Backward1_T_Ps(80,3)
+    565.899909
     """
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 4]
     J = [0, 1, 2, 3, 11, 31, 0, 1, 2, 3, 12, 31, 0, 1, 2, 9, 31, 10, 32, 32]
@@ -417,12 +640,26 @@ def _Backward1_T_Ps(P, s):
 def _Backward1_P_hs(h, s):
     """Backward equation for region 1, P=f(h,s)
 
-    >>> "%.13f" % _Backward1_P_hs(0.001,0)
-    '0.0009800980612'
-    >>> "%.8f" % _Backward1_P_hs(90,0)
-    '91.92954727'
-    >>> "%.8f" % _Backward1_P_hs(1500,3.4)
-    '58.68294423'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward1_P_hs(0.001,0)
+    0.0009800980612
+    >>> _Backward1_P_hs(90,0)
+    91.92954727
+    >>> _Backward1_P_hs(1500,3.4)
+    58.68294423
     """
     I = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 4, 4, 5]
     J = [0, 1, 2, 4, 5, 6, 8, 14, 0, 1, 4, 6, 0, 1, 10, 4, 1, 4, 0]
@@ -446,24 +683,47 @@ def _Backward1_P_hs(h, s):
 def _Region2(T, P):
     """Basic equation for region 2
 
-    >>> "%.11f" % _Region2(700,30)["v"]
-    '0.00542946619'
-    >>> "%.5f" % _Region2(700,30)["h"]
-    '2631.49474'
-    >>> "%.5f" % (_Region2(700,30)["h"]-30000*_Region2(700,30)["v"], )
-    '2468.61076'
-    >>> "%.7f" % _Region2(700,0.0035)["s"]
-    '10.1749996'
-    >>> "%.8f" % _Region2(700,0.0035)["cp"]
-    '2.08141274'
-    >>> "%.8f" % _Region2(700,0.0035)["cv"]
-    '1.61978333'
-    >>> "%.6f" % _Region2(300,0.0035)["w"]
-    '427.920172'
-    >>> "%.11f" % _Region2(300,0.0035)["alfav"]
-    '0.00337578289'
-    >>> "%.6f" % _Region2(300,0.0035)["kt"]
-    '286.239651'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isocoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+
+    Examples
+    --------
+    >>> _Region2(700,30)["v"]
+    0.00542946619
+    >>> _Region2(700,30)["h"]
+    2631.49474
+    >>> _Region2(700,30)["h"]-30000*_Region2(700,30)["v"]
+    2468.61076
+    >>> _Region2(700,0.0035)["s"]
+    10.1749996
+    >>> _Region2(700,0.0035)["cp"]
+    2.08141274
+    >>> _Region2(700,0.0035)["cv"]
+    1.61978333
+    >>> _Region2(300,0.0035)["w"]
+    427.920172
+    >>> _Region2(300,0.0035)["alfav"]
+    0.00337578289
+    >>> _Region2(300,0.0035)["kt"]
+    286.239651
     """
     Tr = 540/T
     Pr = P/1
@@ -522,7 +782,28 @@ def _Region2(T, P):
 
 
 def Region2_cp0(Tr, Pr):
-    """Ideal properties for Region 2"""
+    """Ideal properties for Region 2
+
+    Parameters
+    ----------
+    Tr : float
+        Reduced temperature [-]
+    Pr : float
+        Reduced pressure [-]
+
+    Returns
+    -------
+    prop : array
+        Array with ideal Gibbs energy partial derivatives:
+
+            * g: Ideal Specific Gibbs energy [kJ/kg]
+            * gp: [∂g/∂P]T
+            * gpp: [∂²g/∂P²]T
+            * gt: [∂g/∂T]P
+            * gtt: [∂²g/∂T²]P
+            * gpt: [∂²g/∂T∂P]
+
+    """
     Jo = [0, 1, -5, -4, -3, -2, -1, 2, 3]
     no = [-0.96927686500217E+01, 0.10086655968018E+02, -0.56087911283020E-02,
           0.71452738081455E-01, -0.40710498223928E+00, 0.14240819171444E+01,
@@ -541,8 +822,20 @@ def Region2_cp0(Tr, Pr):
 def _P_2bc(h):
     """Define the boundary between Region 2b and 2c, P=f(h)
 
-    >>> "%.3f" % _P_2bc(3516.004323)
-    '100.000'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _P_2bc(3516.004323)
+    100.0
     """
     return 905.84278514723-0.67955786399241*h+1.2809002730136e-4*h**2
 
@@ -550,8 +843,20 @@ def _P_2bc(h):
 def _hbc_P(P):
     """Define the boundary between Region 2b and 2c, h=f(P)
 
-    >>> "%.6f" % _hbc_P(100)
-    '3516.004323'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _hbc_P(100)
+    3516.004323
     """
     return 0.26526571908428e4+((P-0.45257578905948e1)/1.2809002730136e-4)**0.5
 
@@ -559,8 +864,20 @@ def _hbc_P(P):
 def _hab_s(s):
     """Define the boundary between Region 2a and 2b, h=f(s)
 
-    >>> "%.6f" % _hab_s(7)
-    '3376.437884'
+    Parameters
+    ----------
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _hab_s(7)
+    3376.437884
     """
     smin = _Region2(_TSat_P(4), 4)["s"]
     smax = _Region2(1073.15, 4)["s"]
@@ -577,10 +894,24 @@ def _hab_s(s):
 def _Backward2a_T_Ph(P, h):
     """Backward equation for region 2a, T=f(P,h)
 
-    >>> "%.6f" % _Backward2a_T_Ph(0.001,3000)
-    '534.433241'
-    >>> "%.5f" % _Backward2a_T_Ph(3,4000)
-    '1010.77577'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2a_T_Ph(0.001,3000)
+    534.433241
+    >>> _Backward2a_T_Ph(3,4000)
+    1010.77577
     """
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
          3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7]
@@ -610,10 +941,24 @@ def _Backward2a_T_Ph(P, h):
 def _Backward2b_T_Ph(P, h):
     """Backward equation for region 2b, T=f(P,h)
 
-    >>> "%.5f" % _Backward2b_T_Ph(5,4000)
-    '1015.31583'
-    >>> "%.6f" % _Backward2b_T_Ph(25,3500)
-    '875.279054'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2b_T_Ph(5,4000)
+    1015.31583
+    >>> _Backward2b_T_Ph(25,3500)
+    875.279054
     """
     I = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3,
          3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 7, 7, 9, 9]
@@ -644,10 +989,24 @@ def _Backward2b_T_Ph(P, h):
 def _Backward2c_T_Ph(P, h):
     """Backward equation for region 2c, T=f(P,h)
 
-    >>> "%.6f" % _Backward2c_T_Ph(40,2700)
-    '743.056411'
-    >>> "%.6f" % _Backward2c_T_Ph(60,3200)
-    '882.756860'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2c_T_Ph(40,2700)
+    743.056411
+    >>> _Backward2c_T_Ph(60,3200)
+    882.756860
     """
     I = [-7, -7, -6, -6, -5, -5, -2, -2, -1, -1, 0, 0, 1, 1, 2, 6, 6, 6, 6, 6,
          6, 6, 6]
@@ -671,7 +1030,20 @@ def _Backward2c_T_Ph(P, h):
 
 
 def _Backward2_T_Ph(P, h):
-    """Backward equation for region 2, T=f(P,h)"""
+    """Backward equation for region 2, T=f(P,h)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+    """
     Tsat = _TSat_P(P)
     if P <= 4:
         T = _Backward2a_T_Ph(P, h)
@@ -689,10 +1061,24 @@ def _Backward2_T_Ph(P, h):
 def _Backward2a_T_Ps(P, s):
     """Backward equation for region 2a, T=f(P,s)
 
-    >>> "%.6f" % _Backward2a_T_Ps(0.1,7.5)
-    '399.517097'
-    >>> "%.5f" % _Backward2a_T_Ps(2.5,8)
-    '1039.84917'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2a_T_Ps(0.1,7.5)
+    399.517097
+    >>> _Backward2a_T_Ps(2.5,8)
+    1039.84917
     """
     I = [-1.5, -1.5, -1.5, -1.5, -1.5, -1.5, -1.25, -1.25, -1.25, -1.0, -1.0,
          -1.0, -1.0, -1.0, -1.0, -0.75, -0.75, -0.5, -0.5, -0.5, -0.5, -0.25,
@@ -729,10 +1115,24 @@ def _Backward2a_T_Ps(P, s):
 def _Backward2b_T_Ps(P, s):
     """Backward equation for region 2b, T=f(P,s)
 
-    >>> "%.6f" % _Backward2b_T_Ps(8,6)
-    '600.484040'
-    >>> "%.5f" % _Backward2b_T_Ps(90,6)
-    '1038.01126'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2b_T_Ps(8,6)
+    600.484040
+    >>> _Backward2b_T_Ps(90,6)
+    1038.01126
     """
     I = [-6, -6, -5, -5, -4, -4, -4, -3, -3, -3, -3, -2, -2, -2, -2, -1, -1,
          -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3,
@@ -766,10 +1166,24 @@ def _Backward2b_T_Ps(P, s):
 def _Backward2c_T_Ps(P, s):
     """Backward equation for region 2c, T=f(P,s)
 
-    >>> "%.6f" % _Backward2c_T_Ps(20,5.75)
-    '697.992849'
-    >>> "%.6f" % _Backward2c_T_Ps(80,5.75)
-    '949.017998'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward2c_T_Ps(20,5.75)
+    697.992849
+    >>> _Backward2c_T_Ps(80,5.75)
+    949.017998
     """
     I = [-2, -2, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5,
          5, 6, 6, 7, 7, 7, 7, 7]
@@ -795,7 +1209,20 @@ def _Backward2c_T_Ps(P, s):
 
 
 def _Backward2_T_Ps(P, s):
-    """Backward equation for region 2, T=f(P,s)"""
+    """Backward equation for region 2, T=f(P,s)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+    """
     sf = 5.85
     Tsat = _TSat_P(P)
     if P <= 4:
@@ -810,12 +1237,26 @@ def _Backward2_T_Ps(P, s):
 def _Backward2a_P_hs(h, s):
     """Backward equation for region 2a, P=f(h,s)
 
-    >>> "%.9f" % _Backward2a_P_hs(2800,6.5)
-    '1.371012767'
-    >>> "%.12f" % _Backward2a_P_hs(2800,9.5)
-    '0.001879743844'
-    >>> "%.10f" % _Backward2a_P_hs(4100,9.5)
-    '0.1024788997'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward2a_P_hs(2800,6.5)
+    1.371012767
+    >>> _Backward2a_P_hs(2800,9.5)
+    0.001879743844
+    >>> _Backward2a_P_hs(4100,9.5)
+    0.1024788997
     """
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3,
          3, 4, 5, 5, 6, 7]
@@ -843,12 +1284,26 @@ def _Backward2a_P_hs(h, s):
 def _Backward2b_P_hs(h, s):
     """Backward equation for region 2b, P=f(h,s)
 
-    >>> "%.9f" % _Backward2b_P_hs(2800,6)
-    '4.793911442'
-    >>> "%.8f" % _Backward2b_P_hs(3600,6)
-    '83.95519209'
-    >>> "%.9f" % _Backward2b_P_hs(3600,7)
-    '7.527161441'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward2b_P_hs(2800,6)
+    4.793911442
+    >>> _Backward2b_P_hs(3600,6)
+    83.95519209
+    >>> _Backward2b_P_hs(3600,7)
+    7.527161441
     """
     I = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6,
          6, 6, 7, 7, 8, 8, 8, 8, 12, 14]
@@ -877,12 +1332,26 @@ def _Backward2b_P_hs(h, s):
 def _Backward2c_P_hs(h, s):
     """Backward equation for region 2c, P=f(h,s)
 
-    >>> "%.8f" % _Backward2c_P_hs(2800,5.1)
-    '94.39202060'
-    >>> "%.9f" % _Backward2c_P_hs(2800,5.8)
-    '8.414574124'
-    >>> "%.8f" % _Backward2c_P_hs(3400,5.8)
-    '83.76903879'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward2c_P_hs(2800,5.1)
+    94.39202060
+    >>> _Backward2c_P_hs(2800,5.8)
+    8.414574124
+    >>> _Backward2c_P_hs(3400,5.8)
+    83.76903879
     """
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 5,
          5, 5, 5, 6, 6, 10, 12, 16]
@@ -909,7 +1378,20 @@ def _Backward2c_P_hs(h, s):
 
 
 def _Backward2_P_hs(h, s):
-    """Backward equation for region 2, P=f(h,s)"""
+    """Backward equation for region 2, P=f(h,s)
+
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+    """
     sfbc = 5.85
     hamin = _hab_s(s)
     if h <= hamin:
@@ -925,29 +1407,54 @@ def _Backward2_P_hs(h, s):
 def _Region3(rho, T):
     """Basic equation for region 3
 
-    >>> "%.7f" % _Region3(500,650)["P"]
-    '25.5837018'
-    >>> "%.5f" % _Region3(500,650)["h"]
-    '1863.43019'
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isocoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+            * alfap: Relative pressure coefficient [1/K]
+            * betap: Isothermal stress coefficient [kg/m³]
+
+    Examples
+    --------
+    >>> _Region3(500,650)["P"]
+    25.5837018
+    >>> _Region3(500,650)["h"]
+    1863.43019
     >>> p = _Region3(500, 650)
-    >>> "%.5f" % (p["h"]-p["P"]*1000*p["v"], )
-    '1812.26279'
-    >>> "%.8f" % _Region3(200,650)["s"]
-    '4.85438792'
-    >>> "%.7f" % _Region3(200,650)["cp"]
-    '44.6579342'
-    >>> "%.8f" % _Region3(200,650)["cv"]
-    '4.04118076'
-    >>> "%.6f" % _Region3(200,650)["w"]
-    '383.444594'
-    >>> "%.11f" % _Region3(500,750)["alfav"]
-    '0.00441515098'
-    >>> "%.11f" % _Region3(500,750)["kt"]
-    '0.00806710817'
-    >>> "%.11f" % _Region3(500,750)["alfap"]
-    '0.00698896514'
-    >>> "%.6f" % _Region3(500,750)["betap"]
-    '791.475213'
+    >>> p["h"]-p["P"]*1000*p["v"]
+    1812.26279
+    >>> _Region3(200,650)["s"]
+    4.85438792
+    >>> _Region3(200,650)["cp"]
+    44.6579342
+    >>> _Region3(200,650)["cv"]
+    4.04118076
+    >>> _Region3(200,650)["w"]
+    383.444594
+    >>> _Region3(500,750)["alfav"]
+    0.00441515098
+    >>> _Region3(500,750)["kt"]
+    0.00806710817
+    >>> _Region3(500,750)["alfap"]
+    0.00698896514
+    >>> _Region3(500,750)["betap"]
+    791.475213
     """
 
     I = [None, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,
@@ -1004,8 +1511,20 @@ def _Region3(rho, T):
 def _h_3ab(P):
     """Define the boundary between Region 3a-3b, h=f(P)
 
-    >>> "%.6f" % _h_3ab(25)
-    '2095.936454'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Examples
+    --------
+    >>> _h_3ab(25)
+    2095.936454
     """
     return 0.201464004206875e4 + 3.74696550136983*P - \
         0.0219921901054187*P**2+0.875131686009950e-4*P**3
@@ -1014,8 +1533,20 @@ def _h_3ab(P):
 def _tab_P(P):
     """Define the boundary between Region 3a-3b, T=f(P)
 
-    >>> "%.7f" % _tab_P(40)
-    '693.0341408'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _tab_P(40)
+    693.0341408
     """
     I = [0, 1, 2, -1, -2]
     n = [0.154793642129415e4, -0.187661219490113e3, 0.213144632222113e2,
@@ -1031,8 +1562,20 @@ def _tab_P(P):
 def _top_P(P):
     """Define the boundary between Region 3o-3p, T=f(P)
 
-    >>> "%.7f" % _top_P(22.8)
-    '650.0106943'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _top_P(22.8)
+    650.0106943
     """
     I = [0, 1, 2, -1, -2]
     n = [0.969461372400213e3, -0.332500170441278e3, 0.642859598466067e2,
@@ -1048,8 +1591,20 @@ def _top_P(P):
 def _twx_P(P):
     """Define the boundary between Region 3w-3x, T=f(P)
 
-    >>> "%.7f" % _twx_P(22.3)
-    '648.2049480'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _twx_P(22.3)
+    648.2049480
     """
     I = [0, 1, 2, -1, -2]
     n = [0.728052609145380e1, 0.973505869861952e2, 0.147370491183191e2,
@@ -1065,32 +1620,57 @@ def _twx_P(P):
 def _tef_P(P):
     """Define the boundary between Region 3e-3f, T=f(P)
 
-    >>> "%.7f" % _tef_P(40)
-    '713.9593992'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _tef_P(40)
+    713.9593992
     """
     return 3.727888004*(P-22.064)+647.096
 
 
-def _txx_P(P, xx):
+def _txx_P(P, xy):
     """Define the boundary between 3x-3y, T=f(P)
-    where xx represent the subregions options: cd, gh, ij, jk, mn, qu, rx, uv
 
-    >>> "%.7f" % _txx_P(25,"cd")
-    '649.3659208'
-    >>> "%.7f" % _txx_P(23,"gh")
-    '649.8873759'
-    >>> "%.7f" % _txx_P(23,"ij")
-    '651.5778091'
-    >>> "%.7f" % _txx_P(23,"jk")
-    '655.8338344'
-    >>> "%.7f" % _txx_P(22.8,"mn")
-    '649.6054133'
-    >>> "%.7f" % _txx_P(22,"qu")
-    '645.6355027'
-    >>> "%.7f" % _txx_P(22,"rx")
-    '648.2622754'
-    >>> "%.7f" % _txx_P(22.3,"uv")
-    '647.7996121'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    xy: string
+        Subregions options: cd, gh, ij, jk, mn, qu, rx, uv
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _txx_P(25,"cd")
+    649.3659208
+    >>> _txx_P(23,"gh")
+    649.8873759
+    >>> _txx_P(23,"ij")
+    651.5778091
+    >>> _txx_P(23,"jk")
+    655.8338344
+    >>> _txx_P(22.8,"mn")
+    649.6054133
+    >>> _txx_P(22,"qu")
+    645.6355027
+    >>> _txx_P(22,"rx")
+    648.2622754
+    >>> _txx_P(22.3,"uv")
+    647.7996121
     """
     ng = {
         "cd": [0.585276966696349e3, 0.278233532206915e1, -0.127283549295878e-1,
@@ -1110,7 +1690,7 @@ def _txx_P(P, xx):
         "uv": [0.528199646263062e3, 0.890579602135307e1, -0.222814134903755,
                0.286791682263697e-2]}
 
-    n = ng[xx]
+    n = ng[xy]
     Pr = P/1
     T = 0
     for i in range(len(n)):
@@ -1121,10 +1701,24 @@ def _txx_P(P, xx):
 def _Backward3a_v_Ph(P, h):
     """Backward equation for region 3a, v=f(P,h)
 
-    >>> "%.12f" % _Backward3a_v_Ph(20,1700)
-    '0.001749903962'
-    >>> "%.12f" % _Backward3a_v_Ph(100,2100)
-    '0.001676229776'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Examples
+    --------
+    >>> _Backward3a_v_Ph(20,1700)
+    0.001749903962
+    >>> _Backward3a_v_Ph(100,2100)
+    0.001676229776
     """
     I = [-12, -12, -12, -12, -10, -10, -10, -8, -8, -6, -6, -6, -4, -4, -3, -2,
          -2, -1, -1, -1, -1, 0, 0, 1, 1, 1, 2, 2, 3, 4, 5, 8]
@@ -1153,10 +1747,24 @@ def _Backward3a_v_Ph(P, h):
 def _Backward3b_v_Ph(P, h):
     """Backward equation for region 3b, v=f(P,h)
 
-    >>> "%.12f" % _Backward3b_v_Ph(20,2500)
-    '0.006670547043'
-    >>> "%.12f" % _Backward3b_v_Ph(100,2700)
-    '0.002404234998'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Examples
+    --------
+    >>> _Backward3b_v_Ph(20,2500)
+    0.006670547043
+    >>> _Backward3b_v_Ph(100,2700)
+    0.002404234998
     """
     I = [-12, -12, -8, -8, -8, -8, -8, -8, -6, -6, -6, -6, -6, -6, -4, -4, -4,
          -3, -3, -2, -2, -1, -1, -1, -1, 0, 1, 1, 2, 2]
@@ -1182,7 +1790,20 @@ def _Backward3b_v_Ph(P, h):
 
 
 def _Backward3_v_Ph(P, h):
-    """Backward equation for region 3, v=f(P,h)"""
+    """Backward equation for region 3, v=f(P,h)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+    """
     hf = _h_3ab(P)
     if h <= hf:
         return _Backward3a_v_Ph(P, h)
@@ -1193,10 +1814,24 @@ def _Backward3_v_Ph(P, h):
 def _Backward3a_T_Ph(P, h):
     """Backward equation for region 3a, T=f(P,h)
 
-    >>> "%.7f" % _Backward3a_T_Ph(20,1700)
-    '629.3083892'
-    >>> "%.7f" % _Backward3a_T_Ph(100,2100)
-    '733.6163014'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward3a_T_Ph(20,1700)
+    629.3083892
+    >>> _Backward3a_T_Ph(100,2100)
+    733.6163014
     """
     I = [-12, -12, -12, -12, -12, -12, -12, -12, -10, -10, -10, -8, -8, -8, -8,
          -5, -3, -2, -2, -2, -1, -1, 0, 0, 1, 3, 3, 4, 4, 10, 12]
@@ -1225,10 +1860,24 @@ def _Backward3a_T_Ph(P, h):
 def _Backward3b_T_Ph(P, h):
     """Backward equation for region 3b, T=f(P,h)
 
-    >>> "%.7f" % _Backward3b_T_Ph(20,2500)
-    '641.8418053'
-    >>> "%.7f" % _Backward3b_T_Ph(100,2700)
-    '842.0460876'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward3b_T_Ph(20,2500)
+    641.8418053
+    >>> _Backward3b_T_Ph(100,2700)
+    842.0460876
     """
     I = [-12, -12, -10, -10, -10, -10, -10, -8, -8, -8, -8, -8, -6, -6, -6, -4,
          -4, -3, -2, -2, -1, -1, -1, -1, -1, -1, 0, 0, 1, 3, 5, 6, 8]
@@ -1255,7 +1904,20 @@ def _Backward3b_T_Ph(P, h):
 
 
 def _Backward3_T_Ph(P, h):
-    """Backward equation for region 3, T=f(P,h)"""
+    """Backward equation for region 3, T=f(P,h)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+    """
     hf = _h_3ab(P)
     if h <= hf:
         T = _Backward3a_T_Ph(P, h)
@@ -1267,10 +1929,24 @@ def _Backward3_T_Ph(P, h):
 def _Backward3a_v_Ps(P, s):
     """Backward equation for region 3a, v=f(P,s)
 
-    >>> "%.12f" % _Backward3a_v_Ps(20,3.8)
-    '0.001733791463'
-    >>> "%.12f" % _Backward3a_v_Ps(100,4)
-    '0.001555893131'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Examples
+    --------
+    >>> _Backward3a_v_Ps(20,3.8)
+    0.001733791463
+    >>> _Backward3a_v_Ps(100,4)
+    0.001555893131
     """
     I = [-12, -12, -12, -10, -10, -10, -10, -8, -8, -8, -8, -6, -5, -4, -3, -3,
          -2, -2, -1, -1, 0, 0, 0, 1, 2, 4, 5, 6]
@@ -1298,10 +1974,24 @@ def _Backward3a_v_Ps(P, s):
 def _Backward3b_v_Ps(P, s):
     """Backward equation for region 3b, v=f(P,s)
 
-    >>> "%.12f" % _Backward3b_v_Ps(20,5)
-    '0.006262101987'
-    >>> "%.12f" % _Backward3b_v_Ps(100,5)
-    '0.002449610757'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Examples
+    --------
+    >>> _Backward3b_v_Ps(20,5)
+    0.006262101987
+    >>> _Backward3b_v_Ps(100,5)
+    0.002449610757
     """
     I = [-12, -12, -12, -12, -12, -12, -10, -10, -10, -10, -8, -5, -5, -5, -4,
          -4, -4, -4, -3, -2, -2, -2, -2, -2, -2, 0, 0, 0, 1, 1, 2]
@@ -1328,7 +2018,20 @@ def _Backward3b_v_Ps(P, s):
 
 
 def _Backward3_v_Ps(P, s):
-    """Backward equation for region 3, v=f(P,s)"""
+    """Backward equation for region 3, v=f(P,s)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+    """
     if s <= sc:
         return _Backward3a_v_Ps(P, s)
     else:
@@ -1338,10 +2041,24 @@ def _Backward3_v_Ps(P, s):
 def _Backward3a_T_Ps(P, s):
     """Backward equation for region 3a, T=f(P,s)
 
-    >>> "%.7f" % _Backward3a_T_Ps(20,3.8)
-    '628.2959869'
-    >>> "%.7f" % _Backward3a_T_Ps(100,4)
-    '705.6880237'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward3a_T_Ps(20,3.8)
+    628.2959869
+    >>> _Backward3a_T_Ps(100,4)
+    705.6880237
     """
     I = [-12, -12, -10, -10, -10, -10, -8, -8, -8, -8, -6, -6, -6, -5, -5, -5,
          -4, -4, -4, -2, -2, -1, -1, 0, 0, 0, 1, 2, 2, 3, 8, 8, 10]
@@ -1370,10 +2087,24 @@ def _Backward3a_T_Ps(P, s):
 def _Backward3b_T_Ps(P, s):
     """Backward equation for region 3b, T=f(P,s)
 
-    >>> "%.7f" % _Backward3b_T_Ps(20,5)
-    '640.1176443'
-    >>> "%.7f" % _Backward3b_T_Ps(100,5)
-    '847.4332825'
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward3b_T_Ps(20,5)
+    640.1176443
+    >>> _Backward3b_T_Ps(100,5)
+    847.4332825
     """
     I = [-12, -12, -12, -12, -8, -8, -8, -6, -6, -6, -5, -5, -5, -5, -5, -4,
          -3, -3, -2, 0, 2, 3, 4, 5, 6, 8, 12, 14]
@@ -1399,7 +2130,20 @@ def _Backward3b_T_Ps(P, s):
 
 
 def _Backward3_T_Ps(P, s):
-    """Backward equation for region 3, T=f(P,s)"""
+    """Backward equation for region 3, T=f(P,s)
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+    """
     sc = 4.41202148223476
     if s <= sc:
         T = _Backward3a_T_Ps(P, s)
@@ -1411,12 +2155,26 @@ def _Backward3_T_Ps(P, s):
 def _Backward3a_P_hs(h, s):
     """Backward equation for region 3a, P=f(h,s)
 
-    >>> "%.8f" % _Backward3a_P_hs(1700,3.8)
-    '25.55703246'
-    >>> "%.8f" % _Backward3a_P_hs(2000,4.2)
-    '45.40873468'
-    >>> "%.8f" % _Backward3a_P_hs(2100,4.3)
-    '60.78123340'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward3a_P_hs(1700,3.8)
+    25.55703246
+    >>> _Backward3a_P_hs(2000,4.2)
+    45.40873468
+    >>> _Backward3a_P_hs(2100,4.3)
+    60.78123340
     """
     I = [0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 6, 7, 8, 10, 10,
          14, 18, 20, 22, 22, 24, 28, 28, 32, 32]
@@ -1445,12 +2203,26 @@ def _Backward3a_P_hs(h, s):
 def _Backward3b_P_hs(h, s):
     """Backward equation for region 3b, P=f(h,s)
 
-    >>> "%.8f" % _Backward3b_P_hs(2400,4.7)
-    '63.63924887'
-    >>> "%.8f" % _Backward3b_P_hs(2600,5.1)
-    '34.34999263'
-    >>> "%.8f" % _Backward3b_P_hs(2700,5.0)
-    '88.39043281'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+
+    Examples
+    --------
+    >>> _Backward3b_P_hs(2400,4.7)
+    63.63924887
+    >>> _Backward3b_P_hs(2600,5.1)
+    34.34999263
+    >>> _Backward3b_P_hs(2700,5.0)
+    88.39043281
     """
     I = [-12, -12, -12, -12, -12, -10, -10, -10, -10, -8, -8, -6, -6, -6, -6,
          -5, -4, -4, -4, -3, -3, -3, -3, -2, -2, -1, 0, 2, 2, 5, 6, 8, 10, 14,
@@ -1479,7 +2251,20 @@ def _Backward3b_P_hs(h, s):
 
 
 def _Backward3_P_hs(h, s):
-    """Backward equation for region 3, P=f(h,s)"""
+    """Backward equation for region 3, P=f(h,s)
+
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    P : float
+        Pressure [MPa]
+    """
     sc = 4.41202148223476
     if s <= sc:
         return _Backward3a_P_hs(h, s)
@@ -1489,7 +2274,25 @@ def _Backward3_P_hs(h, s):
 
 def _Backward3_sat_v_P(P, T, x):
     """Backward equation for region 3 for saturated state, vs=f(P,x)
-    x 0,1 vapor quality"""
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    x : integer
+        Vapor quality [-]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Notes
+    -----
+    The vapor quality (x) can be 0 (saturated liquid) or 1 (saturated vapour)
+    """
     if x == 0:
         if P < 19.00881189:
             region = "c"
@@ -1513,7 +2316,20 @@ def _Backward3_sat_v_P(P, T, x):
 
 
 def _Backward3_v_PT(P, T):
-    """Backward equation for region 3, v=f(P,T)"""
+    """Backward equation for region 3, v=f(P,T)
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+    """
     if P > 40:
         if T <= _tab_P(P):
             region = "a"
@@ -1676,110 +2492,126 @@ def _Backward3_v_PT(P, T):
 def _Backward3x_v_PT(T, P, x):
     """Backward equation for region 3x, v=f(P,T)
 
-    >>> "%.12f" % _Backward3x_v_PT(630,50,"a")
-    '0.001470853100'
-    >>> "%.12f" % _Backward3x_v_PT(670,80,"a")
-    '0.001503831359'
-    >>> "%.12f" % _Backward3x_v_PT(710,50,"b")
-    '0.002204728587'
-    >>> "%.12f" % _Backward3x_v_PT(750,80,"b")
-    '0.001973692940'
-    >>> "%.12f" % _Backward3x_v_PT(630,20,"c")
-    '0.001761696406'
-    >>> "%.12f" % _Backward3x_v_PT(650,30,"c")
-    '0.001819560617'
-    >>> "%.12f" % _Backward3x_v_PT(656,26,"d")
-    '0.002245587720'
-    >>> "%.12f" % _Backward3x_v_PT(670,30,"d")
-    '0.002506897702'
-    >>> "%.12f" % _Backward3x_v_PT(661,26,"e")
-    '0.002970225962'
-    >>> "%.12f" % _Backward3x_v_PT(675,30,"e")
-    '0.003004627086'
-    >>> "%.12f" % _Backward3x_v_PT(671,26,"f")
-    '0.005019029401'
-    >>> "%.12f" % _Backward3x_v_PT(690,30,"f")
-    '0.004656470142'
-    >>> "%.12f" % _Backward3x_v_PT(649,23.6,"g")
-    '0.002163198378'
-    >>> "%.12f" % _Backward3x_v_PT(650,24,"g")
-    '0.002166044161'
-    >>> "%.12f" % _Backward3x_v_PT(652,23.6,"h")
-    '0.002651081407'
-    >>> "%.12f" % _Backward3x_v_PT(654,24,"h")
-    '0.002967802335'
-    >>> "%.12f" % _Backward3x_v_PT(653,23.6,"i")
-    '0.003273916816'
-    >>> "%.12f" % _Backward3x_v_PT(655,24,"i")
-    '0.003550329864'
-    >>> "%.12f" % _Backward3x_v_PT(655,23.5,"j")
-    '0.004545001142'
-    >>> "%.12f" % _Backward3x_v_PT(660,24,"j")
-    '0.005100267704'
-    >>> "%.12f" % _Backward3x_v_PT(660,23,"k")
-    '0.006109525997'
-    >>> "%.12f" % _Backward3x_v_PT(670,24,"k")
-    '0.006427325645'
-    >>> "%.12f" % _Backward3x_v_PT(646,22.6,"l")
-    '0.002117860851'
-    >>> "%.12f" % _Backward3x_v_PT(646,23,"l")
-    '0.002062374674'
-    >>> "%.12f" % _Backward3x_v_PT(648.6,22.6,"m")
-    '0.002533063780'
-    >>> "%.12f" % _Backward3x_v_PT(649.3,22.8,"m")
-    '0.002572971781'
-    >>> "%.12f" % _Backward3x_v_PT(649,22.6,"n")
-    '0.002923432711'
-    >>> "%.12f" % _Backward3x_v_PT(649.7,22.8,"n")
-    '0.002913311494'
-    >>> "%.12f" % _Backward3x_v_PT(649.1,22.6,"o")
-    '0.003131208996'
-    >>> "%.12f" % _Backward3x_v_PT(649.9,22.8,"o")
-    '0.003221160278'
-    >>> "%.12f" % _Backward3x_v_PT(649.4,22.6,"p")
-    '0.003715596186'
-    >>> "%.12f" % _Backward3x_v_PT(650.2,22.8,"p")
-    '0.003664754790'
-    >>> "%.12f" % _Backward3x_v_PT(640,21.1,"q")
-    '0.001970999272'
-    >>> "%.12f" % _Backward3x_v_PT(643,21.8,"q")
-    '0.002043919161'
-    >>> "%.12f" % _Backward3x_v_PT(644,21.1,"r")
-    '0.005251009921'
-    >>> "%.12f" % _Backward3x_v_PT(648,21.8,"r")
-    '0.005256844741'
-    >>> "%.12f" % _Backward3x_v_PT(635,19.1,"s")
-    '0.001932829079'
-    >>> "%.12f" % _Backward3x_v_PT(638,20,"s")
-    '0.001985387227'
-    >>> "%.12f" % _Backward3x_v_PT(626,17,"t")
-    '0.008483262001'
-    >>> "%.12f" % _Backward3x_v_PT(640,20,"t")
-    '0.006227528101'
-    >>> "%.12f" % _Backward3x_v_PT(644.6,21.5,"u")
-    '0.002268366647'
-    >>> "%.12f" % _Backward3x_v_PT(646.1,22,"u")
-    '0.002296350553'
-    >>> "%.12f" % _Backward3x_v_PT(648.6,22.5,"v")
-    '0.002832373260'
-    >>> "%.12f" % _Backward3x_v_PT(647.9,22.3,"v")
-    '0.002811424405'
-    >>> "%.12f" % _Backward3x_v_PT(647.5,22.15,"w")
-    '0.003694032281'
-    >>> "%.12f" % _Backward3x_v_PT(648.1,22.3,"w")
-    '0.003622226305'
-    >>> "%.12f" % _Backward3x_v_PT(648,22.11,"x")
-    '0.004528072649'
-    >>> "%.12f" % _Backward3x_v_PT(649,22.3,"x")
-    '0.004556905799'
-    >>> "%.12f" % _Backward3x_v_PT(646.84,22,"y")
-    '0.002698354719'
-    >>> "%.12f" % _Backward3x_v_PT(647.05,22.064,"y")
-    '0.002717655648'
-    >>> "%.12f" % _Backward3x_v_PT(646.89,22,"z")
-    '0.003798732962'
-    >>> "%.12f" % _Backward3x_v_PT(647.15,22.064,"z")
-    '0.003701940009'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    x : char
+        Region 3 subregion code
+
+    Returns
+    -------
+    v : float
+        Specific volume [m³/kg]
+
+    Examples
+    --------
+    >>> _Backward3x_v_PT(630,50,"a")
+    0.001470853100
+    >>> _Backward3x_v_PT(670,80,"a")
+    0.001503831359
+    >>> _Backward3x_v_PT(710,50,"b")
+    0.002204728587
+    >>> _Backward3x_v_PT(750,80,"b")
+    0.001973692940
+    >>> _Backward3x_v_PT(630,20,"c")
+    0.001761696406
+    >>> _Backward3x_v_PT(650,30,"c")
+    0.001819560617
+    >>> _Backward3x_v_PT(656,26,"d")
+    0.002245587720
+    >>> _Backward3x_v_PT(670,30,"d")
+    0.002506897702
+    >>> _Backward3x_v_PT(661,26,"e")
+    0.002970225962
+    >>> _Backward3x_v_PT(675,30,"e")
+    0.003004627086
+    >>> _Backward3x_v_PT(671,26,"f")
+    0.005019029401
+    >>> _Backward3x_v_PT(690,30,"f")
+    0.004656470142
+    >>> _Backward3x_v_PT(649,23.6,"g")
+    0.002163198378
+    >>> _Backward3x_v_PT(650,24,"g")
+    0.002166044161
+    >>> _Backward3x_v_PT(652,23.6,"h")
+    0.002651081407
+    >>> _Backward3x_v_PT(654,24,"h")
+    0.002967802335
+    >>> _Backward3x_v_PT(653,23.6,"i")
+    0.003273916816
+    >>> _Backward3x_v_PT(655,24,"i")
+    0.003550329864
+    >>> _Backward3x_v_PT(655,23.5,"j")
+    0.004545001142
+    >>> _Backward3x_v_PT(660,24,"j")
+    0.005100267704
+    >>> _Backward3x_v_PT(660,23,"k")
+    0.006109525997
+    >>> _Backward3x_v_PT(670,24,"k")
+    0.006427325645
+    >>> _Backward3x_v_PT(646,22.6,"l")
+    0.002117860851
+    >>> _Backward3x_v_PT(646,23,"l")
+    0.002062374674
+    >>> _Backward3x_v_PT(648.6,22.6,"m")
+    0.002533063780
+    >>> _Backward3x_v_PT(649.3,22.8,"m")
+    0.002572971781
+    >>> _Backward3x_v_PT(649,22.6,"n")
+    0.002923432711
+    >>> _Backward3x_v_PT(649.7,22.8,"n")
+    0.002913311494
+    >>> _Backward3x_v_PT(649.1,22.6,"o")
+    0.003131208996
+    >>> _Backward3x_v_PT(649.9,22.8,"o")
+    0.003221160278
+    >>> _Backward3x_v_PT(649.4,22.6,"p")
+    0.003715596186
+    >>> _Backward3x_v_PT(650.2,22.8,"p")
+    0.003664754790
+    >>> _Backward3x_v_PT(640,21.1,"q")
+    0.001970999272
+    >>> _Backward3x_v_PT(643,21.8,"q")
+    0.002043919161
+    >>> _Backward3x_v_PT(644,21.1,"r")
+    0.005251009921
+    >>> _Backward3x_v_PT(648,21.8,"r")
+    0.005256844741
+    >>> _Backward3x_v_PT(635,19.1,"s")
+    0.001932829079
+    >>> _Backward3x_v_PT(638,20,"s")
+    0.001985387227
+    >>> _Backward3x_v_PT(626,17,"t")
+    0.008483262001
+    >>> _Backward3x_v_PT(640,20,"t")
+    0.006227528101
+    >>> _Backward3x_v_PT(644.6,21.5,"u")
+    0.002268366647
+    >>> _Backward3x_v_PT(646.1,22,"u")
+    0.002296350553
+    >>> _Backward3x_v_PT(648.6,22.5,"v")
+    0.002832373260
+    >>> _Backward3x_v_PT(647.9,22.3,"v")
+    0.002811424405
+    >>> _Backward3x_v_PT(647.5,22.15,"w")
+    0.003694032281
+    >>> _Backward3x_v_PT(648.1,22.3,"w")
+    0.003622226305
+    >>> _Backward3x_v_PT(648,22.11,"x")
+    0.004528072649
+    >>> _Backward3x_v_PT(649,22.3,"x")
+    0.004556905799
+    >>> _Backward3x_v_PT(646.84,22,"y")
+    0.002698354719
+    >>> _Backward3x_v_PT(647.05,22.064,"y")
+    0.002717655648
+    >>> _Backward3x_v_PT(646.89,22,"z")
+    0.003798732962
+    >>> _Backward3x_v_PT(647.15,22.064,"z")
+    0.003701940009
     """
     par = {
         "a": [0.0024, 100, 760, 30, 0.085, 0.817, 1, 1, 1],
@@ -2260,7 +3092,27 @@ def _Backward3x_v_PT(T, P, x):
 
 # Region 4
 def _Region4(P, x):
-    """Basic equation for region 4"""
+    """Basic equation for region 4
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    x : float
+        Vapor quality [-]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * T: Saturated temperature [K]
+            * P: Saturated pressure [MPa]
+            * x: Vapor quality [-]
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+    """
     T = _TSat_P(P)
     if T > 623.15:
         rhol = 1./_Backward3_sat_v_P(P, T, 0)
@@ -2292,12 +3144,26 @@ def _Region4(P, x):
 def _Backward4_T_hs(h, s):
     """Backward equation for region 4, T=f(h,s)
 
-    >>> "%.7f" % _Backward4_T_hs(1800,5.3)
-    '346.8475498'
-    >>> "%.7f" % _Backward4_T_hs(2400,6.0)
-    '425.1373305'
-    >>> "%.7f" % _Backward4_T_hs(2500,5.5)
-    '522.5579013'
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    T : float
+        Temperature [K]
+
+    Examples
+    --------
+    >>> _Backward4_T_hs(1800,5.3)
+    346.8475498
+    >>> _Backward4_T_hs(2400,6.0)
+    425.1373305
+    >>> _Backward4_T_hs(2500,5.5)
+    522.5579013
     """
     I = [0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 6,
          8, 10, 10, 12, 14, 14, 16, 16, 18, 18, 18, 20, 28]
@@ -2328,24 +3194,47 @@ def _Backward4_T_hs(h, s):
 def _Region5(T, P):
     """Basic equation for region 5
 
-    >>> "%.8f" % _Region5(1500,0.5)["v"]
-    '1.38455090'
-    >>> "%.5f" % _Region5(1500,0.5)["h"]
-    '5219.76855'
-    >>> "%.5f" % (_Region5(1500,0.5)["h"]-500*_Region5(1500,0.5)["v"], )
-    '4527.49310'
-    >>> "%.8f" % _Region5(1500,30)["s"]
-    '7.72970133'
-    >>> "%.8f" % _Region5(1500,30)["cp"]
-    '2.72724317'
-    >>> "%.8f" % _Region5(1500,30)["cv"]
-    '2.19274829'
-    >>> "%.5f" % _Region5(2000,30)["w"]
-    '1067.36948'
-    >>> "%.12f" % _Region5(2000,30)["alfav"]
-    '0.000508830641'
-    >>> "%.10f" % _Region5(2000,30)["kt"]
-    '0.0329193892'
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isocoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+
+    Examples
+    --------
+    >>> _Region5(1500,0.5)["v"]
+    1.38455090
+    >>> _Region5(1500,0.5)["h"]
+    5219.76855
+    >>> _Region5(1500,0.5)["h"]-500*_Region5(1500,0.5)["v"]
+    4527.49310
+    >>> _Region5(1500,30)["s"]
+    7.72970133
+    >>> _Region5(1500,30)["cp"]
+    2.72724317
+    >>> _Region5(1500,30)["cv"]
+    2.19274829
+    >>> _Region5(2000,30)["w"]
+    1067.36948
+    >>> _Region5(2000,30)["alfav"]
+    0.000508830641
+    >>> _Region5(2000,30)["kt"]
+    0.0329193892
     """
     Tr = 1000/T
     Pr = P/1
@@ -2384,7 +3273,28 @@ def _Region5(T, P):
 
 
 def Region5_cp0(Tr, Pr):
-    """Ideal properties for Region 5"""
+    """Ideal properties for Region 5
+
+    Parameters
+    ----------
+    Tr : float
+        Reduced temperature [-]
+    Pr : float
+        Reduced pressure [-]
+
+    Returns
+    -------
+    prop : array
+        Array with ideal Gibbs energy partial derivatives:
+
+            * g: Ideal Specific Gibbs energy [kJ/kg]
+            * gp: [∂g/∂P]T
+            * gpp: [∂²g/∂P²]T
+            * gt: [∂g/∂T]P
+            * gtt: [∂²g/∂T²]P
+            * gpt: [∂²g/∂T∂P]
+
+    """
     Jo = [0, 1, -3, -2, -1, 2]
     no = [-0.13179983674201e2, 0.68540841634434e1, -0.24805148933466e-1,
           0.36901534980333, -0.31161318213925e1, -0.32961626538917]
@@ -2402,7 +3312,20 @@ def Region5_cp0(Tr, Pr):
 
 # Region definitions
 def _Bound_TP(T, P):
-    """Region definition for input T and P"""
+    """Region definition for input T and P
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    region : float
+        IAPWS-97 region code
+    """
     region = None
     if 1073.15 < T <= 2273.15 and Pmin <= P <= 50:
         region = 5
@@ -2424,7 +3347,20 @@ def _Bound_TP(T, P):
 
 
 def _Bound_Ph(P, h):
-    """Region definition for input P y h"""
+    """Region definition for input P y h
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+
+    Returns
+    -------
+    region : float
+        IAPWS-97 region code
+    """
     region = None
     if Pmin <= P <= Ps_623:
         h14 = _Region1(_TSat_P(P), P)["h"]
@@ -2476,7 +3412,20 @@ def _Bound_Ph(P, h):
 
 
 def _Bound_Ps(P, s):
-    """Region definition for input P and s"""
+    """Region definition for input P and s
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    region : float
+        IAPWS-97 region code
+    """
     region = None
     if Pmin <= P <= Ps_623:
         smin = _Region1(273.15, P)["s"]
@@ -2528,7 +3477,20 @@ def _Bound_Ps(P, s):
 
 
 def _Bound_hs(h, s):
-    """Region definition for input h and s"""
+    """Region definition for input h and s
+
+    Parameters
+    ----------
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+
+    Returns
+    -------
+    region : float
+        IAPWS-97 region code
+    """
     region = None
     smin = _Region1(273.15, 100)["s"]
     hmin = _Region1(273.15, 100)["h"]
@@ -2631,7 +3593,29 @@ def _Bound_hs(h, s):
 
 
 def prop0(T, P):
-    """Ideal gas properties"""
+    """Ideal gas properties
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume [m³/kg]
+            * h: Specific enthalpy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isocoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+    """
     if T <= 1073.15:
         Tr = 540/T
         Pr = P/1.
@@ -2655,91 +3639,100 @@ def prop0(T, P):
 
 
 class IAPWS97(object):
-    """Class to model a state for liquid water or steam with the IAPWS-IF97
+    """Class to model a state of liquid water or steam with the IAPWS-IF97
 
-    Incoming properties::
-    T   -   Temperature, K
-    P   -   Pressure, MPa
-    h   -   Specific enthalpy, kJ/kg
-    s   -   Specific entropy, kJ/kg·K
-    x   -   Quality
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+    x : float
+        Vapor quality [-]
 
-    Optional:
-    l   -   Wavelength of light, for refractive index
+    Other Parameters
+    ----------------
+    l : float
+        Wavelength of light, for refractive index
 
+    Methods
+    -------
     Definitions options:
-    T, P    Not valid for two-phases region
-    P, h
-    P, s
-    h, s
-    T, x    Only for two-phases region
-    P, x    Only for two-phases region
+        * T, P: Not valid for two-phases region
+        * P, h
+        * P, s
+        * h, s
+        * T, x: Only for two-phases region
+        * P, x: Only for two-phases region
 
+    Returns
+    -------
+    The calculated instance has the following properties:
+        * P: Pressure [MPa]
+        * T: Temperature [K]
+        * g: Specific Gibbs free energy [kJ/kg]
+        * a: Specific Helmholtz free energy [kJ/kg]
+        * v: Specific volume [m³/kg]
+        * r: Density [kg/m³]
+        * h: Specific enthalpy [kJ/kg]
+        * u: Specific internal energy [kJ/kg]
+        * s: Specific entropy [kJ/kg·K]
+        * cp: Specific isobaric heat capacity [kJ/kg·K]
+        * cv: Specific isochoric heat capacity [kJ/kg·K]
+        * Z: Compression factor [-]
+        * fi: Fugacity coefficient [-]
+        * f: Fugacity [MPa]
 
-    Properties:
-    P        -   Pressure, MPa
-    T        -   Temperature, K
-    g        -   Specific Gibbs free energy, kJ/kg
-    a        -   Specific Helmholtz free energy, kJ/kg
-    v        -   Specific volume, m³/kg
-    r        -   Density, kg/m³
-    h        -   Specific enthalpy, kJ/kg
-    u        -   Specific internal energy, kJ/kg
-    s        -   Specific entropy, kJ/kg·K
-    cp       -   Specific isobaric heat capacity, kJ/kg·K
-    cv       -   Specific isochoric heat capacity, kJ/kg·K
-    Z        -   Compression factor
-    fi       -   Fugacity coefficient
-    f        -   Fugacity, MPa
+        * gamma: Isoentropic exponent [-]
+        * alfav: Isobaric cubic expansion coefficient [1/K]
+        * xkappa: Isothermal compressibility [1/MPa]
+        * kappas: Adiabatic compresibility [1/MPa]
+        * alfap: Relative pressure coefficient [1/K]
+        * betap: Isothermal stress coefficient [kg/m³]
+        * joule: Joule-Thomson coefficient [K/MPa]
+        * deltat: Isothermal throttling coefficient [kJ/kg·MPa]
+        * region: Region
 
-    gamma    -   Isoentropic exponent
-    alfav    -   Isobaric cubic expansion coefficient, 1/K
-    xkappa   -   Isothermal compressibility, 1/MPa
-    kappas   -   Adiabatic compresibility, 1/MPa
-    alfap    -   Relative pressure coefficient, 1/K
-    betap    -   Isothermal stress coefficient, kg/m³
-    joule    -   Joule-Thomson coefficient, K/MPa
-    deltat   -   Isothermal throttling coefficient, kJ/kg·MPa
-    region   -   Region
+        * v0: Ideal specific volume [m³/kg]
+        * u0: Ideal specific internal energy [kJ/kg]
+        * h0: Ideal specific enthalpy [kJ/kg]
+        * s0: Ideal specific entropy [kJ/kg·K]
+        * a0: Ideal specific Helmholtz free energy [kJ/kg]
+        * g0: Ideal specific Gibbs free energy [kJ/kg]
+        * cp0: Ideal specific isobaric heat capacity [kJ/kg·K]
+        * cv0: Ideal specific isochoric heat capacity [kJ/kg·K]
+        * w0: Ideal speed of sound [m/s]
+        * gamma0: Ideal isoentropic exponent [-]
 
-    v0       -   Ideal specific volume, m³/kg
-    u0       -   Ideal specific internal energy, kJ/kg
-    h0       -   Ideal specific enthalpy, kJ/kg
-    s0       -   Ideal specific entropy, kJ/kg·K
-    a0       -   Ideal specific Helmholtz free energy, kJ/kg
-    g0       -   Ideal specific Gibbs free energy, kJ/kg
-    cp0      -   Ideal specific isobaric heat capacity, kJ/kg·K
-    cv0      -   Ideal specific isochoric heat capacity, kJ/kg·K
-    w0       -   Ideal speed of sound, m/s
-    gamma0   -   Ideal isoentropic exponent
+        * w: Speed of sound [m/s]
+        * mu: Dynamic viscosity [Pa·s]
+        * nu: Kinematic viscosity [m²/s]
+        * k: Thermal conductivity [W/m·K]
+        * alfa: Thermal diffusivity [m²/s]
+        * sigma: Surface tension [N/m]
+        * epsilon: Dielectric constant [-]
+        * n: Refractive index [-]
+        * Prandt: Prandtl number [-]
+        * Pr: Reduced Pressure [-]
+        * Tr: Reduced Temperature [-]
+        * Hvap: Vaporization heat [kJ/kg]
+        * Svap: Vaporization entropy [kJ/kg·K]
 
-    w        -   Speed of sound, m/s
-    mu       -   Dynamic viscosity, Pa·s
-    nu       -   Kinematic viscosity, m²/s
-    k        -   Thermal conductivity, W/m·K
-    alfa     -   Thermal diffusivity, m²/s
-    sigma    -   Surface tension, N/m
-    epsilon  -   Dielectric constant
-    n        -   Refractive index
-    Prandt   -   Prandtl number
-    Pr       -   Reduced Pressure
-    Tr       -   Reduced Temperature
-    Hvap     -   Vaporization heat, kJ/kg
-    Svap     -   Vaporization entropy, kJ/kg·K
-
-    Usage:
+    Examples
+    --------
     >>> water=IAPWS97(T=170+273.15,x=0.5)
-    >>> "%0.4f %0.4f %0.1f %0.2f" %(water.Liquid.cp, water.Vapor.cp, \
-        water.Liquid.w, water.Vapor.w)
-    '4.3695 2.5985 1418.3 498.78'
+    >>> water.Liquid.cp, water.Vapor.cp, water.Liquid.w, water.Vapor.w
+    4.3695 2.5985 1418.3 498.78
     >>> water=IAPWS97(T=325+273.15,x=0.5)
-    >>> "%0.4f %0.8f %0.7f %0.2f %0.2f" %(water.P, water.Liquid.v, \
-        water.Vapor.v, water.Liquid.h, water.Vapor.h)
-    '12.0505 0.00152830 0.0141887 1493.37 2684.48'
+    >>> water.P, water.Liquid.v, water.Vapor.v, water.Liquid.h, water.Vapor.h
+    12.0505 0.00152830 0.0141887 1493.37 2684.48
     >>> water=IAPWS97(T=50+273.15,P=0.0006112127)
-    >>> "%0.4f %0.4f %0.2f %0.3f %0.2f" %(water.cp0, water.cv0, water.h0, \
-        water.s0, water.w0)
-    '1.8714 1.4098 2594.66 9.471 444.93'
+    >>> water.cp0, water.cv0, water.h0, water.s0, water.w0
+    1.8714 1.4098 2594.66 9.471 444.93
     """
     kwargs = {"T": 0.0,
               "P": 0.0,

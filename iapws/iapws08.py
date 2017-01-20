@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-###############################################################################
-# IAPWS for seawater
-###############################################################################
+"""
+IAPWS standard for Seawater IAPWS08
+"""
 
 from __future__ import division
 from math import log
@@ -26,7 +25,7 @@ class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
 
-    Keyword Args
+    Parameters
     ----------
     T : float
         Temperature [K]
@@ -35,7 +34,7 @@ class SeaWater(object):
     S : float
         Salinity [kg/kg]
 
-    Attributes
+    Returns
     -------
     rho : float
         Density [kg/m³]
@@ -126,6 +125,7 @@ class SeaWater(object):
             self.msg = ""
 
     def calculo(self):
+        """Calculate procedure"""
         T = self.kwargs["T"]
         P = self.kwargs["P"]
         S = self.kwargs["S"]
