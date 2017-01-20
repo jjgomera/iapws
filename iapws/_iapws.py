@@ -57,6 +57,13 @@ def _Ice(T, P):
             * gpp: [∂²g/∂P²]T
             * gtp: [∂²g/∂T∂P]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * T ≤ 273.16
+        * P ≤ 208.566
+        * State below the melting and sublimation lines
+
     Examples
     --------
     >>> st1 = _Ice(100, 100)
@@ -175,6 +182,11 @@ def _Sublimation_Pressure(T):
     P : float
         Pressure at sublimation line [MPa]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 50 ≤ T ≤ 273.16
+
     Examples
     --------
     >>> _Sublimation_Pressure(230)
@@ -213,6 +225,11 @@ def _Melting_Pressure(T, ice="Ih"):
     -------
     P : float
         Pressure at sublimation line [MPa]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 251.165 ≤ T ≤ 715
 
     Examples
     --------
@@ -435,6 +452,12 @@ def _Tension(T):
     sigma : float
         Surface tension [N/m]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 248.15 ≤ T ≤ 647
+        * Estrapolate to -25ºC in supercooled liquid metastable state
+
     Examples
     --------
     >>> _Tension(300)
@@ -448,7 +471,7 @@ def _Tension(T):
     June 2014, http://www.iapws.org/relguide/Surf-H2O.html
     """
     Tr = T/Tc
-    if 273.15 <= T < Tc:
+    if 248.15 <= T < Tc:
         return 1e-3*(235.8*(1-Tr)**1.256*(1-0.625*(1-Tr)))
     else:
         raise NotImplementedError("Incoming out of bound")
@@ -524,6 +547,13 @@ def _Refractive(rho, T, l=0.5893):
     n : float
         Refractive index [-]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 0 ≤ ρ ≤ 1060
+        * 261.15 ≤ T ≤ 773.15
+        * 0.2 ≤ λ ≤ 1.1
+
     Examples
     --------
     >>> _Refractive(997.047435, 298.15, 0.2265)
@@ -537,6 +567,10 @@ def _Refractive(rho, T, l=0.5893):
     Function of Wavelength, Temperature and Pressure,
     http://www.iapws.org/relguide/rindex.pdf
     """
+    # Check input parameters
+    if rho < 0 or rho > 1060 or T < 261.15 or T > 773.15 or l < 0.2 or l > 1.1:
+        raise NotImplementedError("Incoming out of bound")
+
     Lir = 5.432937
     Luv = 0.229202
     d = rho/1000.
@@ -567,7 +601,8 @@ def _Kw(rho, T):
     Raises
     ------
     NotImplementedError : If input isn't in limit
-        0 < rho < 1250, 273.15 < T < 1073.15
+        * 0 ≤ ρ ≤ 1250
+        * 273.15 ≤ T ≤ 1073.15
 
     Examples
     --------

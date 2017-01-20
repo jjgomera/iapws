@@ -227,7 +227,7 @@ class Test(unittest.TestCase):
 
     def test_Tension(self):
         """Selected values from table 1"""
-        self.assertRaises(NotImplementedError, _Tension, 270)
+        self.assertRaises(NotImplementedError, _Tension, 230)
         self.assertEqual(round(_Tension(273.16)*1000, 2), 75.65)
         self.assertEqual(round(_Tension(283.15)*1000, 2), 74.22)
         self.assertEqual(round(_Tension(293.15)*1000, 2), 72.74)
