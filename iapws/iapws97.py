@@ -4,32 +4,32 @@
 
 References
 ----------
-.. [1] IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
 Thermodynamic Properties of Water and Steam August 2007,
 http://www.iapws.org/relguide/IF97-Rev.html
 
-.. [2] IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+IAPWS, Revised Supplementary Release on Backward Equations for Pressure
 as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the IAPWS
 Industrial Formulation 1997 for the Thermodynamic Properties of Water and
 Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf
 
-.. [3] IAPWS, Revised Supplementary Release on Backward Equations for the
+IAPWS, Revised Supplementary Release on Backward Equations for the
 Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
 Industrial Formulation 1997 for the Thermodynamic Properties of Water and
 Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf
 
-.. [4] IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
 Region 3, Equations as a Function of h and s for the Region Boundaries, and an
 Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997 for
 the Thermodynamic Properties of Water and Steam,
 http://www.iapws.org/relguide/Supp-phs3-2014.pdf
 
-.. [5] IAPWS, Revised Supplementary Release on Backward Equations for Specific
+IAPWS, Revised Supplementary Release on Backward Equations for Specific
 Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
 IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and
 Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf
 
-.. [6] Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
 Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer, 2008;
 doi: 10.1007/978-3-540-74234-0
 """
