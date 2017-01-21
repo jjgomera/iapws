@@ -20,98 +20,119 @@ from .iapws97 import _TSat_P
 
 class MEoS(_fase):
     """
-    General implementation of multiparameter equation of state
-    From this derived all child class specified per individual compounds
+    General implementation of multiparameter equation of state. From this
+    derived all child class specified per individual compounds
 
-    Incoming properties:
-        T   -   Temperature, K
-        P   -   Pressure, MPa
-        rho -   Density, kg/m3
-        v   -   Specific volume, m3/kg
-        h   -   Specific enthalpy, kJ/kg
-        s   -   Specific entropy, kJ/kg·K
-        u   -   Specific internal energy, kJ/kg·K
-        x   -   Quality
-        l   -   Opcional parameter to light wavelength for Refractive index
+    Keyword Args
+    ------------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    rho : float
+        Density [kg/m³]
+    v : float
+        Specific volume [m³/kg]
+    h : float
+        Specific enthalpy [kJ/kg]
+    s : float
+        Specific entropy [kJ/kgK]
+    u : float
+        Specific internal energy [kJ/kg]
+    x : float
+        Vapor quality [-]
 
-        rho0-   Initial value of density, to improve iteration
-        T0  -   Initial value of temperature, to improve iteration
+    l : float, optional
+        Wavelength of light, for refractive index [nm]
+    rho0 : float, optional
+        Initial value of density, to improve iteration [kg/m³]
+    T0 : float, optional
+        Initial value of temperature, to improve iteration [K]
 
-    It needs two incoming properties
+    Notes
+    -----
+    * It needs two incoming properties of T, P, rho, h, s, u.
+    * v as a alternate input parameter to rho
+    * T-x, P-x, preferred input pair to specified a point in two phases region
 
-    Calculated properties:
-        P         -   Pressure, MPa
-        Pr        -   Reduce pressure
-        T         -   Temperature, K
-        Tr        -   Reduced temperature
-        x         -   Quality
-        v         -   Specific volume, m³/kg
-        rho       -   Density, kg/m³
-        h         -   Specific enthalpy, kJ/kg
-        s         -   Specific entropy, kJ/kg·K
-        u         -   Specific internal energy, kJ/kg
-        g         -   Specific Gibbs free energy, kJ/kg
-        a         -   Specific Helmholtz free energy, kJ/kg
-        cp        -   Specific isobaric heat capacity, kJ/kg·K
-        cv        -   Specific isochoric heat capacity, kJ/kg·K
-        cp_cv     -   Heat capacity ratio
-        w         -   Speed of sound, m/s
-        Z         -   Compression factor
-        fi        -   Fugacity coefficient
-        f         -   Fugacity, MPa
-        gamma     -   Isoentropic exponent
-        Hvap      -   Vaporization heat, kJ/kg
-        alfav     -   Thermal expansion coefficient (Volume expansivity), 1/K
-        kappa     -   Isothermal compressibility, 1/MPa
-        alfap     -   Relative pressure coefficient, 1/K
-        betap     -   Isothermal stress coefficient, kg/m³
-        betas     -   Isoentropic temperature-pressure coefficient
-        joule     -   Joule-Thomson coefficient, K/MPa
-        Gruneisen -   Gruneisen parameter
-        virialB   -   Second virial coefficient, m³/kg
-        virialC   -   Third virial coefficient, m⁶/kg²
-        dpdT_rho  -   Derivatives, dp/dT at constant rho, MPa/K
-        dpdrho_T  -   Derivatives, dp/drho at constant T, MPa·m³/kg
-        drhodT_P  -   Derivatives, drho/dT at constant P, kg/m³·K
-        drhodP_T  -   Derivatives, drho/dP at constant T, kg/m³·MPa
-        dhdT_rho  -   Derivatives, dh/dT at constant rho, kJ/kg·K
-        dhdP_T    -   Isothermal throttling coefficient, kJ/kg·MPa
-        dhdT_P    -   Derivatives, dh/dT at constant P, kJ/kg·K
-        dhdrho_T  -   Derivatives, dh/drho at constant T, kJ·m³/kg²
-        dhdrho_P  -   Derivatives, dh/drho at constant P, kJ·m³/kg²
-        dhdP_rho  -   Derivatives, dh/dP at constant rho, kJ/kg·MPa
-        kt        -   Isothermal Expansion Coefficient
-        ks        -   Adiabatic Compressibility, 1/MPa
-        Ks        -   Adiabatic bulk modulus, MPa
-        Kt        -   Isothermal bulk modulus, MPa
+    Returns
+    -------
+    The calculated instance has the following properties:
+        * P: Pressure [MPa]
+        * T: Temperature [K]
+        * x: Vapor quality [-]
+        * g: Specific Gibbs free energy [kJ/kg]
+        * a: Specific Helmholtz free energy [kJ/kg]
+        * v: Specific volume [m³/kg]
+        * r: Density [kg/m³]
+        * h: Specific enthalpy [kJ/kg]
+        * u: Specific internal energy [kJ/kg]
+        * s: Specific entropy [kJ/kg·K]
+        * cp: Specific isobaric heat capacity [kJ/kg·K]
+        * cv: Specific isochoric heat capacity [kJ/kg·K]
+        * cp_cv: Heat capacity ratio, [-]
+        * Z: Compression factor [-]
+        * fi: Fugacity coefficient [-]
+        * f: Fugacity [MPa]
+        * gamma: Isoentropic exponent [-]
 
-        Z_rho     -   (Z-1) over the density, m³/kg
-        IntP      -   Internal pressure
-        invT      -   Negative reciprocal temperature
-        hInput    -   Specific heat input, kJ/kg
-        mu        -   Dynamic viscosity, Pa·s
-        nu        -   Kinematic viscosity, m²/s
-        k         -   Thermal conductivity, W/m·K
-        sigma     -   Surface tension, N/m
-        alfa      -   Thermal diffusivity, m²/s
-        Pramdt    -   Prandtl number
-        epsilon   -   Dielectric constant
-        n         -   Refractive index
+        * alfav: Isobaric cubic expansion coefficient [1/K]
+        * kappa: Isothermal compressibility [1/MPa]
+        * kappas: Adiabatic compresibility [1/MPa]
+        * alfap: Relative pressure coefficient [1/K]
+        * betap: Isothermal stress coefficient [kg/m³]
+        * joule: Joule-Thomson coefficient [K/MPa]
 
-        v0        -   Ideal gas Specific volume, m³/kg
-        rho0      -   Ideal gas Density, kg/m³
-        h0        -   Ideal gas Specific enthalpy, kJ/kg
-        u0        -   Ideal gas Specific internal energy, kJ/kg
-        s0        -   Ideal gas Specific entropy, kJ/kg·K
-        a0        -   Ideal gas Specific Helmholtz free energy, kJ/kg
-        g0        -   Ideal gas Specific Gibbs free energy, kJ/kg
-        cp0       -   Ideal gas Specific isobaric heat capacity, kJ/kg·K
-        cv0       -   Ideal gas Specific isochoric heat capacity, kJ/kg·K
-        cp0_cv    -   Ideal gas Heat capacity ratio
-        gamma0    -   Ideal gas Isoentropic exponent
+        * betas: Isoentropic temperature-pressure coefficient [-]
+        * Gruneisen: Gruneisen parameter [-]
+        * virialB: Second virial coefficient [m³/kg]
+        * virialC: Third virial coefficient [m⁶/kg²]
+        * dpdT_rho: Derivatives, dp/dT at constant rho [MPa/K]
+        * dpdrho_T: Derivatives, dp/drho at constant T [MPa·m³/kg]
+        * drhodT_P: Derivatives, drho/dT at constant P [kg/m³·K]
+        * drhodP_T: Derivatives, drho/dP at constant T [kg/m³·MPa]
+        * dhdT_rho: Derivatives, dh/dT at constant rho [kJ/kg·K]
+        * dhdP_T: Isothermal throttling coefficient [kJ/kg·MPa]
+        * dhdT_P: Derivatives, dh/dT at constant P [kJ/kg·K]
+        * dhdrho_T: Derivatives, dh/drho at constant T [kJ·m³/kg²]
+        * dhdrho_P: Derivatives, dh/drho at constant P [kJ·m³/kg²]
+        * dhdP_rho: Derivatives, dh/dP at constant rho [kJ/kg·MPa]
+        * kt: Isothermal Expansion Coefficient [-]
+        * ks: Adiabatic Compressibility [1/MPa]
+        * Ks: Adiabatic bulk modulus [MPa]
+        * Kt: Isothermal bulk modulus [MPa]
 
+        * v0: Ideal specific volume [m³/kg]
+        * rho0: Ideal gas density [kg/m³]
+        * u0: Ideal specific internal energy [kJ/kg]
+        * h0: Ideal specific enthalpy [kJ/kg]
+        * s0: Ideal specific entropy [kJ/kg·K]
+        * a0: Ideal specific Helmholtz free energy [kJ/kg]
+        * g0: Ideal specific Gibbs free energy [kJ/kg]
+        * cp0: Ideal specific isobaric heat capacity [kJ/kg·K]
+        * cv0: Ideal specific isochoric heat capacity [kJ/kg·K]
+        * w0: Ideal speed of sound [m/s]
+        * gamma0: Ideal isoentropic exponent [-]
+
+        * w: Speed of sound [m/s]
+        * mu: Dynamic viscosity [Pa·s]
+        * nu: Kinematic viscosity [m²/s]
+        * k: Thermal conductivity [W/m·K]
+        * alfa: Thermal diffusivity [m²/s]
+        * sigma: Surface tension [N/m]
+        * epsilon: Dielectric constant [-]
+        * n: Refractive index [-]
+        * Prandt: Prandtl number [-]
+        * Pr: Reduced Pressure [-]
+        * Tr: Reduced Temperature [-]
+        * Hvap: Vaporization heat [kJ/kg]
+        * Svap: Vaporization entropy [kJ/kg·K]
+
+        * Z_rho: (Z-1) over the density [m³/kg]
+        * IntP: Internal pressure [MPa]
+        * invT: Negative reciprocal temperature [1/K]
+        * hInput: Specific heat input [kJ/kg]
     """
-
     CP = None
     _vapor_Pressure = None
     _liquid_Density = None
@@ -1053,8 +1074,11 @@ class MEoS(_fase):
 
 
 class IAPWS95(MEoS):
-    """Multiparameter equation of state for water (including IAPWS95)
+    """Implementation of IAPWS Formulation 1995 for ordinary water substance,
+    (revised release of 2016), see MEoS __doc__
 
+    Examples
+    --------
     >>> water=IAPWS95(T=300, rho=996.5560)
     >>> print("%0.10f %0.8f %0.5f %0.9f" % ( \
         water.P, water.cv, water.w, water.s))
@@ -1179,6 +1203,11 @@ class IAPWS95(MEoS):
         water.virialB))
     371.24 0.094712 1.99072 1000.00 1047.6 3.0000 0.28144 -0.025543
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Formulation 1995 for the Thermodynamic
+    Properties of Ordinary Water Substance for General and Scientific Use,
+    September 2016, http://www.iapws.org/relguide/IAPWS-95.html
     """
     name = "water"
     CASNumber = "7732-18-5"
@@ -1315,12 +1344,20 @@ class IAPWS95_Tx(IAPWS95):
 
 
 class D2O(MEoS):
-    """Multiparameter equation of state for heavy water
+    """Implementation of IAPWS Formulation 1984 for heavy water substance,
+    (revised release of 2005), see MEoS __doc__
 
-    >>> water=D2O(T=300, rho=996.5560)
-    >>> print("%0.10f %0.8f %0.5f" % ( \
-        water.P, water.Liquid.cv, water.Liquid.w))
+    Examples
+    --------
+    >>> hwater=D2O(T=300, rho=996.5560)
+    >>> hwater.P, hwater.Liquid.cv, hwater.Liquid.w
     0.0030675947 4.21191157 5332.04871
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPS Formulation 1984 for the Thermodynamic
+    Properties of Heavy Water Substance,
+    http://www.iapws.org/relguide/D2O-2005.pdf
     """
     name = "heavy water"
     CASNumber = "7789-20-0"

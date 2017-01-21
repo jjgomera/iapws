@@ -3659,11 +3659,8 @@ class IAPWS97(object):
         Specific entropy [kJ/kgK]
     x : float
         Vapor quality [-]
-
-    Other Parameters
-    ----------------
-    l : float
-        Wavelength of light, for refractive index
+    l : float, optional
+        Wavelength of light, for refractive index [nm]
 
     Notes
     -----
