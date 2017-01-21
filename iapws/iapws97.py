@@ -187,15 +187,20 @@ def _PSat_T(T):
     P : float
         Pressure [MPa]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 273.15 ≤ T ≤ 647.096
+
     Examples
     --------
     >>> _PSat_T(500)
     2.63889776
     """
-    if T < 273.15:
-        T = 273.15
-    elif T > Tc:
-        T = Tc
+    # Check input parameters
+    if T < 273.15 or T > Tc:
+        raise NotImplementedError("Incoming out of bound")
+
     n = [0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
          0.12020824702470E+05, -0.32325550322333E+07, 0.14915108613530E+02,
          -0.48232657361591E+04, 0.40511340542057E+06, -0.23855557567849E+00,
@@ -220,15 +225,20 @@ def _TSat_P(P):
     T : float
         Temperature [K]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 0.00061121 ≤ P ≤ 22.064
+
     Examples
     --------
     >>> _TSat_P(10)
     584.149488
     """
-    if P < 611.212677/1e6:
-        P = 611.212677/1e6
-    elif P > 22.064:
-        P = 22.064
+    # Check input parameters
+    if P < 611.212677/1e6 or P > 22.064:
+        raise NotImplementedError("Incoming out of bound")
+
     n = [0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
          0.12020824702470E+05, -0.32325550322333E+07, 0.14915108613530E+02,
          -0.48232657361591E+04, 0.40511340542057E+06, -0.23855557567849E+00,
@@ -1050,7 +1060,6 @@ def _Backward2_T_Ph(P, h):
     T : float
         Temperature [K]
     """
-    Tsat = _TSat_P(P)
     if P <= 4:
         T = _Backward2a_T_Ph(P, h)
     elif 4 < P <= 6.546699678:
@@ -1061,7 +1070,11 @@ def _Backward2_T_Ph(P, h):
             T = _Backward2b_T_Ph(P, h)
         else:
             T = _Backward2c_T_Ph(P, h)
-    return max(Tsat, T)
+
+    if P <= 22.064:
+        Tsat = _TSat_P(P)
+        T = max(Tsat, T)
+    return T
 
 
 def _Backward2a_T_Ps(P, s):
@@ -1229,15 +1242,17 @@ def _Backward2_T_Ps(P, s):
     T : float
         Temperature [K]
     """
-    sf = 5.85
-    Tsat = _TSat_P(P)
     if P <= 4:
         T = _Backward2a_T_Ps(P, s)
-    elif s >= sf:
+    elif s >= 5.85:
         T = _Backward2b_T_Ps(P, s)
     else:
         T = _Backward2c_T_Ps(P, s)
-    return max(Tsat, T)
+
+    if P <= 22.064:
+        Tsat = _TSat_P(P)
+        T = max(Tsat, T)
+    return T
 
 
 def _Backward2a_P_hs(h, s):
@@ -4065,7 +4080,10 @@ class IAPWS97(object):
         fase.nu = fase.mu/fase.rho
         fase.epsilon = _Dielectric(fase.rho, self.T)
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
-        fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+        try:
+            fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+        except NotImplementedError:
+            fase.n = None
 
         fase.alfa = fase.k/1000/fase.rho/fase.cp
         fase.joule = self.derivative("T", "P", "h", fase)
