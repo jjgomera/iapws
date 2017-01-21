@@ -14,6 +14,7 @@ from scipy.optimize import fsolve
 
 from ._iapws import _fase, getphase
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
+from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from .iapws97 import _TSat_P
 
 
@@ -112,7 +113,6 @@ class MEoS(_fase):
     """
 
     CP = None
-    _surface = None
     _vapor_Pressure = None
     _liquid_Density = None
     _vapor_Density = None
@@ -557,10 +557,7 @@ class MEoS(_fase):
 
         # Calculate special properties useful only for one phase
         if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self.Tc):
-            if self.name == "water":
-                self.sigma = _Tension(T)
-            else:
-                self.sigma = self._Tension(T)
+            self.sigma = self._surface(T)
         else:
             self.sigma = None
 
@@ -1054,15 +1051,6 @@ class MEoS(_fase):
         rho = Pr*self.rhoc
         return rho
 
-    def _Tension(self, T):
-        """Equation for the surface tension"""
-        tau = 1-T/self.Tc
-        tension = 0
-        for sigma, n in zip(self._surface["sigma"],
-                            self._surface["exp"]):
-            tension += sigma*tau**n
-        return tension
-
 
 class IAPWS95(MEoS):
     """Multiparameter equation of state for water (including IAPWS95)
@@ -1292,6 +1280,9 @@ class IAPWS95(MEoS):
         drho = 1/estado["dpdrho"]*1e3
         return _ThCond(rho, T, fase, drho)
 
+    def _surface(self, T):
+        return _Tension(T)
+
 
 class IAPWS95_PT(IAPWS95):
     """Derivated class for direct P and T input"""
@@ -1382,7 +1373,6 @@ class D2O(MEoS):
         "t2": [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6],
         "gamma2": [1.5394]*14}
 
-    _surface = {"sigma": [0.238, -0.152082], "exp": [1.25, 2.25]}
     _vapor_Pressure = {
         "eq": 5,
         "ao": [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2],
@@ -1397,48 +1387,11 @@ class D2O(MEoS):
                -0.70412e2],
         "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
 
-    @classmethod
-    def _visco(cls, rho, T, fase=None):
-        Tr = T/643.847
-        rhor = rho/358.0
+    def _visco(self, rho, T, fase):
+        return _D2O_Viscosity(rho, T)
 
-        no = [1.0, 0.940695, 0.578377, -0.202044]
-        fi0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+    def _thermo(self, rho, T, fase):
+        return _D2O_ThCond(rho, T)
 
-        Li = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 5, 0, 1, 2, 3, 0, 1, 3,
-              5, 0, 1, 5, 3]
-        Lj = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,
-              4, 5, 5, 5, 6]
-        Lij = [0.4864192, -0.2448372, -0.8702035, 0.8716056, -1.051126,
-               0.3458395, 0.3509007, 1.315436, 1.297752, 1.353448, -0.2847572,
-               -1.037026, -1.287846, -0.02148229, 0.07013759, 0.4660127,
-               0.2292075, -0.4857462, 0.01641220, -0.02884911, 0.1607171,
-               -.009603846, -.01163815, -.008239587, 0.004559914, -0.003886659]
-
-        arr = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
-        fi1 = exp(rhor*sum(arr))
-
-        return 55.2651e-6*fi0*fi1
-
-    @classmethod
-    def _thermo(cls, rho, T, fase=None):
-        rhor = rho/358
-        Tr = T/643.847
-        tau = Tr/(abs(Tr-1.1)+1.1)
-
-        no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
-        Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
-
-        nr = [483.656, -191.039, 73.0358, -7.57467]
-        Lr = -167.31*(1-exp(-2.506*rhor))+sum(
-            [Li*rhor**(i+1) for i, Li in enumerate(nr)])
-
-        f1 = exp(0.144847*Tr-5.64493*Tr**2)
-        f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
-        f3 = 1+exp(60*(tau-1)+20)
-        f4 = 1+exp(100*(tau-1)+15)
-        Lc = 35429.6*f1*f2*(1+f2**2*(5e9*f1**4/f3+3.5*f2/f4))
-
-        Ll = -741.112*f1**1.2*(1-exp(-(rhor/2.5)**10))
-
-        return 0.742128e-3*(Lo+Lr+Lc+Ll)
+    def _surface(self, T):
+        return _D2O_Tension(T)

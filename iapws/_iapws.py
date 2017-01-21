@@ -635,6 +635,141 @@ def _Kw(rho, T):
     return pKw
 
 
+# Heavy water transport properties
+def _D2O_Viscosity(rho, T):
+    """Equation for the Viscosity of heavy water
+
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    mu : float
+        Viscosity [Pa·s]
+
+    Examples
+    --------
+    >>> _D2O_Viscosity(998, 298.15)
+    0.0008897351001498108
+    >>> _D2O_Viscosity(600, 873.15)
+    7.743019522728247e-05
+
+    References
+    ----------
+    IAPWS, Revised Release on Viscosity and Thermal Conductivity of Heavy
+    Water Substance, http://www.iapws.org/relguide/TransD2O-2007.pdf
+    """
+    Tr = T/643.847
+    rhor = rho/358.0
+
+    no = [1.0, 0.940695, 0.578377, -0.202044]
+    fi0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+
+    Li = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 5, 0, 1, 2, 3, 0, 1, 3,
+          5, 0, 1, 5, 3]
+    Lj = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,
+          4, 5, 5, 5, 6]
+    Lij = [0.4864192, -0.2448372, -0.8702035, 0.8716056, -1.051126,
+           0.3458395, 0.3509007, 1.315436, 1.297752, 1.353448, -0.2847572,
+           -1.037026, -1.287846, -0.02148229, 0.07013759, 0.4660127,
+           0.2292075, -0.4857462, 0.01641220, -0.02884911, 0.1607171,
+           -.009603846, -.01163815, -.008239587, 0.004559914, -0.003886659]
+
+    arr = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
+    fi1 = exp(rhor*sum(arr))
+
+    return 55.2651e-6*fi0*fi1
+
+def _D2O_ThCond(rho, T):
+    """Equation for the thermal conductivity of heavy water
+
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    k : float
+        Thermal conductivity [W/mK]
+
+    Examples
+    --------
+    >>> _D2O_ThCond(998, 298.15)
+    0.6077128675880629
+    >>> _D2O_ThCond(0, 873.15)
+    0.07910346589648833
+
+    References
+    ----------
+    IAPWS, Revised Release on Viscosity and Thermal Conductivity of Heavy
+    Water Substance, http://www.iapws.org/relguide/TransD2O-2007.pdf
+    """
+    rhor = rho/358
+    Tr = T/643.847
+    tau = Tr/(abs(Tr-1.1)+1.1)
+
+    no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
+    Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
+
+    nr = [483.656, -191.039, 73.0358, -7.57467]
+    Lr = -167.31*(1-exp(-2.506*rhor))+sum(
+        [Li*rhor**(i+1) for i, Li in enumerate(nr)])
+
+    f1 = exp(0.144847*Tr-5.64493*Tr**2)
+    f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
+    f3 = 1+exp(60*(tau-1)+20)
+    f4 = 1+exp(100*(tau-1)+15)
+    Lc = 35429.6*f1*f2*(1+f2**2*(5e9*f1**4/f3+3.5*f2/f4))
+
+    Ll = -741.112*f1**1.2*(1-exp(-(rhor/2.5)**10))
+
+    return 0.742128e-3*(Lo+Lr+Lc+Ll)
+
+
+def _D2O_Tension(T):
+    """Equation for the surface tension of heavy water
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    sigma : float
+        Surface tension [N/m]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 269.65 ≤ T ≤ 643.847
+
+    Examples
+    --------
+    >>> _D2O_Tension(298.15)
+    0.07186
+    >>> _D2O_Tension(573.15)
+    0.01399
+
+    References
+    ----------
+    IAPWS, Release on Surface Tension of Heavy Water Substance,
+    http://www.iapws.org/relguide/surfd2o.pdf
+    """
+    Tr = T/643.847
+    if 269.65 <= T < 643.847:
+        return 1e-3*(238*(1-Tr)**1.25*(1-0.639*(1-Tr)))
+    else:
+        raise NotImplementedError("Incoming out of bound")
+
+
 def getphase(Tc, Pc, T, P, x, region):
     """Return fluid phase string name
 
