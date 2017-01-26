@@ -51,7 +51,7 @@ Pmin = 0.000611212677444
 Ps_623 = 16.5291642526
 
 
-# Boundary Region1-Region2
+# Boundary Region1-Region3
 def _h13_s(s):
     """Define the boundary between Region 1 and 3, h=f(s)
 
@@ -65,6 +65,19 @@ def _h13_s(s):
     h : float
         Specific enthalpy [kJ/kg]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * s(100MPa,623.15K) ≤ s ≤ s'(623.15K)
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 7
+
     Examples
     --------
     >>> _h13_s(3.7)
@@ -72,6 +85,10 @@ def _h13_s(s):
     >>> _h13_s(3.5)
     1566.104611
     """
+    # Check input parameters
+    if s < 3.397782955 or s > 3.77828134:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma = s/3.8
     I = [0, 1, 1, 3, 5, 6]
     J = [0, -2, 2, -12, -4, -3]
@@ -98,6 +115,12 @@ def _P23_T(T):
     P : float
         Pressure [MPa]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 5
+
     Examples
     --------
     >>> _P23_T(623.15)
@@ -119,6 +142,12 @@ def _t_P(P):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 5
 
     Examples
     --------
@@ -144,6 +173,20 @@ def _t_hs(h, s):
     T : float
         Temperature [K]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 5.048096828 ≤ s ≤ 5.260578707
+        * 2.563592004e3 ≤ h ≤ 2.812942061e3
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 8
+
     Examples
     --------
     >>> _t_hs(2600, 5.1)
@@ -151,6 +194,11 @@ def _t_hs(h, s):
     >>> _t_hs(2800, 5.2)
     817.6202120
     """
+    # Check input parameters
+    if s < 5.048096828 or s > 5.260578707 or \
+            h < 2.563592004e3 or h > 2.812942061e3:
+        raise NotImplementedError("Incoming out of bound")
+
     nu = h/3000
     sigma = s/5.3
     I = [-12, -10, -8, -4, -3, -2, -2, -2, -2, 0, 1, 1, 1, 3, 3, 5, 6, 6, 8, 8,
@@ -192,6 +240,12 @@ def _PSat_T(T):
     NotImplementedError : If input isn't in limit
         * 273.15 ≤ T ≤ 647.096
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 30
+
     Examples
     --------
     >>> _PSat_T(500)
@@ -230,6 +284,12 @@ def _TSat_P(P):
     NotImplementedError : If input isn't in limit
         * 0.00061121 ≤ P ≤ 22.064
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 31
+
     Examples
     --------
     >>> _TSat_P(10)
@@ -264,6 +324,18 @@ def _PSat_h(h):
     P : float
         Pressure [MPa]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * h'(623.15K) ≤ h ≤ h''(623.15K)
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 10
+
     Examples
     --------
     >>> _PSat_h(1700)
@@ -271,12 +343,12 @@ def _PSat_h(h):
     >>> _PSat_h(2400)
     20.18090839
     """
+    # Check input parameters
     hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
     hmax_Ps3 = _Region2(623.15, Ps_623)["h"]
-    if h < hmin_Ps3:
-        h = hmin_Ps3
-    if h > hmax_Ps3:
-        h = hmax_Ps3
+    if h < hmin_Ps3 or h > hmax_Ps3:
+        raise NotImplementedError("Incoming out of bound")
+
     nu = h/2600
     I = [0, 1, 1, 1, 1, 5, 7, 8, 14, 20, 22, 24, 28, 36]
     J = [0, 1, 3, 4, 36, 3, 0, 24, 16, 16, 3, 18, 8, 24]
@@ -305,6 +377,18 @@ def _PSat_s(s):
     P : float
         Pressure [MPa]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * s'(623.15K) ≤ s ≤ s''(623.15K)
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 11
+
     Examples
     --------
     >>> _PSat_s(3.8)
@@ -312,6 +396,12 @@ def _PSat_s(s):
     >>> _PSat_s(5.2)
     16.68968482
     """
+    # Check input parameters
+    smin_Ps3 = _Region1(623.15, Ps_623)["s"]
+    smax_Ps3 = _Region2(623.15, Ps_623)["s"]
+    if s < smin_Ps3 or s > smax_Ps3:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma = s/5.2
     I = [0, 1, 1, 4, 12, 12, 16, 24, 28, 32]
     J = [0, 1, 32, 7, 4, 14, 36, 10, 0, 18]
@@ -339,6 +429,19 @@ def _h1_s(s):
     h : float
         Specific enthalpy [kJ/kg]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * s'(273.15K) ≤ s ≤ s'(623.15K)
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 3
+
     Examples
     --------
     >>> _h1_s(1)
@@ -346,6 +449,10 @@ def _h1_s(s):
     >>> _h1_s(3)
     1198.359754
     """
+    # Check input parameters
+    if s < -1.545495919e-4 or s > 3.77828134:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma = s/3.8
     I = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 7, 8, 12, 12, 14, 14, 16, 20,
          20, 22, 24, 28, 32, 32]
@@ -380,6 +487,19 @@ def _h3a_s(s):
     h : float
         Specific enthalpy [kJ/kg]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * s'(623.15K) ≤ s ≤ sc
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 4
+
     Examples
     --------
     >>> _h3a_s(3.8)
@@ -387,6 +507,10 @@ def _h3a_s(s):
     >>> _h3a_s(4.2)
     1949.352563
     """
+    # Check input parameters
+    if s < 3.77828134 or s > 4.41202148223476:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma = s/3.8
     I = [0, 0, 0, 0, 2, 3, 4, 4, 5, 5, 6, 7, 7, 7, 10, 10, 10, 32, 32]
     J = [1, 4, 10, 16, 1, 36, 3, 16, 20, 36, 4, 2, 28, 32, 14, 32, 36, 0, 6]
@@ -417,6 +541,19 @@ def _h2ab_s(s):
     h : float
         Specific enthalpy [kJ/kg]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 5.85 ≤ s ≤ s"(273.15K)
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 5
+
     Examples
     --------
     >>> _h2ab_s(7)
@@ -424,6 +561,10 @@ def _h2ab_s(s):
     >>> _h2ab_s(9)
     2511.861477
     """
+    # Check input parameters
+    if s < 5.85 or s > 9.155759395:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma1 = s/5.21
     sigma2 = s/9.2
     I = [1, 1, 2, 2, 4, 4, 7, 8, 8, 10, 12, 12, 18, 20, 24, 28, 28, 28, 28, 28,
@@ -460,6 +601,19 @@ def _h2c3b_s(s):
     h : float
         Specific enthalpy [kJ/kg]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * sc ≤ s ≤ 5.85
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 6
+
     Examples
     --------
     >>> _h2c3b_s(5.5)
@@ -467,6 +621,10 @@ def _h2c3b_s(s):
     >>> _h2c3b_s(4.5)
     2144.360448
     """
+    # Check input parameters
+    if s < 4.41202148223476 or s > 5.85:
+        raise NotImplementedError("Incoming out of bound")
+
     sigma = s/5.9
     I = [0, 0, 0, 1, 1, 5, 6, 7, 8, 8, 12, 16, 22, 22, 24, 36]
     J = [0, 3, 4, 0, 12, 36, 12, 16, 2, 20, 32, 36, 2, 32, 7, 20]
@@ -507,6 +665,12 @@ def _Region1(T, P):
             * w: Speed of sound [m/s]
             * alfav: Cubic expansion coefficient [1/K]
             * kt: Isothermal compressibility [1/MPa]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 7
 
     Examples
     --------
@@ -588,6 +752,12 @@ def _Backward1_T_Ph(P, h):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 11
+
     Examples
     --------
     >>> _Backward1_T_Ph(3,500)
@@ -628,6 +798,12 @@ def _Backward1_T_Ps(P, s):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 13
+
     Examples
     --------
     >>> _Backward1_T_Ps(3,0.5)
@@ -667,6 +843,13 @@ def _Backward1_P_hs(h, s):
     -------
     P : float
         Pressure [MPa]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+    as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of
+    Water and Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf, Eq 1
 
     Examples
     --------
@@ -719,6 +902,12 @@ def _Region2(T, P):
             * w: Speed of sound [m/s]
             * alfav: Cubic expansion coefficient [1/K]
             * kt: Isothermal compressibility [1/MPa]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 15-17
 
     Examples
     --------
@@ -819,6 +1008,12 @@ def Region2_cp0(Tr, Pr):
             * gtt: [∂²g/∂T²]P
             * gpt: [∂²g/∂T∂P]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 16
+
     """
     Jo = [0, 1, -5, -4, -3, -2, -1, 2, 3]
     no = [-0.96927686500217E+01, 0.10086655968018E+02, -0.56087911283020E-02,
@@ -848,6 +1043,12 @@ def _P_2bc(h):
     P : float
         Pressure [MPa]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 20
+
     Examples
     --------
     >>> _P_2bc(3516.004323)
@@ -869,6 +1070,12 @@ def _hbc_P(P):
     h : float
         Specific enthalpy [kJ/kg]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 21
+
     Examples
     --------
     >>> _hbc_P(100)
@@ -889,6 +1096,13 @@ def _hab_s(s):
     -------
     h : float
         Specific enthalpy [kJ/kg]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+    as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of
+    Water and Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf, Eq 2
 
     Examples
     --------
@@ -921,6 +1135,12 @@ def _Backward2a_T_Ph(P, h):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 22
 
     Examples
     --------
@@ -969,6 +1189,12 @@ def _Backward2b_T_Ph(P, h):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 23
+
     Examples
     --------
     >>> _Backward2b_T_Ph(5,4000)
@@ -1016,6 +1242,12 @@ def _Backward2c_T_Ph(P, h):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 24
 
     Examples
     --------
@@ -1092,6 +1324,12 @@ def _Backward2a_T_Ps(P, s):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 25
+
     Examples
     --------
     >>> _Backward2a_T_Ps(0.1,7.5)
@@ -1146,6 +1384,12 @@ def _Backward2b_T_Ps(P, s):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 26
+
     Examples
     --------
     >>> _Backward2b_T_Ps(8,6)
@@ -1196,6 +1440,12 @@ def _Backward2c_T_Ps(P, s):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 27
 
     Examples
     --------
@@ -1270,6 +1520,13 @@ def _Backward2a_P_hs(h, s):
     P : float
         Pressure [MPa]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+    as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of
+    Water and Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf, Eq 3
+
     Examples
     --------
     >>> _Backward2a_P_hs(2800,6.5)
@@ -1316,6 +1573,13 @@ def _Backward2b_P_hs(h, s):
     -------
     P : float
         Pressure [MPa]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+    as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of
+    Water and Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf, Eq 4
 
     Examples
     --------
@@ -1364,6 +1628,13 @@ def _Backward2c_P_hs(h, s):
     -------
     P : float
         Pressure [MPa]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Pressure
+    as a Function of Enthalpy and Entropy p(h,s) for Regions 1 and 2 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of
+    Water and Steam, http://www.iapws.org/relguide/Supp-PHS12-2014.pdf, Eq 5
 
     Examples
     --------
@@ -1450,6 +1721,12 @@ def _Region3(rho, T):
             * kt: Isothermal compressibility [1/MPa]
             * alfap: Relative pressure coefficient [1/K]
             * betap: Isothermal stress coefficient [kg/m³]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 28
 
     Examples
     --------
@@ -1564,6 +1841,13 @@ def _tab_P(P):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 2
+
     Examples
     --------
     >>> _tab_P(40)
@@ -1592,6 +1876,13 @@ def _top_P(P):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 2
 
     Examples
     --------
@@ -1622,6 +1913,13 @@ def _twx_P(P):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 2
+
     Examples
     --------
     >>> _twx_P(22.3)
@@ -1651,6 +1949,13 @@ def _tef_P(P):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 3
+
     Examples
     --------
     >>> _tef_P(40)
@@ -1673,6 +1978,13 @@ def _txx_P(P, xy):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 1
 
     Examples
     --------
@@ -1729,6 +2041,13 @@ def _Backward3a_v_Ph(P, h):
     h : float
         Specific enthalpy [kJ/kg]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 4
+
     Returns
     -------
     v : float
@@ -1779,6 +2098,13 @@ def _Backward3b_v_Ph(P, h):
     -------
     v : float
         Specific volume [m³/kg]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 5
 
     Examples
     --------
@@ -1847,6 +2173,13 @@ def _Backward3a_T_Ph(P, h):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 2
+
     Examples
     --------
     >>> _Backward3a_T_Ph(20,1700)
@@ -1892,6 +2225,13 @@ def _Backward3b_T_Ph(P, h):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 3
 
     Examples
     --------
@@ -1962,6 +2302,13 @@ def _Backward3a_v_Ps(P, s):
     v : float
         Specific volume [m³/kg]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 8
+
     Examples
     --------
     >>> _Backward3a_v_Ps(20,3.8)
@@ -2006,6 +2353,13 @@ def _Backward3b_v_Ps(P, s):
     -------
     v : float
         Specific volume [m³/kg]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 9
 
     Examples
     --------
@@ -2074,6 +2428,13 @@ def _Backward3a_T_Ps(P, s):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 6
+
     Examples
     --------
     >>> _Backward3a_T_Ps(20,3.8)
@@ -2119,6 +2480,13 @@ def _Backward3b_T_Ps(P, s):
     -------
     T : float
         Temperature [K]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for the
+    Functions T(p,h), v(p,h) and T(p,s), v(p,s) for Region 3 of the IAPWS
+    Industrial Formulation 1997 for the Thermodynamic Properties of Water and
+    Steam, http://www.iapws.org/relguide/Supp-Tv%28ph,ps%293-2014.pdf, Eq 7
 
     Examples
     --------
@@ -2188,6 +2556,14 @@ def _Backward3a_P_hs(h, s):
     P : float
         Pressure [MPa]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 1
+
     Examples
     --------
     >>> _Backward3a_P_hs(1700,3.8)
@@ -2235,6 +2611,14 @@ def _Backward3b_P_hs(h, s):
     -------
     P : float
         Pressure [MPa]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 1
 
     Examples
     --------
@@ -2350,6 +2734,13 @@ def _Backward3_v_PT(P, T):
     -------
     v : float
         Specific volume [m³/kg]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Table 2 and 10
     """
     if P > 40:
         if T <= _tab_P(P):
@@ -2438,6 +2829,7 @@ def _Backward3_v_PT(P, T):
         elif tcd < T <= tqu:
             region = "q"
         elif tqu < T <= trx:
+            # Table 10
             tef = _tef_P(P)
             twx = _twx_P(P)
             tuv = _txx_P(P, "uv")
@@ -2491,7 +2883,7 @@ def _Backward3_v_PT(P, T):
             region = "r"
         else:
             region = "k"
-    elif 19.00881189 < P <= 20.5:
+    elif 19.00881189173929 < P <= 20.5:
         tcd = _txx_P(P, "cd")
         Ts = _TSat_P(P)
         if T <= tcd:
@@ -2500,7 +2892,7 @@ def _Backward3_v_PT(P, T):
             region = "s"
         else:
             region = "t"
-    elif Ps_623 < P <= 19.00881189:
+    elif Ps_623 < P <= 19.00881189173929:
         Ts = _TSat_P(P)
         if T <= Ts:
             region = "c"
@@ -2526,6 +2918,13 @@ def _Backward3x_v_PT(T, P, x):
     -------
     v : float
         Specific volume [m³/kg]
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations for Specific
+    Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
+    IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water
+    and Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf, Eq. 4-5
 
     Examples
     --------
@@ -3177,6 +3576,14 @@ def _Backward4_T_hs(h, s):
     T : float
         Temperature [K]
 
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Backward Equations p(h,s) for
+    Region 3, Equations as a Function of h and s for the Region Boundaries, and
+    an Equation Tsat(h,s) for Region 4 of the IAPWS Industrial Formulation 1997
+    for the Thermodynamic Properties of Water and Steam,
+    http://www.iapws.org/relguide/Supp-phs3-2014.pdf. Eq 9
+
     Examples
     --------
     >>> _Backward4_T_hs(1800,5.3)
@@ -3235,6 +3642,12 @@ def _Region5(T, P):
             * w: Speed of sound [m/s]
             * alfav: Cubic expansion coefficient [1/K]
             * kt: Isothermal compressibility [1/MPa]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 32-34
 
     Examples
     --------
@@ -3314,6 +3727,12 @@ def Region5_cp0(Tr, Pr):
             * gt: [∂g/∂T]P
             * gtt: [∂²g/∂T²]P
             * gpt: [∂²g/∂T∂P]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 33
 
     """
     Jo = [0, 1, -3, -2, -1, 2]
@@ -3984,9 +4403,6 @@ class IAPWS97(object):
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
-
-        else:
-            raise NotImplementedError("Bad incoming variables")
 
         self.M = M
         self.Pc = Pc
