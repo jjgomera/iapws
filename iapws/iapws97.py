@@ -96,8 +96,8 @@ def _h13_s(s):
          0.117518273082168e-17, 0.220000904781292, -0.690815545851641e2]
 
     suma = 0
-    for i in range(6):
-        suma += n[i] * (sigma-0.884)**I[i] * (sigma-0.864)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (sigma-0.884)**i * (sigma-0.864)**j
     return 1700 * suma
 
 
@@ -216,8 +216,8 @@ def _t_hs(h, s):
          0.783237062349385e7]
 
     suma = 0
-    for i in range(25):
-        suma += n[i]*(nu-0.727)**I[i]*(sigma-0.864)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.727)**i * (sigma-0.864)**j
     return 900*suma
 
 
@@ -359,8 +359,8 @@ def _PSat_h(h):
          0.330611514838798e19, 0.813641294467829e38]
 
     suma = 0
-    for i in range(14):
-        suma += n[i]*(nu-1.02)**I[i]*(nu-0.608)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-1.02)**i * (nu-0.608)**j
     return 22*suma
 
 
@@ -411,8 +411,8 @@ def _PSat_s(s):
          0.110649277244882e37]
 
     suma = 0
-    for i in range(10):
-        suma += n[i]*(sigma-1.03)**I[i]*(sigma-0.699)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (sigma-1.03)**i * (sigma-0.699)**j
     return 22*suma
 
 
@@ -469,8 +469,8 @@ def _h1_s(s):
          0.834596332878346e-6, 0.503611916682674e1, 0.655444787064505e2]
 
     suma = 0
-    for i in range(27):
-        suma += n[i]*(sigma-1.09)**I[i]*(sigma+0.366e-4)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
 
@@ -523,8 +523,8 @@ def _h3a_s(s):
          0.631052532240980]
 
     suma = 0
-    for i in range(19):
-        suma += n[i]*(sigma-1.09)**I[i]*(sigma+0.366e-4)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
 
@@ -583,8 +583,8 @@ def _h2ab_s(s):
          -0.175407764869978e33, 0.347581490626396e35, -0.710971318427851e39]
 
     suma = 0
-    for i in range(30):
-        suma += n[i]*(1/sigma1-0.513)**I[i]*(sigma2-0.524)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (1/sigma1-0.513)**i * (sigma2-0.524)**j
     return 2800*exp(suma)
 
 
@@ -636,8 +636,8 @@ def _h2c3b_s(s):
          -0.116994334851995e41]
 
     suma = 0
-    for i in range(16):
-        suma += n[i]*(sigma-1.02)**I[i]*(sigma-0.726)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (sigma-1.02)**i * (sigma-0.726)**j
     return 2800*suma**4
 
 
@@ -712,13 +712,13 @@ def _Region1(T, P):
     Tr = 1386/T
     Pr = P/16.53
     g = gp = gpp = gt = gtt = gpt = 0
-    for i in range(34):
-        g += n[i]*(7.1-Pr)**I[i]*(Tr-1.222)**J[i]
-        gp -= n[i]*I[i]*(7.1-Pr)**(I[i]-1)*(Tr-1.222)**J[i]
-        gpp += n[i]*I[i]*(I[i]-1)*(7.1-Pr)**(I[i]-2)*(Tr-1.222)**J[i]
-        gt += n[i] * (7.1-Pr)**I[i] * J[i] * (Tr-1.222)**(J[i]-1)
-        gtt += n[i]*(7.1-Pr)**I[i]*J[i]*(J[i]-1)*(Tr-1.222)**(J[i]-2)
-        gpt -= n[i]*I[i]*(7.1-Pr)**(I[i]-1)*J[i]*(Tr-1.222)**(J[i]-1)
+    for i, j, ni in zip(I, J, n):
+        g += ni * (7.1-Pr)**i * (Tr-1.222)**j
+        gp -= ni*i * (7.1-Pr)**(i-1) * (Tr-1.222)**j
+        gpp += ni*i*(i-1) * (7.1-Pr)**(i-2) * (Tr-1.222)**j
+        gt += ni*j * (7.1-Pr)**i * (Tr-1.222)**(j-1)
+        gtt += ni*j*(j-1) * (7.1-Pr)**i * (Tr-1.222)**(j-2)
+        gpt -= ni*i*j * (7.1-Pr)**(i-1) * (Tr-1.222)**(j-1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -778,8 +778,8 @@ def _Backward1_T_Ph(P, h):
     Pr = P/1
     nu = h/2500
     T = 0
-    for i in range(20):
-        T += n[i]*Pr**I[i]*(nu+1)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (nu+1)**j
     return T
 
 
@@ -824,8 +824,8 @@ def _Backward1_T_Ps(P, s):
     Pr = P/1
     sigma = s/1
     T = 0
-    for i in range(20):
-        T += n[i]*Pr**I[i]*(sigma+2)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (sigma+2)**j
     return T
 
 
@@ -873,8 +873,8 @@ def _Backward1_P_hs(h, s):
     nu = h/3400
     sigma = s/7.6
     P = 0
-    for i in range(19):
-        P += n[i]*(nu+0.05)**I[i]*(sigma+0.05)**J[i]
+    for i, j, ni in zip(I, J, n):
+        P += ni * (nu+0.05)**i * (sigma+0.05)**j
     return 100*P
 
 
@@ -960,13 +960,13 @@ def _Region2(T, P):
           -9.4369707241209998e-07]
 
     gr = grp = grpp = grt = grtt = grpt = 0
-    for i in range(43):
-        gr += nr[i]*Pr**Ir[i]*(Tr-0.5)**Jr[i]
-        grp += nr[i]*Ir[i]*Pr**(Ir[i]-1)*(Tr-0.5)**Jr[i]
-        grpp += nr[i]*Ir[i]*(Ir[i]-1)*Pr**(Ir[i]-2)*(Tr-0.5)**Jr[i]
-        grt += nr[i]*Pr**Ir[i]*Jr[i]*(Tr-0.5)**(Jr[i]-1)
-        grtt += nr[i]*Pr**Ir[i]*Jr[i]*(Jr[i]-1)*(Tr-0.5)**(Jr[i]-2)
-        grpt += nr[i]*Ir[i]*Pr**(Ir[i]-1)*Jr[i]*(Tr-0.5)**(Jr[i]-1)
+    for i, j, ni in zip(Ir, Jr, nr):
+        gr += ni * Pr**i * (Tr-0.5)**j
+        grp += ni*i * Pr**(i-1) * (Tr-0.5)**j
+        grpp += ni*i*(i-1) * Pr**(i-2) * (Tr-0.5)**j
+        grt += ni*j * Pr**i * (Tr-0.5)**(j-1)
+        grtt += ni*j*(j-1) * Pr**i * (Tr-0.5)**(j-2)
+        grpt += ni*i*j * Pr**(i-1) * (Tr-0.5)**(j-1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -1023,10 +1023,10 @@ def Region2_cp0(Tr, Pr):
     gop = Pr**-1
     gopp = -Pr**-2
     got = gott = gopt = 0
-    for i in range(9):
-        go += no[i]*Tr**Jo[i]
-        got += no[i]*Jo[i]*Tr**(Jo[i]-1)
-        gott += no[i]*Jo[i]*(Jo[i]-1)*Tr**(Jo[i]-2)
+    for j, ni in zip(Jo, no):
+        go += ni * Tr**j
+        got += ni*j * Tr**(j-1)
+        gott += ni*j*(j-1) * Tr**(j-2)
     return go, gop, gopp, got, gott, gopt
 
 
@@ -1169,8 +1169,8 @@ def _Backward2a_T_Ph(P, h):
     Pr = P/1
     nu = h/2000
     T = 0
-    for i in range(34):
-        T += n[i]*Pr**I[i]*(nu-2.1)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (nu-2.1)**j
     return T
 
 
@@ -1223,8 +1223,8 @@ def _Backward2b_T_Ph(P, h):
     Pr = P/1
     nu = h/2000
     T = 0
-    for i in range(38):
-        T += n[i]*(Pr-2)**I[i]*(nu-2.6)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * (Pr-2)**i * (nu-2.6)**j
     return T
 
 
@@ -1272,8 +1272,8 @@ def _Backward2c_T_Ph(P, h):
     Pr = P/1
     nu = h/2000
     T = 0
-    for i in range(23):
-        T += n[i]*(Pr+25)**I[i]*(nu-1.8)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * (Pr+25)**i * (nu-1.8)**j
     return T
 
 
@@ -1364,8 +1364,8 @@ def _Backward2a_T_Ps(P, s):
     Pr = P/1
     sigma = s/2
     T = 0
-    for i in range(46):
-        T += n[i]*Pr**I[i]*(sigma-2)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (sigma-2)**j
     return T
 
 
@@ -1421,8 +1421,8 @@ def _Backward2b_T_Ps(P, s):
     Pr = P/1
     sigma = s/0.7853
     T = 0
-    for i in range(44):
-        T += n[i]*Pr**I[i]*(10-sigma)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (10-sigma)**j
     return T
 
 
@@ -1472,8 +1472,8 @@ def _Backward2c_T_Ps(P, s):
     Pr = P/1
     sigma = s/2.9251
     T = 0
-    for i in range(30):
-        T += n[i]*Pr**I[i]*(2-sigma)**J[i]
+    for i, j, ni in zip(I, J, n):
+        T += ni * Pr**i * (2-sigma)**j
     return T
 
 
@@ -1554,8 +1554,8 @@ def _Backward2a_P_hs(h, s):
     nu = h/4200
     sigma = s/12
     suma = 0
-    for i in range(29):
-        suma += n[i]*(nu-0.5)**I[i]*(sigma-1.2)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.5)**i * (sigma-1.2)**j
     return 4*suma**4
 
 
@@ -1609,8 +1609,8 @@ def _Backward2b_P_hs(h, s):
     nu = h/4100
     sigma = s/7.9
     suma = 0
-    for i in range(33):
-        suma += n[i]*(nu-0.6)**I[i]*(sigma-1.01)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.6)**i * (sigma-1.01)**j
     return 100*suma**4
 
 
@@ -1664,8 +1664,8 @@ def _Backward2c_P_hs(h, s):
     nu = h/3500
     sigma = s/5.9
     suma = 0
-    for i in range(31):
-        suma += n[i]*(nu-0.7)**I[i]*(sigma-1.1)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.7)**i * (sigma-1.1)**j
     return 100*suma**4
 
 
@@ -1755,37 +1755,37 @@ def _Region3(rho, T):
     791.475213
     """
 
-    I = [None, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,
-         3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8, 9, 9, 10, 10, 11]
-    J = [None, 0, 1, 2, 7, 10, 12, 23, 2, 6, 15, 17, 0, 2, 6, 7, 22, 26, 0, 2,
-         4, 16, 26, 0, 2, 4, 26, 1, 3, 26, 0, 2, 26, 2, 26, 2, 26, 0, 1, 26]
-    n = [0.10658070028513e1, -0.15732845290239e2, 0.20944396974307e2,
-         -0.76867707878716e1, 0.26185947787954e1, -0.28080781148620e1,
-         0.12053369696517e1, -0.84566812812502e-2, -0.12654315477714e1,
-         -0.11524407806681e1, 0.88521043984318, -0.64207765181607,
-         0.38493460186671, -0.85214708824206, 0.48972281541877e1,
-         -0.30502617256965e1, 0.39420536879154e-1, 0.12558408424308,
-         -0.27999329698710, 0.13899799569460e1, -0.20189915023570e1,
-         -0.82147637173963e-2, -0.47596035734923, 0.43984074473500e-1,
-         -0.44476435428739, 0.90572070719733, .70522450087967, .10770512626332,
-         -0.32913623258954, -0.50871062041158, -0.22175400873096e-1,
-         0.94260751665092e-1, 0.16436278447961, -0.13503372241348e-1,
-         -0.14834345352472e-1, 0.57922953628084e-3, 0.32308904703711e-2,
-         0.80964802996215e-4, -0.16557679795037e-3, -0.44923899061815e-4]
+    I = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
+         4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8, 9, 9, 10, 10, 11]
+    J = [0, 1, 2, 7, 10, 12, 23, 2, 6, 15, 17, 0, 2, 6, 7, 22, 26, 0, 2, 4, 16,
+         26, 0, 2, 4, 26, 1, 3, 26, 0, 2, 26, 2, 26, 2, 26, 0, 1, 26]
+    n = [-0.15732845290239e2, 0.20944396974307e2, -0.76867707878716e1,
+         0.26185947787954e1, -0.28080781148620e1, 0.12053369696517e1,
+         -0.84566812812502e-2, -0.12654315477714e1, -0.11524407806681e1,
+         0.88521043984318, -0.64207765181607, 0.38493460186671,
+         -0.85214708824206, 0.48972281541877e1, -0.30502617256965e1,
+         0.39420536879154e-1, 0.12558408424308, -0.27999329698710,
+         0.13899799569460e1, -0.20189915023570e1, -0.82147637173963e-2,
+         -0.47596035734923, 0.43984074473500e-1, -0.44476435428739,
+         0.90572070719733, .70522450087967, .10770512626332, -0.32913623258954,
+         -0.50871062041158, -0.22175400873096e-1, 0.94260751665092e-1,
+         0.16436278447961, -0.13503372241348e-1, -0.14834345352472e-1,
+         0.57922953628084e-3, 0.32308904703711e-2, 0.80964802996215e-4,
+         -0.16557679795037e-3, -0.44923899061815e-4]
 
     d = rho/rhoc
     Tr = Tc/T
-    g = n[0]*log(d)
-    gd = n[0]*d**-1
-    gdd = -n[0]*d**-2
+    g = 1.0658070028513*log(d)
+    gd = 1.0658070028513/d
+    gdd = -1.0658070028513/d**2
     gt = gtt = gdt = 0
-    for i in range(1, 40):
-        g += n[i]*d**I[i]*Tr**J[i]
-        gd += n[i]*I[i]*d**(I[i]-1)*Tr**J[i]
-        gdd += n[i]*I[i]*(I[i]-1)*d**(I[i]-2)*Tr**J[i]
-        gt += n[i] * d**I[i] * J[i] * Tr**(J[i]-1)
-        gtt += n[i]*d**I[i]*J[i]*(J[i]-1)*Tr**(J[i]-2)
-        gdt += n[i]*I[i]*d**(I[i]-1)*J[i]*Tr**(J[i]-1)
+    for i, j, ni in zip(I, J, n):
+        g += ni * d**i * Tr**j
+        gd += ni*i * d**(i-1) * Tr**j
+        gdd += ni*i*(i-1) * d**(i-2) * Tr**j
+        gt += ni*j * d**i * Tr**(j-1)
+        gtt += ni*j*(j-1) * d**i * Tr**(j-2)
+        gdt += ni*i*j * d**(i-1) * Tr**(j-1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -1859,8 +1859,8 @@ def _tab_P(P):
 
     Pr = P/1
     T = 0
-    for i in range(5):
-        T += n[i]*log(Pr)**I[i]
+    for i, ni in zip(I, n):
+        T += ni * log(Pr)**i
     return T
 
 
@@ -1895,8 +1895,8 @@ def _top_P(P):
 
     Pr = P/1
     T = 0
-    for i in range(5):
-        T += n[i]*log(Pr)**I[i]
+    for i, ni in zip(I, n):
+        T += ni * log(Pr)**i
     return T
 
 
@@ -1931,8 +1931,8 @@ def _twx_P(P):
 
     Pr = P/1
     T = 0
-    for i in range(5):
-        T += n[i]*log(Pr)**I[i]
+    for i, ni in zip(I, n):
+        T += ni * log(Pr)**i
     return T
 
 
@@ -2026,8 +2026,8 @@ def _txx_P(P, xy):
     n = ng[xy]
     Pr = P/1
     T = 0
-    for i in range(len(n)):
-        T += n[i]*Pr**i
+    for i, ni in enumerate(n):
+        T += ni * Pr**i
     return T
 
 
@@ -2079,8 +2079,8 @@ def _Backward3a_v_Ph(P, h):
     Pr = P/100
     nu = h/2100
     suma = 0
-    for i in range(32):
-        suma += n[i]*(Pr+0.128)**I[i]*(nu-0.727)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.128)**i * (nu-0.727)**j
     return 0.0028*suma
 
 
@@ -2131,8 +2131,8 @@ def _Backward3b_v_Ph(P, h):
     Pr = P/100
     nu = h/2800
     suma = 0
-    for i in range(30):
-        suma += n[i]*(Pr+0.0661)**I[i]*(nu-0.72)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.0661)**i * (nu-0.72)**j
     return 0.0088*suma
 
 
@@ -2334,8 +2334,8 @@ def _Backward3a_v_Ps(P, s):
     Pr = P/100
     sigma = s/4.4
     suma = 0
-    for i in range(28):
-        suma += n[i]*(Pr+0.187)**I[i]*(sigma-0.755)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.187)**i * (sigma-0.755)**j
     return 0.0028*suma
 
 
@@ -2387,8 +2387,8 @@ def _Backward3b_v_Ps(P, s):
     Pr = P/100
     sigma = s/5.3
     suma = 0
-    for i in range(31):
-        suma += n[i]*(Pr+0.298)**I[i]*(sigma-0.816)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.298)**i * (sigma-0.816)**j
     return 0.0088*suma
 
 
@@ -2461,8 +2461,8 @@ def _Backward3a_T_Ps(P, s):
     Pr = P/100
     sigma = s/4.4
     suma = 0
-    for i in range(33):
-        suma += n[i]*(Pr+0.240)**I[i]*(sigma-0.703)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.240)**i * (sigma-0.703)**j
     return 760*suma
 
 
@@ -2513,8 +2513,8 @@ def _Backward3b_T_Ps(P, s):
     Pr = P/100
     sigma = s/5.3
     suma = 0
-    for i in range(28):
-        suma += n[i]*(Pr+0.760)**I[i]*(sigma-0.818)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (Pr+0.760)**i * (sigma-0.818)**j
     return 860*suma
 
 
@@ -2592,8 +2592,8 @@ def _Backward3a_P_hs(h, s):
     nu = h/2300
     sigma = s/4.4
     suma = 0
-    for i in range(33):
-        suma += n[i]*(nu-1.01)**I[i]*(sigma-0.75)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-1.01)**i * (sigma-0.75)**j
     return 99*suma
 
 
@@ -2650,8 +2650,8 @@ def _Backward3b_P_hs(h, s):
     nu = h/2800
     sigma = s/5.3
     suma = 0
-    for i in range(35):
-        suma += n[i]*(nu-0.681)**I[i]*(sigma-0.792)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.681)**i * (sigma-0.792)**j
     return 16.6/suma
 
 
@@ -3034,32 +3034,32 @@ def _Backward3x_v_PT(T, P, x):
     0.003701940009
     """
     par = {
-        "a": [0.0024, 100, 760, 30, 0.085, 0.817, 1, 1, 1],
-        "b": [0.0041, 100, 860, 32, 0.280, 0.779, 1, 1, 1],
-        "c": [0.0022, 40, 690, 35, 0.259, 0.903, 1, 1, 1],
-        "d": [0.0029, 40, 690, 38, 0.559, 0.939, 1, 1, 4],
-        "e": [0.0032, 40, 710, 29, 0.587, 0.918, 1, 1, 1],
-        "f": [0.0064, 40, 730, 42, 0.587, 0.891, 0.5, 1, 4],
-        "g": [0.0027, 25, 660, 38, 0.872, 0.971, 1, 1, 4],
-        "h": [0.0032, 25, 660, 29, 0.898, 0.983, 1, 1, 4],
-        "i": [0.0041, 25, 660, 42, 0.910, 0.984, 0.5, 1, 4],
-        "j": [0.0054, 25, 670, 29, 0.875, 0.964, 0.5, 1, 4],
-        "k": [0.0077, 25, 680, 34, 0.802, 0.935, 1, 1, 1],
-        "l": [0.0026, 24, 650, 43, 0.908, 0.989, 1, 1, 4],
-        "m": [0.0028, 23, 650, 40, 1.000, 0.997, 1, 0.25, 1],
-        "n": [0.0031, 23, 650, 39, 0.976, 0.997, None, None, None],
-        "o": [0.0034, 23, 650, 24, 0.974, 0.996, 0.5, 1, 1],
-        "p": [0.0041, 23, 650, 27, 0.972, 0.997, 0.5, 1, 1],
-        "q": [0.0022, 23, 650, 24, 0.848, 0.983, 1, 1, 4],
-        "r": [0.0054, 23, 650, 27, 0.874, 0.982, 1, 1, 1],
-        "s": [0.0022, 21, 640, 29, 0.886, 0.990, 1, 1, 4],
-        "t": [0.0088, 20, 650, 33, 0.803, 1.020, 1, 1, 1],
-        "u": [0.0026, 23, 650, 38, 0.902, 0.988, 1, 1, 1],
-        "v": [0.0031, 23, 650, 39, 0.960, 0.995, 1, 1, 1],
-        "w": [0.0039, 23, 650, 35, 0.959, 0.995, 1, 1, 4],
-        "x": [0.0049, 23, 650, 36, 0.910, 0.988, 1, 1, 1],
-        "y": [0.0031, 22, 650, 20, 0.996, 0.994, 1, 1, 4],
-        "z": [0.0038, 22, 650, 23, 0.993, 0.994, 1, 1, 4],
+        "a": [0.0024, 100, 760, 0.085, 0.817, 1, 1, 1],
+        "b": [0.0041, 100, 860, 0.280, 0.779, 1, 1, 1],
+        "c": [0.0022, 40, 690, 0.259, 0.903, 1, 1, 1],
+        "d": [0.0029, 40, 690, 0.559, 0.939, 1, 1, 4],
+        "e": [0.0032, 40, 710, 0.587, 0.918, 1, 1, 1],
+        "f": [0.0064, 40, 730, 0.587, 0.891, 0.5, 1, 4],
+        "g": [0.0027, 25, 660, 0.872, 0.971, 1, 1, 4],
+        "h": [0.0032, 25, 660, 0.898, 0.983, 1, 1, 4],
+        "i": [0.0041, 25, 660, 0.910, 0.984, 0.5, 1, 4],
+        "j": [0.0054, 25, 670, 0.875, 0.964, 0.5, 1, 4],
+        "k": [0.0077, 25, 680, 0.802, 0.935, 1, 1, 1],
+        "l": [0.0026, 24, 650, 0.908, 0.989, 1, 1, 4],
+        "m": [0.0028, 23, 650, 1.000, 0.997, 1, 0.25, 1],
+        "n": [0.0031, 23, 650, 0.976, 0.997, None, None, None],
+        "o": [0.0034, 23, 650, 0.974, 0.996, 0.5, 1, 1],
+        "p": [0.0041, 23, 650, 0.972, 0.997, 0.5, 1, 1],
+        "q": [0.0022, 23, 650, 0.848, 0.983, 1, 1, 4],
+        "r": [0.0054, 23, 650, 0.874, 0.982, 1, 1, 1],
+        "s": [0.0022, 21, 640, 0.886, 0.990, 1, 1, 4],
+        "t": [0.0088, 20, 650, 0.803, 1.020, 1, 1, 1],
+        "u": [0.0026, 23, 650, 0.902, 0.988, 1, 1, 1],
+        "v": [0.0031, 23, 650, 0.960, 0.995, 1, 1, 1],
+        "w": [0.0039, 23, 650, 0.959, 0.995, 1, 1, 4],
+        "x": [0.0049, 23, 650, 0.910, 0.988, 1, 1, 1],
+        "y": [0.0031, 22, 650, 0.996, 0.994, 1, 1, 4],
+        "z": [0.0038, 22, 650, 0.993, 0.994, 1, 1, 4],
         }
 
     I = {
@@ -3495,18 +3495,18 @@ def _Backward3x_v_PT(T, P, x):
     I = I[x]
     J = J[x]
     n = n[x]
-    v_, P_, T_, N, a, b, c, d, e = par[x]
+    v_, P_, T_, a, b, c, d, e = par[x]
 
     Pr = P/P_
     Tr = T/T_
     suma = 0
     if x == "n":
-        for i in range(N):
-            suma += n[i]*(Pr-a)**I[i]*(Tr-b)**J[i]
+        for i, j, ni in zip(I, J, n):
+            suma += ni * (Pr-a)**i * (Tr-b)**j
         return v_*exp(suma)
     else:
-        for i in range(N):
-            suma += n[i]*(Pr-a)**(c*I[i])*(Tr-b)**(J[i]*d)
+        for i, j, ni in zip(I, J, n):
+            suma += ni * (Pr-a)**(c*i) * (Tr-b)**(j*d)
         return v_*suma**e
 
 
@@ -3613,8 +3613,8 @@ def _Backward4_T_hs(h, s):
     nu = h/2800
     sigma = s/9.2
     suma = 0
-    for i in range(36):
-        suma += n[i]*(nu-0.119)**I[i]*(sigma-1.07)**J[i]
+    for i, j, ni in zip(I, J, n):
+        suma += ni * (nu-0.119)**i * (sigma-1.07)**j
     return 550*suma
 
 
@@ -3680,13 +3680,13 @@ def _Region5(T, P):
     nr = [0.15736404855259e-2, 0.90153761673944e-3, -0.50270077677648e-2,
           0.22440037409485e-5, -0.41163275453471e-5, 0.37919454822955e-7]
     gr = grp = grpp = grt = grtt = grpt = 0
-    for i in range(6):
-        gr += nr[i]*Pr**Ir[i]*Tr**Jr[i]
-        grp += nr[i]*Ir[i]*Pr**(Ir[i]-1)*Tr**Jr[i]
-        grpp += nr[i]*Ir[i]*(Ir[i]-1)*Pr**(Ir[i]-2)*Tr**Jr[i]
-        grt += nr[i]*Pr**Ir[i]*Jr[i]*Tr**(Jr[i]-1)
-        grtt += nr[i]*Pr**Ir[i]*Jr[i]*(Jr[i]-1)*Tr**(Jr[i]-2)
-        grpt += nr[i]*Ir[i]*Pr**(Ir[i]-1)*Jr[i]*Tr**(Jr[i]-1)
+    for i, j, ni in zip(Ir, Jr, nr):
+        gr += ni * Pr**i * Tr**j
+        grp += ni*i * Pr**(i-1) * Tr**j
+        grpp += ni*i*(i-1) * Pr**(i-2) * Tr**j
+        grt += ni*j * Pr**i * Tr**(j-1)
+        grtt += ni*j*(j-1) * Pr**i * Tr**(j-2)
+        grpt += ni*i*j * Pr**(i-1) * Tr**(j-1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -3742,10 +3742,10 @@ def Region5_cp0(Tr, Pr):
     gop = Pr**-1
     gopp = -Pr**-2
     got = gott = gopt = 0
-    for i in range(6):
-        go += no[i]*Tr**Jo[i]
-        got += no[i]*Jo[i]*Tr**(Jo[i]-1)
-        gott += no[i]*Jo[i]*(Jo[i]-1)*Tr**(Jo[i]-2)
+    for j, ni in zip(Jo, no):
+        go += ni * Tr**j
+        got += ni*j * Tr**(j-1)
+        gott += ni*j*(j-1) * Tr**(j-2)
 
     return go, gop, gopp, got, gott, gopt
 
