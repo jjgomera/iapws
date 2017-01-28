@@ -8,6 +8,44 @@
 The module implement the fundamental equation for the five regions (rectangular
 boxes) and the backward equation (marked in grey).
 
+:ref: IAPWS97: Global module class with all the functionality
+
+Fundamental equations::
+    * :ref: _Region1
+    * :ref: _Region2
+    * :ref: _Region3
+    * :ref: _Region4
+    * :ref: _TSat_P
+    * :ref: _PSat_T
+    * :ref: _Region5
+
+Backward equations::
+    * :ref: _Backward1_T_Ph
+    * :ref: _Backward1_T_Ps
+    * :ref: _Backward1_P_hs
+    * :ref: _Backward2_T_Ph
+    * :ref: _Backward2_T_Ps
+    * :ref: _Backward2_P_hs
+    * :ref: _Backward3_T_Ph
+    * :ref: _Backward3_T_Ps
+    * :ref: _Backward3_P_hs
+    * :ref: _Backward3_v_Ph
+    * :ref: _Backward3_v_Ps
+    * :ref: _Backward3_v_PT
+    * :ref: _Backward4_T_hs
+
+Boundary equations::
+    * :ref: _h13_s
+    * :ref: _h3a_s
+    * :ref: _h1_s
+    * :ref: _t_hs
+    * :ref: _PSat_h
+    * :ref: _h2ab_s
+    * :ref: _h_3ab
+    * :ref: _h2c3b_s
+    * :ref: _hab_s
+    * :ref: _hbc_P
+
 
 References
 ----------
