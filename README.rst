@@ -25,7 +25,9 @@ Python implementation of standard from IAPWS (http://www.iapws.org/release.html)
     IAPWS-06 for Ice
     IAPWS-08 for seawater
     IAPWS-05 for Heavy water
+    ...
     
+
 dependences
 --------------------
 
@@ -44,50 +46,46 @@ or directly cloning the github repository::
 
     git clone https://github.com/jjgomera/iapws.git
 
-and adding the folder to a python path. This is the recommended options to have the latest version.
+and adding the folder to a python path. This is the recommended option to have the latest version.
 
 
-Documentation
+documentation
 --------------------
  
-To see the full documentation of package, see http://iapws.readthedocs.io/en/latest/?badge=latest
+To see the full documentation of package, see `readthedocs <http://iapws.readthedocs.io/>`__
 
 For a rapid usage demostration, see this examples 
 
-IAPWS-IF97::
-
+IAPWS-IF97
+.. code:: python
 	from iapws import IAPWS97
 	sat_steam=IAPWS97(P=1,x=1)                #saturated steam with known P
 	sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
 	steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
-    
-IAPWS-95::
-
+IAPWS-95
+.. code:: python
 	from iapws import IAPWS95
 	sat_steam=IAPWS95(P=1,x=1)                #saturated steam with known P
 	sat_liquid=IAPWS95(T=370, x=0)            #saturated liquid with known T
 	steam=IAPWS95(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
-
     
-IAPWS-05 for Heavy water::
-
+IAPWS-05 for Heavy water
+.. code:: python
 	from iapws import D2O
 	sat_liquid=D2O(T=370, x=0)            #saturated liquid with known T
 	print(sat_liquid.h)                   #calculated enthalpy
 
-
-IAPWS-06 for Ice Ih::
-    
+IAPWS-06 for Ice Ih
+.. code:: python
     from iapws import _Ice
     ice=_Ice(273.15, 0.101325)            #Ice at normal melting point
     print(ice["rho"])                     #Calculated density
 
-    
-IAPWS-08 for seawater::
-    
+IAPWS-08 for seawater
+.. code:: python
     from iapws import SeaWater
     state = SeaWater(T=300, P=0.101325, S=0.001)    #Seawater with 0.1% Salinity
     print(state.cp)     # Get cp
@@ -96,8 +94,7 @@ IAPWS-08 for seawater::
 TODO
 --------------------
 
-Improve convergence in two phase region for IAPWS95 and D2O class
-Fix h-x bound region definition in IAPWS97
-
+* Improve convergence in two phase region for IAPWS95 and D2O class
+* Fix h-x bound region definition in IAPWS97
 
 For any suggestions, comments, bugs ... you can usage the `github issue section <https://github.com/jjgomera/iapws/issues>`__, or contact directly with me at `email <jjgomera@gmail.com>`__.
