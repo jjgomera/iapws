@@ -2,6 +2,13 @@
 # -*- coding: utf-8 -*-
 """IAPWS-IF97 standard implementation
 
+.. image:: https://raw.githubusercontent.com/jjgomera/iapws/master/images/iapws97.png
+    :alt: iapws97
+
+The module implement the fundamental equation for the five regions (rectangular
+boxes) and the backward equation (marked in grey).
+
+
 References
 ----------
 IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
@@ -4250,11 +4257,14 @@ class IAPWS97(object):
             elif region == 2:
                 propiedades = _Region2(T, P)
             elif region == 3:
-                vo = _Backward3_v_PT(P, T)
+                if T == Tc and P == Pc:
+                    rho = rhoc
+                else:
+                    vo = _Backward3_v_PT(P, T)
 
-                def funcion(rho):
-                    return _Region3(rho, self.kwargs["T"])["P"]-P
-                rho = newton(funcion, 1/vo)
+                    def funcion(rho):
+                        return _Region3(rho, self.kwargs["T"])["P"]-P
+                    rho = newton(funcion, 1/vo)
                 propiedades = _Region3(rho, T)
             elif region == 5:
                 propiedades = _Region5(T, P)

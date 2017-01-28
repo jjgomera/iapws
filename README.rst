@@ -103,7 +103,7 @@ IAPWS-08 for seawater
 
     from iapws import SeaWater
     state = SeaWater(T=300, P=0.101325, S=0.001)    #Seawater with 0.1% Salinity
-    print(state.cp)     # Get cp
+    print(state.cp)                                 # Get cp
 
 
 TODO
