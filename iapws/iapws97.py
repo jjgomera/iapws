@@ -3733,7 +3733,6 @@ def Region5_cp0(Tr, Pr):
     IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
     Thermodynamic Properties of Water and Steam August 2007,
     http://www.iapws.org/relguide/IF97-Rev.html, Eq 33
-
     """
     Jo = [0, 1, -3, -2, -1, 2]
     no = [-0.13179983674201e2, 0.68540841634434e1, -0.24805148933466e-1,
@@ -3765,6 +3764,12 @@ def _Bound_TP(T, P):
     -------
     region : float
         IAPWS-97 region code
+
+    References
+    ----------
+    Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+    Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer,
+    2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.3
     """
     region = None
     if 1073.15 < T <= 2273.15 and Pmin <= P <= 50:
@@ -3779,10 +3784,10 @@ def _Bound_TP(T, P):
         T_b23 = _t_P(P)
         if 273.15 <= T <= 623.15:
             region = 1
-        elif T_b23 <= T <= 1073.15:
-            region = 2
         elif 623.15 < T < T_b23:
             region = 3
+        elif T_b23 <= T <= 1073.15:
+            region = 2
     return region
 
 
@@ -3800,6 +3805,12 @@ def _Bound_Ph(P, h):
     -------
     region : float
         IAPWS-97 region code
+
+    References
+    ----------
+    Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+    Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer,
+    2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.5
     """
     region = None
     if Pmin <= P <= Ps_623:
@@ -3865,6 +3876,12 @@ def _Bound_Ps(P, s):
     -------
     region : float
         IAPWS-97 region code
+
+    References
+    ----------
+    Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+    Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer,
+    2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.9
     """
     region = None
     if Pmin <= P <= Ps_623:
@@ -3930,6 +3947,12 @@ def _Bound_hs(h, s):
     -------
     region : float
         IAPWS-97 region code
+
+    References
+    ----------
+    Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
+    Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer,
+    2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.14
     """
     region = None
     smin = _Region1(273.15, 100)["s"]
@@ -4372,15 +4395,17 @@ class IAPWS97(object):
         elif self._thermo == "Px":
             P, x = args
             T = _TSat_P(P)
-            if Pt <= P <= Pc and 0 < x < 1:
+            if Pt <= P < Pc and 0 < x < 1:
                 propiedades = _Region4(P, x)
-            elif P > Ps_623 and x in (0, 1):
+            elif Pt <= P <= Ps_623 and x == 0:
+                propiedades = _Region1(T, P)
+            elif Pt <= P <= Ps_623 and x == 1:
+                propiedades = _Region2(T, P)
+            elif Ps_623 < P < Pc and x in (0, 1):
                 rho = 1./_Backward3_sat_v_P(P, T, x)
                 propiedades = _Region3(rho, T)
-            elif x == 0:
-                propiedades = _Region1(T, P)
-            elif x == 1:
-                propiedades = _Region2(T, P)
+            elif P == Pc and 0 <= x <= 1:
+                propiedades = _Region3(rhoc, Tc)
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
@@ -4388,18 +4413,17 @@ class IAPWS97(object):
         elif self._thermo == "Tx":
             T, x = args
             P = _PSat_T(T)
-            if 273.15 <= T <= Tc and 0 < x < 1:
+            if 273.15 <= T < Tc and 0 < x < 1:
                 propiedades = _Region4(P, x)
-            elif T > 623.15 and x in (0, 1):
-                rho = 1./_Backward3_sat_v_P(P, T, x)
-                propiedades = _Region3(rho, T)
             elif 273.15 <= T <= 623.15 and x == 0:
                 propiedades = _Region1(T, P)
             elif 273.15 <= T <= 623.15 and x == 1:
                 propiedades = _Region2(T, P)
-            elif P > Ps_623:
-                rho = 1./_Backward3_v_PT(P, T)
+            elif 623.15 < T < Tc and x in (0, 1):
+                rho = 1./_Backward3_sat_v_P(P, T, x)
                 propiedades = _Region3(rho, T)
+            elif T == Tc and 0 <= x <= 1:
+                propiedades = _Region3(rhoc, Tc)
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)

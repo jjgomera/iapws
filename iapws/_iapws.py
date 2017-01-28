@@ -470,8 +470,8 @@ def _Tension(T):
     IAPWS, Revised Release on Surface Tension of Ordinary Water Substance
     June 2014, http://www.iapws.org/relguide/Surf-H2O.html
     """
-    Tr = T/Tc
-    if 248.15 <= T < Tc:
+    if 248.15 <= T <= Tc:
+        Tr = T/Tc
         return 1e-3*(235.8*(1-Tr)**1.256*(1-0.625*(1-Tr)))
     else:
         raise NotImplementedError("Incoming out of bound")
@@ -811,8 +811,6 @@ def getphase(Tc, Pc, T, P, x, region):
         phase = "Vapour"
     elif x == 0:
         phase = "Liquid"
-    else:
-        phase = "Unknown"
     return phase
 
 
