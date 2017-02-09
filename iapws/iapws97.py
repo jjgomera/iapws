@@ -10,41 +10,41 @@ boxes) and the backward equation (marked in grey).
 
 :ref: IAPWS97: Global module class with all the functionality
 
-Fundamental equations::
-    * :ref: `_Region1`
-    * :ref: `_Region2`
-    * :ref: `_Region3`
-    * :ref: `_Region4`
-    * :ref: `_TSat_P`
-    * :ref: `_PSat_T`
-    * :ref: `_Region5`
+Fundamental equations:
+    :ref: `_Region1`
+    :ref: `_Region2`
+    :ref: `_Region3`
+    :ref: `_Region4`
+    :ref: `_TSat_P`
+    :ref: `_PSat_T`
+    :ref: `_Region5`
 
-Backward equations::
-    * :ref: `_Backward1_T_Ph`
-    * :ref: `_Backward1_T_Ps`
-    * :ref: `_Backward1_P_hs`
-    * :ref: `_Backward2_T_Ph`
-    * :ref: `_Backward2_T_Ps`
-    * :ref: `_Backward2_P_hs`
-    * :ref: `_Backward3_T_Ph`
-    * :ref: `_Backward3_T_Ps`
-    * :ref: `_Backward3_P_hs`
-    * :ref: `_Backward3_v_Ph`
-    * :ref: `_Backward3_v_Ps`
-    * :ref: `_Backward3_v_PT`
-    * :ref: `_Backward4_T_hs`
+Backward equations:
+    :ref: `_Backward1_T_Ph`
+    :ref: `_Backward1_T_Ps`
+    :ref: `_Backward1_P_hs`
+    :ref: `_Backward2_T_Ph`
+    :ref: `_Backward2_T_Ps`
+    :ref: `_Backward2_P_hs`
+    :ref: `_Backward3_T_Ph`
+    :ref: `_Backward3_T_Ps`
+    :ref: `_Backward3_P_hs`
+    :ref: `_Backward3_v_Ph`
+    :ref: `_Backward3_v_Ps`
+    :ref: `_Backward3_v_PT`
+    :ref: `_Backward4_T_hs`
 
-Boundary equations::
-    * :ref: `_h13_s`
-    * :ref: `_h3a_s`
-    * :ref: `_h1_s`
-    * :ref: `_t_hs`
-    * :ref: `_PSat_h`
-    * :ref: `_h2ab_s`
-    * :ref: `_h_3ab`
-    * :ref: `_h2c3b_s`
-    * :ref: `_hab_s`
-    * :ref: `_hbc_P`
+Boundary equations:
+    :ref: `_h13_s`
+    :ref: `_h3a_s`
+    :ref: `_h1_s`
+    :ref: `_t_hs`
+    :ref: `_PSat_h`
+    :ref: `_h2ab_s`
+    :ref: `_h_3ab`
+    :ref: `_h2c3b_s`
+    :ref: `_hab_s`
+    :ref: `_hbc_P`
 
 
 References
@@ -4000,93 +4000,144 @@ def _Bound_hs(h, s):
     2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.14
     """
     region = None
-    smin = _Region1(273.15, 100)["s"]
-    hmin = _Region1(273.15, 100)["h"]
     s13 = _Region1(623.15, 100)["s"]
     s13s = _Region1(623.15,  Ps_623)["s"]
-    smax = _Region2(1073.15, _PSat_T(273.15))["s"]
-    hmax = _Region2(1073.15, _PSat_T(273.15))["h"]
+    sTPmax = _Region2(1073.15, 100)["s"]
+    s2ab = _Region2(1073.15, 4)["s"]
 
-    s4l = _Region1(273.15, Pmin)["s"]
-    h4l = _Region1(273.15, Pmin)["h"]
-    s4v = _Region2(273.15, Pmin)["s"]
-    h4v = _Region2(273.15, Pmin)["h"]
+    # Left point in h-s plot
+    smin = _Region1(273.15, 100)["s"]
+    hmin = _Region1(273.15, Pmin)["h"]
 
-    h23max = _Region2(863.15, 100)["h"]
-    h23min = _Region2(623.15, Ps_623)["h"]
+    # Right point in h-s plot
+    _Pmax = _Region2(1073.15, Pmin)
+    hmax = _Pmax["h"]
+    smax = _Pmax["s"]
 
-    if h <= hmax:
-        if smin <= s <= s13:
-            P = _Backward1_P_hs(h, s)
-            T = _Backward1_T_Ph(P, h)
-            if T-0.0218 >= 273.15 and Pt <= P <= 100:
-                hs = _h1_s(s)
-                if h >= hs:
-                    region = 1
-                elif hmin <= h < hs:
-                    region = 4
-        elif s13 < s <= s13s:
-            hs = _h1_s(s)
-            h13 = _h13_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            if h > h13 and _Backward3_P_hs(h, s) <= 100:
-                region = 3
-            elif hs <= h <= h13:
-                region = 1
-            elif hmin4 <= h < hs:
-                region = 4
-        elif s13s < s <= sc:
-            hs = _h3a_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            if h >= hs and _Backward3_P_hs(h, s) <= 100:
-                region = 3
-            elif hmin4 <= h < hs:
-                region = 4
-        elif sc < s < 5.049096828:
-            hs = _h2c3b_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            if h >= hs and _Backward3_P_hs(h, s) <= 100:
-                region = 3
-            elif hmin4 <= h < hs:
-                region = 4
-        elif 5.049096828 <= s < 5.260578707:
-            hs = _h2c3b_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            if h23max <= h and _Backward2_P_hs(h, s) <= 100:
+    # Region 4 left and right point
+    _sL = _Region1(273.15, Pmin)
+    h4l = _sL["h"]
+    s4l = _sL["s"]
+    _sV = _Region2(273.15, Pmin)
+    h4v = _sV["h"]
+    s4v = _sV["s"]
+
+    if smin <= s <= s13:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h1_s(s)
+        T = _Backward1_T_Ps(100, s)
+        hmax = _Region1(T, 100)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 1
+
+    elif s13 < s <= s13s:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h1_s(s)
+        h13 = _h13_s(s)
+        v = _Backward3_v_Ph(100, h)
+        T = _Backward3_T_Ph(100, h)
+        hmax = _Region3(1/v, T)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h < h13:
+            region = 1
+        elif h13 <= h <= hmax:
+            region = 3
+
+    elif s13s < s <= sc:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h3a_s(s)
+        v = _Backward3_v_Ps(100, s)
+        T = _Backward3_T_Ps(100, s)
+        hmax = _Region3(1/v, T)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 3
+
+    elif sc < s < 5.049096828:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2c3b_s(s)
+        v = _Backward3_v_Ph(100, h)
+        T = _Backward3_T_Ph(100, h)
+        hmax = _Region3(1/v, T)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 3
+
+    elif 5.049096828 <= s < 5.260578707:
+        # Specific zone with 2-3 boundary in s shape
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2c3b_s(s)
+        h23max = _Region2(863.15, 100)["h"]
+        h23min = _Region2(623.15, Ps_623)["h"]
+        T = _Backward2_T_Ps(100, s)
+        hmax = _Region2(T, 100)["h"]
+
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h < h23min:
+            region = 3
+        elif h23min <= h < h23max:
+            if _Backward2c_P_hs(h, s) <= _P23_T(_t_hs(h, s)):
                 region = 2
-            elif h23min <= h < h23max:
-                if _Backward2c_P_hs(h, s) <= _P23_T(_t_hs(h, s)):
-                    region = 2
-                else:
-                    region = 3
-            elif hs <= h < h23min:
+            else:
                 region = 3
-            elif hmin4 <= h < hs:
-                region = 4
-        elif 5.260578707 <= s < 5.85:
-            hs = _h2c3b_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            if hs <= h and _Backward2_P_hs(h, s) <= 100:
-                region = 2
-            elif hmin4 <= h < hs:
-                region = 4
-        elif 5.85 <= s < s4v:
-            hs = _h2ab_s(s)
-            hmin4 = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
-            P = _Backward2_P_hs(h, s)
-            if P <= 100:
-                T = _Backward2_T_Ph(P, h)
-                h2max = _Region2(1073.15, P)["h"]
-                if hs <= h <= h2max and Pmin <= P <= 100 and T <= 1073.15:
-                    region = 2
-                elif hmin4 <= h < hs:
-                    region = 4
-        elif s4v <= s <= smax:
-            P = _Backward2a_P_hs(h, s)
-            T = _Backward2a_T_Ph(P, h)
-            if P >= Pmin and T <= 1073.15:
-                region = 2
+        elif h23max <= h <= hmax:
+            region = 2
 
+
+    elif 5.260578707 <= s < 5.85:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2c3b_s(s)
+        T = _Backward2_T_Ps(100, s)
+        hmax = _Region2(T, 100)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 2
+
+    elif 5.85 <= s < sTPmax:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2ab_s(s)
+        T = _Backward2_T_Ps(100, s)
+        hmax = _Region2(T, 100)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 2
+
+    elif sTPmax <= s < s2ab:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2ab_s(s)
+        P = _Backward2_P_hs(h, s)
+        hmax = _Region2(1073.15, P)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 2
+
+    elif s2ab <= s < s4v:
+        hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
+        hs = _h2ab_s(s)
+        P = _Backward2_P_hs(h, s)
+        hmax = _Region2(1073.15, P)["h"]
+        if hmin <= h < hs:
+            region = 4
+        elif hs <= h <= hmax:
+            region = 2
+
+    elif s4v <= s <= smax:
+        hmin = _Region2(273.15, Pmin)["h"]
+        P = _Backward2a_P_hs(h, s)
+        hmax = _Region2(1073.15, P)["h"]
+        if Pmin <= P <= 100 and hmin <= h <= hmax:
+            region = 2
+
+    # Check region 5
     if not region and \
             _Region5(1073.15, 50)["s"] < s <= _Region5(2273.15, Pmin)["s"] \
             and _Region5(1073.15, 50)["h"] < h <= _Region5(2273.15, Pmin)["h"]:
@@ -4425,12 +4476,45 @@ class IAPWS97(object):
                 rho, T = fsolve(funcion, [1/vo, To])
                 propiedades = _Region3(rho, T)
             elif region == 4:
-                T = _Backward4_T_hs(h, s)
+                To = _Backward4_T_hs(h, s)
+                if To < 273.15 or To > Tc:
+                    To = 300
+
+                def funcion(par):
+                    if par[1] < 0:
+                        par[1] = 0
+                    elif par[1] > 1:
+                        par[1] = 1
+                    if par[0] < 273.15:
+                        par[0] = 273.15
+                    elif par[0] > Tc:
+                        par[0] = Tc
+
+                    Po = _PSat_T(par[0])
+                    liquid = _Region1(par[0], Po)
+                    vapor = _Region2(par[0], Po)
+                    hl = liquid["h"]
+                    sl = liquid["s"]
+                    hv = vapor["h"]
+                    sv = vapor["s"]
+                    return (hv*par[1]+hl*(1-par[1])-h,
+                            sv*par[1]+sl*(1-par[1])-s)
+                T, x = fsolve(funcion, [To, 0.5])
                 P = _PSat_T(T)
-                h1 = _Region1(T, P)["h"]
-                h2 = _Region2(T, P)["h"]
-                x = (h-h1)/(h2-h1)
-                propiedades = _Region4(P, x)
+
+                if Pt <= P < Pc and 0 < x < 1:
+                    propiedades = _Region4(P, x)
+                elif Pt <= P <= Ps_623 and x == 0:
+                    propiedades = _Region1(T, P)
+                elif Pt <= P <= Ps_623 and x == 1:
+                    propiedades = _Region2(T, P)
+                elif Ps_623 < P < Pc and x in (0, 1):
+                    rho = 1./_Backward3_sat_v_P(P, T, x)
+                    propiedades = _Region3(rho, T)
+                elif P == Pc and 0 <= x <= 1:
+                    propiedades = _Region3(rhoc, Tc)
+                else:
+                    raise NotImplementedError("Incoming out of bound")
             elif region == 5:
                 def funcion(par):
                     return (_Region5(par[0], par[1])["h"]-h,
