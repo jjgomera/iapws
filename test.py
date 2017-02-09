@@ -649,7 +649,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid["w"], 5), 1067.36948)
 
     def test_IAPWS97_custom(self):
-        """Cycle input parameter from selected point"""
+        """Cycle input parameter from selected point for IAPWS97"""
         # Region 1
         P = 50   # MPa
         T = 470  # K
@@ -734,6 +734,14 @@ class Test(unittest.TestCase):
         f_hs = IAPWS97(h=f_px.h, s=f_px.s)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
+        T = 620  # K
+        f_tx = IAPWS97(T=T, x=0)
+        f_ph = IAPWS97(h=f_tx.h, P=f_tx.P)
+        f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
+        f_px = IAPWS97(P=f_ps.P, x=f_ps.x)
+        f_hs = IAPWS97(h=f_px.h, s=f_px.s)
+        self.assertEqual(round(f_hs.T-T, 6), 0)
+
         # Boundary 2-4
         T = 340  # K
         f_tx = IAPWS97(T=T, x=1)
@@ -776,18 +784,17 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_ph.P-P, 4), 0)
         self.assertEqual(round(f_ph.h-h, 4), 0)
 
-        # T = 274  # K
-        # f_tx = IAPWS97(x=.01, T=T)
-        # f_hs = IAPWS97(h=f_tx.h, s=f_tx.s)
-        # self.assertEqual(round(f_hs.P-P, 6), 0)
-        # self.assertEqual(round(f_hs.T-T, 6), 0)
+        T = 274  # K
+        f_tx = IAPWS97(x=.01, T=T)
+        f_hs = IAPWS97(h=f_tx.h, s=f_tx.s)
+        self.assertEqual(round(f_hs.x-0.01, 6), 0)
+        self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        # T = 274  # K
-        # f_tx = IAPWS97(x=.99, T=T)
-        # f_hs = IAPWS97(h=f_tx.h, s=f_tx.s)
-        # f_hs = IAPWS97(h=f_ps.h, s=f_ps.s)
-        # self.assertEqual(round(f_hs.P-P, 6), 0)
-        # self.assertEqual(round(f_hs.T-T, 6), 0)
+        T = 274  # K
+        f_tx = IAPWS97(x=.99, T=T)
+        f_hs = IAPWS97(h=f_tx.h, s=f_tx.s)
+        self.assertEqual(round(f_hs.x-0.99, 6), 0)
+        self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 5
         P = 25   # MPa
@@ -817,6 +824,17 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
+        # Other h-s region
+        f_hs = IAPWS97(h=2700, s=5.15)
+        f_pt = IAPWS97(P=f_hs.P, T=f_hs.T)
+        self.assertEqual(round(f_hs.h-2700, 6), 0)
+        self.assertEqual(round(f_hs.s-5.15, 6), 0)
+
+        f_hs = IAPWS97(h=2700, s=5.87)
+        f_pt = IAPWS97(P=f_hs.P, T=f_hs.T)
+        self.assertEqual(round(f_hs.h-2700, 6), 0)
+        self.assertEqual(round(f_hs.s-5.87, 6), 0)
+
         # Critical point
         st = IAPWS97(T=647.096, x=0.9)
         st = IAPWS97(P=22.064, x=0.9)
@@ -825,10 +843,10 @@ class Test(unittest.TestCase):
         # Derived classes
         st = IAPWS97(T=300, x=0.9)
         st2 = IAPWS97_Tx(st.T, st.x)
-        st3 = IAPWS97_Px(st2.P, st.x)
-        st4 = IAPWS97_Ps(st2.P, st.s)
-        st5 = IAPWS97_Ph(st2.P, st.h)
-        st6 = IAPWS97_PT(st2.P, st.T)
+        st3 = IAPWS97_Px(st2.P, st2.x)
+        st4 = IAPWS97_Ps(st3.P, st3.s)
+        st5 = IAPWS97_Ph(st4.P, st4.h)
+        st6 = IAPWS97_PT(st5.P, st5.T)
         self.assertEqual(round(st6.T-300, 6), 0)
 
         # Exceptions
