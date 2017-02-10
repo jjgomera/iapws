@@ -793,6 +793,9 @@ def getphase(Tc, Pc, T, P, x, region):
     phase : string
         Phase name
     """
+    # Avoid round problem
+    P = round(P, 8)
+    T = round(T, 8)
     if P > Pc and T > Tc:
         phase = "Supercritical fluid"
     elif T > Tc:
