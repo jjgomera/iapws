@@ -4015,7 +4015,7 @@ def _Bound_hs(h, s):
     if smin <= s <= s13:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h1_s(s)
-        T = _Backward1_T_Ps(100, s)
+        T = _Backward1_T_Ps(100, s)-0.0218
         hmax = _Region1(T, 100)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4026,8 +4026,8 @@ def _Bound_hs(h, s):
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h1_s(s)
         h13 = _h13_s(s)
-        v = _Backward3_v_Ph(100, h)
-        T = _Backward3_T_Ph(100, h)
+        v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
+        T = _Backward3_T_Ps(100, s)-0.0248
         hmax = _Region3(1/v, T)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4039,8 +4039,8 @@ def _Bound_hs(h, s):
     elif s13s < s <= sc:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h3a_s(s)
-        v = _Backward3_v_Ps(100, s)
-        T = _Backward3_T_Ps(100, s)
+        v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
+        T = _Backward3_T_Ps(100, s)-0.0248
         hmax = _Region3(1/v, T)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4050,8 +4050,8 @@ def _Bound_hs(h, s):
     elif sc < s < 5.049096828:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2c3b_s(s)
-        v = _Backward3_v_Ph(100, h)
-        T = _Backward3_T_Ph(100, h)
+        v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
+        T = _Backward3_T_Ps(100, s)-0.0248
         hmax = _Region3(1/v, T)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4064,7 +4064,7 @@ def _Bound_hs(h, s):
         hs = _h2c3b_s(s)
         h23max = _Region2(863.15, 100)["h"]
         h23min = _Region2(623.15, Ps_623)["h"]
-        T = _Backward2_T_Ps(100, s)
+        T = _Backward2_T_Ps(100, s)-0.019
         hmax = _Region2(T, 100)["h"]
 
         if hmin <= h < hs:
@@ -4079,11 +4079,10 @@ def _Bound_hs(h, s):
         elif h23max <= h <= hmax:
             region = 2
 
-
     elif 5.260578707 <= s < 5.85:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2c3b_s(s)
-        T = _Backward2_T_Ps(100, s)
+        T = _Backward2_T_Ps(100, s)-0.019
         hmax = _Region2(T, 100)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4093,7 +4092,7 @@ def _Bound_hs(h, s):
     elif 5.85 <= s < sTPmax:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2ab_s(s)
-        T = _Backward2_T_Ps(100, s)
+        T = _Backward2_T_Ps(100, s)-0.019
         hmax = _Region2(T, 100)["h"]
         if hmin <= h < hs:
             region = 4
@@ -4457,8 +4456,8 @@ class IAPWS97(object):
                 propiedades = _Region2(T, P)
             elif region == 3:
                 P = _Backward3_P_hs(h, s)
-                vo = _Backward3_v_Ps(P, s)
-                To = _Backward3_T_Ps(P, s)
+                vo = _Backward3_v_Ph(P, h)
+                To = _Backward3_T_Ph(P, h)
 
                 def funcion(par):
                     return (_Region3(par[0], par[1])["h"]-h,
