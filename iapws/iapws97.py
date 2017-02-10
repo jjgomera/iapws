@@ -1764,8 +1764,6 @@ def _Region3(rho, T):
             * w: Speed of sound [m/s]
             * alfav: Cubic expansion coefficient [1/K]
             * kt: Isothermal compressibility [1/MPa]
-            * alfap: Relative pressure coefficient [1/K]
-            * betap: Isothermal stress coefficient [kg/m³]
 
     References
     ----------
@@ -1794,10 +1792,6 @@ def _Region3(rho, T):
     0.00441515098
     >>> _Region3(500,750)["kt"]
     0.00806710817
-    >>> _Region3(500,750)["alfap"]
-    0.00698896514
-    >>> _Region3(500,750)["betap"]
-    791.475213
     """
 
     I = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
@@ -1844,8 +1838,6 @@ def _Region3(rho, T):
                                       Tr**2/gtt))
     propiedades["alfav"] = (gd-Tr*gdt)/(2*gd+d*gdd)/T
     propiedades["kt"] = 1/(2*d*gd+d**2*gdd)/rho/R/T*1000
-    propiedades["alfap"] = (1-Tr*gdt/gd)/T
-    propiedades["betap"] = rho*(2+d*gdd/gd)
     propiedades["region"] = 3
     propiedades["x"] = 1
     return propiedades
@@ -3599,8 +3591,6 @@ def _Region4(P, x):
     propiedades["w"] = None
     propiedades["alfav"] = None
     propiedades["kt"] = None
-    propiedades["alfap"] = None
-    propiedades["betap"] = None
     propiedades["region"] = 4
     propiedades["x"] = x
     return propiedades
@@ -4662,12 +4652,8 @@ class IAPWS97(object):
         fase.deltat = self.derivative("h", "P", "T", fase)
         fase.gamma = -self.v/self.P/1000*self.derivative("P", "v", "s", fase)
 
-        if self.region == 3:
-            fase.alfap = estado["alfap"]
-            fase.betap = estado["betap"]
-        else:
-            fase.alfap = fase.alfav/self.P/fase.xkappa
-            fase.betap = -1/self.P*self.derivative("P", "v", "T", fase)
+        fase.alfap = fase.alfav/self.P/fase.xkappa
+        fase.betap = -1/self.P*self.derivative("P", "v", "T", fase)
 
         fase.fi = exp((fase.g-self.g0)/R/self.T)
         fase.f = self.P*fase.fi
