@@ -89,7 +89,10 @@ from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
 from ._iapws import getphase
 
 
-sc = 4.41202148223476     # Critic entropy
+# Critic properties
+sc = 4.41202148223476
+hc = 2087.5468451171537
+
 # Pmin = _PSat_T(273.15)   # Minimum pressure
 Pmin = 0.000611212677444
 # Ps_623 = _PSat_T(623.15)  # P Saturation at 623.15 K, boundary region 1-3
@@ -4471,45 +4474,40 @@ class IAPWS97(object):
                 rho, T = fsolve(funcion, [1/vo, To])
                 propiedades = _Region3(rho, T)
             elif region == 4:
-                To = _Backward4_T_hs(h, s)
-                if To < 273.15 or To > Tc:
-                    To = 300
-
-                def funcion(par):
-                    if par[1] < 0:
-                        par[1] = 0
-                    elif par[1] > 1:
-                        par[1] = 1
-                    if par[0] < 273.15:
-                        par[0] = 273.15
-                    elif par[0] > Tc:
-                        par[0] = Tc
-
-                    Po = _PSat_T(par[0])
-                    liquid = _Region1(par[0], Po)
-                    vapor = _Region2(par[0], Po)
-                    hl = liquid["h"]
-                    sl = liquid["s"]
-                    hv = vapor["h"]
-                    sv = vapor["s"]
-                    return (hv*par[1]+hl*(1-par[1])-h,
-                            sv*par[1]+sl*(1-par[1])-s)
-                T, x = fsolve(funcion, [To, 0.5])
-                P = _PSat_T(T)
-
-                if Pt <= P < Pc and 0 < x < 1:
-                    propiedades = _Region4(P, x)
-                elif Pt <= P <= Ps_623 and x == 0:
-                    propiedades = _Region1(T, P)
-                elif Pt <= P <= Ps_623 and x == 1:
-                    propiedades = _Region2(T, P)
-                elif Ps_623 < P < Pc and x in (0, 1):
-                    rho = 1./_Backward3_sat_v_P(P, T, x)
-                    propiedades = _Region3(rho, T)
-                elif P == Pc and 0 <= x <= 1:
+                if round(s-sc, 6) == 0 and round(h-hc, 6) == 0:
                     propiedades = _Region3(rhoc, Tc)
+
                 else:
-                    raise NotImplementedError("Incoming out of bound")
+                    To = _Backward4_T_hs(h, s)
+                    if To < 273.15 or To > Tc:
+                        To = 300
+
+                    def funcion(par):
+                        if par[1] < 0:
+                            par[1] = 0
+                        elif par[1] > 1:
+                            par[1] = 1
+                        if par[0] < 273.15:
+                            par[0] = 273.15
+                        elif par[0] > Tc:
+                            par[0] = Tc
+
+                        Po = _PSat_T(par[0])
+                        liquid = _Region1(par[0], Po)
+                        vapor = _Region2(par[0], Po)
+                        hl = liquid["h"]
+                        sl = liquid["s"]
+                        hv = vapor["h"]
+                        sv = vapor["s"]
+                        return (hv*par[1]+hl*(1-par[1])-h,
+                                sv*par[1]+sl*(1-par[1])-s)
+                    T, x = fsolve(funcion, [To, 0.5])
+                    P = _PSat_T(T)
+
+                    if Pt <= P < Pc and 0 < x < 1:
+                        propiedades = _Region4(P, x)
+                    elif Pt <= P <= Ps_623 and x == 0:
+                        propiedades = _Region1(T, P)
             elif region == 5:
                 def funcion(par):
                     return (_Region5(par[0], par[1])["h"]-h,
@@ -4529,13 +4527,17 @@ class IAPWS97(object):
             elif Pt <= P <= Ps_623 and x == 1:
                 propiedades = _Region2(T, P)
             elif Ps_623 < P < Pc and x in (0, 1):
-                rho = 1./_Backward3_sat_v_P(P, T, x)
+                def funcion(rho):
+                    return _Region3(rho, T)["P"]-P
+                rhoo = 1./_Backward3_sat_v_P(P, T, x)
+                rho = fsolve(funcion, rhoo)[0]
                 propiedades = _Region3(rho, T)
             elif P == Pc and 0 <= x <= 1:
                 propiedades = _Region3(rhoc, Tc)
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
+            propiedades["x"] = x
 
         elif self._thermo == "Tx":
             T, x = args
@@ -4554,6 +4556,7 @@ class IAPWS97(object):
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
+            propiedades["x"] = x
 
         self.M = M
         self.Pc = Pc
