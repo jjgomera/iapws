@@ -3871,7 +3871,10 @@ def _Bound_Ph(P, h):
         if hmin <= h <= h13:
             region = 1
         elif h13 < h < h32:
-            p34 = _PSat_h(h)
+            try:
+                p34 = _PSat_h(h)
+            except NotImplementedError:
+                p34 = Pc
             if P < p34:
                 region = 4
             else:
@@ -3942,7 +3945,10 @@ def _Bound_Ps(P, s):
         if smin <= s <= s13:
             region = 1
         elif s13 < s < s32:
-            p34 = _PSat_s(s)
+            try:
+                p34 = _PSat_s(s)
+            except NotImplementedError:
+                p34 = Pc
             if P < p34:
                 region = 4
             else:
