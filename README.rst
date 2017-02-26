@@ -10,6 +10,10 @@
     :target: https://coveralls.io/github/jjgomera/iapws?branch=master
     :alt: coveralls.io analysis
 
+.. image:: https://landscape.io/github/jjgomera/iapws/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/jjgomera/iapws/master
+   :alt: Code Health
+
 .. image:: http://readthedocs.org/projects/iapws/badge/?version=latest
     :target: http://iapws.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
