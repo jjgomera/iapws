@@ -15,7 +15,8 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
                            _PSat_T, _TSat_P, _h13_s, _t_hs, _Backward4_T_hs,
                            _tab_P, _top_P, _twx_P, _tef_P, _txx_P, _hab_s,
                            _Backward3_v_PT, _P23_T, _t_P, _P_2bc, _hbc_P)
-from iapws.iapws95 import IAPWS95, D2O
+from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
+                           IAPWS95_Px, IAPWS95_Ps, D2O)
 from iapws.iapws08 import SeaWater
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw,
@@ -933,6 +934,112 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS97, **{"P": 105, "h": 400})
         self.assertRaises(NotImplementedError, IAPWS97, **{"P": 65, "s": 9})
         self.assertRaises(NotImplementedError, IAPWS97, **{"h": 700, "s": -1})
+
+    def test_IAPWS95_custom(self):
+        """Cycle input parameter from selected point for IAPWS95"""
+        P = 50   # MPa
+        T = 470  # K
+        f_pt = IAPWS95_PT(P, T)
+        f_ph = IAPWS95_Ph(f_pt.P, f_pt.h)
+        f_ps = IAPWS95_Ps(f_ph.P, f_ph.s)
+        f_hs = IAPWS95(h=f_ps.h, s=f_ps.s)
+        self.assertEqual(round(f_hs.P-P, 5), 0)
+        self.assertEqual(round(f_hs.T-T, 5), 0)
+
+        P = 2   # MPa
+        f_px = IAPWS95_Px(P, 0.5)
+        f_tx = IAPWS95_Tx(f_px.T, f_px.x)
+        f_tv = IAPWS95(T=f_px.T, v=f_px.v)
+        f_th = IAPWS95(T=f_tv.T, h=f_tv.h)
+        f_ts = IAPWS95(T=f_th.T, s=f_th.s)
+        f_tu = IAPWS95(T=f_ts.T, u=f_ts.u)
+        f_ph = IAPWS95(P=f_tu.P, h=f_tu.h)
+        f_ps = IAPWS95(P=f_ph.P, s=f_ph.s)
+        f_pu = IAPWS95(P=f_ps.P, u=f_ps.u)
+        f_hs = IAPWS95(h=f_pu.h, s=f_pu.s)
+        f_hu = IAPWS95(h=f_hs.h, u=f_hs.u, T0=f_px.T, rho0=f_px.rho)
+        f_su = IAPWS95(s=f_hu.s, u=f_hu.u)
+        f_rhoh = IAPWS95(rho=f_su.rho, h=f_su.h)
+        f_rhos = IAPWS95(rho=f_rhoh.rho, s=f_rhoh.s)
+        f_rhou = IAPWS95(rho=f_rhos.rho, u=f_rhos.u)
+        f_Prho = IAPWS95(rho=f_rhou.rho, P=f_rhou.P)
+        self.assertEqual(round(f_Prho.P-P, 5), 0)
+        self.assertEqual(round(f_Prho.x-0.5, 5), 0)
+
+        P = 50   # MPa
+        T = 770  # K
+        f_pt = IAPWS95_PT(P, T)
+        f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
+        f_th = IAPWS95(T=f_tv.T, h=f_tv.h)
+        f_ts = IAPWS95(T=f_th.T, s=f_th.s)
+        f_tu = IAPWS95(T=f_ts.T, u=f_ts.u)
+        f_ph = IAPWS95(P=f_tu.P, h=f_tu.h)
+        f_ps = IAPWS95(P=f_ph.P, s=f_ph.s)
+        f_pu = IAPWS95(P=f_ps.P, u=f_ps.u)
+        f_hs = IAPWS95(h=f_pu.h, s=f_pu.s)
+        f_hu = IAPWS95(h=f_hs.h, u=f_hs.u, T0=T, rho0=f_hs.rho)
+        f_su = IAPWS95(s=f_hu.s, u=f_hu.u, T0=T, rho0=f_hu.rho)
+        f_rhoh = IAPWS95(rho=f_su.rho, h=f_su.h)
+        f_rhos = IAPWS95(rho=f_rhoh.rho, s=f_rhoh.s)
+        f_rhou = IAPWS95(rho=f_rhos.rho, u=f_rhos.u)
+        f_Prho = IAPWS95(rho=f_rhou.rho, P=f_rhou.P)
+        self.assertEqual(round(f_Prho.P-P, 5), 0)
+        self.assertEqual(round(f_Prho.T-T, 5), 0)
+
+        P = 0.1   # MPa
+        T = 300  # K
+        f_pt = IAPWS95_PT(P, T)
+        f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
+        f_th = IAPWS95(T=f_tv.T, h=f_tv.h, x0=0)
+        f_ts = IAPWS95(T=f_th.T, s=f_th.s)
+        f_tu = IAPWS95(T=f_ts.T, u=f_ts.u)
+        f_ph = IAPWS95(P=f_tu.P, h=f_tu.h)
+        f_ps = IAPWS95(P=f_ph.P, s=f_ph.s)
+        f_pu = IAPWS95(P=f_ps.P, u=f_ps.u)
+        f_hs = IAPWS95(h=f_pu.h, s=f_pu.s)
+        f_hu = IAPWS95(h=f_hs.h, u=f_hs.u)
+        f_su = IAPWS95(s=f_hu.s, u=f_hu.u, T0=T, rho0=f_hu.rho)
+        f_rhoh = IAPWS95(rho=f_su.rho, h=f_su.h)
+        f_rhos = IAPWS95(rho=f_rhoh.rho, s=f_rhoh.s)
+        f_rhou = IAPWS95(rho=f_rhos.rho, u=f_rhos.u)
+        f_Prho = IAPWS95(rho=f_rhou.rho, P=f_rhou.P)
+        self.assertEqual(round(f_Prho.P-P, 5), 0)
+        self.assertEqual(round(f_Prho.T-T, 5), 0)
+
+        P = 0.1   # MPa
+        T = 500  # K
+        f_pt = IAPWS95_PT(P, T)
+        f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
+        f_th = IAPWS95(T=f_tv.T, h=f_tv.h, x0=1)
+        f_ts = IAPWS95(T=f_th.T, s=f_th.s)
+        f_tu = IAPWS95(T=f_ts.T, u=f_ts.u)
+        f_ph = IAPWS95(P=f_tu.P, h=f_tu.h)
+        f_ps = IAPWS95(P=f_ph.P, s=f_ph.s)
+        f_hu = IAPWS95(P=f_ps.P, u=f_ps.u, T0=T, rho0=f_pt.rho)
+        f_su = IAPWS95(s=f_hu.s, u=f_hu.u, T0=T, rho0=f_hu.rho)
+        f_rhoh = IAPWS95(rho=f_su.rho, h=f_su.h)
+        f_rhos = IAPWS95(rho=f_rhoh.rho, s=f_rhoh.s)
+        f_rhou = IAPWS95(rho=f_rhos.rho, u=f_rhos.u)
+        f_Prho = IAPWS95(rho=f_rhou.rho, P=f_rhou.P)
+        self.assertEqual(round(f_Prho.P-P, 5), 0)
+        self.assertEqual(round(f_Prho.T-T, 5), 0)
+
+        P = 2   # MPa
+        f_px = IAPWS95_Px(P, 0)
+        f_tx = IAPWS95_Tx(f_px.T, f_px.x)
+        self.assertEqual(round(f_tx.P-P, 5), 0)
+        f_px = IAPWS95_Px(P, 1)
+        f_tx = IAPWS95_Tx(f_px.T, f_px.x)
+        self.assertEqual(round(f_tx.P-P, 5), 0)
+
+        P = 0.1   # MPa
+        T = 300  # K
+        f_pt = D2O(P=P, T=T)
+        self.assertEqual(round(f_pt.P-P, 5), 0)
+        self.assertEqual(round(f_pt.T-T, 5), 0)
+
+        self.assertRaises(NotImplementedError, IAPWS95, **{"T": 700, "x": 0})
+        self.assertRaises(NotImplementedError, IAPWS95, **{"P": 25, "x": 1})
 
     def xest_D2O(self):
         """Table 5 pag 11"""
