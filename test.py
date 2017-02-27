@@ -19,7 +19,7 @@ from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
 from iapws.iapws08 import SeaWater
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
-                          _Viscosity, _ThCond, _Tension, _Kw,
+                          _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension)
 
 
@@ -302,6 +302,50 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Kw(700, 600), 6), 11.203153)
         self.assertEqual(round(_Kw(200, 800), 6), 15.089765)
         self.assertEqual(round(_Kw(1200, 800), 6), 6.438330)
+
+    def test_liquid(self):
+        """Table 8, pag 11"""
+        liq = _Liquid(260)
+        self.assertEqual(round(liq["g"], 7), -1.2659892)
+        self.assertEqual(round(liq["s"], 8), -.20998555)
+        self.assertEqual(round(liq["cp"], 8), 4.30017472)
+        self.assertEqual(round(liq["rho"], 6), 997.068360)
+        self.assertEqual(round(liq["vt"]*1e7, 8), -3.86550941)
+        self.assertEqual(round(liq["vtt"]*1e8, 8), 3.27442503)
+        self.assertEqual(round(liq["vp"]*1e7, 8), -5.82096820)
+        self.assertEqual(round(liq["vpt"]*1e9, 8), 7.80938294)
+        self.assertEqual(round(liq["w"], 5), 1324.87258)
+        self.assertEqual(round(liq["mu"]*1e6, 5), 3058.36075)
+        self.assertEqual(round(liq["k"], 9), 0.515628010)
+        self.assertEqual(round(liq["epsilon"], 6), 93.455835)
+
+        liq = _Liquid(298.15)
+        self.assertEqual(round(liq["g"], 7), -4.5617537)
+        self.assertEqual(round(liq["s"], 8), 0.36720145)
+        self.assertEqual(round(liq["cp"], 8), 4.18144618)
+        self.assertEqual(round(liq["rho"], 6), 997.047013)
+        self.assertEqual(round(liq["vt"]*1e7, 8), 2.58054178)
+        self.assertEqual(round(liq["vtt"]*1e8, 8), 0.97202076)
+        self.assertEqual(round(liq["vp"]*1e7, 8), -4.53803340)
+        self.assertEqual(round(liq["vpt"]*1e9, 8), 1.00038567)
+        self.assertEqual(round(liq["w"], 5), 1496.69922)
+        self.assertEqual(round(liq["mu"]*1e6, 6), 889.996774)
+        self.assertEqual(round(liq["k"], 9), 0.606502308)
+        self.assertEqual(round(liq["epsilon"], 6), 78.375218)
+
+        liq = _Liquid(375)
+        self.assertEqual(round(liq["g"], 7), -71.0588021)
+        self.assertEqual(round(liq["s"], 8), 1.32806616)
+        self.assertEqual(round(liq["cp"], 8), 4.21774697)
+        self.assertEqual(round(liq["rho"], 6), 957.009710)
+        self.assertEqual(round(liq["vt"]*1e7, 8), 7.94706623)
+        self.assertEqual(round(liq["vtt"]*1e8, 8), 0.62024104)
+        self.assertEqual(round(liq["vp"]*1e7, 8), -5.15666528)
+        self.assertEqual(round(liq["vpt"]*1e9, 8), -2.27073594)
+        self.assertEqual(round(liq["w"], 5), 1541.46611)
+        self.assertEqual(round(liq["mu"]*1e6, 6), 276.207245)
+        self.assertEqual(round(liq["k"], 9), 0.677913788)
+        self.assertEqual(round(liq["epsilon"], 6), 55.266199)
 
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""

@@ -176,6 +176,184 @@ def _Ice(T, P):
     return propiedades
 
 
+# IAPWS-08 for Liquid wagter at 0.1 MPa
+def _Liquid(T, P=0.1):
+    """Supplementary release on properties of liquid water at 0.1 MPa
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    optional, although this relation is for P=0.1MPa, can be extrapoled at
+    pressure 0.3MPa
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties of water. The available properties are:
+
+            * h: Specific enthalpy [kJ/kg]
+            * u: Specific internal energy [kJ/kg]
+            * a: Specific Helmholtz energy [kJ/kg]
+            * g: Specific Gibbs energy [kJ/kg]
+            * s: Specific entropy [kJ/kgK]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isochoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s²]
+            * rho: Density [kg/m³]
+            * v: Specific volume [m³/kg]
+            * vt: [∂v/∂T]P [m³/kgK]
+            * vtt: [∂²v/∂T²]P [m³/kgK²]
+            * vp: [∂v/∂P]T [m³/kg/MPa]
+            * vtp: [∂²v/∂T∂P] [m³/kg/MPa]
+            * alfav: Cubic expansion coefficient [1/K]
+            * kt: Isothermal compressibility [1/MPa]
+            * ks: Isentropic compressibility [1/MPa]
+            * mu: Viscosity [mPas]
+            * k: Thermal conductivity [W/mK]
+            * epsilon: Dielectric constant [-]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 253.15 ≤ T ≤ 383.15
+        * 0.1 ≤ P ≤ 0.3
+
+    Examples
+    --------
+    >>> st1 = _Liquid(260)
+    >>> st1["rho"], st1["h"], st1["s"]
+    997.0683602710492 -55.86223174460868 -0.20998554842619535
+
+    References
+    ----------
+    IAPWS, Revised Supplementary Release on Properties of Liquid Water at 0.1
+    MPa, http://www.iapws.org/relguide/LiquidWater.html
+    """
+    # Check input in range of validity
+    if T <= 253.15 or T >= 383.15 or P < 0.1 or P > 0.3:
+        raise NotImplementedError("Incoming out of bound")
+    elif P != 0.1:
+        # Raise a warning if the P value is extrapolated
+        raise(Warning("Using extrapolated values"))
+
+    R = 0.46151805   # kJ/kgK
+    Po = 0.1
+    Tr = 10
+    tau = T/Tr
+    alfa = Tr/(593-T)
+    beta = Tr/(T-232)
+
+    a = [None, -1.661470539e5, 2.708781640e6, -1.557191544e8, None,
+         1.93763157e-2, 6.74458446e3, -2.22521604e5, 1.00231247e8,
+         -1.63552118e9, 8.32299658e9, -7.5245878e-6, -1.3767418e-2,
+         1.0627293e1, -2.0457795e2, 1.2037414e3]
+    b = [None, -8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
+         5.78545292e-3, -1.53195665E-2, 3.11337859e-2, -4.23546241e-2,
+         3.38713507e-2, -1.19946761e-2, -3.1091470e-6, 2.8964919e-5,
+         -1.3112763e-4, 3.0410453e-4, -3.9034594e-4, 2.3403117e-4,
+         -4.8510101e-5]
+    c = [None, -2.452093414e2, 3.869269598e1, -8.983025854]
+    n = [None, 4, 5, 7, None, None, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
+    m = [None, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
+
+    suma1 = sum([a[i]*alfa**n[i] for i in range(1, 4)])
+    suma2 = sum([b[i]*beta**m[i] for i in range(1, 5)])
+    go = R*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
+
+    suma1 = sum([a[i]*alfa**n[i] for i in range(6, 11)])
+    suma2 = sum([b[i]*beta**m[i] for i in range(5, 11)])
+    vo = R*Tr/Po/1000*(a[5]+suma1+suma2)
+
+    suma1 = sum([a[i]*alfa**n[i] for i in range(11, 16)])
+    suma2 = sum([b[i]*beta**m[i] for i in range(11, 18)])
+    vpo = R*Tr/Po**2/1000*(suma1+suma2)
+
+    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4)])
+    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5)])
+    so = -R*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
+
+    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4)])
+    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5)])
+    cpo = -R*(c[3]+tau*suma1+tau*suma2)
+
+    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11)])
+    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11)])
+    vto = R/Po/1000*(suma1-suma2)
+
+    # This properties are only neccessary for computing thermodynamic
+    # properties at pressures different from 0.1 MPa
+    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11)])
+    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11)])
+    vtto = R/Tr/Po/1000*(suma1+suma2)
+
+    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16)])
+    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18)])
+    vpto = R/Po**2/1000*(suma1-suma2)
+
+    if P != 0.1:
+        go += vo*(P-0.1)
+        so -= vto*(P-0.1)
+        cpo -= T*vtto*(P-0.1)
+        vo -= vpo*(P-0.1)
+        vto += vpto*(P-0.1)
+        vppo = 3.24e-10*R*Tr/0.1**3
+        vpo += vppo*(P-0.1)
+
+    h = go+T*so
+    u = h-P*vo
+    a = go-P*vo
+    cv = cpo+T*vto**2/vpo
+    kt = -vpo/vo
+    alfa = vto/vo
+    ks = -(T*vto**2/cpo+vpo)/vo
+    w = (-vo**2*1e9/(vpo*1e3+T*vto**2*1e6/cpo))**0.5
+
+    propiedades = {}
+    propiedades["g"] = go
+    propiedades["T"] = T
+    propiedades["P"] = P
+    propiedades["v"] = vo
+    propiedades["vt"] = vto
+    propiedades["vp"] = vpo
+    propiedades["vpt"] = vpto
+    propiedades["vtt"] = vtto
+    propiedades["rho"] = 1/vo
+    propiedades["h"] = h
+    propiedades["s"] = so
+    propiedades["cp"] = cpo
+    propiedades["cv"] = cv
+    propiedades["u"] = u
+    propiedades["a"] = a
+    propiedades["kt"] = kt
+    propiedades["alfav"] = vto/vo
+    propiedades["ks"] = ks
+    propiedades["w"] = w
+
+    # Viscosity correlation, Eq 7
+    a = [None, 280.68, 511.45, 61.131, 0.45903]
+    b = [None, -1.9, -7.7, -19.6, -40]
+    T_ = T/300
+    mu = sum([a[i]*T_**b[i] for i in range(1, 5)])/1e6
+    propiedades["mu"] = mu
+
+    # Thermal conductivity correlation, Eq 8
+    c = [None, 1.6630, -1.7781, 1.1567, -0.432115]
+    d = [None, -1.15, -3.4, -6.0, -7.6]
+    k = sum([c[i]*T_**d[i] for i in range(1, 5)])
+    propiedades["k"] = k
+
+    # Dielectric constant correlation, Eq 9
+    e = [None, -43.7527, 299.504, -399.364, 221.327]
+    f = [None, -0.05, -1.47, -2.11, -2.31]
+    epsilon = sum([e[i]*T_**f[i] for i in range(1, 5)])
+    propiedades["epsilon"] = epsilon
+
+    return propiedades
+
+
 def _Sublimation_Pressure(T):
     """Sublimation Pressure correlation
 
