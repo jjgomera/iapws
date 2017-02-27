@@ -13,6 +13,7 @@ from itertools import product
 from scipy import exp, log
 from scipy.optimize import fsolve
 
+from ._iapws import Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _fase, getphase
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
@@ -1362,9 +1363,9 @@ class IAPWS95(MEoS):
     CASNumber = "7732-18-5"
     formula = "H2O"
     synonym = "R-718"
-    Tc = 647.096
-    rhoc = 322.
-    Pc = 22.064
+    Tc = Tc
+    rhoc = rhoc
+    Pc = Pc
     M = 18.015268  # g/mol
     Tt = 273.16
     Tb = 373.1243
@@ -1512,9 +1513,9 @@ class D2O(MEoS):
     CASNumber = "7789-20-0"
     formula = "D2O"
     synonym = "deuterium oxide"
-    Tc = 643.847
-    rhoc = 356.0
-    Pc = 21.671
+    Tc = Tc_D2O
+    rhoc = rhoc_D2O
+    Pc = Pc_D2O
     M = 20.027508  # g/mol
     Tt = 276.97
     Tb = 374.563

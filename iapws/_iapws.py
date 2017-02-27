@@ -14,9 +14,16 @@ from cmath import log as log_c
 Rm = 8.31451      # kJ/kmol·K
 M = 18.015257     # kg/kmol
 R = 0.461526      # kJ/kg·K
+
+# Table 1 from Release on the Values of Temperature, Pressure and Density of
+# Ordinary and Heavy Water Substances at their Respective Critical Points
 Tc = 647.096      # K
 Pc = 22.064       # MPa
 rhoc = 322.       # kg/m³
+Tc_D2O = 643.847  # K
+Pc_D2O = 21.671   # MPa
+rhoc_D2O = 356    # kg/m³
+
 Tt = 273.16       # K
 Pt = 611.657e-6   # MPa
 Tb = 373.1243     # K
@@ -683,6 +690,7 @@ def _D2O_Viscosity(rho, T):
     fi1 = exp(rhor*sum(arr))
 
     return 55.2651e-6*fi0*fi1
+
 
 def _D2O_ThCond(rho, T):
     """Equation for the thermal conductivity of heavy water
