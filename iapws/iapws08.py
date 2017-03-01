@@ -34,6 +34,9 @@ class SeaWater(object):
     S : float
         Salinity [kg/kg]
 
+    fast : Boolean, default False
+        Use the Supplementary release SR7-09 to speed up the calculation
+
     Returns
     -------
     rho : float
@@ -92,6 +95,9 @@ class SeaWater(object):
     ----------
     IAPWS, Release on the IAPWS Formulation 2008 for the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Seawater.html
+    IAPWS, Supplementary Release on a Computationally Efficient Thermodynamic
+    Formulation for Liquid Water for Oceanographic Use,
+    http://www.iapws.org/relguide/OceanLiquid.html
 
     Examples
     --------
@@ -105,7 +111,8 @@ class SeaWater(object):
     """
     kwargs = {"T": 0.0,
               "P": 0.0,
-              "S": None}
+              "S": None,
+              "fast": False}
     status = 0
     msg = "Undefined"
 
@@ -131,7 +138,10 @@ class SeaWater(object):
         S = self.kwargs["S"]
 
         m = S/(1-S)/Ms
-        pw = self._water(T, P)
+        if self.kwargs["fast"] and T <= 313.15:
+            pw = self._waterSupp(T, P)
+        else:
+            pw = self._water(T, P)
         ps = self._saline(T, P, S)
 
         prop = {}
@@ -156,11 +166,18 @@ class SeaWater(object):
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
 
-        self.mu = prop["gs"]
-        self.muw = prop["g"]-S*prop["gs"]
-        self.mus = prop["g"]+(1-S)*prop["gs"]
-        self.osm = -(ps["g"]-S*prop["gs"])/m/Rm/T
-        self.haline = -prop["gsp"]/prop["gp"]
+        if S:
+            self.mu = prop["gs"]
+            self.muw = prop["g"]-S*prop["gs"]
+            self.mus = prop["g"]+(1-S)*prop["gs"]
+            self.osm = -(ps["g"]-S*prop["gs"])/m/Rm/T
+            self.haline = -prop["gsp"]/prop["gp"]
+        else:
+            self.mu = None
+            self.muw = None
+            self.mus = None
+            self.osm = None
+            self.haline = None
 
     @classmethod
     def _water(cls, T, P):
@@ -173,6 +190,57 @@ class SeaWater(object):
         prop["gtt"] = -water.cp/T
         prop["gtp"] = water.betas*water.cp/T
         prop["gpp"] = -1e6/(water.rho*water.w)**2-water.betas**2*1e3*water.cp/T
+        prop["gs"] = 0
+        prop["gsp"] = 0
+        return prop
+
+    @classmethod
+    def _waterSupp(cls, T, P):
+        """Get properties of pure water using the supplementary release SR7-09,
+        Table4 pag 6"""
+        tau = (T-273.15)/40
+        pi = (P-0.101325)/100
+
+        J = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3,
+             3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7]
+        K = [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2,
+             3, 4, 5, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 0, 1]
+        G = [0.101342743139674e3, 0.100015695367145e6, -0.254457654203630e4,
+             0.284517778446287e3, -0.333146754253611e2, 0.420263108803084e1,
+             -0.546428511471039, 0.590578347909402e1, -0.270983805184062e3,
+             0.776153611613101e3, -0.196512550881220e3, 0.289796526294175e2,
+             -0.213290083518327e1, -0.123577859330390e5, 0.145503645404680e4,
+             -0.756558385769359e3, 0.273479662323528e3, -0.555604063817218e2,
+             0.434420671917197e1, 0.736741204151612e3, -0.672507783145070e3,
+             0.499360390819152e3, -0.239545330654412e3, 0.488012518593872e2,
+             -0.166307106208905e1, -0.148185936433658e3, 0.397968445406972e3,
+             -0.301815380621876e3, 0.152196371733841e3, -0.263748377232802e2,
+             0.580259125842571e2, -0.194618310617595e3, 0.120520654902025e3,
+             -0.552723052340152e2, 0.648190668077221e1, -0.189843846514172e2,
+             0.635113936641785e2, -0.222897317140459e2, 0.817060541818112e1,
+             0.305081646487967e1, -0.963108119393062e1]
+
+        g, gt, gp, gtt, gtp, gpp = 0, 0, 0, 0, 0, 0
+        for j, k, gi in zip(J, K, G):
+            g += gi*tau**j*pi**k
+            if j >= 1:
+                gt += gi*j*tau**(j-1)*pi**k
+            if k >= 1:
+                gp += k*gi*tau**j*pi**(k-1)
+            if j >= 2:
+                gtt += j*(j-1)*gi*tau**(j-2)*pi**k
+            if j >= 1 and k >= 1:
+                gtp += j*k*gi*tau**(j-1)*pi**(k-1)
+            if k >= 2:
+                gpp += k*(k-1)*gi*tau**j*pi**(k-2)
+
+        prop = {}
+        prop["g"] = g*1e-3
+        prop["gt"] = gt/40*1e-3
+        prop["gp"] = gp/100*1e-6
+        prop["gtt"] = gtt/40**2*1e-3
+        prop["gtp"] = gtp/40/100*1e-6
+        prop["gpp"] = gpp/100**2*1e-6
         prop["gs"] = 0
         prop["gsp"] = 0
         return prop
@@ -218,27 +286,30 @@ class SeaWater(object):
              -0.792001547211682e1]
 
         g, gt, gp, gtt, gtp, gpp, gs, gsp = 0, 0, 0, 0, 0, 0, 0, 0
-        for i, j, k, gi in zip(I, J, K, G):
-            if i == 1:
-                g += gi*X**2*log(X)*tau**j*pi**k
-                gs += gi*(2*log(X)+1)*tau**j*pi**k
-            else:
-                g += gi*X**i*tau**j*pi**k
-                gs += i*gi*X**(i-2)*tau**j*pi**k
-            if j >= 1:
+
+        # Calculate only for some salinity
+        if S != 0:
+            for i, j, k, gi in zip(I, J, K, G):
                 if i == 1:
-                    gt += gi*X**2*log(X)*j*tau**(j-1)*pi**k
+                    g += gi*X**2*log(X)*tau**j*pi**k
+                    gs += gi*(2*log(X)+1)*tau**j*pi**k
                 else:
-                    gt += gi*X**i*j*tau**(j-1)*pi**k
-            if k >= 1:
-                gp += k*gi*X**i*tau**j*pi**(k-1)
-                gsp += i*k*gi*X**(i-2)*tau**j*pi**(k-1)
-            if j >= 2:
-                gtt += j*(j-1)*gi*X**i*tau**(j-2)*pi**k
-            if j >= 1 and k >= 1:
-                gtp += j*k*gi*X**i*tau**(j-1)*pi**(k-1)
-            if k >= 2:
-                gpp += k*(k-1)*gi*X**i*tau**j*pi**(k-2)
+                    g += gi*X**i*tau**j*pi**k
+                    gs += i*gi*X**(i-2)*tau**j*pi**k
+                if j >= 1:
+                    if i == 1:
+                        gt += gi*X**2*log(X)*j*tau**(j-1)*pi**k
+                    else:
+                        gt += gi*X**i*j*tau**(j-1)*pi**k
+                if k >= 1:
+                    gp += k*gi*X**i*tau**j*pi**(k-1)
+                    gsp += i*k*gi*X**(i-2)*tau**j*pi**(k-1)
+                if j >= 2:
+                    gtt += j*(j-1)*gi*X**i*tau**(j-2)*pi**k
+                if j >= 1 and k >= 1:
+                    gtp += j*k*gi*X**i*tau**(j-1)*pi**(k-1)
+                if k >= 2:
+                    gpp += k*(k-1)*gi*X**i*tau**j*pi**(k-2)
 
         prop = {}
         prop["g"] = g*1e-3
