@@ -347,6 +347,9 @@ class Test(unittest.TestCase):
         self.assertEqual(round(liq["k"], 9), 0.677913788)
         self.assertEqual(round(liq["epsilon"], 6), 55.266199)
 
+        self.assertWarns(Warning, _Liquid, *(375, 0.2))
+        self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
+
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""
 

@@ -6,8 +6,9 @@ Miscelaneous IAPWS standards
 
 from __future__ import division
 
-from math import log, exp, tan, atan, acos, sin, pi, log10
 from cmath import log as log_c
+from math import log, exp, tan, atan, acos, sin, pi, log10
+import warnings
 
 
 # Constants
@@ -237,7 +238,7 @@ def _Liquid(T, P=0.1):
         raise NotImplementedError("Incoming out of bound")
     elif P != 0.1:
         # Raise a warning if the P value is extrapolated
-        raise(Warning("Using extrapolated values"))
+        warnings.warn("Using extrapolated values")
 
     R = 0.46151805   # kJ/kgK
     Po = 0.1
