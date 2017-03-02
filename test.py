@@ -23,6 +23,11 @@ from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension)
 
 
+# Python version detect for new capacities of unittest
+major = sys.version_info[0]
+minor = sys.version_info[1]
+
+
 # Test
 class Test(unittest.TestCase):
     """
@@ -347,7 +352,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(liq["k"], 9), 0.677913788)
         self.assertEqual(round(liq["epsilon"], 6), 55.266199)
 
-        self.assertWarns(Warning, _Liquid, *(375, 0.2))
+        if major == 3:
+            self.assertWarns(Warning, _Liquid, *(375, 0.2))
         self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
 
     def test_IAPWS97_1(self):
@@ -1464,8 +1470,6 @@ class Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    major = sys.version_info[0]
-    minor = sys.version_info[1]
     if major == 2 and minor == 6:
         unittest.main()
     else:
