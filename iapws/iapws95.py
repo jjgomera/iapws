@@ -1222,41 +1222,125 @@ class MEoS(_fase):
               "a": -self.P*1000}
         return (dv[z]*dT[y]-dT[z]*dv[y])/(dv[x]*dT[y]-dT[x]*dv[y])
 
-    def _Vapor_Pressure(self, T):
-        eq = self._Pv["eq"]
-        Tita = 1-T/self.Tc
-        if eq == 6:
-            Tita = Tita**0.5
+    @classmethod
+    def _Vapor_Pressure(cls, T):
+        """Auxiliary equation for the vapour pressure
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        Pv : float
+            Vapour pressure [Pa]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.1
+        """
+        Tita = 1-T/cls.Tc
         suma = 0
-        for n, x in zip(self._Pv["ao"], self._Pv["exp"]):
+        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
             suma += n*Tita**x
-        Pr = exp(self.Tc/T*suma)
-        Pv = Pr*self.Pc
+        Pr = exp(cls.Tc/T*suma)
+        Pv = Pr*cls.Pc
         return Pv
 
-    def _Liquid_Density(self, T):
-        eq = self._rhoL["eq"]
-        Tita = 1-T/self.Tc
+    @classmethod
+    def _Liquid_Density(cls, T):
+        """Auxiliary equation for the density or saturated liquid
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        rho : float
+            Saturated liquid density [kg/m³]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.2
+        """
+        eq = cls._rhoL["eq"]
+        Tita = 1-T/cls.Tc
         if eq == 2:
             Tita = Tita**(1./3)
         suma = 0
-        for n, x in zip(self._rhoL["ao"], self._rhoL["exp"]):
+        for n, x in zip(cls._rhoL["ao"], cls._rhoL["exp"]):
             suma += n*Tita**x
         Pr = suma+1
-        rho = Pr*self.rhoc
+        rho = Pr*cls.rhoc
         return rho
 
-    def _Vapor_Density(self, T):
-        eq = self._rhoG["eq"]
-        Tita = 1-T/self.Tc
+    @classmethod
+    def _Vapor_Density(cls, T):
+        """Auxiliary equation for the density or saturated vapor
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        rho : float
+            Saturated vapor density [kg/m³]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.3
+        """
+        eq = cls._rhoG["eq"]
+        Tita = 1-T/cls.Tc
         if eq == 4:
             Tita = Tita**(1./3)
         suma = 0
-        for n, x in zip(self._rhoG["ao"], self._rhoG["exp"]):
+        for n, x in zip(cls._rhoG["ao"], cls._rhoG["exp"]):
             suma += n*Tita**x
         Pr = exp(suma)
-        rho = Pr*self.rhoc
+        rho = Pr*cls.rhoc
         return rho
+
+    @classmethod
+    def _dPdT_sat(cls, T):
+        """Auxiliary equation for the dP/dT along saturation line
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        dPdT : float
+            dPdT [MPa/K]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, derived from Eq.1
+        """
+        Tita = 1-T/cls.Tc
+        suma1 = 0
+        suma2 = 0
+        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+            suma1 -= n*x*Tita**(x-1)/cls.Tc
+            suma2 += n*Tita**x
+        Pr = (cls.Tc*suma1/T-cls.Tc/T**2*suma2)*exp(cls.Tc/T*suma2)
+        dPdT = Pr*cls.Pc
+        return dPdT
 
 
 class IAPWS95(MEoS):
@@ -1358,6 +1442,8 @@ class IAPWS95(MEoS):
     IAPWS, Revised Release on the IAPWS Formulation 1995 for the Thermodynamic
     Properties of Ordinary Water Substance for General and Scientific Use,
     September 2016, http://www.iapws.org/relguide/IAPWS-95.html
+    IAPWS, Revised Supplementary Release on Saturation Properties of Ordinary
+    Water Substance September 1992, http://www.iapws.org/relguide/Supp-sat.html
     """
     name = "water"
     CASNumber = "7732-18-5"
@@ -1432,10 +1518,9 @@ class IAPWS95(MEoS):
         "beta4": [0.3, 0.3]}
 
     _Pv = {
-        "eq": 6,
         "ao": [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
                1.80122502],
-        "exp": [2, 3, 6, 7, 8, 15]}
+        "exp": [1, 1.5, 3, 3.5, 4, 7.5]}
     _rhoL = {
         "eq": 2,
         "ao": [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
@@ -1446,6 +1531,174 @@ class IAPWS95(MEoS):
         "ao": [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
                -63.9201063],
         "exp": [1, 2, 4, 9, 18.5, 35.5]}
+
+    @classmethod
+    def _alfa_sat(cls, T):
+        """Auxiliary equation for the alfa coefficient for calculate the
+        enthalpy along the saturation line
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        alfa : float
+            alfa coefficient [kJ/kg]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.4
+        """
+        di = [-1135.905627715, -5.65134998e-8, 2690.66631, 127.287297,
+              -135.003439, 0.981825814]
+        expi = [0, -19, 1, 4.5, 5, 54.5]
+        Tita = T/cls.Tc
+        alfa = 0
+        for d, x in zip(di, expi):
+            alfa += d*Tita**x
+        return alfa
+
+    @classmethod
+    def _phi_sat(cls, T):
+        """Auxiliary equation for the phi coefficient for calculate the
+        entropy along the saturation line
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        phi : float
+            phi coefficient [kJ/kgK]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.5
+        """
+        di = [2319.5246, -5.65134998e-8*19/20, 2690.66631, 127.287297*9/7,
+              -135.003439*5/4, 0.981825814*109/107]
+        expi = [0, -20, None, 3.5, 4, 53.5]
+        Tita = T/cls.Tc
+        suma = 0
+        for d, x in zip(di, expi):
+            if x is None:
+                suma += d*log(Tita)
+            else:
+                suma += d*Tita**x
+        phi = suma/cls.Tc
+        return phi
+
+    @classmethod
+    def _Liquid_Enthalpy(cls, T):
+        """Auxiliary equation for the specific enthalpy for saturated liquid
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        h : float
+            Saturated liquid enthalpy [kJ/kg]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.6
+        """
+        alfa = cls._alfa_sat(T)
+        rho = cls._Liquid_Density(T)
+        dpdT = cls._dPdT_sat(T)
+        h = alfa+T/rho*dpdT*1000
+        return h
+
+    @classmethod
+    def _Vapor_Enthalpy(cls, T):
+        """Auxiliary equation for the specific enthalpy for saturated vapor
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        h : float
+            Saturated vapor enthalpy [kJ/kg]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.7
+        """
+        alfa = cls._alfa_sat(T)
+        rho = cls._Vapor_Density(T)
+        dpdT = cls._dPdT_sat(T)
+        h = alfa+T/rho*dpdT*1000
+        return h
+
+    @classmethod
+    def _Liquid_Entropy(cls, T):
+        """Auxiliary equation for the specific entropy for saturated liquid
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        s : float
+            Saturated liquid entropy [kJ/kgK]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.8
+        """
+        phi = cls._phi_sat(T)
+        rho = cls._Liquid_Density(T)
+        dpdT = cls._dPdT_sat(T)
+        s = phi+dpdT/rho*1000
+        return s
+
+    @classmethod
+    def _Vapor_Entropy(cls, T):
+        """Auxiliary equation for the specific entropy for saturated vapor
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        s : float
+            Saturated liquid entropy [kJ/kgK]
+
+        References
+        ----------
+        IAPWS, Revised Supplementary Release on Saturation Properties of
+        Ordinary Water Substance September 1992,
+        http://www.iapws.org/relguide/Supp-sat.html, Eq.9
+        """
+        phi = cls._phi_sat(T)
+        rho = cls._Vapor_Density(T)
+        dpdT = cls._dPdT_sat(T)
+        s = phi+dpdT/rho*1000
+        return s
 
     def _visco(self, rho, T, fase):
         ref = IAPWS95()
@@ -1561,7 +1814,6 @@ class D2O(MEoS):
         "gamma2": [1.5394]*14}
 
     _Pv = {
-        "eq": 5,
         "ao": [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2],
         "exp": [1.0, 1.5, 2.75, 3.0, 3.2]}
     _rhoL = {

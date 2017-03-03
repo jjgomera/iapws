@@ -356,6 +356,42 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, _Liquid, *(375, 0.2))
         self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
 
+    def test_auxiliarySaturation(self):
+        """Table 1 pag 7"""
+        fluid = IAPWS95()
+        self.assertEqual(round(fluid._Vapor_Pressure(273.16), 9), 0.000611657)
+        self.assertEqual(round(fluid._dPdT_sat(273.16), 12), 44.436693e-6)
+        self.assertEqual(round(fluid._Liquid_Density(273.16), 3), 999.789)
+        self.assertEqual(round(fluid._Vapor_Density(273.16), 8), 0.00485426)
+        self.assertEqual(round(fluid._alfa_sat(273.16), 9), -0.011529101)
+        self.assertEqual(round(fluid._Liquid_Enthalpy(273.16), 9), 0.000611786)
+        self.assertEqual(round(fluid._Vapor_Enthalpy(273.16), 1), 2500.5)
+        self.assertEqual(round(fluid._phi_sat(273.16), 5), -0.00004)
+        self.assertEqual(round(fluid._Liquid_Entropy(273.16), 1), 0)
+        self.assertEqual(round(fluid._Vapor_Entropy(273.16), 3), 9.154)
+
+        self.assertEqual(round(fluid._Vapor_Pressure(373.1243), 6), 0.101325)
+        self.assertEqual(round(fluid._dPdT_sat(373.1243), 6), 0.003616)
+        self.assertEqual(round(fluid._Liquid_Density(373.1243), 3), 958.365)
+        self.assertEqual(round(fluid._Vapor_Density(373.1243), 6), 0.597586)
+        self.assertEqual(round(fluid._alfa_sat(373.1243), 2), 417.65)
+        self.assertEqual(round(fluid._Liquid_Enthalpy(373.1243), 2), 419.05)
+        self.assertEqual(round(fluid._Vapor_Enthalpy(373.1243), 1), 2675.7)
+        self.assertEqual(round(fluid._phi_sat(373.1243), 3), 1.303)
+        self.assertEqual(round(fluid._Liquid_Entropy(373.1243), 3), 1.307)
+        self.assertEqual(round(fluid._Vapor_Entropy(373.1243), 3), 7.355)
+
+        self.assertEqual(round(fluid._Vapor_Pressure(647.096), 3), 22.064)
+        self.assertEqual(round(fluid._dPdT_sat(647.096), 3), 0.268)
+        self.assertEqual(round(fluid._Liquid_Density(647.096), 3), 322)
+        self.assertEqual(round(fluid._Vapor_Density(647.096), 8), 322)
+        self.assertEqual(round(fluid._alfa_sat(647.096), 0), 1548)
+        self.assertEqual(round(fluid._Liquid_Enthalpy(647.096), 1), 2086.6)
+        self.assertEqual(round(fluid._Vapor_Enthalpy(647.096), 1), 2086.6)
+        self.assertEqual(round(fluid._phi_sat(647.096), 3), 3.578)
+        self.assertEqual(round(fluid._Liquid_Entropy(647.096), 3), 4.410)
+        self.assertEqual(round(fluid._Vapor_Entropy(647.096), 3), 4.410)
+
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""
 
