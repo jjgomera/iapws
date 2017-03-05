@@ -166,6 +166,21 @@ class Test(unittest.TestCase):
         self.assertEqual(round(liquid["s"], 8), 3.80194683)
         self.assertEqual(round(vapor["s"], 8), 5.18506121)
 
+    def test_LowT(self):
+        """Table 3, pag 5"""
+        fluid = IAPWS95()
+        fex, fext, fextt = fluid._phiex(50)
+        self.assertEqual(round(fex, 11), 0.00381124912)
+        self.assertEqual(round(fext, 11), 0.00172505502)
+        self.assertEqual(round(fextt, 12), 0.000525861643)
+        self.assertEqual(round(fluid._prop0(1, 50).cp/fluid.R, 8), 3.91824190)
+
+        fex, fext, fextt = fluid._phiex(100)
+        self.assertEqual("%0.8e" % fex, "3.98019838e-06")
+        self.assertEqual(round(fext, 13), 0.120506637e-4)
+        self.assertEqual(round(fextt, 13), 0.277309851e-4)
+        self.assertEqual(round(fluid._prop0(1, 100).cp/fluid.R, 8), 4.00536708)
+
     def test_Melting(self):
         """Table 3, pag 7"""
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 49)

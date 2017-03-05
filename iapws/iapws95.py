@@ -10,7 +10,7 @@ Implemented multiparameter equation of state as a Helmholtz free energy
 
 from itertools import product
 
-from scipy import exp, log
+from scipy import exp, log, ndarray
 from scipy.optimize import fsolve
 
 from ._iapws import Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
@@ -842,7 +842,7 @@ class MEoS(_fase):
 
         # Ideal properties
         cp0 = self._prop0(self.rho, self.T)
-        self.v0 = cp0.v
+        self.v0 = self.R*self.T/self.P/1000
         self.rho0 = 1./self.v0
         self.h0 = cp0.h
         self.u0 = self.h0-self.P*self.v0
@@ -852,6 +852,7 @@ class MEoS(_fase):
         self.cp0 = cp0.cp
         self.cv0 = cp0.cv
         self.cp0_cv = self.cp0/self.cv0
+        cp0.v = self.v0
         self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
 
     def fill(self, fase, estado):
@@ -951,6 +952,14 @@ class MEoS(_fase):
 
     def _Helmholtz(self, rho, T):
         """Calculated properties, table 3 pag 10"""
+        if isinstance(rho, ndarray):
+            rho = rho[0]
+        if isinstance(T, ndarray):
+            T = T[0]
+        if rho < 0:
+            rho = 1e-20
+        if T < 50:
+            T = 50
         rhoc = self._constants.get("rhoref", self.rhoc)
         Tc = self._constants.get("Tref", self.Tc)
         delta = rho/rhoc
@@ -1002,7 +1011,6 @@ class MEoS(_fase):
         fio, fiot, fiott, fiod, fiodd, fiodt = self._phi0(tau, delta)
 
         propiedades = _fase()
-        propiedades.v = self.R*T/self.P/1000
         propiedades.h = self.R*T*(1+tau*fiot)
         propiedades.s = self.R*(tau*fiot-fio)
         propiedades.cv = -self.R*tau**2*fiott
@@ -1034,7 +1042,24 @@ class MEoS(_fase):
             fiot += n*t*((1-exp(-t*tau))**-1-1)
             fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
 
+        # Low temperature extension of the IAPWS-95
+        T = self.Tc/tau
+        if 50 <= T < 130:
+            fex, fext, fextt = self._phiex(T)
+            fio += fex
+            fiot += fext
+            fiott += fextt
+
         return fio, fiot, fiott, fiod, fiodd, fiodt
+
+    def _phiex(self, T):
+        tau = self.Tc/T
+        E = 0.278296458178592
+        ep = self.Tc/130
+        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2+tau**2/2/ep**3)
+        fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
+        fextt = E*(-1/tau+1/ep)**3
+        return fex, fext, fextt
 
     def _phir(self, tau, delta):
         delta_0 = 1e-200
@@ -1444,6 +1469,8 @@ class IAPWS95(MEoS):
     September 2016, http://www.iapws.org/relguide/IAPWS-95.html
     IAPWS, Revised Supplementary Release on Saturation Properties of Ordinary
     Water Substance September 1992, http://www.iapws.org/relguide/Supp-sat.html
+    IAPWS, Guideline on a Low-Temperature Extension of the IAPWS-95 Formulation
+    for Water Vapor, http://www.iapws.org/relguide/LowT.html
     """
     name = "water"
     CASNumber = "7732-18-5"
