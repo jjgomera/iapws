@@ -8,6 +8,7 @@ Implemented multiparameter equation of state as a Helmholtz free energy
 """
 
 
+from __future__ import division
 from itertools import product
 
 from scipy import exp, log, ndarray
