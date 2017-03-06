@@ -17,10 +17,11 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
                            _Backward3_v_PT, _P23_T, _t_P, _P_2bc, _hbc_P)
 from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
-from iapws.iapws08 import SeaWater
+from iapws.iapws08 import SeaWater, _ThCond_SeaWater
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
-                          _D2O_Viscosity, _D2O_ThCond, _D2O_Tension)
+                          _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
+                          _Conductivity)
 
 
 # Python version detect for new capacities of unittest
@@ -1518,6 +1519,49 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.rho, 6), 992.216354)
         self.assertEqual(round(fluid.cp, 8), 4.17942416)
         self.assertEqual(round(fluid.w, 5), 1528.91242)
+
+    def test_SeaWater_thcond(self):
+        """Table 2, pag 5"""
+        fluid = SeaWater(T=293.15, P=0.1, S=0.035)
+        self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.035), 9), -0.004186040)
+        self.assertEqual(round(fluid.k, 9), 0.593825535)
+
+        fluid = SeaWater(T=293.15, P=120, S=0.035)
+        self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=120, S=0.035), 9), -0.004317350)
+        self.assertEqual(round(fluid.k, 9), 0.651692949)
+
+        fluid = SeaWater(T=333.15, P=0.1, S=0.035)
+        self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=0.1, S=0.035), 9), -0.004124057)
+        self.assertEqual(round(fluid.k, 9), 0.646875533)
+
+        fluid = SeaWater(T=333.15, P=120, S=0.035)
+        self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=120, S=0.035), 9), -0.004264405)
+        self.assertEqual(round(fluid.k, 9), 0.702484548)
+
+        fluid = SeaWater(T=293.15, P=0.1, S=0.1)
+        self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.1), 9), -0.013819821)
+        self.assertEqual(round(fluid.k, 9), 0.584191754)
+
+        fluid = SeaWater(T=373.15, P=1, S=0.1)
+        self.assertEqual(round(_ThCond_SeaWater(T=373.15, P=1, S=0.1), 9), -0.013094107)
+        self.assertEqual(round(fluid.k, 9), 0.664627314)
+
+        fluid = SeaWater(T=293.15, P=0.1, S=0.12)
+        self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.12), 9), -0.017005302)
+        self.assertEqual(round(fluid.k, 9), 0.581006273)
+
+        fluid = SeaWater(T=293.15, P=120, S=0.12)
+        self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=120, S=0.12), 9), -0.020194816)
+        self.assertEqual(round(fluid.k, 9), 0.635815483)
+
+        fluid = SeaWater(T=333.15, P=120, S=0.12)
+        self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=120, S=0.12), 9), -0.019722469)
+        self.assertEqual(round(fluid.k, 9), 0.687026483)
+
+    # def test_Conductivity(self):
+        # """Selected values from table II"""
+        # self.assertEqual(round(_Conductivity(1100, 573.16), 9), 22.8e-6)
+        # self.assertEqual(round(_Conductivity(1100, 273.16), 9), 0.0333e-6)
 
 
 if __name__ == "__main__":

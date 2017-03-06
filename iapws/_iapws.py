@@ -28,8 +28,11 @@ rhoc_D2O = 356    # kg/m³
 Tt = 273.16       # K
 Pt = 611.657e-6   # MPa
 Tb = 373.1243     # K
-Dipole = 1.855    # Debye
 f_acent = 0.3443
+
+# IAPWS, Guideline on the Use of Fundamental Physical Constants and Basic
+# Constants of Water, http://www.iapws.org/relguide/fundam.pdf
+Dipole = 1.85498  # Debye
 
 
 # IAPWS-06 for Ice

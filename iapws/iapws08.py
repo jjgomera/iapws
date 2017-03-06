@@ -5,9 +5,10 @@ IAPWS standard for Seawater IAPWS08
 """
 
 from __future__ import division
-from math import log
+from math import exp, log
 
 from .iapws95 import IAPWS95
+from ._iapws import _ThCond
 
 
 # Constants
@@ -98,6 +99,8 @@ class SeaWater(object):
     IAPWS, Supplementary Release on a Computationally Efficient Thermodynamic
     Formulation for Liquid Water for Oceanographic Use,
     http://www.iapws.org/relguide/OceanLiquid.html
+    IAPWS, Guideline on the Thermal Conductivity of Seawater,
+    http://www.iapws.org/relguide/Seawater-ThCond.html
 
     Examples
     --------
@@ -165,6 +168,12 @@ class SeaWater(object):
             prop["gtt"]
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
+
+        try:
+            kw = _ThCond(1/pw["gp"], T)
+            self.k = _ThCond_SeaWater(T, P, S)+kw
+        except NotImplementedError:
+            self.k = None
 
         if S:
             self.mu = prop["gs"]
@@ -321,3 +330,57 @@ class SeaWater(object):
         prop["gs"] = gs/S_/2*1e-3
         prop["gsp"] = gsp/S_/2/100*1e-6
         return prop
+
+
+def _ThCond_SeaWater(T, P, S):
+    """Equation for the thermal conductivity of seawater
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    S : float
+        Salinity [kg/kg]
+
+    Returns
+    -------
+    k : float
+        Thermal conductivity excess relative to that of the pure water [W/mK]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 273.15 ≤ T ≤ 523.15
+        * 0 ≤ P ≤ 140
+        * 0 ≤ S ≤ 0.17
+
+    Examples
+    --------
+    >>> _ThCond_Seawater(293.15, 0.1, 0.035)
+    -0.00418604
+
+    References
+    ----------
+    IAPWS, Guideline on the Thermal Conductivity of Seawater,
+    http://www.iapws.org/relguide/Seawater-ThCond.html
+    """
+    # Check input parameters
+    if T < 273.15 or T > 523.15 or P < 0 or P > 140 or S < 0 or S > 0.17:
+        raise NotImplementedError("Incoming out of bound")
+
+    # Eq 4
+    a1 = -7.180891e-5+1.831971e-7*P
+    a2 = 1.048077e-3-4.494722e-6*P
+
+    # Eq 5
+    b1 = 1.463375e-1+9.208586e-4*P
+    b2 = -3.086908e-3+1.798489e-5*P
+
+    a = a1*exp(a2*(T-273.15))  # Eq 2
+    b = b1*exp(b2*(T-273.15))  # Eq 3
+
+    # Eq 1
+    DL = a*(1000*S)**(1+b)
+    return DL
