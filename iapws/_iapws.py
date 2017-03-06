@@ -958,3 +958,248 @@ def _D2O_Tension(T):
         return 1e-3*(238*(1-Tr)**1.25*(1-0.639*(1-Tr)))
     else:
         raise NotImplementedError("Incoming out of bound")
+
+
+def _Henry(T, gas, liquid="H2O"):
+    """Equation for the calculation of Henry's constant
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    gas : string
+        Name of gas to calculate solubility
+    liquid : string
+        Name of liquid solvent, can be H20 (default) or D2O
+
+    Returns
+    -------
+    kw : float
+        Henry's constant [MPa]
+
+    Notes
+    -----
+    The gas availables for H2O solvent are:
+        He, Ne, Ar, Kr, Xe, H2, N2, O2, CO, CO2, H2S, CH4, C2H6, SF6
+    For D2O as solvent:
+        He, Ne, Ar, Kr, Xe, D2, CH4
+
+    Examples
+    --------
+    >>> _Henry(500, "He")
+    1.1973
+    >>> _Henry(300, "D2", "D2O")
+    1.6594
+
+    References
+    ----------
+    IAPWS, Guideline on the Henry's Constant and Vapor-Liquid Distribution
+    Constant for Gases in H2O and D2O at High Temperatures,
+    http://www.iapws.org/relguide/HenGuide.html
+    """
+    if liquid == "D2O":
+        gas += "(D2O)"
+
+    limit = {
+        "He": (273.21, 553.18),
+        "Ne": (273.20, 543.36),
+        "Ar": (273.19, 568.36),
+        "Kr": (273.19, 525.56),
+        "Xe": (273.22, 574.85),
+        "H2": (273.15, 636.09),
+        "N2": (278.12, 636.46),
+        "O2": (274.15, 616.52),
+        "CO": (278.15, 588.67),
+        "CO2": (274.19, 642.66),
+        "H2S": (273.15, 533.09),
+        "CH4": (275.46, 633.11),
+        "C2H6": (275.44, 473.46),
+        "SF6": (283.14, 505.55),
+        "He(D2O)": (288.15, 553.18),
+        "Ne(D2O)": (288.18, 549.96),
+        "Ar(D2O)": (288.30, 583.76),
+        "Kr(D2O)": (288.19, 523.06),
+        "Xe(D2O)": (295.39, 574.85),
+        "D2(D2O)": (288.17, 581.00),
+        "CH4(D2O)": (288.16, 517.46)}
+
+    # Check input parameters
+    if liquid != "D2O" and liquid != "H2O":
+        raise NotImplementedError("Solvent liquid unsupported")
+    if gas not in limit:
+        raise NotImplementedError("Gas unsupported")
+
+    Tmin, Tmax = limit[gas]
+    if T < Tmin or T > Tmax:
+        warnings.warn("Temperature out of data of correlation")
+
+    if liquid == "D2O":
+        Tc = 643.847
+        Pc = 21.671
+    else:
+        Tc = 647.096
+        Pc = 22.064
+
+    Tr = T/Tc
+    tau = 1-Tr
+
+    # Eq 4
+    if liquid == "H2O":
+        ai = [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
+              1.80122502]
+        bi = [1, 1.5, 3, 3.5, 4, 7.5]
+    else:
+        ai = [-7.896657, 24.73308, -27.81128, 9.355913, -9.220083]
+        bi = [1, 1.89, 2, 3, 3.6]
+    ps = Pc*exp(1/Tr*sum([a*tau**b for a, b in zip(ai, bi)]))
+
+    # Select values from Table 2
+    par = {
+        "He": (-3.52839, 7.12983, 4.47770),
+        "Ne": (-3.18301, 5.31448, 5.43774),
+        "Ar": (-8.40954, 4.29587, 10.52779),
+        "Kr": (-8.97358, 3.61508, 11.29963),
+        "Xe": (-14.21635, 4.00041, 15.60999),
+        "H2": (-4.73284, 6.08954, 6.06066),
+        "N2": (-9.67578, 4.72162, 11.70585),
+        "O2": (-9.44833, 4.43822, 11.42005),
+        "CO": (-10.52862, 5.13259, 12.01421),
+        "CO2": (-8.55445, 4.01195, 9.52345),
+        "H2S": (-4.51499, 5.23538, 4.42126),
+        "CH4": (-10.44708, 4.66491, 12.12986),
+        "C2H6": (-19.67563, 4.51222, 20.62567),
+        "SF6": (-16.56118, 2.15289, 20.35440),
+        "He(D2O)": (-0.72643, 7.02134, 2.04433),
+        "Ne(D2O)": (-0.91999, 5.65327, 3.17247),
+        "Ar(D2O)": (-7.17725, 4.48177, 9.31509),
+        "Kr(D2O)": (-8.47059, 3.91580, 10.69433),
+        "Xe(D2O)": (-14.46485, 4.42330, 15.60919),
+        "D2(D2O)": (-5.33843, 6.15723, 6.53046),
+        "CH4(D2O)": (-10.01915, 4.73368, 11.75711)}
+    A, B, C = par[gas]
+
+    # Eq 3
+    kh = ps*exp(A/Tr+B*tau**0.355/Tr+C*Tr**-0.41*exp(tau))
+    return kh
+
+
+def _Kvalue(T, gas, liquid="H2O"):
+    """Equation for the vapor-liquid distribution constant
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    gas : string
+        Name of gas to calculate solubility
+    liquid : string
+        Name of liquid solvent, can be H20 (default) or D2O
+
+    Returns
+    -------
+    kd : float
+        Vapor-liquid distribution constant [-]
+
+    Notes
+    -----
+    The gas availables for H2O solvent are:
+        He, Ne, Ar, Kr, Xe, H2, N2, O2, CO, CO2, H2S, CH4, C2H6, SF6
+    For D2O as solvent:
+        He, Ne, Ar, Kr, Xe, D2, CH4
+
+    Examples
+    --------
+    >>> _Kvalue(600, "He")
+    3.8019
+    >>> _Kvalue(300, "D2", "D2O")
+    14.3520
+
+    References
+    ----------
+    IAPWS, Guideline on the Henry's Constant and Vapor-Liquid Distribution
+    Constant for Gases in H2O and D2O at High Temperatures,
+    http://www.iapws.org/relguide/HenGuide.html
+    """
+    if liquid == "D2O":
+        gas += "(D2O)"
+
+    limit = {
+        "He": (273.21, 553.18),
+        "Ne": (273.20, 543.36),
+        "Ar": (273.19, 568.36),
+        "Kr": (273.19, 525.56),
+        "Xe": (273.22, 574.85),
+        "H2": (273.15, 636.09),
+        "N2": (278.12, 636.46),
+        "O2": (274.15, 616.52),
+        "CO": (278.15, 588.67),
+        "CO2": (274.19, 642.66),
+        "H2S": (273.15, 533.09),
+        "CH4": (275.46, 633.11),
+        "C2H6": (275.44, 473.46),
+        "SF6": (283.14, 505.55),
+        "He(D2O)": (288.15, 553.18),
+        "Ne(D2O)": (288.18, 549.96),
+        "Ar(D2O)": (288.30, 583.76),
+        "Kr(D2O)": (288.19, 523.06),
+        "Xe(D2O)": (295.39, 574.85),
+        "D2(D2O)": (288.17, 581.00),
+        "CH4(D2O)": (288.16, 517.46)}
+
+    # Check input parameters
+    if liquid != "D2O" and liquid != "H2O":
+        raise NotImplementedError("Solvent liquid unsupported")
+    if gas not in limit:
+        raise NotImplementedError("Gas unsupported")
+
+    Tmin, Tmax = limit[gas]
+    if T < Tmin or T > Tmax:
+        warnings.warn("Temperature out of data of correlation")
+
+    if liquid == "D2O":
+        Tc = 643.847
+    else:
+        Tc = 647.096
+
+    Tr = T/Tc
+    tau = 1-Tr
+
+    # Eq 6
+    if liquid == "H2O":
+        ci = [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
+              -6.7469445e5]
+        di = [1/3, 2/3, 5/3, 16/3, 43/3, 110/3]
+        q = -0.023767
+    else:
+        ci = [2.7072, 0.58662, -1.3069, -45.663]
+        di = [0.374, 1.45, 2.6, 12.3]
+        q = -0.024552
+    f = sum([c*tau**d for c, d in zip(ci, di)])
+
+    # Select values from Table 2
+    par = {"He": (2267.4082, -2.9616, -3.2604, 7.8819),
+           "Ne": (2507.3022, -38.6955, 110.3992, -71.9096),
+           "Ar": (2310.5463, -46.7034, 160.4066, -118.3043),
+           "Kr": (2276.9722, -61.1494, 214.0117, -159.0407),
+           "Xe": (2022.8375, 16.7913, -61.2401, 41.9236),
+           "H2": (2286.4159, 11.3397, -70.7279, 63.0631),
+           "N2": (2388.8777, -14.9593, 42.0179, -29.4396),
+           "O2": (2305.0674, -11.3240, 25.3224, -15.6449),
+           "CO": (2346.2291, -57.6317, 204.5324, -152.6377),
+           "CO2": (1672.9376, 28.1751, -112.4619, 85.3807),
+           "H2S": (1319.1205, 14.1571, -46.8361, 33.2266),
+           "CH4": (2215.6977, -0.1089, -6.6240, 4.6789),
+           "C2H6": (2143.8121, 6.8859, -12.6084, 0),
+           "SF6": (2871.7265, -66.7556, 229.7191, -172.7400),
+           "He(D2O)": (2293.2474, -54.7707, 194.2924, -142.1257),
+           "Ne(D2O)": (2439.6677, -93.4934, 330.7783, -243.0100),
+           "Ar(D2O)": (2269.2352, -53.6321, 191.8421, -143.7659),
+           "Kr(D2O)": (2250.3857, -42.0835, 140.7656, -102.7592),
+           "Xe(D2O)": (2038.3656, 68.1228, -271.3390, 207.7984),
+           "D2(D2O)": (2141.3214, -1.9696, 1.6136, 0),
+           "CH4(D2O)": (2216.0181, -40.7666, 152.5778, -117.7430)}
+    E, F, G, H = par[gas]
+
+    # Eq 5
+    kd = exp(q*F+E/T*f+(F+G*tau**(2./3)+H*tau)*exp((273.15-T)/100))
+    return kd
