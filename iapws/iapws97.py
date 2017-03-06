@@ -74,6 +74,9 @@ Volume as a Function of Pressure and Temperature v(p,T) for Region 3 of the
 IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and
 Steam, http://www.iapws.org/relguide/Supp-VPT3-2016.pdf
 
+IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+Formulations, http://www.iapws.org/relguide/Advise3.pdf
+
 Wagner, W; Kretzschmar, H-J: International Steam Tables: Properties of
 Water and Steam Based on the Industrial Formulation IAPWS-IF97; Springer, 2008;
 doi: 10.1007/978-3-540-74234-0
@@ -86,7 +89,7 @@ from scipy.optimize import fsolve, newton
 
 from ._iapws import M, R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent, _fase
 from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
-from ._iapws import getphase
+from ._iapws import getphase, deriv_G
 
 
 # Critic properties
@@ -4667,25 +4670,9 @@ class IAPWS97(object):
         fase.f = self.P*fase.fi
 
     def derivative(self, z, x, y, fase):
-        """Calculate generic partial derivative: (δz/δx)y
+        """Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, u, h, s, g, a"""
-        dT = {"P": 0,
-              "T": 1,
-              "v": fase.v*fase.alfav,
-              "u": fase.cp-self.P*1000*fase.v*fase.alfav,
-              "h": fase.cp,
-              "s": fase.cp/self.T,
-              "g": -fase.s,
-              "a": -self.P*1000*fase.v*fase.alfav-fase.s}
-        dP = {"P": 1,
-              "T": 0,
-              "v": -fase.v*fase.xkappa,
-              "u": fase.v*(self.P*1000*fase.xkappa-self.T*fase.alfav),
-              "h": fase.v*(1-self.T*fase.alfav),
-              "s": -fase.v*fase.alfav,
-              "g": fase.v,
-              "a": self.P*1000*fase.v*fase.xkappa}
-        return (dP[z]*dT[y]-dT[z]*dP[y])/(dP[x]*dT[y]-dT[x]*dP[y])
+        return deriv_G(self, z, x, y, fase)
 
 
 class IAPWS97_PT(IAPWS97):

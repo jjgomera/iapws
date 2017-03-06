@@ -8,7 +8,7 @@ from __future__ import division
 from math import exp, log
 
 from .iapws95 import IAPWS95
-from ._iapws import _ThCond
+from ._iapws import _ThCond, deriv_G
 
 
 # Constants
@@ -70,11 +70,11 @@ class SeaWater(object):
         Derivative Gibbs energy with salinity [kJ/kg]
     gsp : float
         Derivative Gibbs energy with salinity and pressure [m³/kg]
-    alfa : float
+    alfav : float
         Thermal expansion coefficient [1/K]
     betas : float
         Isentropic temperature-pressure coefficient [K/MPa]
-    kt : float
+    xkappa : float
         Isothermal compressibility [1/MPa]
     ks : float
         Isentropic compressibility [1/MPa]
@@ -101,6 +101,8 @@ class SeaWater(object):
     http://www.iapws.org/relguide/OceanLiquid.html
     IAPWS, Guideline on the Thermal Conductivity of Seawater,
     http://www.iapws.org/relguide/Seawater-ThCond.html
+    IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+    Formulations, http://www.iapws.org/relguide/Advise3.pdf
 
     Examples
     --------
@@ -161,9 +163,9 @@ class SeaWater(object):
         self.h = prop["g"]-T*prop["gt"]
         self.u = prop["g"]-T*prop["gt"]-P*1000*prop["gp"]
         self.a = prop["g"]-P*1000*prop["gp"]
-        self.alfa = prop["gtp"]/prop["gp"]
+        self.alfav = prop["gtp"]/prop["gp"]
         self.betas = -prop["gtp"]/prop["gtt"]
-        self.kt = -prop["gpp"]/prop["gp"]
+        self.xkappa = -prop["gpp"]/prop["gp"]
         self.ks = (prop["gtp"]**2-prop["gt"]*prop["gpp"])/prop["gp"] / \
             prop["gtt"]
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
@@ -187,6 +189,11 @@ class SeaWater(object):
             self.mus = None
             self.osm = None
             self.haline = None
+
+    def derivative(self, z, x, y):
+        """Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, u, h, s, g, a"""
+        return deriv_G(self, z, x, y, self)
 
     @classmethod
     def _water(cls, T, P):

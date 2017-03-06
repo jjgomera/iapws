@@ -16,7 +16,7 @@ from scipy import exp, log, ndarray
 from scipy.optimize import fsolve
 
 from ._iapws import Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
-from ._iapws import _fase, getphase
+from ._iapws import _fase, getphase, deriv_H
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from .iapws97 import _TSat_P, IAPWS97
@@ -182,6 +182,17 @@ class MEoS(_fase):
                 self.status = 0
                 self.msg = err.args[0]
                 raise(err)
+
+            # Add msg for extrapolation state
+            if 130 <= self.T < 273.15:
+                self.msg = "Extrapolated state"
+                self.status = 3
+                warnings.warn("Using extrapolated values")
+            elif 50 <= self.T < 130:
+                self.msg = "Extrapolated state using Low-Temperature extension"
+                self.status = 3
+                warnings.warn("Using extrapolated values and Low-Temperature"
+                              "extension")
 
     @property
     def calculable(self):
@@ -920,6 +931,11 @@ class MEoS(_fase):
             fase.epsilon = None
             fase.n = None
 
+    def derivative(self, z, x, y, fase):
+        """Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, u, h, s, g, a"""
+        return deriv_H(self, z, x, y, fase)
+
     def _saturation(self, T):
         """Saturation calculation for two phase search"""
         if T > self.Tc:
@@ -1058,7 +1074,8 @@ class MEoS(_fase):
         tau = self.Tc/T
         E = 0.278296458178592
         ep = self.Tc/130
-        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2+tau**2/2/ep**3)
+        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2 +
+                 tau**2/2/ep**3)
         fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
         fextt = E*(-1/tau+1/ep)**3
         return fex, fext, fextt
@@ -1225,29 +1242,6 @@ class MEoS(_fase):
                 F_+delta_0*Fd_)+DeltaBdd_*delta_0*F_)
 
         return fir, firt, firtt, fird, firdd, firdt, firdtt, B, C
-
-    def derivative(self, z, x, y, fase):
-        """Calculate generic partial derivative: (δz/δx)y
-        where x, y, z can be: P, T, v, u, h, s, g, a"""
-        dT = {"P": self.P*1000*fase.alfap,
-              "T": 1,
-              "v": 0,
-              "rho": 0,
-              "u": fase.cv,
-              "h": fase.cv+self.P*1000*fase.v*fase.alfap,
-              "s": fase.cv/self.T,
-              "g": self.P*1000*fase.v*fase.alfap-fase.s,
-              "a": -fase.s}
-        dv = {"P": -self.P*1000*fase.betap,
-              "T": 0,
-              "v": 1,
-              "rho": -1,
-              "u": self.P*1000*(self.T*fase.alfap-1),
-              "h": self.P*1000*(self.T*fase.alfap-fase.v*fase.betap),
-              "s": self.P*1000*fase.alfap,
-              "g": -self.P*1000*fase.v*fase.betap,
-              "a": -self.P*1000}
-        return (dv[z]*dT[y]-dT[z]*dv[y])/(dv[x]*dT[y]-dT[x]*dv[y])
 
     @classmethod
     def _Vapor_Pressure(cls, T):
@@ -1473,6 +1467,8 @@ class IAPWS95(MEoS):
     Water Substance September 1992, http://www.iapws.org/relguide/Supp-sat.html
     IAPWS, Guideline on a Low-Temperature Extension of the IAPWS-95 Formulation
     for Water Vapor, http://www.iapws.org/relguide/LowT.html
+    IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+    Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
     name = "water"
     CASNumber = "7732-18-5"
@@ -1742,7 +1738,8 @@ class IAPWS95(MEoS):
         return _ThCond(rho, T, fase, drho)
 
     def _surface(self, T):
-        return _Tension(T)
+        s = _Tension(T)
+        return s
 
 
 class IAPWS95_PT(IAPWS95):
@@ -1790,6 +1787,8 @@ class D2O(MEoS):
     IAPWS, Revised Release on the IAPS Formulation 1984 for the Thermodynamic
     Properties of Heavy Water Substance,
     http://www.iapws.org/relguide/D2O-2005.pdf
+    IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+    Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
     name = "heavy water"
     CASNumber = "7789-20-0"
@@ -1862,4 +1861,5 @@ class D2O(MEoS):
         return _D2O_ThCond(rho, T)
 
     def _surface(self, T):
-        return _D2O_Tension(T)
+        s = _D2O_Tension(T)
+        return s

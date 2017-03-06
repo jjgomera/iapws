@@ -1306,7 +1306,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ice["rho"], 9), 916.709492200)
         self.assertEqual(round(ice["alfav"], 15), 0.000159863102566)
         self.assertEqual(round(ice["beta"], 11), 1.35714764659)
-        self.assertEqual(round(ice["kt"], 15), 0.000117793449348)
+        self.assertEqual(round(ice["xkappa"], 15), 0.000117793449348)
         self.assertEqual(round(ice["ks"], 15), 0.000114161597779)
 
         ice = _Ice(273.152519, 0.101325)
@@ -1324,7 +1324,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ice["rho"], 9), 916.721463419)
         self.assertEqual(round(ice["alfav"], 15), 0.000159841589458)
         self.assertEqual(round(ice["beta"], 11), 1.35705899321)
-        self.assertEqual(round(ice["kt"], 15), 0.000117785291765)
+        self.assertEqual(round(ice["xkappa"], 15), 0.000117785291765)
         self.assertEqual(round(ice["ks"], 15), 0.000114154442556)
 
         ice = _Ice(100, 100.)
@@ -1342,7 +1342,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ice["rho"], 9), 941.678203297)
         self.assertEqual(round(ice["alfav"], 16), 0.0000258495528207)
         self.assertEqual(round(ice["beta"], 12), 0.291466166994)
-        self.assertEqual(round(ice["kt"], 16), 0.0000886880048115)
+        self.assertEqual(round(ice["xkappa"], 16), 0.0000886880048115)
         self.assertEqual(round(ice["ks"], 16), 0.0000886060982687)
 
         # Test check input
@@ -1470,6 +1470,11 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.w, 5), 1621.98998)
         self.assertEqual(round(fluid.muw, 7), 95.3214082)
 
+        # Custom derivative implementation
+        fluid = SeaWater(T=353, P=0.101325, S=0)
+        wat = IAPWS95(T=353, P=0.101325)
+        self.assertEqual(round(fluid.derivative("T", "P", "h")*1000-wat.joule, 7), 0)
+
     def test_SeaWater_supp(self):
         """Table 6, pag 9"""
         fluid = SeaWater(T=273.15, P=0.101325, S=0, fast=True)
@@ -1557,6 +1562,9 @@ class Test(unittest.TestCase):
         fluid = SeaWater(T=333.15, P=120, S=0.12)
         self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=120, S=0.12), 9), -0.019722469)
         self.assertEqual(round(fluid.k, 9), 0.687026483)
+
+        fluid = SeaWater(T=270, P=1, S=0.12)
+        self.assertRaises(NotImplementedError, _ThCond_SeaWater, *(270, 1, 0))
 
     # def test_Conductivity(self):
         # """Selected values from table II"""

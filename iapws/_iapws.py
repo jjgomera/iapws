@@ -60,7 +60,7 @@ def _Ice(T, P):
             * cp: Specific isobaric heat capacity [kJ/kgK]
             * alfav: Cubic expansion coefficient [1/K]
             * beta: Pressure coefficient [MPa/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * xkappa: Isothermal compressibility [1/MPa]
             * ks: Isentropic compressibility [1/MPa]
             * gt: [∂g/∂T]P
             * gtt: [∂²g/∂T²]P
@@ -84,7 +84,7 @@ def _Ice(T, P):
     >>> st2["a"], st2["u"], st2["cp"]
     -0.00918701567 -333.465403393 2.09671391024
     >>> st3 = _Ice(273.16,611.657e-6)
-    >>> st3["alfav"], st3["beta"], st3["kt"], st3["ks"]
+    >>> st3["alfav"], st3["beta"], st3["xkappa"], st3["ks"]
     0.000159863102566 1.35714764659 1.17793449348e-04 1.14161597779e-04
 
     References
@@ -175,7 +175,7 @@ def _Ice(T, P):
     propiedades["a"] = g-P*gp
     propiedades["alfav"] = gtp/gp
     propiedades["beta"] = -gtp/gpp
-    propiedades["kt"] = -gpp/gp
+    propiedades["xkappa"] = -gpp/gp
     propiedades["ks"] = (gtp**2-gtt*gpp)/gp/gtt
     return propiedades
 
@@ -213,7 +213,7 @@ def _Liquid(T, P=0.1):
             * vp: [∂v/∂P]T [m³/kg/MPa]
             * vtp: [∂²v/∂T∂P] [m³/kg/MPa]
             * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * xkappa : Isothermal compressibility [1/MPa]
             * ks: Isentropic compressibility [1/MPa]
             * mu: Viscosity [mPas]
             * k: Thermal conductivity [W/mK]
@@ -310,7 +310,7 @@ def _Liquid(T, P=0.1):
     u = h-P*vo
     a = go-P*vo
     cv = cpo+T*vto**2/vpo
-    kt = -vpo/vo
+    xkappa = -vpo/vo
     alfa = vto/vo
     ks = -(T*vto**2/cpo+vpo)/vo
     w = (-vo**2*1e9/(vpo*1e3+T*vto**2*1e6/cpo))**0.5
@@ -331,7 +331,7 @@ def _Liquid(T, P=0.1):
     propiedades["cv"] = cv
     propiedades["u"] = u
     propiedades["a"] = a
-    propiedades["kt"] = kt
+    propiedades["xkappa"] = xkappa
     propiedades["alfav"] = vto/vo
     propiedades["ks"] = ks
     propiedades["w"] = w
@@ -1060,3 +1060,89 @@ class _fase(object):
     Z_rho = None
     IntP = None
     hInput = None
+
+
+def deriv_H(state, z, x, y, fase):
+    """Calculate generic partial derivative: (∂z/∂x)y from a fundamental
+    helmholtz free energy equation of state
+
+    Parameters
+    ----------
+    state : any python object
+        Only need define P and T properties
+    x, y, z : string
+        Represent the variables of derivate, can be: P, T, v, u, h, s, g, a
+    fase : any python object
+        Define other phase properties v, cv, alfap, s, betap
+
+    Returns
+    -------
+    deriv : float
+        ∂z/∂x|y
+
+    References
+    ----------
+    IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+    Formulations, http://www.iapws.org/relguide/Advise3.pdf
+    """
+    dT = {"P": state.P*1000*fase.alfap,
+          "T": 1,
+          "v": 0,
+          "rho": 0,
+          "u": fase.cv,
+          "h": fase.cv+state.P*1000*fase.v*fase.alfap,
+          "s": fase.cv/state.T,
+          "g": state.P*1000*fase.v*fase.alfap-fase.s,
+          "a": -fase.s}
+    dv = {"P": -state.P*1000*fase.betap,
+          "T": 0,
+          "v": 1,
+          "rho": -1,
+          "u": state.P*1000*(state.T*fase.alfap-1),
+          "h": state.P*1000*(state.T*fase.alfap-fase.v*fase.betap),
+          "s": state.P*1000*fase.alfap,
+          "g": -state.P*1000*fase.v*fase.betap,
+          "a": -state.P*1000}
+    return (dv[z]*dT[y]-dT[z]*dv[y])/(dv[x]*dT[y]-dT[x]*dv[y])
+
+
+def deriv_G(state, z, x, y, fase):
+    """Calculate generic partial derivative: (∂z/∂x)y from a fundamental
+    Gibbs free energy equation of state
+
+    Parameters
+    ----------
+    state : any python object
+        Only need define P and T properties
+    x, y, z : string
+        Represent the variables of derivate, can be: P, T, v, u, h, s, g, a
+    fase : any python object
+        Define other phase properties v, cp, alfav, s, xkappa
+
+    Returns
+    -------
+    deriv : float
+        ∂z/∂x|y
+
+    References
+    ----------
+    IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
+    Formulations, http://www.iapws.org/relguide/Advise3.pdf
+    """
+    dT = {"P": 0,
+          "T": 1,
+          "v": fase.v*fase.alfav,
+          "u": fase.cp-state.P*1000*fase.v*fase.alfav,
+          "h": fase.cp,
+          "s": fase.cp/state.T,
+          "g": -fase.s,
+          "a": -state.P*1000*fase.v*fase.alfav-fase.s}
+    dP = {"P": 1,
+          "T": 0,
+          "v": -fase.v*fase.xkappa,
+          "u": fase.v*(state.P*1000*fase.xkappa-state.T*fase.alfav),
+          "h": fase.v*(1-state.T*fase.alfav),
+          "s": -fase.v*fase.alfav,
+          "g": fase.v,
+          "a": state.P*1000*fase.v*fase.xkappa}
+    return (dP[z]*dT[y]-dT[z]*dP[y])/(dP[x]*dT[y]-dT[x]*dP[y])
