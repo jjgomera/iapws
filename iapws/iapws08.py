@@ -8,7 +8,8 @@ from __future__ import division
 from math import exp, log
 
 from .iapws95 import IAPWS95
-from ._iapws import _ThCond, deriv_G
+from ._iapws import _ThCond
+from ._utils import deriv_G
 
 
 # Constants

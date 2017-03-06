@@ -87,9 +87,9 @@ from math import sqrt, log, exp
 
 from scipy.optimize import fsolve, newton
 
-from ._iapws import M, R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent, _fase
+from ._iapws import M, R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent
 from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
-from ._iapws import getphase, deriv_G
+from ._utils import getphase, deriv_G, _fase
 
 
 # Critic properties

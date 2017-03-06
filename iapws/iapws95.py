@@ -15,11 +15,11 @@ import warnings
 from scipy import exp, log, ndarray
 from scipy.optimize import fsolve
 
+from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
-from ._iapws import _fase, getphase, deriv_H
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
-from .iapws97 import _TSat_P, IAPWS97
+from ._utils import _fase, getphase, deriv_H
 
 
 class MEoS(_fase):

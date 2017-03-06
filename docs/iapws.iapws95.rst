@@ -5,3 +5,6 @@ iapws.iapws95 module
     :members:
     :private-members: 
     :undoc-members:
+
+.. autoclass:: IAPWS95, D2O
+    :members: derivative
