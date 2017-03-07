@@ -18,11 +18,12 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
                            _Backward3_v_PT, _P23_T, _t_P, _P_2bc, _hbc_P)
 from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
-from iapws.iapws08 import SeaWater, _ThCond_SeaWater
+from iapws.iapws08 import SeaWater, _ThCond_SeaWater, _solNa2SO4
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
-                          _Conductivity, _Henry, _Kvalue)
+                          # _Conductivity,
+                          _Henry, _Kvalue)
 
 
 # Python version detect for new capacities of unittest
@@ -1566,6 +1567,24 @@ class Test(unittest.TestCase):
 
         fluid = SeaWater(T=270, P=1, S=0.12)
         self.assertRaises(NotImplementedError, _ThCond_SeaWater, *(270, 1, 0))
+
+    def test_na2so4(self):
+        """Selected point from Table 1, pag 5"""
+        self.assertEqual(round(_solNa2SO4(523.15, 0, 0), 2), 3.54)
+        self.assertEqual(round(_solNa2SO4(523.15, 0.25, 0.083), 2), 3.31)
+        self.assertEqual(round(_solNa2SO4(523.15, 0.75, 2.25), 2), 2.85)
+        self.assertEqual(round(_solNa2SO4(548.15, 0, 0), 2), 2.51)
+        self.assertEqual(round(_solNa2SO4(548.15, 0.75, 2.25), 2), 2.62)
+        self.assertEqual(round(_solNa2SO4(548.15, 0.25, 0.083), 2), 2.58)
+        self.assertEqual(round(_solNa2SO4(573.15, 0, 0), 2), 1.61)
+        self.assertEqual(round(_solNa2SO4(573.15, 0.75, 2.25), 2), 2.42)
+        self.assertEqual(round(_solNa2SO4(598.15, 0, 0), 2), 0.81)
+        self.assertEqual(round(_solNa2SO4(598.15, 0.25, 0.083), 2), 1.2)
+        self.assertEqual(round(_solNa2SO4(598.15, 0.75, 2.25), 2), 2.26)
+        self.assertEqual(round(_solNa2SO4(623.15, 0, 0), 2), 0.13)
+        self.assertEqual(round(_solNa2SO4(623.15, 0.25, 0.083), 2), 0.55)
+        self.assertEqual(round(_solNa2SO4(623.15, 0.75, 2.25), 2), 2.13)
+        self.assertRaises(NotImplementedError, _solNa2SO4, *(500, 0, 0))
 
     def test_Henry(self):
         # Table 6 for Henry constants

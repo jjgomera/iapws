@@ -392,3 +392,59 @@ def _ThCond_SeaWater(T, P, S):
     # Eq 1
     DL = a*(1000*S)**(1+b)
     return DL
+
+
+def _solNa2SO4(T, mH2SO4, mNaCl):
+    """Equation for the solubility of sodium sulfate in aqueous mixtures of
+    sodium chloride and sulfuric acid
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    mH2SO4 : float
+        Molality of sufuric acid [mol/kg(water)]
+    mNaCl : float
+        Molality of sodium chloride [mol/kg(water)]
+
+    Returns
+    -------
+    S : float
+        Molal solutility of sodium sulfate [mol/kg(water)]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 523.15 ≤ T ≤ 623.15
+        * 0 ≤ mH2SO4 ≤ 0.75
+        * 0 ≤ mNaCl ≤ 2.25
+
+    Examples
+    --------
+    >>> _solNa2SO4(523.15, 0.25, 0.75)
+    2.68
+
+    References
+    ----------
+    IAPWS, Solubility of Sodium Sulfate in Aqueous Mixtures of Sodium Chloride
+    and Sulfuric Acid from Water to Concentrated Solutions,
+    http://www.iapws.org/relguide/na2so4.pdf
+    """
+    # Check input parameters
+    if T < 523.15 or T > 623.15 or mH2SO4 < 0 or mH2SO4 > 0.75 or \
+            mNaCl < 0 or mNaCl > 2.25:
+        raise NotImplementedError("Incoming out of bound")
+
+    A00 = -0.8085987*T+81.4613752+0.10537803*T*log(T)
+    A10 = 3.4636364*T-281.63322-0.46779874*T*log(T)
+    A20 = -6.0029634*T+480.60108+0.81382854*T*log(T)
+    A30 = 4.4540258*T-359.36872-0.60306734*T*log(T)
+    A01 = 0.4909061*T-46.556271-0.064612393*T*log(T)
+    A02 = -0.002781314*T+1.722695+0.0000013319698*T*log(T)
+    A03 = -0.014074108*T+0.99020227+0.0019397832*T*log(T)
+    A11 = -0.87146573*T+71.808756+0.11749585*T*log(T)
+
+    S = A00 + A10*mH2SO4 + A20*mH2SO4**2 + A30*mH2SO4**3 + A01*mNaCl + \
+        A02*mNaCl**2 + A03*mNaCl**3 + A11*mH2SO4*mNaCl
+
+    return S
