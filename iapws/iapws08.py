@@ -8,7 +8,7 @@ from __future__ import division
 from math import exp, log
 
 from .iapws95 import IAPWS95
-from ._iapws import _ThCond
+from ._iapws import _ThCond, Tc, Pc, rhoc
 from ._utils import deriv_G
 
 
@@ -448,3 +448,62 @@ def _solNa2SO4(T, mH2SO4, mNaCl):
         A02*mNaCl**2 + A03*mNaCl**3 + A11*mH2SO4*mNaCl
 
     return S
+
+
+def _critNaCl(x):
+    """Equation for the critical locus of aqueous solutions of sodium chloride
+
+    Parameters
+    ----------
+    x : float
+        Mole fraction of NaCl [-]
+
+    Returns
+    -------
+    prop : float
+        dictionary with critical Properties
+        Tc: critical temperature [K]
+        Pc: critical pressure [MPa]
+        rhoc: critical density [kg/m³]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 0 ≤ x ≤ 0.12
+
+    Examples
+    --------
+    >>> _critNaCl(0.1)
+    975.571016
+
+    References
+    ----------
+    IAPWS, Revised Guideline on the Critical Locus of Aqueous Solutions of
+    Sodium Chloride, http://www.iapws.org/relguide/critnacl.html
+    """
+    # Check input parameters
+    if x < 0 or x > 0.12:
+        raise NotImplementedError("Incoming out of bound")
+    T1 = Tc*(1 + 2.3e1*x - 3.3e2*x**1.5 - 1.8e3*x**2)
+    T2 = Tc*(1 + 1.757e1*x - 3.026e2*x**1.5 + 2.838e3*x**2 - 1.349e4*x**2.5 +
+             3.278e4*x**3 - 3.674e4*x**3.5 + 1.437e4*x**4)
+    f1 = (abs(10000*x-10-1)-abs(10000*x-10+1))/4+0.5
+    f2 = (abs(10000*x-10+1)-abs(10000*x-10-1))/4+0.5
+
+    # Eq 1
+    tc = f1*T1+f2*T2
+
+    # Eq 7
+    rc = rhoc*(1 + 1.7607e2*x - 2.9693e3*x**1.5 + 2.4886e4*x**2 -
+               1.1377e5*x**2.5 + 2.8847e5*x**3 - 3.8195e5*x**3.5 +
+               2.0633e5*x**4)
+
+    # Eq 8
+    DT = tc-Tc
+    pc = Pc*(1+9.1443e-3*DT+5.1636e-5*DT**2-2.5360e-7*DT**3+3.6494e-10*DT**4)
+
+    prop = {}
+    prop["Tc"] = tc
+    prop["rhoc"] = rc
+    prop["Pc"] = pc
+    return prop
