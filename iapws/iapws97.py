@@ -87,7 +87,7 @@ from math import sqrt, log, exp
 
 from scipy.optimize import fsolve, newton
 
-from ._iapws import M, R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent
+from ._iapws import R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent
 from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
 from ._utils import getphase, deriv_G, _fase
 
@@ -4561,7 +4561,7 @@ class IAPWS97(object):
             self.sigma = _Tension(T)
             propiedades["x"] = x
 
-        self.M = M
+        self.M = 18.015257  # kg/kmol
         self.Pc = Pc
         self.Tc = Tc
         self.rhoc = rhoc

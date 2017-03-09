@@ -16,7 +16,7 @@ from scipy import exp, log, ndarray
 from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
-from ._iapws import Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
+from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H
@@ -1477,7 +1477,7 @@ class IAPWS95(MEoS):
     Tc = Tc
     rhoc = rhoc
     Pc = Pc
-    M = 18.015268  # g/mol
+    M = M
     Tt = 273.16
     Tb = 373.1243
     f_acent = 0.3443

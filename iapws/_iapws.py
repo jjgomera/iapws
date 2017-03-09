@@ -13,7 +13,7 @@ import warnings
 
 # Constants
 Rm = 8.31451      # kJ/kmol·K
-M = 18.015257     # kg/kmol
+M = 18.015268  # g/mol
 R = 0.461526      # kJ/kg·K
 
 # Table 1 from Release on the Values of Temperature, Pressure and Density of
@@ -699,7 +699,6 @@ def _Dielectric(rho, T):
     alfa = 1.636e-40
     epsilon0 = 8.854187817e-12
     mu = 6.138e-30
-    M = 0.018015268
 
     d = rho/rhoc
     Tr = Tc/T
@@ -713,8 +712,8 @@ def _Dielectric(rho, T):
     g = 1+n[11]*d/(Tc/228/Tr-1)**1.2
     for i in range(11):
         g += n[i]*d**I[i]*Tr**J[i]
-    A = Na*mu**2*rho*g/M/epsilon0/k/T
-    B = Na*alfa*rho/3/M/epsilon0
+    A = Na*mu**2*rho*g/M*1000/epsilon0/k/T
+    B = Na*alfa*rho/3/M*1000/epsilon0
     e = (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
     return e
 
