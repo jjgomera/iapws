@@ -460,8 +460,7 @@ def _critNaCl(x):
 
     Returns
     -------
-    prop : float
-        dictionary with critical Properties
+    prop : dictionary with critical Properties
         Tc: critical temperature [K]
         Pc: critical pressure [MPa]
         rhoc: critical density [kg/m³]
@@ -484,6 +483,7 @@ def _critNaCl(x):
     # Check input parameters
     if x < 0 or x > 0.12:
         raise NotImplementedError("Incoming out of bound")
+
     T1 = Tc*(1 + 2.3e1*x - 3.3e2*x**1.5 - 1.8e3*x**2)
     T2 = Tc*(1 + 1.757e1*x - 3.026e2*x**1.5 + 2.838e3*x**2 - 1.349e4*x**2.5 +
              3.278e4*x**3 - 3.674e4*x**3.5 + 1.437e4*x**4)
