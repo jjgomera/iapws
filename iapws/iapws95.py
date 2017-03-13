@@ -982,9 +982,21 @@ class MEoS(_fase):
         Tc = self._constants.get("Tref", self.Tc)
         delta = rho/rhoc
         tau = Tc/T
-        fio, fiot, fiott, fiod, fiodd, fiodt = self._phi0(tau, delta)
-        fir, firt, firtt, fird, firdd, firdt, firdtt, B, C = self._phir(
-            tau, delta)
+        ideal = self._phi0(tau, delta)
+        fio = ideal["fio"]
+        fiot = ideal["fiot"]
+        fiott = ideal["fiott"]
+        fiodt = ideal["fiodt"]
+
+        res = self._phir(tau, delta)
+        fir = res["fir"]
+        firt = res["firt"]
+        firtt = res["firtt"]
+        fird = res["fird"]
+        firdd = res["firdd"]
+        firdt = res["firdt"]
+        B = res["B"]
+        C = res["C"]
 
         propiedades = {}
         propiedades["fir"] = fir
@@ -1026,7 +1038,10 @@ class MEoS(_fase):
         Tc = self._constants.get("Tref", self.Tc)
         delta = rho/rhoc
         tau = Tc/T
-        fio, fiot, fiott, fiod, fiodd, fiodt = self._phi0(tau, delta)
+        ideal = self._phi0(tau, delta)
+        fio = ideal["fio"]
+        fiot = ideal["fiot"]
+        fiott = ideal["fiott"]
 
         propiedades = _fase()
         propiedades.h = self.R*T*(1+tau*fiot)
@@ -1068,9 +1083,17 @@ class MEoS(_fase):
             fiot += fext
             fiott += fextt
 
-        return fio, fiot, fiott, fiod, fiodd, fiodt
+        prop = {}
+        prop["fio"] = fio
+        prop["fiot"] = fiot
+        prop["fiott"] = fiott
+        prop["fiod"] = fiod
+        prop["fiodd"] = fiodd
+        prop["fiodt"] = fiodt
+        return prop
 
     def _phiex(self, T):
+        """Low temperature extension"""
         tau = self.Tc/T
         E = 0.278296458178592
         ep = self.Tc/130
@@ -1083,7 +1106,7 @@ class MEoS(_fase):
     def _phir(self, tau, delta):
         delta_0 = 1e-200
 
-        fir = fird = firdd = firt = firtt = firdt = firdtt = B = C = 0
+        fir = fird = firdd = firt = firtt = firdt = B = C = 0
 
         # Polinomial terms
         nr1 = self._constants.get("nr1", [])
@@ -1096,7 +1119,6 @@ class MEoS(_fase):
             firt += n*t*delta**d*tau**(t-1)
             firtt += n*t*(t-1)*delta**d*tau**(t-2)
             firdt += n*t*d*delta**(d-1)*tau**(t-1)
-            firdtt += n*t*d*(t-1)*delta**(d-1)*tau**(t-2)
             B += n*d*delta_0**(d-1)*tau**t
             C += n*d*(d-1)*delta_0**(d-2)*tau**t
 
@@ -1115,8 +1137,6 @@ class MEoS(_fase):
             firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-g*delta**c)
             firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(
                 -g*delta**c)
-            firdtt += n*t*(t-1)*delta**(d-1)*tau**(t-2)*(d-g*c*delta**c) * \
-                exp(-g*delta**c)
             B += n*exp(-g*delta_0**c)*delta_0**(d-1)*tau**t*(d-g*c*delta_0**c)
             C += n*exp(-g*delta_0**c)*(delta_0**(d-2)*tau**t*(
                 (d-g*c*delta_0**c)*(d-1-g*c*delta_0**c)-g**2*c**2*delta_0**c))
@@ -1153,10 +1173,6 @@ class MEoS(_fase):
                 delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
                     t3[i]/tau-2*b3[i]*(tau-g3[i]))*(d3[i]/delta-2*a3[i]*(
                         delta-e3[i]))
-            firdtt += nr3[i]*delta**d3[i]*tau**t3[i]*exp(-a3[i]*(
-                delta-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*((
-                    t3[i]/tau-2*b3[i]*(tau-g3[i]))**exp2[i]-t3[i]/tau**2-2 *
-                    b3[i])*(d3[i]/delta-2*a3[i]*(delta-e3[i]))
             B += nr3[i]*delta_0**d3[i]*tau**t3[i]*exp(-a3[i]*(
                 delta_0-e3[i])**exp1[i]-b3[i]*(tau-g3[i])**exp2[i])*(
                     d3[i]/delta_0-2*a3[i]*(delta_0-e3[i]))
@@ -1183,7 +1199,6 @@ class MEoS(_fase):
             Ft = -2*D[i]*F*(tau-1)
             Ftt = 2*D[i]*F*(2*D[i]*(tau-1)**2-1)
             Fdt = 4*Ci[i]*D[i]*F*(delta-1)*(tau-1)
-            Fdtt = 4*Ci[i]*D[i]*F*(delta-1)*(2*D[i]*(tau-1)**2-1)
 
             Delta = Tita**2+Bi[i]*((delta-1)**2)**a4[i]
             Deltad = (delta-1)*(A[i]*Tita*2/bt[i]*((delta-1)**2)**(
@@ -1205,9 +1220,6 @@ class MEoS(_fase):
             DeltaBdt = -A[i]*b[i]*2/bt[i]*Delta**(b[i]-1)*(delta-1)*((
                 delta-1)**2)**(0.5/bt[i]-1)-2*Tita*b[i]*(b[i]-1)*Delta**(
                     b[i]-2)*Deltad
-            DeltaBdtt = 2*b[i]*(b[i]-1)*Delta**(b[i]-2)*(Deltad*(
-                1+2*Tita**2*(b[i]-2)/Delta)+4*Tita*A[i]*(delta-1)/bt[i]*((
-                    delta-1)**2)**(0.5/bt[i]-1))
 
             fir += nr4[i]*Delta**b[i]*delta*F
             fird += nr4[i]*(Delta**b[i]*(F+delta*Fd)+DeltaBd*delta*F)
@@ -1217,9 +1229,6 @@ class MEoS(_fase):
             firtt += nr4[i]*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt)
             firdt += nr4[i]*(Delta**b[i]*(Ft+delta*Fdt)+delta*DeltaBd*Ft +
                              DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
-            firdtt += nr4[i]*((DeltaBtt*F+2*DeltaBt*Ft+Delta**b[i]*Ftt)+delta*(
-                DeltaBdtt*F+DeltaBtt*Fd+2*DeltaBdt*Ft+2*DeltaBt*Fdt+DeltaBt *
-                Ftt+Delta**b[i]*Fdtt))
 
             Tita_ = (1-tau)+A[i]*((delta_0-1)**2)**(0.5/bt[i])
             Delta_ = Tita_**2+Bi[i]*((delta_0-1)**2)**a4[i]
@@ -1241,7 +1250,16 @@ class MEoS(_fase):
             C += nr4[i]*(Delta_**b[i]*(2*Fd_+delta_0*Fdd_)+2*DeltaBd_*(
                 F_+delta_0*Fd_)+DeltaBdd_*delta_0*F_)
 
-        return fir, firt, firtt, fird, firdd, firdt, firdtt, B, C
+        prop = {}
+        prop["fir"] = fir
+        prop["firt"] = firt
+        prop["firtt"] = firtt
+        prop["fird"] = fird
+        prop["firdd"] = firdd
+        prop["firdt"] = firdt
+        prop["B"] = B
+        prop["C"] = C
+        return prop
 
     @classmethod
     def _Vapor_Pressure(cls, T):

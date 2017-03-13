@@ -45,21 +45,21 @@ class Test(unittest.TestCase):
         delta = rho/fluid.rhoc
         tau = fluid.Tc/T
 
-        fio, fiot, fiott, fiod, fiodd, fiodt = fluid._phi0(tau, delta)
-        self.assertEqual(round(fio, 8), 2.04797733)
-        self.assertEqual(round(fiod, 9), 0.384236747)
-        self.assertEqual(round(fiodd, 9), -0.147637878)
-        self.assertEqual(round(fiot, 8), 9.04611106)
-        self.assertEqual(round(fiott, 8), -1.93249185)
-        self.assertEqual(round(fiodt, 8), 0.0)
+        ideal = fluid._phi0(tau, delta)
+        self.assertEqual(round(ideal["fio"], 8), 2.04797733)
+        self.assertEqual(round(ideal["fiod"], 9), 0.384236747)
+        self.assertEqual(round(ideal["fiodd"], 9), -0.147637878)
+        self.assertEqual(round(ideal["fiot"], 8), 9.04611106)
+        self.assertEqual(round(ideal["fiott"], 8), -1.93249185)
+        self.assertEqual(round(ideal["fiodt"], 8), 0.0)
 
-        fir, firt, firtt, fird, firdd, firdt, firdtt, B, C = fluid._phir(tau, delta)
-        self.assertEqual(round(fir, 8), -3.42693206)
-        self.assertEqual(round(fird, 9), -0.364366650)
-        self.assertEqual(round(firdd, 9), 0.856063701)
-        self.assertEqual(round(firt, 8), -5.81403435)
-        self.assertEqual(round(firtt, 8), -2.23440737)
-        self.assertEqual(round(firdt, 8), -1.12176915)
+        res = fluid._phir(tau, delta)
+        self.assertEqual(round(res["fir"], 8), -3.42693206)
+        self.assertEqual(round(res["fird"], 9), -0.364366650)
+        self.assertEqual(round(res["firdd"], 9), 0.856063701)
+        self.assertEqual(round(res["firt"], 8), -5.81403435)
+        self.assertEqual(round(res["firtt"], 8), -2.23440737)
+        self.assertEqual(round(res["firdt"], 8), -1.12176915)
 
     def test_phase(self):
         """Table 7 from IAPWS95, pag 14"""
@@ -1587,7 +1587,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _solNa2SO4, *(500, 0, 0))
 
     def test_critNaCl(self):
-        "Table II, page 6"""
+        """Table II, page 6"""
         crit = _critNaCl(0)
         self.assertEqual(round(crit["Tc"], 6), 647.096000)
         self.assertEqual(round(crit["Pc"], 7), 22.0640000)
