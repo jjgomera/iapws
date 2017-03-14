@@ -6,11 +6,16 @@ Ammonia-Water Mistures
 """
 
 
+from __future__ import division
 from math import exp, log
 import warnings
 
-from ._iapws import M, rhoc, Tc
-from .iapws95 import MEoS
+from ._iapws import M as Mw
+from .iapws95 import MEoS, IAPWS95
+
+
+Ma = 28.96546  # g/mol
+R = 8.314472  # J/molK
 
 
 def _virial(T):
@@ -32,6 +37,12 @@ def _virial(T):
         Caaw: Third air-water cross virial coefficient [m⁶/mol]
         Caww: Third air-water cross virial coefficient [m⁶/mol]
         Cwww: Third virial coefficient of dry air [m⁶/mol]
+        Bawt: dBaw/dT [m³/molK]
+        Bawtt: d²Baw/dT² [m³/molK²]
+        Caawt: dCaaw/dT [m⁶/molK]
+        Caawtt: d²Caaw/dT² [m⁶/molK²]
+        Cawwt: dCaww/dT [m⁶/molK]
+        Cawwtt: d²Caww/dT² [m⁶/molK²]
 
     Raises
     ------
@@ -53,6 +64,10 @@ def _virial(T):
     ----------
     IAPWS, Guideline on a Virial Equation for the Fugacity of H2O in Humid Air,
     http://www.iapws.org/relguide/VirialFugacity.html
+    IAPWS, Guideline on an Equation of State for Humid Air in Contact with
+    Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
+    Thermodynamic Properties of Seawater, Table 10,
+    http://www.iapws.org/relguide/SeaAir.html
     """
     # Check input parameters
     if T < 60 or T > 2000:
@@ -71,7 +86,7 @@ def _virial(T):
         warnings.warn("Cwww out of validity range")
 
     T_ = T/100
-    tau = Tc/T
+    tau = IAPWS95.Tc/T
 
     # Table 1
     # Reorganizated to easy use in equations
@@ -101,7 +116,7 @@ def _virial(T):
     sum2 = 0
     for n, b, B, A, C, D in zip(ni, bi, Bi, Ai, Ci, Di):
         sum2 += n*((A+1-tau)**2+B)**b*exp(-C-D*(tau-1)**2)
-    Bww = M/rhoc*(sum1+sum2)
+    Bww = Mw/IAPWS95.rhoc*(sum1+sum2)
 
     # Eq 6
     sum1 = sum([n*tau**t for n, t in zip(nc, bc)])
@@ -111,7 +126,7 @@ def _virial(T):
         Tita = A+1-tau
         sum3 += n*(C*(Tita**2+B)-b*(A*Tita/beta+B*a))*(Tita**2+B)**(b-1) * \
             exp(-C-D*(tau-1)**2)
-    Cwww = 2*(M/rhoc)**2*(sum1-sum2+2*sum3)
+    Cwww = 2*(Mw/IAPWS95.rhoc)**2*(sum1-sum2+2*sum3)
 
     # Table 3
     ai = [0.482737e-3, 0.105678e-2, -0.656394e-2, 0.294442e-1, -0.319317e-1]
@@ -119,9 +134,28 @@ def _virial(T):
     ci = [66.5687, -238.834, -176.755]
     di = [-0.237, -1.048, -3.183]
 
-    Baw = 1e-6*sum([c*T_**d for c, d in zip(ci, di)])                # Eq 7
-    Caaw = 1e-6*sum([a/T_**i for i, a in enumerate(ai)])             # Eq 8
-    Caww = -1e-6*exp(sum([b/T_**i for i, b in enumerate(bi)]))       # Eq 9
+    Baw = 1e-6*sum([c*T_**d for c, d in zip(ci, di)])                  # Eq 7
+    Caaw = 1e-6*sum([a/T_**i for i, a in enumerate(ai)])               # Eq 8
+    Caww = -1e-6*exp(sum([b/T_**i for i, b in enumerate(bi)]))         # Eq 9
+
+    # Eq T56
+    Bawt = 1e-6*T_/T*sum([c*d*T_**(d-1) for c, d in zip(ci, di)])
+    # Eq T57
+    Bawtt = 1e-6*T_**2/T**2*sum(
+        [c*d*(d-1)*T_**(d-2) for c, d in zip(ci, di)])
+    # Eq T59
+    Caawt = -1e-6*T_/T*sum([i*a*T_**(-i-1) for i, a in enumerate(ai)])
+    # Eq T60
+    Caawtt = 1e-6*T_**2/T**2*sum(
+        [i*(i+1)*a*T_**(-i-2) for i, a in enumerate(ai)])
+    # Eq T62
+    Cawwt = 1e-6*T_/T*sum([i*b*T_**(-i-1) for i, b in enumerate(bi)]) * \
+        exp(sum([b/T_**i for i, b in enumerate(bi)]))
+    # Eq T63
+    Cawwtt = -1e-6*T_**2/T**2*((
+        sum([i*(i+1)*b*T_**(-i-2) for i, b in enumerate(bi)]) +
+        sum([i*b*T_**(-i-1) for i, b in enumerate(bi)])**2) *
+        exp(sum([b/T_**i for i, b in enumerate(bi)])))
 
     # Table 4
     # Reorganizated to easy use in equations
@@ -141,6 +175,12 @@ def _virial(T):
     prop["Caaw"] = Caaw
     prop["Caww"] = Caww
     prop["Cwww"] = Cwww/1e6
+    prop["Bawt"] = Bawt
+    prop["Bawtt"] = Bawtt
+    prop["Caawt"] = Caawt
+    prop["Caawtt"] = Caawtt
+    prop["Cawwt"] = Cawwt
+    prop["Cawwtt"] = Cawwtt
     return prop
 
 
