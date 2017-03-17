@@ -251,6 +251,9 @@ class MEoS(_fase):
         if T0 or rho0:
             To = T0
             rhoo = rho0
+        elif self.name == "air":
+            To = 300
+            rhoo = 1e-3
         else:
             try:
                 st0 = IAPWS97(**self.kwargs)
@@ -273,6 +276,8 @@ class MEoS(_fase):
             # Method with iteration necessary to get x
             if self._mode == "TP":
                 try:
+                    if self.name == "air":
+                        raise ValueError
                     st0 = IAPWS97(**self.kwargs)
                     rhoo = st0.rho
                 except NotImplementedError:
@@ -285,6 +290,8 @@ class MEoS(_fase):
                         rhoo = self._Vapor_Density(T)
                     else:
                         rhoo = self.rhoc*3
+                except ValueError:
+                    rhoo = 1e-3
                 rho = fsolve(
                     lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)[0]
 
@@ -887,6 +894,15 @@ class MEoS(_fase):
         fase.cp_cv = fase.cp/fase.cv
         fase.w = estado["w"]
 
+        fase.rhoM = fase.rho/self.M
+        fase.hM = fase.h*self.M
+        fase.sM = fase.s*self.M
+        fase.uM = fase.u*self.M
+        fase.aM = fase.a*self.M
+        fase.gM = fase.g*self.M
+        fase.cvM = fase.cv*self.M
+        fase.cpM = fase.cp*self.M
+
         fase.alfap = estado["alfap"]
         fase.betap = estado["betap"]
 
@@ -1074,6 +1090,12 @@ class MEoS(_fase):
             fio += n*log(1-exp(-tau*t))
             fiot += n*t*((1-exp(-t*tau))**-1-1)
             fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
+
+        if "ao_exp2" in Fi0:
+            for n, g, sum in zip(Fi0["ao_exp2"], Fi0["titao2"], Fi0["sum2"]):
+                fio += n*log(sum+exp(g*tau))
+                fiot += n*g/(sum*exp(-g*tau)+1)
+                fiott += sum*n*g**2*exp(-g*tau)/(sum*exp(-g*tau)+1)**2
 
         prop = {}
         prop["fio"] = fio

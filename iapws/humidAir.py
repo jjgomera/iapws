@@ -240,3 +240,111 @@ def _fugacity(T, P, x):
     # Eq 2
     fv = x*P*exp(beta*P*1e6/R/T+0.5*gamma*(P*1e6/R/T)**2)
     return fv
+
+
+class MEoSBlend(MEoS):
+    """Special meos class to implement pseudocomponent blend and defining its
+    ancillary dew and bubble point"""
+    @classmethod
+    def _dewP(cls, T):
+        """Using ancillary equation return the pressure of dew point"""
+        c = cls._constants["dew"]
+        Tj = cls._constants["Tj"]
+        Pj = cls._constants["Pj"]
+        Tita = 1-T/Tj
+
+        suma = 0
+        for i, n in zip(c["i"], c["n"]):
+            suma += n*Tita**(i/2.)
+        P = Pj*exp(Tj/T*suma)
+        return P
+
+    @classmethod
+    def _bubbleP(cls, T):
+        """Using ancillary equation return the pressure of bubble point"""
+        c = cls._constants["bubble"]
+        Tj = cls._constants["Tj"]
+        Pj = cls._constants["Pj"]
+        Tita = 1-T/Tj
+
+        suma = 0
+        for i, n in zip(c["i"], c["n"]):
+            suma += n*Tita**(i/2.)
+        P = Pj*exp(Tj/T*suma)
+        return P
+
+
+class Air(MEoSBlend):
+    """Multiparameter equation of state for Air as pseudocomponent"""
+    name = "air"
+    CASNumber = "1"
+    formula = "N2+Ar+O2"
+    synonym = "R-729"
+    rhoc = 342.60456
+    Tc = 132.6306
+    Pc = 3786.0  # kPa
+    M = Ma
+    Tt = 59.75
+    Tb = 78.903
+    f_acent = 0.0335
+    momentoDipolar = 0.0
+
+    Fi0 = {"ao_log": [1, 2.490888032],
+           "pow": [-3, -2, -1, 0, 1, 1.5],
+           "ao_pow": [0.6057194e-7, -0.210274769e-4, -0.158860716e-3,
+                      9.7480251743948, 10.0986147428912, -0.19536342e-3],
+           "ao_exp": [0.791309509, 0.212236768],
+           "titao": [25.36365, 16.90741],
+           "ao_exp2": [-0.197938904],
+           "titao2": [87.31279],
+           "sum2": [2./3]
+           }
+
+    _constants = {
+        "R": 8.314472,
+        "Tref": 132.6312, "rhoref": 10.4477*28.9586,
+
+        "Tj": 132.6312, "Pj": 3.78502,
+        "dew": {"i": [1, 2, 5, 8],
+                "n": [-0.1567266, -5.539635, 0.7567212, -3.514322]},
+        "bubble": {"i": [1, 2, 3, 4, 5, 6],
+                   "n": [0.2260724, -7.080499, 5.700283, -12.44017, 17.81926,
+                         -10.81364]},
+
+        "nr1": [0.118160747229, 0.713116392079, -0.161824192067e1,
+                0.714140178971e-1, -0.865421396646e-1, 0.134211176704,
+                0.112626704218e-1, -0.420533228842e-1, 0.349008431982e-1,
+                0.164957183186e-3],
+        "d1": [1, 1, 1, 2, 3, 3, 4, 4, 4, 6],
+        "t1": [0, 0.33, 1.01, 0, 0, 0.15, 0, 0.2, 0.35, 1.35],
+
+        "nr2": [-0.101365037912, -0.173813690970, -0.472103183731e-1,
+                -0.122523554253e-1, -0.146629609713, -0.316055879821e-1,
+                0.233594806142e-3, 0.148287891978e-1, -0.938782884667e-2],
+        "d2": [1, 3, 5, 6, 1, 3, 11, 1, 3],
+        "t2": [1.6, 0.8, 0.95, 1.25, 3.6, 6, 3.25, 3.5, 15],
+        "c2": [1, 1, 1, 1, 2, 2, 2, 3, 3],
+        "gamma2": [1]*9}
+
+    _melting = {"eq": 1, "Tref": Tb, "Pref": 5.265,
+                "Tmin": 59.75, "Tmax": 2000.0,
+                "a1": [1, 0.354935e5, -0.354935e5],
+                "exp1": [0, 0.178963e1, 0],
+                "a2": [], "exp2": [], "a3": [], "exp3": []}
+    _rhoG = {
+        "eq": 3,
+        "ao": [-0.20466e1, -0.4752e1, -0.13259e2, -0.47652e2],
+        "exp": [0.41, 1, 2.8, 6.5]}
+    _Pv = {
+        "ao": [-0.1567266, -0.5539635e1, 0.7567212, -0.3514322e1],
+        "exp": [0.5, 1, 2.5, 4]}
+
+    def _surface(self, T):
+        """Equation for the surface tension"""
+        tau = 1-T/self.Tc
+        tension = 0
+        sigmai = [0.03046]
+        ni = [1.28]
+        for sigma, n in zip(sigmai, ni):
+            tension += sigma*tau**n
+        return tension
