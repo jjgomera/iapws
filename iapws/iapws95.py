@@ -184,11 +184,11 @@ class MEoS(_fase):
                 raise(err)
 
             # Add msg for extrapolation state
-            if 130 <= self.T < 273.15:
+            if self.name == "water" and 130 <= self.T < 273.15:
                 self.msg = "Extrapolated state"
                 self.status = 3
                 warnings.warn("Using extrapolated values")
-            elif 50 <= self.T < 130:
+            elif self.name == "water" and 50 <= self.T < 130:
                 self.msg = "Extrapolated state using Low-Temperature extension"
                 self.status = 3
                 warnings.warn("Using extrapolated values and Low-Temperature"
@@ -1075,14 +1075,6 @@ class MEoS(_fase):
             fiot += n*t*((1-exp(-t*tau))**-1-1)
             fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
 
-        # Low temperature extension of the IAPWS-95
-        T = self.Tc/tau
-        if 50 <= T < 130:
-            fex, fext, fextt = self._phiex(T)
-            fio += fex
-            fiot += fext
-            fiott += fextt
-
         prop = {}
         prop["fio"] = fio
         prop["fiot"] = fiot
@@ -1091,17 +1083,6 @@ class MEoS(_fase):
         prop["fiodd"] = fiodd
         prop["fiodt"] = fiodt
         return prop
-
-    def _phiex(self, T):
-        """Low temperature extension"""
-        tau = self.Tc/T
-        E = 0.278296458178592
-        ep = self.Tc/130
-        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2 +
-                 tau**2/2/ep**3)
-        fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
-        fextt = E*(-1/tau+1/ep)**3
-        return fex, fext, fextt
 
     def _phir(self, tau, delta):
         delta_0 = 1e-200
@@ -1574,6 +1555,29 @@ class IAPWS95(MEoS):
         "ao": [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
                -63.9201063],
         "exp": [1, 2, 4, 9, 18.5, 35.5]}
+
+    def _phi0(self, tau, delta):
+        """Low temperature extension of the IAPWS-95"""
+        prop = MEoS._phi0(self, tau, delta)
+
+        T = self.Tc/tau
+        if 50 <= T < 130:
+            fex, fext, fextt = self._phiex(T)
+            prop["fio"] += fex
+            prop["fiot"] += fext
+            prop["fiott"] += fextt
+        return prop
+
+    def _phiex(self, T):
+        """Low temperature extension"""
+        tau = self.Tc/T
+        E = 0.278296458178592
+        ep = self.Tc/130
+        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2 +
+                 tau**2/2/ep**3)
+        fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
+        fextt = E*(-1/tau+1/ep)**3
+        return fex, fext, fextt
 
     @classmethod
     def _alfa_sat(cls, T):
