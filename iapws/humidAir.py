@@ -7,7 +7,7 @@ Ammonia-Water Mistures
 
 
 from __future__ import division
-from math import exp, log
+from math import exp, log, pi, atan
 import warnings
 
 from ._iapws import M as Mw
@@ -348,3 +348,177 @@ class Air(MEoSBlend):
         for sigma, n in zip(sigmai, ni):
             tension += sigma*tau**n
         return tension
+
+    @classmethod
+    def _Liquid_Density(cls, T):
+        """Auxiliary equation for the density or saturated liquid
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        rho : float
+            Saturated liquid density [kg/m³]
+        """
+        Tc = 132.6312
+        rhoc = 10.4477*cls.M
+        Ni = [44.3413, -240.073, 285.139, -88.3366]
+        ti = [0.65, 0.85, 0.95, 1.1]
+        Tita = 1-T/Tc
+        suma = 1
+        for n, t in zip(Ni, ti):
+            suma += n*Tita**t
+        suma -= 0.892181*log(T/Tc)
+        rho = suma*rhoc
+        return rho
+
+    @staticmethod
+    def _visco(rho, T, fase=None):
+        """Equation for the Viscosity
+
+        Parameters
+        ----------
+        rho : float
+            Density [kg/m³]
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        mu : float
+            Viscosity [Pa·s]
+
+        References
+        ----------
+        Lemmon, E.W. and Jacobsen, R.T., Viscosity and Thermal Conductivity
+        Equations for Nitrogen, Oxygen, Argon, and Air, Int. J. Thermophys.,
+        25:21-69, 2004. doi:10.1023/B:IJOT.0000022327.04529.f3
+        """
+        ek = 103.3
+        sigma = 0.36
+        M = 28.9586
+        rhoc = 10.4477*M
+        tau = 132.6312/T
+        delta = rho/rhoc
+
+        b = [0.431, -0.4623, 0.08406, 0.005341, -0.00331]
+        T_ = log(T/ek)
+        suma = 0
+        for i, bi in enumerate(b):
+            suma += bi*T_**i
+        omega = exp(suma)
+
+        # Eq 2
+        muo = 0.0266958*(M*T)**0.5/(sigma**2*omega)
+
+        n_poly = [10.72, 1.122, 0.002019, -8.876, -0.02916]
+        t_poly = [.2, .05, 2.4, .6, 3.6]
+        d_poly = [1, 4, 9, 1, 8]
+        l_poly = [0, 0, 0, 1, 1]
+        g_poly = [0, 0, 0, 1, 1]
+
+        # Eq 3
+        mur = 0
+        for n, t, d, l, g in zip(n_poly, t_poly, d_poly, l_poly, g_poly):
+            mur += n*tau**t*delta**d*exp(-g*delta**l)
+
+        # Eq 1
+        mu = muo+mur
+        return mu*1e-6
+
+    def _thermo(self, rho, T, fase=None):
+        """Equation for the thermal conductivity
+
+        Parameters
+        ----------
+        rho : float
+            Density [kg/m³]
+        T : float
+            Temperature [K]
+        fase: dict
+            phase properties
+
+        Returns
+        -------
+        k : float
+            Thermal conductivity [W/mK]
+
+        References
+        ----------
+        Lemmon, E.W. and Jacobsen, R.T., Viscosity and Thermal Conductivity
+        Equations for Nitrogen, Oxygen, Argon, and Air, Int. J. Thermophys.,
+        25:21-69, 2004. doi:10.1023/B:IJOT.0000022327.04529.f3
+        """
+        ek = 103.3
+        sigma = 0.36
+        M = 28.9586
+        rhoc = 10.4477*M
+        tau = 132.6312/T
+        delta = rho/rhoc
+
+        b = [0.431, -0.4623, 0.08406, 0.005341, -0.00331]
+        T_ = log(T/ek)
+        suma = 0
+        for i, bi in enumerate(b):
+            suma += bi*T_**i
+        omega = exp(suma)
+
+        # Eq 2
+        muo = 0.0266958*(M*T)**0.5/(sigma**2*omega)
+
+        # Eq 5
+        N = [1.308, 1.405, -1.036]
+        t = [-1.1, -0.3]
+        lo = N[0]*muo+N[1]*tau**t[0]+N[2]*tau**t[1]
+
+        n_poly = [8.743, 14.76, -16.62, 3.793, -6.142, -0.3778]
+        t_poly = [0.1, 0, 0.5, 2.7, 0.3, 1.3]
+        d_poly = [1, 2, 3, 7, 7, 11]
+        g_poly = [0, 0, 1, 1, 1, 1]
+        l_poly = [0, 0, 2, 2, 2, 2]
+
+        # Eq 6
+        lr = 0
+        for n, t, d, l, g in zip(n_poly, t_poly, d_poly, l_poly, g_poly):
+            lr += n*tau**t*delta**d*exp(-g*delta**l)
+
+        lc = 0
+        # TODO: Critical enchancement
+        # if fase:
+        #     qd = 0.31e-9
+        #     Gamma = 0.055
+        #     Xio = 0.11e-9
+        #     Tref = 265.262
+        #     k = 1.380658e-23  # J/K
+
+        #     # Eq 11
+        #     X = self.Pc*rho/rhoc**2*fase.drhodP_T
+        #     refst = self._Helmholtz(rho, Tref)
+        #     drhodP_T = 1/refst["dpdrho"]
+        #     Xref = 3.78502*rho/rhoc**2*drhodP_T
+
+        #     # Eq 10
+        #     bracket = X-Xref*Tref/T
+        #     if bracket > 0:
+        #         Xi = Xio*(bracket/Gamma)**(0.63/1.2415)
+
+        #         Xq = Xi/qd
+        #         # Eq 8
+        #         Omega = 2/pi*((fase.cp-fase.cv)/fase.cp*atan(Xq) +
+        #                       fase.cv/fase.cp*(Xq))
+        #         # Eq 9
+        #         Omega0 = 2/pi*(1-exp(-1/(1/Xq+Xq**2/3*rhoc**2/rho**2)))
+
+        #         # Eq 7
+        #         lc = rho*fase.cp*k*1.01*T/6/pi/Xi/fase.mu*(Omega-Omega0)
+        #     else:
+        #         lc = 0
+
+        # Eq 4
+        k = lo+lr+lc
+
+        return k*1e-3
+

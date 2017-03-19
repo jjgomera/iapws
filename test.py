@@ -22,8 +22,8 @@ from iapws.iapws08 import SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
-                          # _Conductivity,
-                          _Henry, _Kvalue)
+                          _Conductivity, _Henry, _Kvalue)
+from iapws.humidAir import _virial, _fugacity, Air, HumidAir
 
 
 # Python version detect for new capacities of unittest
