@@ -823,6 +823,57 @@ def _Kw(rho, T):
     return pKw
 
 
+def _Conductivity(rho, T):
+    """Equation for the electrolytic conductivity of liquid and dense
+    supercrítical water
+
+    Parameters
+    ----------
+    rho : float
+        Density [kg/m³]
+    T : float
+        Temperature [K]
+
+    Returns
+    -------
+    K : float
+        Electrolytic conductivity [S/m]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 600 ≤ ρ ≤ 1200
+        * 273.15 ≤ T ≤ 1073.15
+
+    Examples
+    --------
+    >>> _Conductivity(1000, 373.15)
+    1.13
+
+    References
+    ----------
+    IAPWS, Electrolytic Conductivity (Specific Conductance) of Liquid and Dense
+    Supercritical Water from 0°C to 800°C and Pressures up to 1000 MPa,
+    http://www.iapws.org/relguide/conduct.pdf
+    """
+    rho_ = rho/1000
+    kw = 10**-_Kw(rho, T)
+
+    A = [1850., 1410., 2.16417e-6, 1.81609e-7, -1.75297e-9, 7.20708e-12]
+    B = [16., 11.6, 3.26e-4, -2.3e-6, 1.1e-8]
+    t = T-273.15
+
+    Loo = A[0]-1/(1/A[1]+sum([A[i+2]*t**(i+1) for i in range(4)]))      # Eq 5
+    rho_h = B[0]-1/(1/B[1]+sum([B[i+2]*t**(i+1) for i in range(3)]))    # Eq 6
+
+    # Eq 4
+    L_o = (rho_h-rho_)*Loo/rho_h
+
+    # Eq 1
+    k = 100*1e-3*L_o*kw**0.5*rho_
+    return k
+
+
 # Heavy water transport properties
 def _D2O_Viscosity(rho, T):
     """Equation for the Viscosity of heavy water
