@@ -161,7 +161,7 @@ class MEoS(_fase):
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
-        self.R = self._constants["R"]/self.M
+        self.R = self._constants["R"]/self._constants.get("M", self.M)
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
@@ -268,7 +268,7 @@ class MEoS(_fase):
                     To = 300
                     rhoo = 900
 
-        self.R = self._constants["R"]/self.M
+        self.R = self._constants["R"]/self._constants.get("M", self.M)
 
         propiedades = None
 
@@ -1092,10 +1092,10 @@ class MEoS(_fase):
             fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
 
         if "ao_exp2" in Fi0:
-            for n, g, sum in zip(Fi0["ao_exp2"], Fi0["titao2"], Fi0["sum2"]):
-                fio += n*log(sum+exp(g*tau))
-                fiot += n*g/(sum*exp(-g*tau)+1)
-                fiott += sum*n*g**2*exp(-g*tau)/(sum*exp(-g*tau)+1)**2
+            for n, g, C in zip(Fi0["ao_exp2"], Fi0["titao2"], Fi0["sum2"]):
+                fio += n*log(C+exp(g*tau))
+                fiot += n*g/(C*exp(-g*tau)+1)
+                fiott += C*n*g**2*exp(-g*tau)/(C*exp(-g*tau)+1)**2
 
         prop = {}
         prop["fio"] = fio
@@ -1262,6 +1262,43 @@ class MEoS(_fase):
         prop["firdt"] = firdt
         prop["B"] = B
         prop["C"] = C
+        return prop
+
+    def _derivDimensional(self, rho, T):
+        """Return the dimensional form or Helmholtz free energy derivatives
+        IAPWS, Guideline on an Equation of State for Humid Air in Contact with
+        Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
+        Thermodynamic Properties of Seawater, Table 7,
+        http://www.iapws.org/relguide/SeaAir.html
+        """
+        R = self._constants.get("R")/self._constants.get("M", self.M)
+        rhoc = self._constants.get("rhoref", self.rhoc)
+        Tc = self._constants.get("Tref", self.Tc)
+        delta = rho/rhoc
+        tau = Tc/T
+
+        ideal = self._phi0(tau, delta)
+        fio = ideal["fio"]
+        fiot = ideal["fiot"]
+        fiott = ideal["fiott"]
+        fiod = ideal["fiod"]
+        fiodd = ideal["fiodd"]
+
+        res = self._phir(tau, delta)
+        fir = res["fir"]
+        firt = res["firt"]
+        firtt = res["firtt"]
+        fird = res["fird"]
+        firdd = res["firdd"]
+        firdt = res["firdt"]
+
+        prop = {}
+        prop["fir"] = R*T*(fio+fir)
+        prop["firt"] = R*(fio+fir-(fiot+firt)*tau)
+        prop["fird"] = R*T/rhoc*(fiod+fird)
+        prop["firtt"] = R*tau**2/T*(fiott+firtt)
+        prop["firdt"] = R/rhoc*(fiod+fird-firdt*tau)
+        prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
         return prop
 
     @classmethod

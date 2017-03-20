@@ -7,7 +7,7 @@ Ammonia-Water Mistures
 
 
 from __future__ import division
-from math import exp, log, pi, atan
+from math import exp, log
 import warnings
 
 from ._iapws import M as Mw
@@ -248,9 +248,9 @@ class MEoSBlend(MEoS):
     @classmethod
     def _dewP(cls, T):
         """Using ancillary equation return the pressure of dew point"""
-        c = cls._constants["dew"]
-        Tj = cls._constants["Tj"]
-        Pj = cls._constants["Pj"]
+        c = cls._blend["dew"]
+        Tj = cls._blend["Tj"]
+        Pj = cls._blend["Pj"]
         Tita = 1-T/Tj
 
         suma = 0
@@ -262,9 +262,9 @@ class MEoSBlend(MEoS):
     @classmethod
     def _bubbleP(cls, T):
         """Using ancillary equation return the pressure of bubble point"""
-        c = cls._constants["bubble"]
-        Tj = cls._constants["Tj"]
-        Pj = cls._constants["Pj"]
+        c = cls._blend["bubble"]
+        Tj = cls._blend["Tj"]
+        Pj = cls._blend["Pj"]
         Tita = 1-T/Tj
 
         suma = 0
@@ -280,7 +280,7 @@ class Air(MEoSBlend):
     CASNumber = "1"
     formula = "N2+Ar+O2"
     synonym = "R-729"
-    rhoc = 342.60456
+    rhoc = 10.4477*Ma
     Tc = 132.6306
     Pc = 3786.0  # kPa
     M = Ma
@@ -292,7 +292,7 @@ class Air(MEoSBlend):
     Fi0 = {"ao_log": [1, 2.490888032],
            "pow": [-3, -2, -1, 0, 1, 1.5],
            "ao_pow": [0.6057194e-7, -0.210274769e-4, -0.158860716e-3,
-                      9.7480251743948, 10.0986147428912, -0.19536342e-3],
+                      9.7450251743948, 10.0986147428912, -0.19536342e-3],
            "ao_exp": [0.791309509, 0.212236768],
            "titao": [25.36365, 16.90741],
            "ao_exp2": [-0.197938904],
@@ -301,15 +301,8 @@ class Air(MEoSBlend):
            }
 
     _constants = {
-        "R": 8.314472,
-        "Tref": 132.6312, "rhoref": 10.4477*28.9586,
-
-        "Tj": 132.6312, "Pj": 3.78502,
-        "dew": {"i": [1, 2, 5, 8],
-                "n": [-0.1567266, -5.539635, 0.7567212, -3.514322]},
-        "bubble": {"i": [1, 2, 3, 4, 5, 6],
-                   "n": [0.2260724, -7.080499, 5.700283, -12.44017, 17.81926,
-                         -10.81364]},
+        "R": 8.31451,
+        "Tref": 132.6312, "rhoref": 10.4477*Ma,
 
         "nr1": [0.118160747229, 0.713116392079, -0.161824192067e1,
                 0.714140178971e-1, -0.865421396646e-1, 0.134211176704,
@@ -325,6 +318,14 @@ class Air(MEoSBlend):
         "t2": [1.6, 0.8, 0.95, 1.25, 3.6, 6, 3.25, 3.5, 15],
         "c2": [1, 1, 1, 1, 2, 2, 2, 3, 3],
         "gamma2": [1]*9}
+
+    _blend = {
+        "Tj": 132.6312, "Pj": 3.78502,
+        "dew": {"i": [1, 2, 5, 8],
+                "n": [-0.1567266, -5.539635, 0.7567212, -3.514322]},
+        "bubble": {"i": [1, 2, 3, 4, 5, 6],
+                   "n": [0.2260724, -7.080499, 5.700283, -12.44017, 17.81926,
+                         -10.81364]}}
 
     _melting = {"eq": 1, "Tref": Tb, "Pref": 5.265,
                 "Tmin": 59.75, "Tmax": 2000.0,
@@ -522,3 +523,131 @@ class Air(MEoSBlend):
 
         return k*1e-3
 
+
+class HumidAir(object):
+
+    def _fav(self, T, rho, A):
+        """Table 6, pag 10"""
+        water = IAPWS95()
+        rhov = (1-A)*rho
+        fv = water._derivDimensional(rhov, T)
+
+        air = Air()
+        rhoa = A*rho
+        fa = air._derivDimensional(rhoa, T)
+
+        fmix = self._fmix(T, rho, A)
+
+        f = (1-A)*fv["fir"] + A*fa["fir"] + fmix["fir"]
+        fA = -fv["fir"]-rhov*fv["fird"]+fa["fir"]+rhoa*fa["fird"]+fmix["fira"]
+        ft = (1-A)*fv["firt"]+A*fa["firt"]+fmix["firt"]
+        fd = (1-A)**2*fv["fird"]+A**2*fa["fird"]+fmix["fird"]
+        faa = rho*(2*fv["fird"]+rhov*fv["firdd"] +
+                   2*fa["fird"]+rhoa*fa["firdd"])+fmix["firaa"]
+        fat = -fv["firt"]-rhov*fv["firdt"]+fa["firt"]+rhoa*fa["firdt"] + \
+            fmix["firat"]
+        fad = -(1-A)*(2*fv["fird"]+rhov*fv["firdd"]) + \
+            A*(2*fa["fird"]+rhoa*fa["firdd"])+fmix["firad"]
+        ftt = (1-A)*fv["firtt"]+A*fa["firtt"]+fmix["firtt"]
+        ftd = (1-A)**2*fv["firdt"]+A**2*fa["firdt"]+fmix["firdt"]
+        fdd = (1-A)**3*fv["firdd"]+A**3*fa["firdd"]+fmix["firdd"]
+
+        prop = {}
+        prop["fir"] = f
+        prop["fira"] = fA
+        prop["firt"] = ft
+        prop["fird"] = fd
+        prop["firaa"] = faa
+        prop["firat"] = fat
+        prop["firad"] = fad
+        prop["firtt"] = ftt
+        prop["firdt"] = ftd
+        prop["firdd"] = fdd
+        return prop
+
+    def _fmix(self, T, rho, A):
+        """Specific Helmholtz energy of air-water interaction
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+        rho : float
+            Density [kg/m³]
+        A : float
+            Mass fraction of dry air in humid air [kg/kg]
+
+        Returns
+        -------
+        prop : float
+            dictionary with helmholtz energy and derivatives
+            fir
+            fira: [∂fmix/∂A]T,ρ
+            firt: [∂fmix/∂T]A,ρ
+            fird: [∂fmix/∂ρ]A,T
+            firaa: [∂²fmix/∂A²]T,ρ
+            firat: [∂²fmix/∂A∂T]ρ
+            firad: [∂²fmix/∂A∂ρ]T
+            firtt: [∂²fmix/∂T²]A,ρ
+            firdt: [∂²fmix/∂T∂ρ]A
+            firdd: [∂²fmix/∂ρ²]A,T
+
+        References
+        ----------
+        IAPWS, Guideline on an Equation of State for Humid Air in Contact with
+        Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
+        Thermodynamic Properties of Seawater, Table 10,
+        http://www.iapws.org/relguide/SeaAir.html
+        """
+        Ma = Air.M/1000
+        Mw = IAPWS95.M/1000
+        vir = _virial(T)
+        Baw = vir["Baw"]
+        Bawt = vir["Bawt"]
+        Bawtt = vir["Bawtt"]
+        Caaw = vir["Caaw"]
+        Caawt = vir["Caawt"]
+        Caawtt = vir["Caawtt"]
+        Caww = vir["Caww"]
+        Cawwt = vir["Cawwt"]
+        Cawwtt = vir["Cawwtt"]
+
+        # Eq T45
+        f = 2*A*(1-A)*rho*R*T/Ma/Mw*(Baw+3*rho/4*(A/Ma*Caaw+(1-A)/Mw*Caww))
+        # Eq T46
+        fa = 2*rho*R*T/Ma/Mw*((1-2*A)*Baw+3*rho/4*(
+            A*(2-3*A)/Ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
+        # Eq T47
+        ft = 2*A*(1-A)*rho*R/Ma/Mw*(
+            Baw+T*Bawt+3*rho/4*(A/Ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
+        # Eq T48
+        fd = A*(1-A)*R*T/Ma/Mw*(2*Baw+3*rho*(A/Ma*Caaw+(1-A)/Mw*Caww))
+        # Eq T49
+        faa = rho*R*T/Ma/Mw*(-4*Baw+3*rho*((1-3*A)/Ma*Caaw-(2-3*A)/Mw*Caww))
+        # Eq T50
+        fat = 2*rho*R/Ma/Mw*(1-2*A)*(Baw+T*Bawt)+3*rho**2*R/2/Ma/Mw*(
+            A*(2-3*A)/Ma*(Caaw+T*Caawt)+(1-A)*(1-3*A)/Mw*(Caww+T*Cawwt))
+        # Eq T51
+        fad = 2*R*T/Ma/Mw*((1-2*A)*Baw+3/2*rho*(
+            A*(2-3*A)/Ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
+        # Eq T52
+        ftt = 2*A*(1-A)*rho*R/Ma/Mw*(2*Bawt+T*Bawtt+3*rho/4*(
+            A/Ma*(2*Caawt+T*Caawtt)+(1-A)/Mw*(2*Cawwt+T*Cawwtt)))
+        # Eq T53
+        ftd = 2*A*(1-A)*R/Ma/Mw*(Baw+T*Bawt+3*rho/2*(
+            A/Ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
+        # Eq T54
+        fdd = 3*A*(1-A)*R*T/Ma/Mw*(A/Ma*Caaw+(1-A)/Mw*Caww)
+
+        prop = {}
+        prop["fir"] = f/1000
+        prop["fira"] = fa/1000
+        prop["firt"] = ft/1000
+        prop["fird"] = fd/1000
+        prop["firaa"] = faa/1000
+        prop["firat"] = fat/1000
+        prop["firad"] = fad/1000
+        prop["firtt"] = ftt/1000
+        prop["firdt"] = ftd/1000
+        prop["firdd"] = fdd/1000
+        return prop

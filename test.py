@@ -1860,10 +1860,334 @@ class Test(unittest.TestCase):
         self.assertEqual(round(log(_Kvalue(500, "CH4", "D2O")), 4), 6.9021)
         self.assertEqual(round(log(_Kvalue(600, "CH4", "D2O")), 4), 3.8126)
 
-    # def test_Conductivity(self):
-        # """Selected values from table II"""
-        # self.assertEqual(round(_Conductivity(1100, 573.16), 9), 22.8e-6)
-        # self.assertEqual(round(_Conductivity(1100, 273.16), 9), 0.0333e-6)
+    def xest_Conductivity(self):
+        """Selected values from table II"""
+        self.assertEqual(round(_Conductivity(600, 673.15), 9), 1.57e-6)
+        self.assertEqual(round(_Conductivity(800, 1073.15), 9), 103e-6)
+        self.assertEqual(round(_Conductivity(900, 473.15), 9), 4.19e-6)
+        self.assertEqual(round(_Conductivity(1100, 273.16), 9), 0.0333e-6)
+        self.assertEqual(round(_Conductivity(1100, 473.15), 9), 22.8e-6)
+
+    def test_virial(self):
+        # Table 7, page 10
+        st = _virial(200)
+        self.assertEqual(round(st["Baa"], 13), -0.392722567e-4)
+        self.assertEqual(round(st["Baw"], 13), -0.784874278e-4)
+        self.assertEqual(round(st["Bww"], 10), -0.186282737e-1)
+        self.assertEqual(round(st["Caaa"], 17), 0.227113063e-8)
+        self.assertEqual(round(st["Caaw"], 17), 0.105493575e-8)
+        self.assertEqual(round(st["Caww"], 14), -0.349872634e-5)
+        self.assertEqual(round(st["Cwww"], 12), -0.263959706e-3)
+
+        st = _virial(300)
+        self.assertEqual(round(st["Baa"], 14), -0.776210977e-5)
+        self.assertEqual(round(st["Baw"], 13), -0.295672747e-4)
+        self.assertEqual(round(st["Bww"], 11), -0.120129928e-2)
+        self.assertEqual(round(st["Caaa"], 17), 0.181166638e-8)
+        self.assertEqual(round(st["Caaw"], 18), 0.801977741e-9)
+        self.assertEqual(round(st["Caww"], 15), -0.115552784e-6)
+        self.assertEqual(round(st["Cwww"], 14), -0.420419196e-5)
+
+        st = _virial(400)
+        self.assertEqual(round(st["Baa"], 14), 0.603953176e-5)
+        self.assertEqual(round(st["Baw"], 13), -0.100804610e-4)
+        self.assertEqual(round(st["Bww"], 12), -0.348784166e-3)
+        self.assertEqual(round(st["Caaa"], 17), 0.162604635e-8)
+        self.assertEqual(round(st["Caaw"], 18), 0.672018172e-9)
+        self.assertEqual(round(st["Caww"], 16), -0.200806021e-7)
+        self.assertEqual(round(st["Cwww"], 15), -0.217733298e-6)
+
+        # Table 8, page 10
+        self.assertEqual(round(_fugacity(300, 0.01, 0.1), 12), 0.000998917199)
+        self.assertEqual(round(_fugacity(300, 0.01, 0.9), 11), 0.00895677892)
+        self.assertEqual(round(_fugacity(300, 0.1, 0.1), 11), 0.00989090701)
+        self.assertEqual(round(_fugacity(300, 0.1, 0.9), 9), 0.085431837)
+        self.assertEqual(round(_fugacity(300, 1, 0.1), 9), 0.088406169)
+        self.assertEqual(round(_fugacity(300, 1, 0.9), 8), 0.36007512)
+
+        if major == 3:
+            self.assertWarns(Warning, _virial, 50)
+        self.assertRaises(NotImplementedError, _fugacity, *(190, 1, 0.1))
+
+    def test_Air(self):
+        # Table A1, Pag 363
+        self.assertEqual(round(Air._bubbleP(59.75), 6), 0.005265)
+        self.assertEqual(round(Air._bubbleP(59.75), 6), 0.005265)
+        self.assertEqual(round(Air._dewP(59.75), 5), 0.00243)
+        self.assertEqual(round(Air._bubbleP(70), 5), 0.03191)
+        self.assertEqual(round(Air._dewP(70), 5), 0.01943)
+        self.assertEqual(round(Air._bubbleP(80), 5), 0.11462)
+        self.assertEqual(round(Air._dewP(80), 5), 0.08232)
+        self.assertEqual(round(Air._bubbleP(100), 5), 0.66313)
+        self.assertEqual(round(Air._dewP(100), 5), 0.56742)
+        self.assertEqual(round(Air._bubbleP(120), 5), 2.15573)
+        self.assertEqual(round(Air._dewP(120), 5), 2.00674)
+        self.assertEqual(round(Air._bubbleP(130), 5), 3.42947)
+        self.assertEqual(round(Air._dewP(130), 5), 3.30835)
+
+        # Table A2, Pag 366
+        st = Air(T=100, P=0.101325)
+        self.assertEqual(round(st.rhoM, 5), 0.12449)
+        self.assertEqual(round(st.cvM, 2), 21.09)
+        self.assertEqual(round(st.cpM, 2), 30.13)
+        self.assertEqual(round(st.w, 1), 198.2)
+
+        st = Air(T=500, P=0.2)
+        self.assertEqual(round(st.rhoM, 6), 0.048077)
+        self.assertEqual(round(st.cvM, 2), 21.51)
+        self.assertEqual(round(st.cpM, 2), 29.84)
+        self.assertEqual(round(st.w, 1), 446.6)
+
+        st = Air(T=130, P=1)
+        self.assertEqual(round(st.rhoM, 4), 1.0295)
+        self.assertEqual(round(st.cvM, 2), 22.05)
+        self.assertEqual(round(st.cpM, 2), 34.69)
+        self.assertEqual(round(st.w, 1), 216.8)
+
+        st = Air(T=2000, P=10)
+        self.assertEqual(round(st.rhoM, 5), 0.59094)
+        self.assertEqual(round(st.cvM, 2), 27.93)
+        self.assertEqual(round(st.cpM, 2), 36.25)
+        self.assertEqual(round(st.w, 1), 878.5)
+
+        st = Air(T=2000, P=500)
+        self.assertEqual(round(st.rhoM, 2), 16.48)
+        self.assertEqual(round(st.cvM, 2), 29.07)
+        self.assertEqual(round(st.cpM, 2), 37.27)
+        self.assertEqual(round(st.w, 1), 1497.4)
+
+        # Zero point enthalpy and entropy
+        st0 = Air(T=273.15, P=0.101325)
+        self.assertEqual(round(st0.h, 9), 0)
+        self.assertEqual(round(st0.s, 9), 0)
+
+        # Custom cycle
+        P = 50   # MPa
+        T = 470  # K
+        f_pt = Air(P=P, T=T)
+        f_prho = Air(P=f_pt.P, rho=f_pt.rho)
+        self.assertEqual(round(f_prho.P-P, 6), 0)
+        self.assertEqual(round(f_prho.T-T, 6), 0)
+
+    def test_AirTransport(self):
+        """Table V, pag 28"""
+        self.assertEqual(round(Air._visco(0, 100), 11), 7.09559e-6)
+        self.assertEqual(round(Air._visco(0, 300), 10), 18.523e-6)
+        self.assertEqual(round(Air._visco(28*28.9586, 100), 9), 107.923e-6)
+        self.assertEqual(round(Air._visco(10*28.9586, 200), 10), 21.1392e-6)
+        self.assertEqual(round(Air._visco(5*28.9586, 300), 10), 21.3241e-6)
+        self.assertEqual(round(Air._visco(10.4*28.9586, 132.64), 10), 17.7623e-6)
+
+        st = Air()
+        self.assertEqual(round(st._thermo(0, 100), 8), 9.35902e-3)
+        self.assertEqual(round(st._thermo(0, 300), 7), 26.3529e-3)
+        # self.assertEqual(round(Air(rho=28*28.9586, T=100).k, 6), 119.221e-3)
+        # self.assertEqual(round(Air(rho=10*28.9586, T=200).k, 6), 35.3185e-3)
+        self.assertEqual(round(Air(rho=5*28.9586, T=300).k, 7), 32.6062e-3)
+        # self.assertEqual(round(Air(rho=10.4*28.9586, T=132.64).k, 7), 75.6231e-3)
+
+    def test_HumidAir(self):
+        """Tables 13-15 from page 19"""
+        # Table 13
+        A = 0.892247719
+        T = 200
+        rho = 1.63479657e-5
+        psy = HumidAir()
+        fa = psy._fav(T, rho, A)
+        self.assertEqual(round(fa["fir"], 6), -0.682093392e3)
+        self.assertEqual(round(fa["fira"], 6), -0.572680404e3)
+        self.assertEqual(round(fa["firt"], 8), -0.405317966e1)
+        self.assertEqual(round(fa["fird"], 2), 0.374173101e7)
+        self.assertEqual(round(fa["firaa"], 6), 0.920967684e3)
+        self.assertEqual(round(fa["firat"], 8), 0.915653743e1)
+        self.assertEqual(round(fa["firad"], 2), -0.213442099e7)
+        self.assertEqual(round(fa["firtt"], 11), -0.394011921e-2)
+        self.assertEqual(round(fa["firdt"], 4), 0.187087034e5)
+        self.assertEqual(round(fa["firdd"]*1e-6, 3), -0.228880603e6)
+
+        A = 0.977605798
+        T = 300
+        rho = 1.14614216
+        psy = HumidAir()
+        fa = psy._fav(T, rho, A)
+        self.assertEqual(round(fa["fir"], 7), -0.927718178e2)
+        self.assertEqual(round(fa["fira"], 9), -0.263453864)
+        self.assertEqual(round(fa["firt"], 9), -0.296711481)
+        self.assertEqual(round(fa["fird"], 7), 0.761242496e2)
+        self.assertEqual(round(fa["firaa"], 5), 0.624886233e4)
+        self.assertEqual(round(fa["firat"], 8), 0.822733446e1)
+        self.assertEqual(round(fa["firad"], 7), -0.450004399e2)
+        self.assertEqual(round(fa["firtt"], 11), -0.244742952e-2)
+        self.assertEqual(round(fa["firdt"], 9), 0.254456302)
+        self.assertEqual(round(fa["firdd"], 7), -0.664465525e2)
+
+        A = 0.825565291
+        T = 400
+        rho = 0.793354063e1
+        psy = HumidAir()
+        fa = psy._fav(T, rho, A)
+        self.assertEqual(round(fa["fir"], 7), 0.240345570e2)
+        self.assertEqual(round(fa["fira"], 6), 0.311096733e3)
+        self.assertEqual(round(fa["firt"], 8), -0.106891931e1)
+        self.assertEqual(round(fa["fird"], 7), 0.158878781e2)
+        self.assertEqual(round(fa["firaa"], 5), 0.113786423e4)
+        self.assertEqual(round(fa["firat"], 8), 0.702631471e1)
+        self.assertEqual(round(fa["firad"], 8), -0.727972651e1)
+        self.assertEqual(round(fa["firtt"], 11), -0.222449294e-2)
+        self.assertEqual(round(fa["firdt"], 10), 0.414350772e-1)
+        self.assertEqual(round(fa["firdd"], 8), -0.201886184e1)
+
+        # Table 14
+        A = 0.892247719
+        T = 200
+        rho = 1.63479657e-5
+        rhoa = A*rho
+        rhov = (1-A)*rho
+        air = Air()
+        fa = air._derivDimensional(rhoa, T)
+        self.assertEqual(round(rhoa, 13), 1.45864351e-5)
+        self.assertEqual(round(fa["fir"], 6), -0.740041144e3)
+        self.assertEqual(round(fa["firt"], 8), -0.304774177e1)
+        self.assertEqual(round(fa["fird"], 2), 0.393583654e7)
+        self.assertEqual(round(fa["firtt"], 11), -0.357677878e-2)
+        self.assertEqual(round(fa["firdt"], 4), 0.196791837e5)
+        self.assertEqual(round(fa["firdd"]*1e-6, 3), -0.269828549e6)
+        water = IAPWS95()
+        fv = water._derivDimensional(rhov, T)
+        self.assertEqual(round(rhov, 14), 1.76153059e-6)
+        self.assertEqual(round(fv["fir"], 6), -0.202254351e3)
+        self.assertEqual(round(fv["firt"], 7), -0.123787544e2)
+        self.assertEqual(round(fv["fird"], 1), 0.523995674e8)
+        self.assertEqual(round(fv["firtt"], 11), -0.694877601e-2)
+        self.assertEqual(round(fv["firdt"], 3), 0.262001885e6)
+        self.assertEqual(round(fv["firdd"]*1e-6, 1), -0.297466671e8)
+
+        A = 0.977605798
+        T = 300
+        rho = 1.14614216
+        rhoa = A*rho
+        rhov = (1-A)*rho
+        air = Air()
+        fa = air._derivDimensional(rhoa, T)
+        self.assertEqual(round(rhoa, 8), 1.12047522)
+        self.assertEqual(round(fa["fir"], 7), -0.916103453e2)
+        self.assertEqual(round(fa["firt"], 9), -0.108476220)
+        self.assertEqual(round(fa["fird"], 7), 0.768326795e2)
+        self.assertEqual(round(fa["firtt"], 11), -0.239319940e-2)
+        self.assertEqual(round(fa["firdt"], 9), 0.256683306)
+        self.assertEqual(round(fa["firdd"], 7), -0.685917373e2)
+        water = IAPWS95()
+        fv = water._derivDimensional(rhov, T)
+        self.assertEqual(round(rhov, 10), 0.256669391e-1)
+        self.assertEqual(round(fv["fir"], 6), -0.143157426e3)
+        self.assertEqual(round(fv["firt"], 8), -0.851598213e1)
+        self.assertEqual(round(fv["fird"], 5), 0.538480619e4)
+        self.assertEqual(round(fv["firtt"], 11), -0.480817011e-2)
+        self.assertEqual(round(fv["firdt"], 7), 0.181489502e2)
+        self.assertEqual(round(fv["firdd"], 3), -0.210184992e6)
+
+        A = 0.825565291
+        T = 400
+        rho = 0.793354063e1
+        rhoa = A*rho
+        rhov = (1-A)*rho
+        air = Air()
+        fa = air._derivDimensional(rhoa, T)
+        self.assertEqual(round(rhoa, 8), 0.654965578e1)
+        self.assertEqual(round(fa["fir"], 7), 0.895561286e2)
+        self.assertEqual(round(fa["firt"], 9), 0.193271394)
+        self.assertEqual(round(fa["fird"], 7), 0.175560114e2)
+        self.assertEqual(round(fa["firtt"], 11), -0.181809877e-2)
+        self.assertEqual(round(fa["firdt"], 10), 0.442769673e-1)
+        self.assertEqual(round(fa["firdd"], 8), -0.267635928e1)
+        water = IAPWS95()
+        fv = water._derivDimensional(rhov, T)
+        self.assertEqual(round(rhov, 8), 0.138388485e1)
+        self.assertEqual(round(fv["fir"], 6), -0.285137534e3)
+        self.assertEqual(round(fv["firt"], 8), -0.705288048e1)
+        self.assertEqual(round(fv["fird"], 6), 0.129645039e3)
+        self.assertEqual(round(fv["firtt"], 11), -0.411710659e-2)
+        self.assertEqual(round(fv["firdt"], 9), 0.361784086)
+        self.assertEqual(round(fv["firdd"], 7), -0.965539462e2)
+
+        # Table 15
+        A = 0.892247719
+        T = 200
+        rho = 1.63479657e-5
+        hum = HumidAir()
+        fmix = hum._fmix(T, rho, A)
+        self.assertEqual(round(fmix["fir"], 15), -0.786231899e-6)
+        self.assertEqual(round(fmix["fira"], 14), 0.641550398e-5)
+        self.assertEqual(round(fmix["firt"], 17), 0.456438658e-8)
+        self.assertEqual(round(fmix["fird"], 10), -0.480937188e-1)
+        self.assertEqual(round(fmix["firaa"], 13), 0.163552956e-4)
+        self.assertEqual(round(fmix["firat"], 16), -0.372455576e-7)
+        self.assertEqual(round(fmix["firad"], 9), 0.392437132)
+        self.assertEqual(round(fmix["firtt"], 19), -0.378875706e-10)
+        self.assertEqual(round(fmix["firdt"], 12), 0.279209778e-3)
+        self.assertEqual(round(fmix["firdd"], 10), -0.192042557e-1)
+        vir = _virial(T)
+        self.assertEqual(round(vir["Baw"], 13), -0.784874278e-4)
+        self.assertEqual(round(vir["Bawt"], 15), 0.848076624e-6)
+        self.assertEqual(round(vir["Bawtt"], 16), -0.122622146e-7)
+        self.assertEqual(round(vir["Caaw"], 17), 0.105493575e-8)
+        self.assertEqual(round(vir["Caawt"], 20), -0.152535e-11)
+        self.assertEqual(round(vir["Caawtt"], 21), -0.113436375e-12)
+        self.assertEqual(round(vir["Caww"], 14), -0.349872634e-5)
+        self.assertEqual(round(vir["Cawwt"], 15), 0.188025052e-6)
+        self.assertEqual(round(vir["Cawwtt"], 16), -0.124996856e-7)
+
+        A = 0.977605798
+        T = 300
+        rho = 0.114614216e1
+        hum = HumidAir()
+        fmix = hum._fmix(T, rho, A)
+        self.assertEqual(round(fmix["fir"], 11), -0.711677596e-2)
+        self.assertEqual(round(fmix["fira"], 9), 0.311844020)
+        self.assertEqual(round(fmix["firt"], 13), 0.441247962e-4)
+        self.assertEqual(round(fmix["fird"], 11), -0.623030392e-2)
+        self.assertEqual(round(fmix["firaa"], 9), 0.534234669)
+        self.assertEqual(round(fmix["firat"], 11), -0.195073372e-2)
+        self.assertEqual(round(fmix["firad"], 9), 0.274155508)
+        self.assertEqual(round(fmix["firtt"], 15), -0.148783177e-6)
+        self.assertEqual(round(fmix["firdt"], 13), 0.390012443e-4)
+        self.assertEqual(round(fmix["firdd"], 13), -0.365975429e-4)
+        vir = _virial(T)
+        self.assertEqual(round(vir["Baw"], 13), -0.295672747e-4)
+        self.assertEqual(round(vir["Bawt"], 15), 0.280097360e-6)
+        self.assertEqual(round(vir["Bawtt"], 17), -0.242599241e-8)
+        self.assertEqual(round(vir["Caaw"], 18), 0.801977741e-9)
+        self.assertEqual(round(vir["Caawt"], 20), -0.196103457e-11)
+        self.assertEqual(round(vir["Caawtt"], 22), 0.170055638e-13)
+        self.assertEqual(round(vir["Caww"], 15), -0.115552784e-6)
+        self.assertEqual(round(vir["Cawwt"], 17), 0.261363278e-8)
+        self.assertEqual(round(vir["Cawwtt"], 19), -0.751334582e-10)
+
+        A = 0.825565291
+        T = 400
+        rho = 0.793354063e1
+        hum = HumidAir()
+        fmix = hum._fmix(T, rho, A)
+        self.assertEqual(round(fmix["fir"], 9), -0.161991543)
+        self.assertEqual(round(fmix["fira"], 9), 0.831044354)
+        self.assertEqual(round(fmix["firt"], 11), 0.178968942e-2)
+        self.assertEqual(round(fmix["fird"], 10), -0.223330257e-1)
+        self.assertEqual(round(fmix["firaa"], 8), 0.135814949e1)
+        self.assertEqual(round(fmix["firat"], 11), -0.916854756e-2)
+        self.assertEqual(round(fmix["firad"], 9), 0.125834930)
+        self.assertEqual(round(fmix["firtt"], 14), -0.536741578e-5)
+        self.assertEqual(round(fmix["firdt"], 12), 0.249580143e-3)
+        self.assertEqual(round(fmix["firdd"], 12), -0.482623664e-3)
+        vir = _virial(T)
+        self.assertEqual(round(vir["Baw"], 13), -0.100804610e-4)
+        self.assertEqual(round(vir["Bawt"], 15), 0.135021228e-6)
+        self.assertEqual(round(vir["Bawtt"], 18), -0.839901729e-9)
+        self.assertEqual(round(vir["Caaw"], 18), 0.672018172e-9)
+        self.assertEqual(round(vir["Caawt"], 21), -0.812416406e-12)
+        self.assertEqual(round(vir["Caawtt"], 23), 0.683147461e-14)
+        self.assertEqual(round(vir["Caww"], 16), -0.200806021e-7)
+        self.assertEqual(round(vir["Cawwt"], 18), 0.274535403e-9)
+        self.assertEqual(round(vir["Cawwtt"], 20), -0.491763910e-11)
 
 
 if __name__ == "__main__":

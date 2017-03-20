@@ -13,7 +13,7 @@ import warnings
 
 # Constants
 Rm = 8.31451      # kJ/kmol·K
-M = 18.015268  # g/mol
+M = 18.015268     # g/mol
 R = 0.461526      # kJ/kg·K
 
 # Table 1 from Release on the Values of Temperature, Pressure and Density of
