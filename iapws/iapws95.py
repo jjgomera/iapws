@@ -858,10 +858,12 @@ class MEoS(_fase):
             self.virialB = vapor["B"]/self.rhoc
             self.virialC = vapor["C"]/self.rhoc**2
             self.Hvap = vapor["h"]-liquido["h"]
+            self.Svap = vapor["s"]-liquido["s"]
         else:
             self.virialB = propiedades["B"]/self.rhoc
             self.virialC = propiedades["C"]/self.rhoc**2
             self.Hvap = None
+            self.Svap = None
 
         self.invT = -1/self.T
 
