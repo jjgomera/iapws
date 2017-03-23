@@ -793,7 +793,12 @@ class MEoS(_fase):
                     liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
                 return Ps/1000-P
 
-            To = _TSat_P(P)
+            if T0:
+                To = T0
+            elif self.name == "water":
+                To = _TSat_P(P)
+            else:
+                To = (self.Tc+self.Tt)/2
             T = fsolve(funcion, To)[0]
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
