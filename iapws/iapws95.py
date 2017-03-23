@@ -1301,6 +1301,31 @@ class MEoS(_fase):
         prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
         return prop
 
+    def _surface(self, T):
+        """Generic equation for the surface tension
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        sigma : float
+            Surface tension [N/m]
+
+        Notes
+        -----
+        Need a _surf dict in the derived class with the parameters keys:
+            sigma: coefficient
+            exp: exponent
+        """
+        tau = 1-T/self.Tc
+        sigma = 0
+        for n, t in zip(self._surf["sigma"], self._surf["exp"]):
+            sigma += n*tau**t
+        return sigma
+
     @classmethod
     def _Vapor_Pressure(cls, T):
         """Auxiliary equation for the vapour pressure

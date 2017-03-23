@@ -332,6 +332,7 @@ class Air(MEoSBlend):
                 "a1": [1, 0.354935e5, -0.354935e5],
                 "exp1": [0, 0.178963e1, 0],
                 "a2": [], "exp2": [], "a3": [], "exp3": []}
+    _surf = {"sigma": [0.03046], "exp": [1.28]}
     _rhoG = {
         "eq": 3,
         "ao": [-0.20466e1, -0.4752e1, -0.13259e2, -0.47652e2],
@@ -339,16 +340,6 @@ class Air(MEoSBlend):
     _Pv = {
         "ao": [-0.1567266, -0.5539635e1, 0.7567212, -0.3514322e1],
         "exp": [0.5, 1, 2.5, 4]}
-
-    def _surface(self, T):
-        """Equation for the surface tension"""
-        tau = 1-T/self.Tc
-        tension = 0
-        sigmai = [0.03046]
-        ni = [1.28]
-        for sigma, n in zip(sigmai, ni):
-            tension += sigma*tau**n
-        return tension
 
     @classmethod
     def _Liquid_Density(cls, T):
