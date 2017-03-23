@@ -24,6 +24,7 @@ from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
                           _Conductivity, _Henry, _Kvalue)
 from iapws.humidAir import _virial, _fugacity, Air, HumidAir
+from iapws.ammonia import NH3
 
 
 # Python version detect for new capacities of unittest
@@ -2184,10 +2185,91 @@ class Test(unittest.TestCase):
         self.assertEqual(round(vir["Bawtt"], 18), -0.839901729e-9)
         self.assertEqual(round(vir["Caaw"], 18), 0.672018172e-9)
         self.assertEqual(round(vir["Caawt"], 21), -0.812416406e-12)
-        self.assertEqual(round(vir["Caawtt"], 23), 0.683147461e-14)
+        self.assertEqual(round(vir["Caawtt"]*1e12, 11), 0.683147461e-2)
         self.assertEqual(round(vir["Caww"], 16), -0.200806021e-7)
         self.assertEqual(round(vir["Cawwt"], 18), 0.274535403e-9)
         self.assertEqual(round(vir["Cawwtt"], 20), -0.491763910e-11)
+
+    def test_Ammonia(self):
+        """Selected point front table of pag 42"""
+        st = NH3(T=-77.65+273.15, x=0.5)
+        self.assertEqual(round(st.P, 5), 0.00609)
+        self.assertEqual(round(st.Liquid.rho, 2), 732.90)
+        self.assertEqual(round(st.Gas.rho, 4), 0.0641)
+        # self.assertEqual(round(st.Liquid.h, 2), -143.14)
+        self.assertEqual(round(st.Hvap, 1), 1484.4)
+        self.assertEqual(round(st.Gas.h, 1), 1341.2)
+        self.assertEqual(round(st.Liquid.s, 4), -0.4715)
+        # self.assertEqual(round(st.Svap, 4), 7.5928)
+        # self.assertEqual(round(st.Gas.s, 4), 7.1213)
+
+        st = NH3(T=273.15, x=0.5)
+        self.assertEqual(round(st.P, 5), 0.42938)
+        self.assertEqual(round(st.Liquid.rho, 2), 638.57)
+        self.assertEqual(round(st.Gas.rho, 4), 3.4567)
+        self.assertEqual(round(st.Liquid.h, 2), 200.00)
+        self.assertEqual(round(st.Hvap, 1), 1262.2)
+        self.assertEqual(round(st.Gas.h, 1), 1462.2)
+        self.assertEqual(round(st.Liquid.s, 4), 1.0000)
+        self.assertEqual(round(st.Svap, 4), 4.6210)
+        self.assertEqual(round(st.Gas.s, 4), 5.6210)
+
+        st = NH3(T=125+273.15, x=0.5)
+        self.assertEqual(round(st.P, 5), 9.97022)
+        self.assertEqual(round(st.Liquid.rho, 2), 357.80)
+        self.assertEqual(round(st.Gas.rho, 2), 120.73)
+        self.assertEqual(round(st.Liquid.h, 2), 919.68)
+        self.assertEqual(round(st.Hvap, 2), 389.44)
+        self.assertEqual(round(st.Gas.h, 1), 1309.1)
+        self.assertEqual(round(st.Liquid.s, 4), 3.0702)
+        self.assertEqual(round(st.Svap, 4), 0.9781)
+        self.assertEqual(round(st.Gas.s, 4), 4.0483)
+
+        st = NH3(P=1, x=0.5)
+        self.assertEqual(round(st.T-273.15, 2), 24.89)
+        self.assertEqual(round(st.Liquid.rho, 2), 602.92)
+        # self.assertEqual(round(st.Gas.rho, 4), 7.7821)
+        self.assertEqual(round(st.Liquid.h, 2), 317.16)
+        self.assertEqual(round(st.Hvap, 1), 1166.2)
+        self.assertEqual(round(st.Gas.h, 1), 1483.4)
+        self.assertEqual(round(st.Liquid.s, 4), 1.4072)
+        # self.assertEqual(round(st.Svap, 4), 3.9129)
+        self.assertEqual(round(st.Gas.s, 4), 5.3200)
+
+    def xest_AmmoniaVisco(self):
+        # Appendix II, pag 1664
+        st = NH3(T=680, P=0.1)
+        self.assertEqual(round(st.mu*1e6, 2), 24.66)
+        st = NH3(T=200, P=0.1)
+        self.assertEqual(round(st.mu*1e6, 2), 507.47)
+        st = NH3(T=300, P=0.1)
+        self.assertEqual(round(st.mu*1e6, 2), 10.16)
+        st = NH3(T=290, P=1)
+        self.assertEqual(round(st.mu*1e6, 2), 142.93)
+        st = NH3(T=680, P=50)
+        self.assertEqual(round(st.mu*1e6, 2), 31.90)
+
+        # Appendix III, pag 1667
+        st = NH3(T=196, x=0.5)
+        self.assertEqual(round(st.P, 4), 0.0063)
+        self.assertEqual(round(st.Gas.rhoM, 4), 0.0039)
+        self.assertEqual(round(st.Gas.mu*1e6, 2), 6.85)
+        self.assertEqual(round(st.Liquid.rhoM, 4), 43.0041)
+        self.assertEqual(round(st.Liquid.mu*1e6, 2), 553.31)
+
+        st = NH3(T=300, x=0.5)
+        self.assertEqual(round(st.P, 4), 1.0617)
+        self.assertEqual(round(st.Gas.rhoM, 4), 0.4845)
+        self.assertEqual(round(st.Gas.mu*1e6, 2), 9.89)
+        self.assertEqual(round(st.Liquid.rhoM, 4), 35.2298)
+        self.assertEqual(round(st.Liquid.mu*1e6, 2), 129.33)
+
+        st = NH3(T=402, x=0.5)
+        self.assertEqual(round(st.P, 4), 10.6777)
+        self.assertEqual(round(st.Gas.rhoM, 4), 8.5479)
+        self.assertEqual(round(st.Gas.mu*1e6, 2), 19.69)
+        self.assertEqual(round(st.Liquid.rhoM, 4), 19.0642)
+        self.assertEqual(round(st.Liquid.mu*1e6, 2), 39.20)
 
 
 if __name__ == "__main__":
