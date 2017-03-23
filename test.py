@@ -2005,6 +2005,15 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fa["firtt"], 11), -0.394011921e-2)
         self.assertEqual(round(fa["firdt"], 4), 0.187087034e5)
         self.assertEqual(round(fa["firdd"]*1e-6, 3), -0.228880603e6)
+        colig = psy._coligative(rho, A, fa)
+        self.assertEqual(round(colig["muw"], 6), -0.109950917e3)
+        prop = psy._prop(T, rho, fa)
+        self.assertEqual(round(prop["P"], 15), 0.999999998e-6)
+        self.assertEqual(round(prop["h"], 6), 0.189712231e3)
+        self.assertEqual(round(prop["g"], 6), -0.620923701e3)
+        self.assertEqual(round(prop["s"], 8), 0.405317966e1)
+        self.assertEqual(round(prop["cp"], 8), 0.109387397e1)
+        self.assertEqual(round(prop["w"], 6), 0.291394959e3)
 
         A = 0.977605798
         T = 300
@@ -2021,6 +2030,15 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fa["firtt"], 11), -0.244742952e-2)
         self.assertEqual(round(fa["firdt"], 9), 0.254456302)
         self.assertEqual(round(fa["firdd"], 7), -0.664465525e2)
+        colig = psy._coligative(rho, A, fa)
+        self.assertEqual(round(colig["muw"], 8), -0.526505193e1)
+        prop = psy._prop(T, rho, fa)
+        self.assertEqual(round(prop["P"], 9), 0.1)
+        self.assertEqual(round(prop["h"], 7), 0.834908383e2)
+        self.assertEqual(round(prop["g"], 8), -0.552260595e1)
+        self.assertEqual(round(prop["s"], 9), 0.296711481)
+        self.assertEqual(round(prop["cp"], 8), 0.102681324e1)
+        self.assertEqual(round(prop["w"], 6), 0.349234196e3)
 
         A = 0.825565291
         T = 400
@@ -2037,6 +2055,15 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fa["firtt"], 11), -0.222449294e-2)
         self.assertEqual(round(fa["firdt"], 10), 0.414350772e-1)
         self.assertEqual(round(fa["firdd"], 8), -0.201886184e1)
+        colig = psy._coligative(rho, A, fa)
+        self.assertEqual(round(colig["muw"], 6), -0.106748981e3)
+        prop = psy._prop(T, rho, fa)
+        self.assertEqual(round(prop["P"], 8), 1)
+        self.assertEqual(round(prop["h"], 6), 0.577649408e3)
+        self.assertEqual(round(prop["g"], 6), 0.150081684e3)
+        self.assertEqual(round(prop["s"], 8), 0.106891931e1)
+        self.assertEqual(round(prop["cp"], 8), 0.123552454e1)
+        self.assertEqual(round(prop["w"], 6), 0.416656820e3)
 
         # Table 14
         A = 0.892247719

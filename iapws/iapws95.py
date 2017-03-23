@@ -1278,6 +1278,16 @@ class MEoS(_fase):
         Thermodynamic Properties of Seawater, Table 7,
         http://www.iapws.org/relguide/SeaAir.html
         """
+        if not rho:
+            prop = {}
+            prop["fir"] = 0
+            prop["firt"] = 0
+            prop["fird"] = 0
+            prop["firtt"] = 0
+            prop["firdt"] = 0
+            prop["firdd"] = 0
+            return prop
+
         R = self._constants.get("R")/self._constants.get("M", self.M)
         rhoc = self._constants.get("rhoref", self.rhoc)
         Tc = self._constants.get("Tref", self.Tc)
