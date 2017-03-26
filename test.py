@@ -24,7 +24,7 @@ from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
                           _Conductivity, _Henry, _Kvalue)
 from iapws.humidAir import _virial, _fugacity, Air, HumidAir
-from iapws.ammonia import NH3
+from iapws.ammonia import NH3, H2ONH3, Ttr
 
 
 # Python version detect for new capacities of unittest
@@ -1690,6 +1690,8 @@ class Test(unittest.TestCase):
 
     def test_Henry(self):
         # Table 6 for Henry constants
+        self.assertRaises(NotImplementedError, _Henry, *(300, "He", "He"))
+        self.assertRaises(NotImplementedError, _Henry, *(300, "SF6", "D2O"))
         self.assertEqual(round(log(_Henry(300, "He")/1000), 4), 2.6576)
         self.assertEqual(round(log(_Henry(400, "He")/1000), 4), 2.1660)
         self.assertEqual(round(log(_Henry(500, "He")/1000), 4), 1.1973)
@@ -1776,6 +1778,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(log(_Henry(600, "CH4", "D2O")/1000), 4), -0.2186)
 
         # Table 7 for Kd
+        self.assertRaises(NotImplementedError, _Kvalue, *(300, "He", "He"))
+        self.assertRaises(NotImplementedError, _Kvalue, *(300, "SF6", "D2O"))
         self.assertEqual(round(log(_Kvalue(300, "He")), 4), 15.2250)
         self.assertEqual(round(log(_Kvalue(400, "He")), 4), 10.4364)
         self.assertEqual(round(log(_Kvalue(500, "He")), 4), 6.9971)
@@ -2072,6 +2076,9 @@ class Test(unittest.TestCase):
         rhoa = A*rho
         rhov = (1-A)*rho
         air = Air()
+        fa = air._derivDimensional(0, T)
+        self.assertEqual(round(fa["fir"], 6), 0)
+
         fa = air._derivDimensional(rhoa, T)
         self.assertEqual(round(rhoa, 13), 1.45864351e-5)
         self.assertEqual(round(fa["fir"], 6), -0.740041144e3)
@@ -2263,6 +2270,9 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st.Svap, 4), 3.9129)
         self.assertEqual(round(st.Gas.s, 4), 5.3200)
 
+        if major == 3:
+            self.assertWarns(Warning, st._thermo, *(235, st.Tc, st))
+
     def xest_AmmoniaVisco(self):
         # Appendix II, pag 1664
         st = NH3(T=680, P=0.1)
@@ -2297,6 +2307,93 @@ class Test(unittest.TestCase):
         self.assertEqual(round(st.Gas.mu*1e6, 2), 19.69)
         self.assertEqual(round(st.Liquid.rhoM, 4), 19.0642)
         self.assertEqual(round(st.Liquid.mu*1e6, 2), 39.20)
+
+    def test_nh3h2o(self):
+
+        # Range of validity
+        Tt1 = Ttr(0)
+        Tt2 = Ttr(0.5)
+        Tt3 = Ttr(0.7)
+        Tt4 = Ttr(0.9)
+        self.assertGreater(Tt1, Tt2)
+        self.assertGreater(Tt3, Tt4)
+
+        self.assertRaises(NotImplementedError, Ttr, 1.1)
+
+        cl = H2ONH3()
+        # Pure fluid reference state
+        water = IAPWS95(T=IAPWS95.Tt, x=0)
+        st = cl._prop(water.rho, IAPWS95.Tt, 0)
+        # self.assertEqual(round(st["u"], 5), 0)
+        # self.assertEqual(round(st["s"], 5), 0)
+
+        nh3 = NH3(T=NH3.Tt, x=0)
+        st = cl._prop(nh3.rho, NH3.Tt, 1)
+        # self.assertEqual(round(st["u"], 5), 0)
+        # self.assertEqual(round(st["s"], 5), 0)
+
+        # Table 6
+        x = 0.1
+        rhoM = 35
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 600, x)
+        # FIXME: The values are good, bad difer by 1%, a error I can find
+        # In Pressure happen and only use fird
+        # self.assertEqual(round(st["a"]*M, 7), -13734.1763)
+        self.assertEqual(round(st["P"], 7), 32.1221333)
+        # self.assertEqual(round(st["cv"]*M, 7), 53.3159544)
+        # self.assertEqual(round(st["w"], 6), 883.925596)
+
+        x = 0.1
+        rhoM = 4
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 600, x)
+        # self.assertEqual(round(st["a"]*M, 7), -16991.6697)
+        # self.assertEqual(round(st["P"], 7), 12.7721090)
+        # self.assertEqual(round(st["cv"]*M, 7), 52.7644553)
+        # self.assertEqual(round(st["w"], 6), 471.762394)
+
+        x = 0.5
+        rhoM = 32
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 500, x)
+        # self.assertEqual(round(st["a"]*M, 7), -12109.5369)
+        # self.assertEqual(round(st["P"], 7), 21.3208159)
+        # self.assertEqual(round(st["cv"]*M, 7), 58.0077346)
+        # self.assertEqual(round(st["w"], 6), 830.295833)
+
+        x = 0.5
+        rhoM = 1
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 500, x)
+        # self.assertEqual(round(st["a"]*M, 7), -18281.3020)
+        # self.assertEqual(round(st["P"], 7), 3.6423080)
+        # self.assertEqual(round(st["cv"]*M, 7), 36.8228098)
+        # self.assertEqual(round(st["w"], 6), 510.258362)
+
+        x = 0.9
+        rhoM = 30
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 400, x)
+        # self.assertEqual(round(st["a"]*M, 7), -6986.4869)
+        # self.assertEqual(round(st["P"], 7), 22.2830797)
+        # self.assertEqual(round(st["cv"]*M, 7), 51.8072415)
+        # self.assertEqual(round(st["w"], 6), 895.748711)
+
+        x = 0.9
+        rhoM = 0.5
+        M = (1-x)*IAPWS95.M+x*NH3.M
+        rho = rhoM*M
+        st = cl._prop(rho, 400, x)
+        # self.assertEqual(round(st["a"]*M, 7), -13790.6278)
+        # self.assertEqual(round(st["P"], 7), 1.5499708)
+        # self.assertEqual(round(st["cv"]*M, 7), 32.9703870)
+        # self.assertEqual(round(st["w"], 6), 478.608147)
 
 
 if __name__ == "__main__":

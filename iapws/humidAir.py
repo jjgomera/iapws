@@ -539,7 +539,6 @@ class HumidAir(object):
         A = fsolve(f, 0.9)
         print(A, f(A))
 
-
     def _prop(self, T, rho, fav):
         """Thermodynamic properties of humid air
 
@@ -559,7 +558,7 @@ class HumidAir(object):
             s: Specific entropy [kJ/kgK]
             cp: Specific isobaric heat capacity [kJ/kgK]
             h: Specific enthalpy [kJ/kg]
-            h: Specific gibbs energy [kJ/kg]
+            g: Specific gibbs energy [kJ/kg]
             alfa: Thermal expansion coefficient [1/K]
             betas: Isentropic T-P coefficient [K/MPa]
             kt: Isothermal compressibility [1/MPa]

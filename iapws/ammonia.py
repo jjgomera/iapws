@@ -11,7 +11,7 @@ from math import exp, log, pi
 import warnings
 
 from scipy.constants import Boltzmann as kb
-from .iapws95 import MEoS
+from .iapws95 import MEoS, IAPWS95
 
 
 class NH3(MEoS):
@@ -104,7 +104,7 @@ class NH3(MEoS):
         omega = exp(sum([ai*log(T_)**i for i, ai in enumerate(a)]))
 
         # Eq 2, Zero-Density Limit
-        muo = 0.021357*(T*self.M)**0.5/sigma**2/omega
+        muo = 2.1357*(T*self.M)**0.5/sigma**2/omega
 
         # Eq 8, Viscosity virial coefficient
         cv = [-0.17999496e1, 0.46692621e2, -0.53460794e3, 0.33604074e4,
@@ -189,3 +189,389 @@ class NH3(MEoS):
         k = Lo+L_+DL
         return k
 
+
+class H2ONH3(object):
+
+    # TODO: Add equilibrium routine
+
+    def _prop(self, rho, T, x):
+        """Thermodynamic properties of ammonia-water mixtures
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+        rho : float
+            Density [kg/m³]
+        x : float
+            Mole fraction of ammonia in mixture [mol/mol]
+
+        Returns
+        -------
+        prop : dictionary with thermodynamic properties of humid air
+            M: Mixture molecular mass [g/mol]
+            P: Pressure [MPa]
+            u: Specific internal energy [kJ/kg]
+            s: Specific entropy [kJ/kgK]
+            h: Specific enthalpy [kJ/kg]
+            a: Specific Helmholtz energy [kJ/kg]
+            g: Specific gibbs energy [kJ/kg]
+            cv: Specific isochoric heat capacity [kJ/kgK]
+            cp: Specific isobaric heat capacity [kJ/kgK]
+            w: Speed of sound [m/s]
+            fugH2O: Fugacity of water [-]
+            fugNH3: Fugacity of ammonia [-]
+
+        References
+        ----------
+        IAPWS, Guideline on the IAPWS Formulation 2001 for the Thermodynamic
+        Properties of Ammonia-Water Mixtures,
+        http://www.iapws.org/relguide/nh3h2o.pdf, Table 4
+        """
+        # FIXME: The values are good, bad difer by 1%, a error I can find
+        # In Pressure happen and only use fird
+
+        M = (1-x)*IAPWS95.M + x*NH3.M
+        R = 8.314471/M
+
+        phio = self._phi0(rho, T, x)
+        fio = phio["fio"]
+        tau0 = phio["tau"]
+        fiot = phio["fiot"]
+        fiott = phio["fiott"]
+
+        phir = self._phir(rho, T, x)
+        fir = phir["fir"]
+        tau = phir["tau"]
+        delta = phir["delta"]
+        firt = phir["firt"]
+        firtt = phir["firtt"]
+        fird = phir["fird"]
+        firdd = phir["firdd"]
+        firdt = phir["firdt"]
+        F = phir["F"]
+
+        prop = {}
+        Z = 1 + delta*fird
+        prop["M"] = M
+        prop["P"] = Z*R*T*rho/1000
+        prop["u"] = R*T*(tau0*fiot + tau*firt)
+        prop["s"] = R*(tau0*fiot + tau*firt - fio - fir)
+        prop["h"] = R*T*(1+delta*fird+tau0*fiot+tau*firt)
+        prop["g"] = prop["h"]-T*prop["s"]
+        prop["a"] = prop["u"]-T*prop["s"]
+        cvR = -tau0**2*fiott - tau**2*firtt
+        prop["cv"] = R*cvR
+        prop["cp"] = R*(cvR+(1+delta*fird-delta*tau*firdt)**2 /
+                        (1+2*delta*fird+delta**2*firdd))
+        prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd +
+                               (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
+        prop["fugH2O"] = Z*exp(fir+delta*fird-x*F)
+        prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
+        return prop
+
+    def _phi0(self, rho, T, x):
+        """Ideal gas Helmholtz energy of binary mixtures and derivatives
+
+        Parameters
+        ----------
+        rho : float
+            Density [kg/m³]
+        T : float
+            Temperature [K]
+        x : float
+            Mole fraction of ammonia in mixture [mol/mol]
+
+        Returns
+        -------
+        prop : dictionary with ideal adimensional helmholtz energy and deriv
+            tau: the adimensional temperature variable [-]
+            delta: the adimensional density variable [-]
+            fio  [-]
+            fiot: [∂fio/∂τ]δ  [-]
+            fiod: [∂fio/∂δ]τ  [-]
+            fiott: [∂²fio/∂τ²]δ  [-]
+            fiodt: [∂²fio/∂τ∂δ]  [-]
+            fiodd: [∂²fio/∂δ²]τ  [-]
+
+        References
+        ----------
+        IAPWS, Guideline on the IAPWS Formulation 2001 for the Thermodynamic
+        Properties of Ammonia-Water Mixtures,
+        http://www.iapws.org/relguide/nh3h2o.pdf, Eq 2
+        """
+        # Define reducing parameters for mixture model
+        M = (1-x)*IAPWS95.M + x*NH3.M
+        tau = 500/T
+        delta = rho/15/M
+
+        # Table 2
+        Fi0 = {
+            "log_water": 3.006320,
+            "ao_water": [-7.720435, 8.649358],
+            "pow_water": [0, 1],
+            "ao_exp": [0.012436, 0.97315, 1.279500, 0.969560, 0.248730],
+            "titao": [1.666, 4.578, 10.018, 11.964, 35.600],
+            "log_nh3": -1.0,
+            "ao_nh3": [-16.444285, 4.036946, 10.69955, -1.775436, 0.82374034],
+            "pow_nh3": [0, 1, 1/3, -3/2, -7/4]}
+
+        fiod = 1/delta
+        fiodd = -1/delta**2
+        fiodt = 0
+        fiow = fiotw = fiottw = 0
+        fioa = fiota = fiotta = 0
+
+        # Water section
+        if x < 1:
+            fiow = Fi0["log_water"]*log(tau) + log(1-x)
+            fiotw = Fi0["log_water"]/tau
+            fiottw = -Fi0["log_water"]/tau**2
+            for n, t in zip(Fi0["ao_water"], Fi0["pow_water"]):
+                fiow += n*tau**t
+                if t != 0:
+                    fiotw += t*n*tau**(t-1)
+                if t not in [0, 1]:
+                    fiottw += n*t*(t-1)*tau**(t-2)
+            for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
+                fiow += n*log(1-exp(-tau*t))
+                fiotw += n*t*((1-exp(-t*tau))**-1-1)
+                fiottw -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
+
+        # ammonia section
+        if x > 0:
+            fioa = Fi0["log_nh3"]*log(tau) + log(x)
+            fiota = Fi0["log_nh3"]/tau
+            fiotta = -Fi0["log_nh3"]/tau**2
+            for n, t in zip(Fi0["ao_nh3"], Fi0["pow_nh3"]):
+                fioa += n*tau**t
+                if t != 0:
+                    fiota += t*n*tau**(t-1)
+                if t not in [0, 1]:
+                    fiotta += n*t*(t-1)*tau**(t-2)
+
+        prop = {}
+        prop["tau"] = tau
+        prop["delta"] = delta
+        prop["fio"] = log(delta) + (1-x)*fiow + x*fioa
+        prop["fiot"] = (1-x)*fiotw + x*fiota
+        prop["fiott"] = (1-x)*fiottw + x*fiotta
+        prop["fiod"] = fiod
+        prop["fiodd"] = fiodd
+        prop["fiodt"] = fiodt
+        return prop
+
+    def _phir(self, rho, T, x):
+        """Residual contribution to the free Helmholtz energy
+
+        Parameters
+        ----------
+        rho : float
+            Density [kg/m³]
+        T : float
+            Temperature [K]
+        x : float
+            Mole fraction of ammonia in mixture [mol/mol]
+
+        Returns
+        -------
+        prop : dictionary with residual adimensional helmholtz energy and deriv
+            tau: the adimensional temperature variable [-]
+            delta: the adimensional density variable [-]
+            fir  [-]
+            firt: [∂fir/∂τ]δ,x  [-]
+            fird: [∂fir/∂δ]τ,x  [-]
+            firtt: [∂²fir/∂τ²]δ,x  [-]
+            firdt: [∂²fir/∂τ∂δ]x  [-]
+            firdd: [∂²fir/∂δ²]τ,x  [-]
+            firx: [∂fir/∂x]τ,δ  [-]
+            F: Function for fugacity calculation [-]
+
+        References
+        ----------
+        IAPWS, Guideline on the IAPWS Formulation 2001 for the Thermodynamic
+        Properties of Ammonia-Water Mixtures,
+        http://www.iapws.org/relguide/nh3h2o.pdf, Eq 3
+        """
+
+        # Temperature reducing value, Eq 4
+        Tc12 = 0.9648407/2*(IAPWS95.Tc+NH3.Tc)
+        Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-x**1.125455)*Tc12
+        dTnx = -2*IAPWS95.Tc*(1-x) + 2*x*NH3.Tc + 2*Tc12*(1-x**1.125455) - \
+            2*Tc12*1.12455*x**1.12455
+
+        # Density reducing value, Eq 5
+        b = 0.8978069
+        rhoc12 = 1/(1.2395117/2*(1/IAPWS95.rhoc+1/NH3.rhoc))
+        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc +
+                  2*x*(1-x**b)/rhoc12)
+        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12 +
+                   2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
+                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc +
+                       (1-x)**2/IAPWS95.rhoc)**2
+
+        tau = Tn/T
+        delta = rho/rhon
+
+        water = IAPWS95()
+        phi1 = water._phir(tau, delta)
+
+        ammonia = NH3()
+        phi2 = ammonia._phir(tau, delta)
+
+        Dphi = self._Dphir(tau, delta, x)
+
+        prop = {}
+        prop["tau"] = tau
+        prop["delta"] = delta
+        prop["fir"] = (1-x)*phi1["fir"] + x*phi2["fir"] + Dphi["fir"]
+        prop["firt"] = (1-x)*phi1["firt"] + x*phi2["firt"] + Dphi["firt"]
+        prop["firtt"] = (1-x)*phi1["firtt"] + x*phi2["firtt"] + Dphi["firtt"]
+        prop["fird"] = (1-x)*phi1["fird"] + x*phi2["fird"] + Dphi["fird"]
+        prop["firdd"] = (1-x)*phi1["firdd"] + x*phi2["firdd"] + Dphi["firdd"]
+        prop["firdt"] = (1-x)*phi1["firdt"] + x*phi2["firdt"] + Dphi["firdt"]
+        prop["firx"] = -phi1["fir"] + phi2["fir"] + Dphi["firx"]
+        prop["F"] = prop["firx"] - delta/rhon*drhonx*prop["fird"] + \
+            tau/Tn*dTnx*prop["firt"]
+        return prop
+
+    def _Dphir(self, tau, delta, x):
+        """Departure function to the residual contribution to the free
+        Helmholtz energy
+
+        Parameters
+        ----------
+        tau : float
+            Adimensional temperature [-]
+        delta : float
+            Adimensional density [-]
+        x : float
+            Mole fraction of ammonia in mixture [mol/mol]
+
+        Returns
+        -------
+        prop : dictionary with departure contribution to the residual
+        adimensional helmholtz energy and deriv
+            fir  [-]
+            firt: [∂Δfir/∂τ]δ,x  [-]
+            fird: [∂Δfir/∂δ]τ,x  [-]
+            firtt: [∂²Δfir/∂τ²]δ,x  [-]
+            firdt: [∂²Δfir/∂τ∂δ]x  [-]
+            firdd: [∂²Δfir/∂δ²]τ,x  [-]
+            firx: [∂Δfir/∂x]τ,δ  [-]
+
+        References
+        ----------
+        IAPWS, Guideline on the IAPWS Formulation 2001 for the Thermodynamic
+        Properties of Ammonia-Water Mixtures,
+        http://www.iapws.org/relguide/nh3h2o.pdf, Eq 8
+        """
+        fx = x*(1-x**0.5248379)
+        dfx = 1-1.5248379*x**0.5248379
+
+        # Polinomial terms
+        n = -1.855822e-2
+        t = 1.5
+        d = 4
+        fir = n*delta**d*tau**t
+        fird = n*d*delta**(d-1)*tau**t
+        firdd = n*d*(d-1)*delta**(d-2)*tau**t
+        firt = n*t*delta**d*tau**(t-1)
+        firtt = n*t*(t-1)*delta**d*tau**(t-2)
+        firdt = n*t*d*delta**(d-1)*tau**(t-1)
+        firx = dfx*n*delta**d*tau**t
+
+        # Exponential terms
+        nr2 = [5.258010e-2, 3.552874e-10, 5.451379e-6, -5.998546e-13,
+               -3.687808e-6]
+        t2 = [0.5, 6.5, 1.75, 15, 6]
+        d2 = [5, 15, 12, 12, 15]
+        c2 = [1, 1, 1, 1, 2]
+        for n, d, t, c in zip(nr2, d2, t2, c2):
+            fir += n*delta**d*tau**t*exp(-delta**c)
+            fird += n*exp(-delta**c)*delta**(d-1)*tau**t*(d-c*delta**c)
+            firdd += n*exp(-delta**c)*delta**(d-2)*tau**t * \
+                ((d-c*delta**c)*(d-1-c*delta**c)-c**2*delta**c)
+            firt += n*t*delta**d*tau**(t-1)*exp(-delta**c)
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-delta**c)
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*exp(
+                -delta**c)
+            firx += dfx*n*delta**d*tau**t*exp(-delta**c)
+
+        # Exponential terms with composition
+        nr3 = [0.2586192, -1.368072e-8, 1.226146e-2, -7.181443e-2, 9.970849e-2,
+               1.0584086e-3, -0.1963687]
+        t3 = [-1, 4, 3.5, 0, -1, 8, 7.5]
+        d3 = [4, 15, 4, 5, 6, 10, 6]
+        c3 = [1, 1, 1, 1, 2, 2, 2]
+        for n, d, t, c in zip(nr3, d3, t3, c3):
+            fir += x*n*delta**d*tau**t*exp(-delta**c)
+            fird += x*n*exp(-delta**c)*delta**(d-1)*tau**t*(d-c*delta**c)
+            firdd += x*n*exp(-delta**c)*delta**(d-2)*tau**t * \
+                ((d-c*delta**c)*(d-1-c*delta**c)-c**2*delta**c)
+            firt += x*n*t*delta**d*tau**(t-1)*exp(-delta**c)
+            firtt += x*n*t*(t-1)*delta**d*tau**(t-2)*exp(-delta**c)
+            firdt += x*n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*exp(
+                -delta**c)
+            firx += x*dfx*n*delta**d*tau**t*exp(-delta**c)
+
+        n = -0.7777897
+        t = 4
+        d = 2
+        c = 2
+        fir += x**2*n*delta**d*tau**t*exp(-delta**c)
+        fird += x**2*n*exp(-delta**c)*delta**(d-1)*tau**t*(d-c*delta**c)
+        firdd += x**2*n*exp(-delta**c)*delta**(d-2)*tau**t * \
+            ((d-c*delta**c)*(d-1-c*delta**c)-c**2*delta**c)
+        firt += x**2*n*t*delta**d*tau**(t-1)*exp(-delta**c)
+        firtt += x**2*n*t*(t-1)*delta**d*tau**(t-2)*exp(-delta**c)
+        firdt += x**2*n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*exp(
+            -delta**c)
+        firx += x**2*dfx*n*delta**d*tau**t*exp(-delta**c)
+
+        prop = {}
+        prop["fir"] = fir*fx
+        prop["firt"] = firt*fx
+        prop["firtt"] = firtt*fx
+        prop["fird"] = fird*fx
+        prop["firdd"] = firdd*fx
+        prop["firdt"] = firdt*fx
+        prop["firx"] = firx
+        return prop
+
+
+def Ttr(x):
+    """Equation for the triple point of ammonia-water mixture
+
+    Parameters
+    ----------
+    x : float
+        Mole fraction of ammonia in mixture [mol/mol]
+
+    Returns
+    -------
+    Ttr : float
+        Triple point temperature [K]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 0 ≤ x ≤ 1
+
+    References
+    ----------
+    IAPWS, Guideline on the IAPWS Formulation 2001 for the Thermodynamic
+    Properties of Ammonia-Water Mixtures,
+    http://www.iapws.org/relguide/nh3h2o.pdf, Eq 9
+    """
+    if 0 <= x <= 0.33367:
+        Ttr = 273.16*(1-0.3439823*x-1.3274271*x**2-274.973*x**3)
+    elif 0.33367 < x <= 0.58396:
+        Ttr = 193.549*(1-4.987368*(x-0.5)**2)
+    elif 0.58396 < x <= 0.81473:
+        Ttr = 194.38*(1-4.886151*(x-2/3)**2+10.37298*(x-2/3)**3)
+    elif 0.81473 < x <= 1:
+        Ttr = 195.495*(1-0.323998*(1-x)-15.87560*(1-x)**4)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return Ttr
