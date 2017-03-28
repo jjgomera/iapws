@@ -118,7 +118,7 @@ def deriv_H(state, z, x, y, fase):
     state : any python object
         Only need define P and T properties
     x, y, z : string
-        Represent the variables of derivate, can be: P, T, v, u, h, s, g, a
+        Name of variables of derivate, can be: P, T, v, rho, u, h, s, g, a
     fase : any python object
         Define other phase properties v, cv, alfap, s, betap
 
@@ -132,10 +132,22 @@ def deriv_H(state, z, x, y, fase):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
+    # We use the relation between rho and v and his partial derivative
+    # ∂v/∂b|c = -1/ρ² ∂ρ/∂b|c
+    # ∂a/∂v|c = -ρ² ∂a/∂ρ|c
+    mul = 1
+    if z == "rho":
+        mul = -fase.rho**2
+        z = "v"
+    if x == "rho":
+        mul = -1/fase.rho**2
+        x = "v"
+    if y == "rho":
+        y = "v"
+
     dT = {"P": state.P*1000*fase.alfap,
           "T": 1,
           "v": 0,
-          "rho": 0,
           "u": fase.cv,
           "h": fase.cv+state.P*1000*fase.v*fase.alfap,
           "s": fase.cv/state.T,
@@ -144,13 +156,13 @@ def deriv_H(state, z, x, y, fase):
     dv = {"P": -state.P*1000*fase.betap,
           "T": 0,
           "v": 1,
-          "rho": -1,
           "u": state.P*1000*(state.T*fase.alfap-1),
           "h": state.P*1000*(state.T*fase.alfap-fase.v*fase.betap),
           "s": state.P*1000*fase.alfap,
           "g": -state.P*1000*fase.v*fase.betap,
           "a": -state.P*1000}
-    return (dv[z]*dT[y]-dT[z]*dv[y])/(dv[x]*dT[y]-dT[x]*dv[y])
+    deriv = (dv[z]*dT[y]-dT[z]*dv[y])/(dv[x]*dT[y]-dT[x]*dv[y])
+    return mul*deriv
 
 
 def deriv_G(state, z, x, y, fase):
@@ -162,7 +174,7 @@ def deriv_G(state, z, x, y, fase):
     state : any python object
         Only need define P and T properties
     x, y, z : string
-        Represent the variables of derivate, can be: P, T, v, u, h, s, g, a
+        Name of variables of derivate, can be: P, T, v, rho, u, h, s, g, a
     fase : any python object
         Define other phase properties v, cp, alfav, s, xkappa
 
@@ -176,6 +188,14 @@ def deriv_G(state, z, x, y, fase):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
+    mul = 1
+    if z == "rho":
+        mul = -fase.rho**2
+        z = "v"
+    if x == "rho":
+        mul = -1/fase.rho**2
+        x = "v"
+
     dT = {"P": 0,
           "T": 1,
           "v": fase.v*fase.alfav,
@@ -192,4 +212,5 @@ def deriv_G(state, z, x, y, fase):
           "s": -fase.v*fase.alfav,
           "g": fase.v,
           "a": state.P*1000*fase.v*fase.xkappa}
-    return (dP[z]*dT[y]-dT[z]*dP[y])/(dP[x]*dT[y]-dT[x]*dP[y])
+    deriv = (dP[z]*dT[y]-dT[z]*dP[y])/(dP[x]*dT[y]-dT[x]*dP[y])
+    return mul*deriv
