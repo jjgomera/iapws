@@ -211,8 +211,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Viscosity(100, 1173.15)*1e6, 6), 47.640433)
         self.assertEqual(round(_Viscosity(400, 1173.15)*1e6, 6), 64.154608)
 
-    def test_Viscosity_2(self):
-        """Table 5, pag 9"""
+        # Table 5, pag 9
         fluid = IAPWS95(rho=122, T=647.35)
         self.assertEqual(round(fluid.mu*1e6, 6), 25.520677)
         fluid = IAPWS95(rho=222, T=647.35)
@@ -226,15 +225,14 @@ class Test(unittest.TestCase):
         fluid = IAPWS95(rho=422, T=647.35)
         self.assertEqual(round(fluid.mu*1e6, 6), 49.436256)
 
-    def test_ThCond_1(self):
+    def test_ThCond(self):
         """Table 4, pag 10"""
         self.assertEqual(round(_ThCond(0, 298.15)*1000, 7), 18.4341883)
         self.assertEqual(round(_ThCond(998, 298.15)*1000, 6), 607.712868)
         self.assertEqual(round(_ThCond(1200, 298.15)*1000, 6), 799.038144)
         self.assertEqual(round(_ThCond(0, 873.15)*1000, 7), 79.1034659)
 
-    def test_ThCond_2(self):
-        """Table 5, pag 10"""
+        # Table 5, pag 10
         fluid = IAPWS95(rho=1, T=647.35)
         self.assertEqual(round(fluid.k*1000, 7), 51.9298924)
         fluid = IAPWS95(rho=122, T=647.35)
@@ -251,6 +249,22 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.k*1000, 6), 448.883487)
         fluid = IAPWS95(rho=750, T=647.35)
         self.assertEqual(round(fluid.k*1000, 6), 600.961346)
+
+        # Industrial formulation, Table 7, 8, 9
+        fluid = IAPWS97(T=620, P=20)
+        self.assertEqual(round(fluid.k*1000, 6), 481.485195)
+        fluid = IAPWS97(T=620, P=50)
+        self.assertEqual(round(fluid.k*1000, 6), 545.038940)
+        fluid = IAPWS97(T=650, P=0.3)
+        self.assertEqual(round(fluid.k*1000, 7), 52.2311024)
+        fluid = IAPWS97(T=800, P=50)
+        self.assertEqual(round(fluid.k*1000, 6), 177.709914)
+        P = _Region3(T=647.35, rho=222)["P"]
+        fluid = IAPWS97(T=647.35, P=P)
+        self.assertEqual(round(fluid.k*1000, 6), 366.879411)
+        P = _Region3(T=647.35, rho=322)["P"]
+        fluid = IAPWS97(T=647.35, P=P)
+        self.assertEqual(round(fluid.k*1000, 5), 1241.82415)
 
     def test_Tension(self):
         """Selected values from table 1"""

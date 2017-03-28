@@ -4648,17 +4648,6 @@ class IAPWS97(object):
         fase.xkappa = estado["kt"]
         fase.kappas = -1/fase.v*self.derivative("v", "P", "s", fase)
 
-        fase.mu = _Viscosity(fase.rho, self.T)
-        fase.k = _ThCond(fase.rho, self.T)
-        fase.nu = fase.mu/fase.rho
-        fase.epsilon = _Dielectric(fase.rho, self.T)
-        fase.Prandt = fase.mu*fase.cp*1000/fase.k
-        try:
-            fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
-        except NotImplementedError:
-            fase.n = None
-
-        fase.alfa = fase.k/1000/fase.rho/fase.cp
         fase.joule = self.derivative("T", "P", "h", fase)
         fase.deltat = self.derivative("h", "P", "T", fase)
         fase.gamma = -self.v/self.P/1000*self.derivative("P", "v", "s", fase)
@@ -4668,6 +4657,21 @@ class IAPWS97(object):
 
         fase.fi = exp((fase.g-self.g0)/R/self.T)
         fase.f = self.P*fase.fi
+
+        fase.mu = _Viscosity(fase.rho, self.T)
+        # Use industrial formulation for critical enhancement in thermal
+        # conductivity calculation
+        fase.drhodP_T = self.derivative("rho", "P", "T", fase)
+        fase.k = _ThCond(fase.rho, self.T, fase)
+
+        fase.nu = fase.mu/fase.rho
+        fase.alfa = fase.k/1000/fase.rho/fase.cp
+        fase.epsilon = _Dielectric(fase.rho, self.T)
+        fase.Prandt = fase.mu*fase.cp*1000/fase.k
+        try:
+            fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+        except NotImplementedError:
+            fase.n = None
 
     def derivative(self, z, x, y, fase):
         """Wrapper derivative for custom derived properties
