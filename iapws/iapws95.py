@@ -894,12 +894,10 @@ class MEoS(_fase):
         fase.g = fase.h-self.T*fase.s
 
         fase.Z = self.P*fase.v/self.T/self.R*1e3
-        fase.fi = estado["fugacity"]
+        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"] -
+                      log(1+estado["delta"]*estado["fird"]))
         fase.f = fase.fi*self.P
-        fase.cp = estado["cp"]
         fase.cv = estado["cv"]
-        fase.cp_cv = fase.cp/fase.cv
-        fase.w = estado["w"]
 
         fase.rhoM = fase.rho/self.M
         fase.hM = fase.h*self.M
@@ -907,11 +905,15 @@ class MEoS(_fase):
         fase.uM = fase.u*self.M
         fase.aM = fase.a*self.M
         fase.gM = fase.g*self.M
-        fase.cvM = fase.cv*self.M
-        fase.cpM = fase.cp*self.M
 
         fase.alfap = estado["alfap"]
         fase.betap = estado["betap"]
+
+        fase.cp = self.derivative("h", "T", "P", fase)
+        fase.cp_cv = fase.cp/fase.cv
+        fase.w = (self.derivative("P", "rho", "s", fase)*1000)**0.5
+        fase.cvM = fase.cv*self.M
+        fase.cpM = fase.cp*self.M
 
         fase.joule = self.derivative("T", "P", "h", fase)*1e3
         fase.Gruneisen = fase.v/fase.cv*self.derivative("P", "T", "v", fase)
@@ -1017,13 +1019,12 @@ class MEoS(_fase):
         fird = res["fird"]
         firdd = res["firdd"]
         firdt = res["firdt"]
-        B = res["B"]
-        C = res["C"]
 
         propiedades = {}
         propiedades["fir"] = fir
         propiedades["fird"] = fird
         propiedades["firdd"] = firdd
+        propiedades["delta"] = delta
 
         propiedades["T"] = T
         propiedades["P"] = (1+delta*fird)*self.R*T*rho
@@ -1031,18 +1032,11 @@ class MEoS(_fase):
         propiedades["h"] = self.R*T*(1+tau*(fiot+firt)+delta*fird)
         propiedades["s"] = self.R*(tau*(fiot+firt)-fio-fir)
         propiedades["cv"] = -self.R*tau**2*(fiott+firtt)
-        propiedades["cp"] = self.R*(
-            -tau**2*(fiott+firtt) + (1+delta*fird-delta*tau*firdt)**2/(
-                1+2*delta*fird+delta**2*firdd))
-        propiedades["w"] = (
-            self.R*1000*T*(1+2*delta*fird+delta**2*firdd - (
-                1+delta*fird-delta*tau*firdt)**2/tau**2/(fiott+firtt)))**0.5
         propiedades["alfap"] = (1-delta*tau*firdt/(1+delta*fird))/T
         propiedades["betap"] = rho*(
             1+(delta*fird+delta**2*firdd)/(1+delta*fird))
-        propiedades["fugacity"] = exp(fir+delta*fird-log(1+delta*fird))
-        propiedades["B"] = B
-        propiedades["C"] = C
+        propiedades["B"] = res["B"]
+        propiedades["C"] = res["C"]
 #        dbt=-phi11/rho/t
 #        propiedades["cps"] = propiedades["cv"] Add cps from Argon pag.27
 
