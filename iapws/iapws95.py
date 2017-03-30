@@ -928,12 +928,12 @@ class MEoS(_fase):
         fase.dhdT_P = self.derivative("h", "T", "P", fase)
         fase.dhdP_T = self.derivative("h", "P", "T", fase)*1e3
         fase.dhdP_rho = self.derivative("h", "P", "rho", fase)*1e3
-        fase.dhdrho_T = estado["dhdrho"]
-        fase.dhdrho_P = estado["dhdrho"]+fase.dhdT_rho/estado["drhodt"]
+        fase.dhdrho_T = self.derivative("h", "rho", "T", fase)
+        fase.dhdrho_P = self.derivative("h", "rho", "P", fase)
         fase.dpdT_rho = self.derivative("P", "T", "rho", fase)*1e-3
-        fase.dpdrho_T = estado["dpdrho"]*1e-3
-        fase.drhodP_T = 1/estado["dpdrho"]*1e3
-        fase.drhodT_P = estado["drhodt"]
+        fase.dpdrho_T = self.derivative("P", "rho", "T", fase)*1e-3
+        fase.drhodP_T = self.derivative("rho", "P", "T", fase)*1e3
+        fase.drhodT_P = self.derivative("rho", "T", "P", fase)
 
         fase.Z_rho = (fase.Z-1)/fase.rho
         fase.IntP = self.T*self.derivative("P", "T", "rho", fase)*1e-3-self.P
@@ -1009,7 +1009,6 @@ class MEoS(_fase):
         fio = ideal["fio"]
         fiot = ideal["fiot"]
         fiott = ideal["fiott"]
-        fiodt = ideal["fiodt"]
 
         res = self._phir(tau, delta)
         fir = res["fir"]
@@ -1044,12 +1043,6 @@ class MEoS(_fase):
         propiedades["fugacity"] = exp(fir+delta*fird-log(1+delta*fird))
         propiedades["B"] = B
         propiedades["C"] = C
-        propiedades["dpdrho"] = self.R*T*(1+2*delta*fird+delta**2*firdd)
-        propiedades["drhodt"] = -rho*(1+delta*fird-delta*tau*firdt) / \
-            (T*(1+2*delta*fird+delta**2*firdd))
-
-        propiedades["dhdrho"] = self.R*T/rho * \
-            (tau*delta*(fiodt+firdt)+delta*fird+delta**2*firdd)
 #        dbt=-phi11/rho/t
 #        propiedades["cps"] = propiedades["cv"] Add cps from Argon pag.27
 
@@ -1850,14 +1843,16 @@ class IAPWS95(MEoS):
 
     def _visco(self, rho, T, fase):
         ref = IAPWS95()
-        estado = ref._Helmholtz(rho, 1.5*647.096)
-        drho = 1/estado["dpdrho"]*1e3
+        st = ref._Helmholtz(rho, 1.5*Tc)
+        delta = rho/rhoc
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _Viscosity(rho, T, fase, drho)
 
     def _thermo(self, rho, T, fase):
         ref = IAPWS95()
-        estado = ref._Helmholtz(rho, 1.5*647.096)
-        drho = 1/estado["dpdrho"]*1e3
+        st = ref._Helmholtz(rho, 1.5*Tc)
+        delta = rho/rhoc
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _ThCond(rho, T, fase, drho)
 
     def _surface(self, T):
