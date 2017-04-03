@@ -10,6 +10,8 @@ from cmath import log as log_c
 from math import log, exp, tan, atan, acos, sin, pi, log10
 import warnings
 
+from scipy.optimize import minimize
+
 from ._utils import deriv_H
 
 
@@ -181,7 +183,7 @@ def _Ice(T, P):
     return propiedades
 
 
-# IAPWS-08 for Liquid wagter at 0.1 MPa
+# IAPWS-08 for Liquid water at 0.1 MPa
 def _Liquid(T, P=0.1):
     """Supplementary release on properties of liquid water at 0.1 MPa
 
@@ -357,6 +359,181 @@ def _Liquid(T, P=0.1):
     propiedades["epsilon"] = epsilon
 
     return propiedades
+
+
+# IAPWS-15 for supercooled liquid water
+def _Supercooled(T, P):
+    """Guideline on thermodynamic properties of supercooled water
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties of water. The available properties are:
+
+            * L: Ordering field [-]
+            * x: Mole fraction of low-density structure [-]
+            * rho: Density [kg/m³]
+            * s: Specific entropy [kJ/kgK]
+            * h: Specific enthalpy [kJ/kg]
+            * u: Specific internal energy [kJ/kg]
+            * a: Specific Helmholtz energy [kJ/kg]
+            * g: Specific Gibbs energy [kJ/kg]
+            * alfap: Thermal expansion coefficient [1/K]
+            * xkappa : Isothermal compressibility [1/MPa]
+            * cp: Specific isobaric heat capacity [kJ/kgK]
+            * cv: Specific isochoric heat capacity [kJ/kgK]
+            * w: Speed of sound [m/s²]
+
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * Tm ≤ T ≤ 300
+        * 0 < P ≤ 1000
+
+    The minimum temperature in range of validity is the melting temperature, it
+    depend of pressure
+
+    Examples
+    --------
+    >>> liq = _Supercooled(235.15, 0.101325)
+    >>> liq["rho"], liq["cp"], liq["w"]
+    968.09999 5.997563 1134.5855
+
+    References
+    ----------
+    IAPWS, Guideline on Thermodynamic Properties of Supercooled Water,
+    http://iapws.org/relguide/Supercooled.html
+    """
+
+    # Check input in range of validity
+    if P < 198.9:
+        Tita = T/235.15
+        Ph = 0.1+228.27*(1-Tita**6.243)+15.724*(1-Tita**79.81)
+        if P < Ph or T > 300:
+            raise NotImplementedError("Incoming out of bound")
+    else:
+        Th = 172.82+0.03718*P+3.403e-5*P**2-1.573e-8*P**3
+        if T < Th or T > 300 or P > 1000:
+            raise NotImplementedError("Incoming out of bound")
+
+    # Parameters, Table 1
+    Tll = 228.2
+    rho0 = 1081.6482
+    R = 0.461523087
+    pi0 = 300e3/rho0/R/Tll
+    omega0 = 0.5212269
+    L0 = 0.76317954
+    k0 = 0.072158686
+    k1 = -0.31569232
+    k2 = 5.2992608
+
+    # Reducing parameters, Eq 2
+    tau = T/Tll-1
+    p = P*1000/rho0/R/Tll
+    tau_ = tau+1
+    p_ = p+pi0
+
+    # Eq 3
+    ci = [-8.1570681381655, 1.2875032, 7.0901673598012, -3.2779161e-2,
+          7.3703949e-1, -2.1628622e-1, -5.1782479, 4.2293517e-4, 2.3592109e-2,
+          4.3773754, -2.9967770e-3, -9.6558018e-1, 3.7595286, 1.2632441,
+          2.8542697e-1, -8.5994947e-1, -3.2916153e-1, 9.0019616e-2,
+          8.1149726e-2, -3.2788213]
+    ai = [0, 0, 1, -0.2555, 1.5762, 1.6400, 3.6385, -0.3828, 1.6219, 4.3287,
+          3.4763, 5.1556, -0.3593, 5.0361, 2.9786, 6.2373, 4.0460, 5.3558,
+          9.0157, 1.2194]
+    bi = [0, 1, 0, 2.1051, 1.1422, 0.9510, 0, 3.6402, 2.0760, -0.0016, 2.2769,
+          0.0008, 0.3706, -0.3975, 2.9730, -0.3180, 2.9805, 2.9265, 0.4456,
+          0.1298]
+    di = [0, 0, 0, -0.0016, 0.6894, 0.0130, 0.0002, 0.0435, 0.0500, 0.0004,
+          0.0528, 0.0147, 0.8584, 0.9924, 1.0041, 1.0961, 1.0228, 1.0303,
+          1.6180, 0.5213]
+    phir = phirt = phirp = phirtt = phirtp = phirpp = 0
+    for c, a, b, d in zip(ci, ai, bi, di):
+        phir += c*tau_**a*p_**b*exp(-d*p_)
+        phirt += c*a*tau_**(a-1)*p_**b*exp(-d*p_)
+        phirp += c*tau_**a*p_**(b-1)*(b-d*p_)*exp(-d*p_)
+        phirtt += c*a*(a-1)*tau_**(a-2)*p_**b*exp(-d*p_)
+        phirtp += c*a*tau_**(a-1)*p_**(b-1)*(b-d*p_)*exp(-d*p_)
+        phirpp += c*tau_**a*p_**(b-2)*((d*p_-b)**2-b)*exp(-d*p_)
+
+    # Eq 5
+    K1 = ((1+k0*k2+k1*(p-k2*tau))**2-4*k0*k1*k2*(p-k2*tau))**0.5
+    K2 = (1+k2**2)**0.5
+
+    # Eq 6
+    omega = 2+omega0*p
+
+    # Eq 4
+    L = L0*K2/2/k1/k2*(1+k0*k2+k1*(p+k2*tau)-K1)
+
+    # Define interval of solution, Table 4
+    if omega < 10/9*(log(19)-L):
+        xmin = 0.049
+        xmax = 0.5
+    elif 10/9*(log(19)-L) <= omega < 50/49*(log(99)-L):
+        xmin = 0.0099
+        xmax = 0.051
+    else:
+        xmin = 0.99*exp(-50/49*L-omega)
+        xmax = min(1.1*exp(-L-omega), 0.0101)
+
+    def f(x):
+        return abs(L+log(x/(1-x))+omega*(1-2*x))
+
+    x = minimize(f, ((xmin+xmax)/2,), bounds=((xmin, xmax),))["x"][0]
+
+    # Eq 12
+    fi = 2*x-1
+    Xi = 1/(2/(1-fi**2)-omega)
+
+    # Derivatives, Table 3
+    Lt = L0*K2/2*(1+(1-k0*k2+k1*(p-k2*tau))/K1)
+    Lp = L0*K2*(K1+k0*k2-k1*p+k1*k2*tau-1)/2/k2/K1
+    Ltt = -2*L0*K2*k0*k1*k2**2/K1**3
+    Ltp = 2*L0*K2*k0*k1*k2/K1**3
+    Lpp = -2*L0*K2*k0*k1/K1**3
+
+    prop = {}
+    prop["L"] = L
+    prop["x"] = x
+
+    # Eq 13
+    prop["rho"] = rho0/((tau+1)/2*(omega0/2*(1-fi**2)+Lp*(fi+1))+phirp)
+
+    # Eq 1
+    prop["g"] = phir+(tau+1)*(x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))
+
+    # Eq 14
+    prop["s"] = -R*((tau+1)/2*Lt*(fi+1) +
+                    (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
+
+    # Basic derived state properties
+    prop["h"] = prop["g"]+T*prop["s"]
+    prop["u"] = prop["h"]+P/prop["rho"]
+    prop["a"] = prop["u"]-T*prop["s"]
+
+    # Eq 15
+    prop["xkappa"] = prop["rho"]/rho0**2/R*1000/Tll*(
+        (tau+1)/2*(Xi*(Lp-omega0*fi)**2-(fi+1)*Lpp)-phirpp)
+    prop["alfap"] = prop["rho"]/rho0/Tll*(
+        Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2 -
+        (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
+    prop["cp"] = -R*(tau+1)*(Lt*(fi+1)+(tau+1)/2*(Ltt*(fi+1)-Lt**2*Xi)+phirtt)
+
+    # Eq 16
+    prop["cv"] = prop["cp"]-T*prop["alfap"]**2/prop["rho"]/prop["xkappa"]*1e3
+
+    # Eq 17
+    prop["w"] = (prop["rho"]*prop["xkappa"]*1e-6*prop["cv"]/prop["cp"])**-0.5
+    return prop
 
 
 def _Sublimation_Pressure(T):
@@ -895,6 +1072,7 @@ def _Conductivity(rho, T):
     Supercritical Water from 0°C to 800°C and Pressures up to 1000 MPa,
     http://www.iapws.org/relguide/conduct.pdf
     """
+    # FIXME: Dont work
     rho_ = rho/1000
     kw = 10**-_Kw(rho, T)
 

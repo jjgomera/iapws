@@ -22,7 +22,7 @@ from iapws.iapws08 import SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
-                          _Conductivity, _Henry, _Kvalue)
+                          _Conductivity, _Henry, _Kvalue, _Supercooled)
 from iapws.humidAir import _virial, _fugacity, Air, HumidAir
 from iapws.ammonia import NH3, H2ONH3, Ttr
 
@@ -388,6 +388,56 @@ class Test(unittest.TestCase):
         if major == 3:
             self.assertWarns(Warning, _Liquid, *(375, 0.2))
         self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
+
+    def test_supperCooled(self):
+        """Table 5, pag 9"""
+        liq = _Supercooled(273.15, 0.101325)
+        self.assertEqual(round(liq["x"], 8), 0.09665471)
+        self.assertEqual(round(liq["L"], 8), 0.62120474)
+        self.assertEqual(round(liq["rho"], 5), 999.84229)
+        self.assertEqual(round(liq["alfap"]*1e4, 6), -0.683042)
+        self.assertEqual(round(liq["xkappa"]*1e4, 6), 5.088499)
+        self.assertEqual(round(liq["cp"], 7), 4.2183001)
+        self.assertEqual(round(liq["w"], 4), 1402.3886)
+
+        liq = _Supercooled(235.15, 0.101325)
+        self.assertEqual(round(liq["x"], 8), 0.25510285)
+        self.assertEqual(round(liq["L"], 8), 0.09176368)
+        self.assertEqual(round(liq["rho"], 5), 968.09999)
+        self.assertEqual(round(liq["alfap"]*1e4, 5), -29.63381)
+        self.assertEqual(round(liq["xkappa"]*1e4, 6), 11.580785)
+        self.assertEqual(round(liq["cp"], 6), 5.997563)
+        self.assertEqual(round(liq["w"], 4), 1134.5855)
+
+        liq = _Supercooled(250, 200)
+        self.assertEqual(round(liq["x"], 8), 0.03042927)
+        self.assertEqual(round(liq["L"], 8), 0.72377081)
+        self.assertEqual(round(liq["rho"], 5), 1090.45677)
+        self.assertEqual(round(liq["alfap"]*1e4, 6), 3.267768)
+        self.assertEqual(round(liq["xkappa"]*1e4, 6), 3.361311)
+        self.assertEqual(round(liq["cp"], 7), 3.7083902)
+        self.assertEqual(round(liq["w"], 4), 1668.2020)
+
+        liq = _Supercooled(200, 400)
+        self.assertEqual(round(liq["x"], 8), 0.00717008)
+        self.assertEqual(round(liq["L"], 7), 1.1553965)
+        self.assertEqual(round(liq["rho"], 5), 1185.02800)
+        self.assertEqual(round(liq["alfap"]*1e4, 6), 6.716009)
+        self.assertEqual(round(liq["xkappa"]*1e4, 6), 2.567237)
+        self.assertEqual(round(liq["cp"], 7), 3.3385250)
+        self.assertEqual(round(liq["w"], 4), 1899.3294)
+
+        liq = _Supercooled(250, 400)
+        self.assertEqual(round(liq["x"], 8), 0.00535883)
+        self.assertEqual(round(liq["L"], 7), 1.4345145)
+        self.assertEqual(round(liq["rho"], 4), 1151.7152)
+        self.assertEqual(round(liq["alfap"]*1e4, 5), 4.92993)
+        self.assertEqual(round(liq["xkappa"]*1e4, 6), 2.277029)
+        self.assertEqual(round(liq["cp"], 7), 3.7572144)
+        self.assertEqual(round(liq["w"], 4), 2015.8784)
+
+        self.assertRaises(NotImplementedError, _Supercooled, *(200, 100))
+        self.assertRaises(NotImplementedError, _Supercooled, *(180, 300))
 
     def test_auxiliarySaturation(self):
         """Table 1 pag 7"""
