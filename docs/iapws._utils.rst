@@ -1,7 +1,7 @@
-iapws.iapws08 module
+iapws._utils module
 ======================
 
-.. automodule:: iapws.iapws08
+.. automodule:: iapws._utils
     :members:
     :private-members:
     :undoc-members:

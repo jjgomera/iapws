@@ -1,7 +1,7 @@
-iapws.iapws08 module
+iapws.humidAir module
 ======================
 
-.. automodule:: iapws.iapws08
+.. automodule:: iapws.humidAir
     :members:
     :private-members:
     :undoc-members:

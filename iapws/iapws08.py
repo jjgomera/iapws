@@ -97,11 +97,14 @@ class SeaWater(object):
     ----------
     IAPWS, Release on the IAPWS Formulation 2008 for the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Seawater.html
+
     IAPWS, Supplementary Release on a Computationally Efficient Thermodynamic
     Formulation for Liquid Water for Oceanographic Use,
     http://www.iapws.org/relguide/OceanLiquid.html
+
     IAPWS, Guideline on the Thermal Conductivity of Seawater,
     http://www.iapws.org/relguide/Seawater-ThCond.html
+
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
 

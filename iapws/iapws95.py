@@ -1496,7 +1496,7 @@ class MEoS(_fase):
 
     @classmethod
     def _Liquid_Density(cls, T):
-        """Auxiliary equation for the density or saturated liquid
+        """Auxiliary equation for the density of saturated liquid
 
         Parameters
         ----------
@@ -1527,7 +1527,7 @@ class MEoS(_fase):
 
     @classmethod
     def _Vapor_Density(cls, T):
-        """Auxiliary equation for the density or saturated vapor
+        """Auxiliary equation for the density of saturated vapor
 
         Parameters
         ----------

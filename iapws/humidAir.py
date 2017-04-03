@@ -520,7 +520,9 @@ class Air(MEoSBlend):
 
 class HumidAir(object):
 
+    # TODO: Add equilibrium routine
     def _eq(self, T, P):
+
         if T <= 273.16:
             gw = _Ice(T, P)["g"]
         else:

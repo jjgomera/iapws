@@ -8,47 +8,47 @@
 The module implement the fundamental equation for the five regions (rectangular
 boxes) and the backward equation (marked in grey).
 
-:ref: IAPWS97: Global module class with all the functionality
+:func:`IAPWS97`: Global module class with all the functionality integrated
 
 Fundamental equations:
-    :ref: `_Region1`
-    :ref: `_Region2`
-    :ref: `_Region3`
-    :ref: `_Region4`
-    :ref: `_TSat_P`
-    :ref: `_PSat_T`
-    :ref: `_Region5`
+   * :func:`_Region1`
+   * :func:`_Region2`
+   * :func:`_Region3`
+   * :func:`_Region4`
+   * :func:`_TSat_P`
+   * :func:`_PSat_T`
+   * :func:`_Region5`
 
 Backward equations:
-    :ref: `_Backward1_T_Ph`
-    :ref: `_Backward1_T_Ps`
-    :ref: `_Backward1_P_hs`
-    :ref: `_Backward2_T_Ph`
-    :ref: `_Backward2_T_Ps`
-    :ref: `_Backward2_P_hs`
-    :ref: `_Backward3_T_Ph`
-    :ref: `_Backward3_T_Ps`
-    :ref: `_Backward3_P_hs`
-    :ref: `_Backward3_v_Ph`
-    :ref: `_Backward3_v_Ps`
-    :ref: `_Backward3_v_PT`
-    :ref: `_Backward4_T_hs`
+   * :func:`_Backward1_T_Ph`
+   * :func:`_Backward1_T_Ps`
+   * :func:`_Backward1_P_hs`
+   * :func:`_Backward2_T_Ph`
+   * :func:`_Backward2_T_Ps`
+   * :func:`_Backward2_P_hs`
+   * :func:`_Backward3_T_Ph`
+   * :func:`_Backward3_T_Ps`
+   * :func:`_Backward3_P_hs`
+   * :func:`_Backward3_v_Ph`
+   * :func:`_Backward3_v_Ps`
+   * :func:`_Backward3_v_PT`
+   * :func:`_Backward4_T_hs`
 
 Boundary equations:
-    :ref: `_h13_s`
-    :ref: `_h3a_s`
-    :ref: `_h1_s`
-    :ref: `_t_hs`
-    :ref: `_PSat_h`
-    :ref: `_h2ab_s`
-    :ref: `_h_3ab`
-    :ref: `_h2c3b_s`
-    :ref: `_hab_s`
-    :ref: `_hbc_P`
+   * :func:`_h13_s`
+   * :func:`_h3a_s`
+   * :func:`_h1_s`
+   * :func:`_t_hs`
+   * :func:`_PSat_h`
+   * :func:`_h2ab_s`
+   * :func:`_h_3ab`
+   * :func:`_h2c3b_s`
+   * :func:`_hab_s`
+   * :func:`_hbc_P`
 
 
-References
-----------
+References:
+
 IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
 Thermodynamic Properties of Water and Steam August 2007,
 http://www.iapws.org/relguide/IF97-Rev.html

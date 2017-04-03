@@ -1,7 +1,7 @@
-iapws.iapws08 module
+iapws.ammonia module
 ======================
 
-.. automodule:: iapws.iapws08
+.. automodule:: iapws.ammonia
     :members:
     :private-members:
     :undoc-members:

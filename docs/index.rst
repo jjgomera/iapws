@@ -6,12 +6,12 @@
 Welcome to iapws's documentation!
 ==================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 10
 
    modules
+
+.. include:: modules.rst
 
 
 Indices and tables
