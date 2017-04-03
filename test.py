@@ -2395,8 +2395,9 @@ class Test(unittest.TestCase):
         Tt2 = Ttr(0.5)
         Tt3 = Ttr(0.7)
         Tt4 = Ttr(0.9)
-        self.assertGreater(Tt1, Tt2)
-        self.assertGreater(Tt3, Tt4)
+        if major == 3:
+            self.assertGreater(Tt1, Tt2)
+            self.assertGreater(Tt3, Tt4)
 
         self.assertRaises(NotImplementedError, Ttr, 1.1)
 
