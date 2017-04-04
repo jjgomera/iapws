@@ -57,6 +57,8 @@ documentation
  
 To see the full documentation of package, see `readthedocs <http://iapws.readthedocs.io/>`__
 
+.. inclusion-marker-do-not-remove
+
 For a rapid usage demostration, see this examples 
 
 
@@ -110,9 +112,25 @@ IAPWS-08 for seawater
 
 
 TODO
---------------------
+====
 
-* Improve convergence in two phase region for IAPWS95 and D2O class
-* Fix h-x bound region definition in IAPWS97
+* FIXME: D2O residual helmholtz calculation
+* FIXME: Electrolytic conductiviy
+* TODO: Improve convergence in two phase region for IAPWS95 and D2O class
+* TODO: Implement SBTL method for fast calculation
+* TODO: Implement TTSE method for fast calculation
 
+Ammonia-water mixture:
+
+* FIXME: Visco correlation for ammonia
+* FIXME: Ammonia-water mixture residual helmholtz. The values are good, bad difer by 1%
+* TODO: Add equilibrium routine
+
+Air:
+
+* FIXME: Air thermal conductivity critical enchancement
+* TODO: Add equilibrium routine
+
+
+I've tried to test all code and use all values for computer verification the standards give, but anyway the code can have hidden problem.
 For any suggestions, comments, bugs ... you can usage the `github issue section <https://github.com/jjgomera/iapws/issues>`__, or contact directly with me at `email <jjgomera@gmail.com>`__.
