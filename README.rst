@@ -126,7 +126,7 @@ Ammonia-water mixture:
 * FIXME: Ammonia-water mixture residual helmholtz. The values are good, bad difer by 1%
 * TODO: Add equilibrium routine
 
-Air:
+Humid air:
 
 * FIXME: Air thermal conductivity critical enchancement
 * TODO: Add equilibrium routine

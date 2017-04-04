@@ -12,6 +12,7 @@ install:
   - pip install --upgrade pip setuptools wheel
   - pip install --only-binary=scipy scipy
   - pip install coveralls
+  - pip install codecov
 
 # command to run tests
 script:
@@ -20,3 +21,4 @@ script:
 # Add coverall support
 after_success:
   - coveralls
+  - codecov
