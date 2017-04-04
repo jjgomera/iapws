@@ -10,6 +10,10 @@
     :target: https://coveralls.io/github/jjgomera/iapws?branch=master
     :alt: coveralls.io analysis
 
+.. image:: https://codecov.io/gh/jjgomera/iapws/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/jjgomera/iapws
+    :alt: codecov.io analysis
+
 .. image:: https://landscape.io/github/jjgomera/iapws/master/landscape.svg?style=flat
    :target: https://landscape.io/github/jjgomera/iapws/master
    :alt: Code Health
