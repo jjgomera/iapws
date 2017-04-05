@@ -8,6 +8,7 @@ from __future__ import division
 from math import exp, log
 
 from .iapws95 import IAPWS95
+from .iapws97 import IAPWS97
 from ._iapws import _ThCond, Tc, Pc, rhoc
 from ._utils import deriv_G
 
@@ -38,6 +39,8 @@ class SeaWater(object):
 
     fast : Boolean, default False
         Use the Supplementary release SR7-09 to speed up the calculation
+    IF97 : Boolean, default False
+        Use the Advisory Note No. 5 with industrial formulation
 
     Returns
     -------
@@ -57,6 +60,8 @@ class SeaWater(object):
         Specific Helmholtz free energy [kJ/kg]
     cp : float
         Specific isobaric heat capacity [kJ/kg·K]
+    cv : float
+        Specific isochoric heat capacity [kJ/kg·K]
     gt : float
         Derivative Gibbs energy with temperature [kJ/kg·K]
     gp : float
@@ -108,6 +113,9 @@ class SeaWater(object):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
 
+    IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
+    Properties of Seawater, http://www.iapws.org/relguide/Advise5.html
+
     Examples
     --------
     >>> salt = iapws.SeaWater(T=300, P=1, S=0.04)
@@ -121,7 +129,8 @@ class SeaWater(object):
     kwargs = {"T": 0.0,
               "P": 0.0,
               "S": None,
-              "fast": False}
+              "fast": False,
+              "IF97": False}
     status = 0
     msg = "Undefined"
 
@@ -149,6 +158,8 @@ class SeaWater(object):
         m = S/(1-S)/Ms
         if self.kwargs["fast"] and T <= 313.15:
             pw = self._waterSupp(T, P)
+        elif self.kwargs["IF97"]:
+            pw = self._waterIF97(T, P)
         else:
             pw = self._water(T, P)
         ps = self._saline(T, P, S)
@@ -164,6 +175,7 @@ class SeaWater(object):
         self.v = prop["gp"]
         self.s = -prop["gt"]
         self.cp = -T*prop["gtt"]
+        self.cv = T*(prop["gtp"]**2/prop["gpp"]-prop["gtt"])
         self.h = prop["g"]-T*prop["gt"]
         self.u = prop["g"]-T*prop["gt"]-P*1000*prop["gp"]
         self.a = prop["g"]-P*1000*prop["gp"]
@@ -210,6 +222,21 @@ class SeaWater(object):
         prop["gtt"] = -water.cp/T
         prop["gtp"] = water.betas*water.cp/T
         prop["gpp"] = -1e6/(water.rho*water.w)**2-water.betas**2*1e3*water.cp/T
+        prop["gs"] = 0
+        prop["gsp"] = 0
+        return prop
+
+    @classmethod
+    def _waterIF97(cls, T, P):
+        water = IAPWS97(P=P, T=T)
+        betas = water.derivative("T", "P", "s", water)
+        prop = {}
+        prop["g"] = water.h-T*water.s
+        prop["gt"] = -water.s
+        prop["gp"] = 1./water.rho
+        prop["gtt"] = -water.cp/T
+        prop["gtp"] = betas*water.cp/T
+        prop["gpp"] = -1e6/(water.rho*water.w)**2-betas**2*1e3*water.cp/T
         prop["gs"] = 0
         prop["gsp"] = 0
         return prop
