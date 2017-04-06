@@ -98,7 +98,7 @@ def _Ice(T, P):
     # Check input in range of validity
     if T > 273.16:
         # No Ice Ih stable
-        raise NotImplementedError("Incoming out of bound")
+        warnings.warn("Metastable ice")
     elif P > 208.566:
         # Ice Ih limit upper pressure
         raise NotImplementedError("Incoming out of bound")
@@ -106,12 +106,12 @@ def _Ice(T, P):
         Psub = _Sublimation_Pressure(T)
         if Psub > P:
             # Zone Gas
-            raise NotImplementedError("Incoming out of bound")
+            warnings.warn("Metastable ice in vapor region")
     elif 251.165 < T:
         Pmel = _Melting_Pressure(T)
         if Pmel < P:
             # Zone Liquid
-            raise NotImplementedError("Incoming out of bound")
+            warnings.warn("Metastable ice in liquid region")
 
     Tr = T/Tt
     Pr = P/Pt

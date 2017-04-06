@@ -1431,9 +1431,10 @@ class Test(unittest.TestCase):
 
         # Test check input
         self.assertRaises(NotImplementedError, _Ice, *(270, 300))
-        self.assertRaises(NotImplementedError, _Ice, *(300, 1))
-        self.assertRaises(NotImplementedError, _Ice, *(273, 3))
-        self.assertRaises(NotImplementedError, _Ice, *(272, 1e-4))
+        if major == 3:
+            self.assertWarns(Warning, _Ice, *(300, 1))
+            self.assertWarns(Warning, _Ice, *(273, 3))
+            self.assertWarns(Warning, _Ice, *(272, 1e-4))
 
     def test_SeaWater(self):
         """Table 8, pag 17-19"""
