@@ -89,6 +89,8 @@ class SeaWater(object):
     w : float
         Sound Speed [m/s]
 
+    m : float
+        Molality of seawater [mol/kg]
     mu : float
         Relative chemical potential [kJ/kg]
     muw : float
@@ -157,7 +159,7 @@ class SeaWater(object):
         P = self.kwargs["P"]
         S = self.kwargs["S"]
 
-        m = S/(1-S)/Ms
+        self.m = S/(1-S)/Ms
         if self.kwargs["fast"] and T <= 313.15:
             pw = self._waterSupp(T, P)
         elif self.kwargs["IF97"]:
@@ -199,7 +201,7 @@ class SeaWater(object):
             self.mu = prop["gs"]
             self.muw = prop["g"]-S*prop["gs"]
             self.mus = prop["g"]+(1-S)*prop["gs"]
-            self.osm = -(ps["g"]-S*prop["gs"])/m/Rm/T
+            self.osm = -(ps["g"]-S*prop["gs"])/self.m/Rm/T
             self.haline = -prop["gsp"]/prop["gp"]
         else:
             self.mu = None
