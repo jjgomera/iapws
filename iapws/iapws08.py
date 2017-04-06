@@ -7,9 +7,11 @@ IAPWS standard for Seawater IAPWS08
 from __future__ import division
 from math import exp, log
 
+from scipy.optimize import fsolve
+
 from .iapws95 import IAPWS95
-from .iapws97 import IAPWS97
-from ._iapws import _ThCond, Tc, Pc, rhoc
+from .iapws97 import IAPWS97, _Region1, _Region2
+from ._iapws import _ThCond, Tc, Pc, rhoc, _Ice
 from ._utils import deriv_G
 
 
@@ -370,6 +372,115 @@ class SeaWater(object):
         return prop
 
 
+def _Tb(P, S):
+    """Procedure to calculate the boiling temperature of seawater
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    S : float
+        Salinity [kg/kg]
+
+    Returns
+    -------
+    Tb : float
+        Boiling temperature [K]
+
+    References
+    ----------
+    IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
+    Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 7
+    """
+    def f(T):
+        pw = _Region1(T, P)
+        gw = pw["h"]-T*pw["s"]
+
+        pv = _Region2(T, P)
+        gv = pv["h"]-T*pv["s"]
+
+        ps = SeaWater._saline(T, P, S)
+        return -ps["g"]+S*ps["gs"]-gw+gv
+
+    Tb = fsolve(f, 300)[0]
+    return Tb
+
+
+def _Tf(P, S):
+    """Procedure to calculate the freezing temperature of seawater
+
+    Parameters
+    ----------
+    P : float
+        Pressure [MPa]
+    S : float
+        Salinity [kg/kg]
+
+    Returns
+    -------
+    Tf : float
+        Freezing temperature [K]
+
+    References
+    ----------
+    IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
+    Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 12
+    """
+    def f(T):
+        pw = _Region1(T, P)
+        gw = pw["h"]-T*pw["s"]
+
+        gih = _Ice(T, P)["g"]
+
+        ps = SeaWater._saline(T, P, S)
+        return -ps["g"]+S*ps["gs"]-gw+gih
+
+    Tf = fsolve(f, 300)[0]
+    return Tf
+
+
+def _Triple(S):
+    """Procedure to calculate the triple point pressure and temperature for
+    seawater
+
+    Parameters
+    ----------
+    S : float
+        Salinity [kg/kg]
+
+    Returns
+    -------
+    Tt : float
+        Triple point temperature [K]
+    Pt: float
+        Triple point pressure [MPa]
+
+    References
+    ----------
+    IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
+    Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 7
+    """
+    def f(parr):
+        T, P = parr
+        pw = _Region1(T, P)
+        gw = pw["h"]-T*pw["s"]
+
+        pv = _Region2(T, P)
+        gv = pv["h"]-T*pv["s"]
+
+        gih = _Ice(T, P)["g"]
+        ps = SeaWater._saline(T, P, S)
+
+        return -ps["g"]+S*ps["gs"]-gw+gih, -ps["g"]+S*ps["gs"]-gw+gv
+
+    Tt, Pt = fsolve(f, [273, 6e-4])
+
+    prop = {}
+    prop["Tt"] = Tt
+    prop["Pt"] = Pt
+    return prop
+
+
 def _ThCond_SeaWater(T, P, S):
     """Equation for the thermal conductivity of seawater
 
@@ -490,10 +601,9 @@ def _critNaCl(x):
 
     Returns
     -------
-    prop : dictionary with critical Properties
-        Tc: critical temperature [K]
-        Pc: critical pressure [MPa]
-        rhoc: critical density [kg/m³]
+    Tc: critical temperature [K]
+    Pc: critical pressure [MPa]
+    rhoc: critical density [kg/m³]
 
     Raises
     ------

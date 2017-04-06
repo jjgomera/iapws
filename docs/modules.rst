@@ -13,15 +13,15 @@ Python implementation of standard from IAPWS (http://www.iapws.org/release.html)
 - Documentation: http://iapws.readthedocs.io/
 
 
-dependences
+Dependences
 ===========
 
 * python 2x, 3x, compatible with both versions
 * Numpy-scipy: library with mathematic and scientific tools
 
 
-install
-=======
+Installation
+============
 
 In debian you can find in official repositories in jessie, testing and sid. In ubuntu it's in official repositories from ubuntu saucy (13.10). In other system you can install using pip::
 
@@ -92,11 +92,11 @@ Advisory Notes:
 * AN2-04(2013): Role of Various IAPWS Documents Concerning the Thermodynamic Properties of Ordinary Water Substance
 * AN3-07(2014): Thermodynamic Derivatives from IAPWS Formulations, :func:`iapws._utils.deriv_G`, :func:`iapws._utils.deriv_H`
 * AN4-09: Roles of IAPWS and CIPM Standards for the Density of Water
-* AN5-13(2016): Industrial Calculation of the Thermodynamic Properties of Seawater
+* AN5-13(2016): Industrial Calculation of the Thermodynamic Properties of Seawater, :func:`iapws.iapws08.Seawater._waterIF97`, :func:`iapws.iapws08._Tb`, :func:`iapws.iapws08._Tf`, :func:`iapws.iapws08._Triple`
 * AN6-16: Relationship between Various IAPWS Documents and the International Thermodynamic Equation of Seawater - 2010 (TEOS-10)
 
 
-documentation
+Documentation
 =============
  
 You can navigate the full documentation of package:

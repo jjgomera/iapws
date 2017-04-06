@@ -18,7 +18,8 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
                            _Backward3_v_PT, _P23_T, _t_P, _P_2bc, _hbc_P)
 from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
-from iapws.iapws08 import SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl
+from iapws.iapws08 import (SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl,
+                           _Tb, _Tf, _Triple)
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
@@ -1721,6 +1722,119 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.cp, 8), 0.377237430e1)
         self.assertEqual(round(fluid.w, 5), 0.162218081e4)
         self.assertEqual(round(fluid.muw, 7), 0.953212423e2)
+
+        # Table A2
+        self.assertEqual(round(_Tb(0.001, 0), 2), 280.12)
+        self.assertEqual(round(_Tb(0.001, 0.02), 2), 280.27)
+        self.assertEqual(round(_Tb(0.001, 0.04), 2), 280.43)
+        self.assertEqual(round(_Tb(0.001, 0.06), 2), 280.61)
+        self.assertEqual(round(_Tb(0.001, 0.08), 2), 280.80)
+        self.assertEqual(round(_Tb(0.001, 0.10), 2), 281.01)
+        self.assertEqual(round(_Tb(0.001, 0.12), 2), 281.25)
+
+        self.assertEqual(round(_Tb(0.005, 0), 2), 306.02)
+        self.assertEqual(round(_Tb(0.005, 0.02), 2), 306.21)
+        self.assertEqual(round(_Tb(0.005, 0.04), 2), 306.41)
+        self.assertEqual(round(_Tb(0.005, 0.06), 2), 306.63)
+        self.assertEqual(round(_Tb(0.005, 0.08), 2), 306.87)
+        self.assertEqual(round(_Tb(0.005, 0.10), 2), 307.14)
+        self.assertEqual(round(_Tb(0.005, 0.12), 2), 307.44)
+
+        self.assertEqual(round(_Tb(0.01, 0), 2), 318.96)
+        self.assertEqual(round(_Tb(0.01, 0.02), 2), 319.16)
+        self.assertEqual(round(_Tb(0.01, 0.04), 2), 319.38)
+        self.assertEqual(round(_Tb(0.01, 0.06), 2), 319.62)
+        self.assertEqual(round(_Tb(0.01, 0.08), 2), 319.89)
+        self.assertEqual(round(_Tb(0.01, 0.10), 2), 320.19)
+        self.assertEqual(round(_Tb(0.01, 0.12), 2), 320.52)
+
+        self.assertEqual(round(_Tb(0.02, 0), 2), 333.21)
+        self.assertEqual(round(_Tb(0.02, 0.02), 2), 333.44)
+        self.assertEqual(round(_Tb(0.02, 0.04), 2), 333.68)
+        self.assertEqual(round(_Tb(0.02, 0.06), 2), 333.95)
+        self.assertEqual(round(_Tb(0.02, 0.08), 2), 334.24)
+        self.assertEqual(round(_Tb(0.02, 0.10), 2), 334.57)
+        self.assertEqual(round(_Tb(0.02, 0.12), 2), 334.94)
+
+        self.assertEqual(round(_Tb(0.04, 0), 2), 349.01)
+        self.assertEqual(round(_Tb(0.04, 0.02), 2), 349.26)
+        self.assertEqual(round(_Tb(0.04, 0.04), 2), 349.53)
+        self.assertEqual(round(_Tb(0.04, 0.06), 2), 349.83)
+        self.assertEqual(round(_Tb(0.04, 0.08), 2), 350.15)
+        self.assertEqual(round(_Tb(0.04, 0.10), 2), 350.52)
+        self.assertEqual(round(_Tb(0.04, 0.12), 2), 350.94)
+
+        self.assertEqual(round(_Tf(0.001, 0), 4), 273.1600)
+        self.assertEqual(round(_Tf(0.001, 0.02), 4), 272.0823)
+        self.assertEqual(round(_Tf(0.001, 0.04), 4), 270.9611)
+        self.assertEqual(round(_Tf(0.001, 0.06), 4), 269.7618)
+        self.assertEqual(round(_Tf(0.001, 0.08), 4), 268.4609)
+        self.assertEqual(round(_Tf(0.001, 0.1), 4), 267.0397)
+        self.assertEqual(round(_Tf(0.001, 0.12), 4), 265.4900)
+
+        self.assertEqual(round(_Tf(0.005, 0), 4), 273.1597)
+        self.assertEqual(round(_Tf(0.005, 0.02), 4), 272.0820)
+        self.assertEqual(round(_Tf(0.005, 0.04), 4), 270.9608)
+        self.assertEqual(round(_Tf(0.005, 0.06), 4), 269.7615)
+        self.assertEqual(round(_Tf(0.005, 0.08), 4), 268.4606)
+        self.assertEqual(round(_Tf(0.005, 0.1), 4), 267.0394)
+        self.assertEqual(round(_Tf(0.005, 0.12), 4), 265.4897)
+
+        self.assertEqual(round(_Tf(0.01, 0), 4), 273.1593)
+        self.assertEqual(round(_Tf(0.01, 0.02), 4), 272.0816)
+        self.assertEqual(round(_Tf(0.01, 0.04), 4), 270.9604)
+        self.assertEqual(round(_Tf(0.01, 0.06), 4), 269.7612)
+        self.assertEqual(round(_Tf(0.01, 0.08), 4), 268.4602)
+        self.assertEqual(round(_Tf(0.01, 0.12), 4), 265.4893)
+
+        self.assertEqual(round(_Tf(0.1, 0), 3), 273.153)
+        self.assertEqual(round(_Tf(0.1, 0.02), 3), 272.075)
+        self.assertEqual(round(_Tf(0.1, 0.04), 3), 270.954)
+        self.assertEqual(round(_Tf(0.1, 0.06), 3), 269.754)
+        self.assertEqual(round(_Tf(0.1, 0.08), 3), 268.453)
+        self.assertEqual(round(_Tf(0.1, 0.1), 3), 267.032)
+        self.assertEqual(round(_Tf(0.1, 0.12), 3), 265.482)
+
+        self.assertEqual(round(_Tf(1, 0), 2), 273.09)
+        self.assertEqual(round(_Tf(1, 0.02), 2), 272.01)
+        self.assertEqual(round(_Tf(1, 0.04), 2), 270.89)
+
+        self.assertEqual(round(_Tf(10, 0), 1), 272.4)
+        self.assertEqual(round(_Tf(10, 0.02), 2), 271.32)
+        self.assertEqual(round(_Tf(10, 0.04), 2), 270.20)
+
+        self.assertEqual(round(_Tf(100, 0), 2), 264.21)
+        self.assertEqual(round(_Tf(100, 0.02), 2), 263.09)
+        self.assertEqual(round(_Tf(100, 0.04), 2), 261.92)
+
+        # Triple point, Table A4
+        Tt = _Triple(0)
+        self.assertEqual(round(Tt["Tt"], 2), 273.16)
+        self.assertEqual(round(Tt["Pt"], 8), 6.1168e-4)
+
+        Tt = _Triple(0.02)
+        self.assertEqual(round(Tt["Tt"], 2), 272.08)
+        self.assertEqual(round(Tt["Pt"], 8), 5.5953e-4)
+
+        Tt = _Triple(0.04)
+        self.assertEqual(round(Tt["Tt"], 2), 270.96)
+        self.assertEqual(round(Tt["Pt"], 8), 5.0961e-4)
+
+        Tt = _Triple(0.06)
+        self.assertEqual(round(Tt["Tt"], 2), 269.76)
+        self.assertEqual(round(Tt["Pt"], 8), 4.6073e-4)
+
+        Tt = _Triple(0.08)
+        self.assertEqual(round(Tt["Tt"], 2), 268.46)
+        self.assertEqual(round(Tt["Pt"], 8), 4.1257e-4)
+
+        Tt = _Triple(0.1)
+        self.assertEqual(round(Tt["Tt"], 2), 267.04)
+        self.assertEqual(round(Tt["Pt"], 8), 3.6524e-4)
+
+        Tt = _Triple(0.12)
+        self.assertEqual(round(Tt["Tt"], 2), 265.49)
+        self.assertEqual(round(Tt["Pt"], 8), 3.1932e-4)
 
     def test_SeaWater_thcond(self):
         """Table 2, pag 5"""
