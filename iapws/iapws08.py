@@ -6,6 +6,7 @@ IAPWS standard for Seawater IAPWS08
 
 from __future__ import division
 from math import exp, log
+import warnings
 
 from scipy.optimize import fsolve
 
@@ -101,6 +102,13 @@ class SeaWater(object):
         Osmotic coefficient, [-]
     haline : float
         Haline contraction coefficient [kg/kg]
+
+    Raises
+    ------
+    Warning : If input isn't in limit
+        * 261 ≤ T ≤ 353
+        * 0 < P ≤ 100
+        * 0 ≤ S ≤ 0.12
 
     References
     ----------
@@ -299,6 +307,11 @@ class SeaWater(object):
     @classmethod
     def _saline(cls, T, P, S):
         """Eq 4"""
+
+        # Check input in range of validity
+        if T <= 261 or T > 353 or P <= 0 or P > 100 or S < 0 or S > 0.12:
+            warnings.warn("Incoming out of bound")
+
         S_ = 0.03516504*40/35
         X = (S/S_)**0.5
         tau = (T-273.15)/40
