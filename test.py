@@ -19,7 +19,7 @@ from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
 from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
 from iapws.iapws08 import (SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl,
-                           _Tb, _Tf, _Triple)
+                           _Tb, _Tf, _Triple, _OsmoticPressure)
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
@@ -1836,6 +1836,9 @@ class Test(unittest.TestCase):
         Tt = _Triple(0.12)
         self.assertEqual(round(Tt["Tt"], 2), 265.49)
         self.assertEqual(round(Tt["Pt"], 8), 3.1932e-4)
+
+        # Osmotic pressure, i have no test to do
+        self.assertEqual(round(_OsmoticPressure(300, 0.1, 0), 5), 0.0)
 
     def test_SeaWater_thcond(self):
         """Table 2, pag 5"""

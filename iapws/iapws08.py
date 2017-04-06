@@ -483,6 +483,41 @@ def _Triple(S):
     return prop
 
 
+def _OsmoticPressure(T, P, S):
+    """Procedure to calculate the osmotic pressure of seawater
+
+    Parameters
+    ----------
+    T : float
+        Tmperature [K]
+    P : float
+        Pressure [MPa]
+    S : float
+        Salinity [kg/kg]
+
+    Returns
+    -------
+    Posm : float
+        Osmotic pressure [MPa]
+
+    References
+    ----------
+    IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
+    Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 15
+    """
+    pw = _Region1(T, P)
+    gw = pw["h"]-T*pw["s"]
+
+    def f(Posm):
+        pw2 = _Region1(T, P+Posm)
+        gw2 = pw2["h"]-T*pw2["s"]
+        ps = SeaWater._saline(T, P+Posm, S)
+        return -ps["g"]+S*ps["gs"]-gw+gw2
+
+    Posm = fsolve(f, 0)[0]
+    return Posm
+
+
 def _ThCond_SeaWater(T, P, S):
     """Equation for the thermal conductivity of seawater
 
