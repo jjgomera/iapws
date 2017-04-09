@@ -126,7 +126,6 @@ TODO
 
 Ammonia-water mixture:
 
-* FIXME: Visco correlation for ammonia
 * FIXME: Ammonia-water mixture residual helmholtz. The values are good, bad difer by 1%
 * TODO: Add equilibrium routine
 

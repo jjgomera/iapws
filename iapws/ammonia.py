@@ -92,7 +92,6 @@ class NH3(MEoS):
         and Vogel, E., The viscosity of ammonia, J. Phys. Chem. Ref. Data 24,
         1649 (1995). doi:10.1063/1.555961
         """
-        # FIXME: Dont work
         ek = 386
         sigma = 0.2957
 
