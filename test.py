@@ -2536,6 +2536,20 @@ class Test(unittest.TestCase):
         self.assertEqual(round(vir["Cawwt"], 18), 0.274535403e-9)
         self.assertEqual(round(vir["Cawwtt"], 20), -0.491763910e-11)
 
+        # Humid air class custom testing
+        hum = HumidAir(T=300, P=0.1, A=0.977605798)
+        hum2 = HumidAir(T=hum.T, P=hum.P, W=hum.W)
+        hum3 = HumidAir(T=hum2.T, P=hum2.P, xa=hum2.xa)
+        hum4 = HumidAir(T=hum3.T, P=hum3.P, xw=hum3.xw)
+        hum5 = HumidAir(P=hum4.P, rho=hum4.rho, xw=hum4.xw)
+        hum6 = HumidAir(T=hum5.T, rho=hum5.rho, xw=hum5.xw)
+        hum7 = HumidAir(T=hum6.T, v=hum6.v, xw=hum6.xw)
+        self.assertEqual(round(hum.cp-hum7.cp, 8), 0)
+
+        hum = HumidAir(T=200, rho=1.63479657e-5, A=0.892247719)
+        self.assertEqual(round(hum.cp, 8), 1.09387397)
+        self.assertEqual(round(hum.cp-200*hum.derivative("s", "T", "P"), 8), 0)
+
     def test_Ammonia(self):
         """Selected point front table of pag 42"""
         st = NH3(T=-77.65+273.15, x=0.5)

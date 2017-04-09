@@ -133,7 +133,6 @@ Ammonia-water mixture:
 Humid air:
 
 * FIXME: Air thermal conductivity critical enchancement
-* TODO: Add equilibrium routine
 
 
 I've tried to test all code and use all values for computer verification the standards give, but anyway the code can have hidden problem.

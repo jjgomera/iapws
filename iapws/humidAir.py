@@ -14,6 +14,7 @@ from scipy.optimize import fsolve
 
 from ._iapws import M as Mw
 from ._iapws import _Ice
+from ._utils import deriv_G
 from .iapws95 import MEoS, IAPWS95
 
 
@@ -519,27 +520,219 @@ class Air(MEoSBlend):
 
 
 class HumidAir(object):
+    """
+    Humid air class with complete functionality
 
-    # TODO: Add equilibrium routine
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    P : float
+        Pressure [MPa]
+    rho : float
+        Density [kg/m³]
+    v : float
+        Specific volume [m³/kg]
+    A : float
+        Mass fraction of dry air in humid air [kg/kg]
+    xa : float
+        Mole fraction of dry air in humid air [-]
+    W : float
+        Mass fraction of water in humid air [kg/kg]
+    xw : float
+        Mole fraction of water in humid air [-]
+
+    Notes
+    -----
+    * It needs two incoming properties of T, P, rho.
+    * v as a alternate input parameter to rho
+    * For composition need one of A, xa, W, xw.
+
+    Returns
+    -------
+    The calculated instance has the following properties:
+        * P: Pressure [MPa]
+        * T: Temperature [K]
+        * g: Specific Gibbs free energy [kJ/kg]
+        * a: Specific Helmholtz free energy [kJ/kg]
+        * v: Specific volume [m³/kg]
+        * rho: Density [kg/m³]
+        * h: Specific enthalpy [kJ/kg]
+        * u: Specific internal energy [kJ/kg]
+        * s: Specific entropy [kJ/kg·K]
+        * cp: Specific isobaric heat capacity [kJ/kg·K]
+        * w: Speed of sound [m/s]
+
+        * alfav: Isobaric cubic expansion coefficient [1/K]
+        * betas: Isoentropic temperature-pressure coefficient [-]
+        * xkappa: Isothermal Expansion Coefficient [-]
+        * ks: Adiabatic Compressibility [1/MPa]
+
+        * A: Mass fraction of dry air in humid air [kg/kg]
+        * xa: Mole fraction of dry air in humid air [-]
+        * W: Mass fraction of water in humid air [kg/kg]
+        * xw: Mole fraction of water in humid air [-]
+        * mu: Relative chemical potential [kJ/kg]
+        * muw: Chemical potential of water [kJ/kg]
+        * M: Molar mass of humid air [g/mol]
+        * HR: Humidity ratio [-]
+        * xa: Mole fraction of dry air [-]
+        * xw: Mole fraction of water [-]
+        * xa_sat: Mole fraction of dry air at saturation state [-]
+        * RH: Relative humidity
+    """
+    kwargs = {"T": 0.0,
+              "P": 0.0,
+              "rho": 0.0,
+              "v": 0.0,
+              "A": None,
+              "xa": None,
+              "W": None,
+              "xw": None}
+    status = 0
+    msg = "Undefined"
+
+    def __init__(self, **kwargs):
+        """Constructor, define common constant and initinialice kwargs"""
+        self.kwargs = HumidAir.kwargs.copy()
+        self.__call__(**kwargs)
+
+    def __call__(self, **kwargs):
+        """Make instance callable to can add input parameter one to one"""
+        # Check alernate input parameters
+        if kwargs.get("v", 0):
+            kwargs["rho"] = 1./kwargs["v"]
+            del kwargs["v"]
+        if kwargs.get("W", 0):
+            kwargs["A"] = 1-kwargs["W"]
+            del kwargs["W"]
+        if kwargs.get("xw", 0):
+            kwargs["xa"] = 1-kwargs["xw"]
+            del kwargs["xw"]
+
+        self.kwargs.update(kwargs)
+
+        if self.calculable:
+            self.status = 1
+            self.calculo()
+            self.msg = ""
+
+    @property
+    def calculable(self):
+        """Check if inputs are enough to define state"""
+        self._mode = ""
+        if self.kwargs["T"] and self.kwargs["P"]:
+            self._mode = "TP"
+        elif self.kwargs["T"] and self.kwargs["rho"]:
+            self._mode = "Trho"
+        elif self.kwargs["P"] and self.kwargs["rho"]:
+            self._mode = "Prho"
+
+        # Composition definition
+        self._composition = ""
+        if self.kwargs["A"] is not None:
+            self._composition = "A"
+        elif self.kwargs["xa"] is not None:
+            self._composition = "xa"
+
+        return bool(self._mode) and bool(self._composition)
+
+    def calculo(self):
+        """Calculate procedure"""
+        T = self.kwargs["T"]
+        rho = self.kwargs["rho"]
+        P = self.kwargs["P"]
+
+        # Composition alternate definition
+        if self._composition == "A":
+            A = self.kwargs["A"]
+        elif self._composition == "xa":
+            xa = self.kwargs["xa"]
+            A = xa/(1-(1-xa)*(1-Mw/Ma))
+
+        # Thermodynamic definition
+        if self._mode == "TP":
+            def f(rho):
+                fav = self._fav(T, rho, A)
+                return rho**2*fav["fird"]/1000-P
+            rho = fsolve(f, 1)[0]
+        elif self._mode == "Prho":
+            def f(T):
+                fav = self._fav(T, rho, A)
+                return rho**2*fav["fird"]/1000-P
+            T = fsolve(f, 300)[0]
+
+        # General calculation procedure
+        fav = self._fav(T, rho, A)
+
+        # Common thermodynamic properties
+        prop = self._prop(T, rho, fav)
+        self.T = T
+        self.rho = rho
+        self.v = 1/rho
+        self.P = prop["P"]
+        self.s = prop["s"]
+        self.cp = prop["cp"]
+        self.h = prop["h"]
+        self.g = prop["g"]
+        self.alfav = prop["alfav"]
+        self.betas = prop["betas"]
+        self.xkappa = prop["xkappa"]
+        self.ks = prop["ks"]
+        self.w = prop["w"]
+
+        # Coligative properties
+        coligative = self._coligative(rho, A, fav)
+        self.A = A
+        self.W = 1-A
+        self.mu = coligative["mu"]
+        self.muw = coligative["muw"]
+        self.M = coligative["M"]
+        self.HR = coligative["HR"]
+        self.xa = coligative["xa"]
+        self.xw = coligative["xw"]
+        self.Pv = (1-self.xa)*self.P
+
+        # Saturation related properties
+        A_sat = self._eq(self.T, self.P)
+        self.xa_sat = A_sat*Mw/Ma/(1-A_sat*(1-Mw/Ma))
+        self.RH = (1-self.xa)/(1-self.xa_sat)
+
+    def derivative(self, z, x, y):
+        """Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, rho, u, h, s, g, a"""
+        return deriv_G(self, z, x, y, self)
+
     def _eq(self, T, P):
+        """Procedure for calculate the composition in saturation state
 
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+        P : float
+            Pressure [MPa]
+
+        Returns
+        -------
+        Asat : float
+            Saturation mass fraction of dry air in humid air [kg/kg]
+        """
         if T <= 273.16:
-            gw = _Ice(T, P)["g"]
+            ice = _Ice(T, P)
+            gw = ice["g"]
+            rho = ice["rho"]
         else:
             water = IAPWS95(T=T, P=P)
             gw = water.g
             rho = water.rho
 
         def f(a):
-            if a < 0:
-                a = 0
-            if a > 1:
-                a = 1
             fa = self._fav(T, rho, a)
             muw = fa["fir"]+rho*fa["fird"]-a*fa["fira"]
             return gw-muw
-        A = fsolve(f, 0.9)
-        print(A, f(A))
+        Asat = fsolve(f, 0.9)[0]
+        return Asat
 
     def _prop(self, T, rho, fav):
         """Thermodynamic properties of humid air
@@ -561,9 +754,9 @@ class HumidAir(object):
             cp: Specific isobaric heat capacity [kJ/kgK]
             h: Specific enthalpy [kJ/kg]
             g: Specific gibbs energy [kJ/kg]
-            alfa: Thermal expansion coefficient [1/K]
+            alfav: Thermal expansion coefficient [1/K]
             betas: Isentropic T-P coefficient [K/MPa]
-            kt: Isothermal compressibility [1/MPa]
+            xkappa: Isothermal compressibility [1/MPa]
             ks: Isentropic compressibility [1/MPa]
             w: Speed of sound [m/s]
 
@@ -575,17 +768,17 @@ class HumidAir(object):
         http://www.iapws.org/relguide/SeaAir.html
         """
         prop = {}
-        prop["P"] = rho**2*fav["fird"]/1000                            # Eq T1
-        prop["s"] = -fav["firt"]                                       # Eq T2
-        prop["cp"] = -T*fav["firtt"]+T*rho*fav["firdt"]**2/(           # Eq T3
+        prop["P"] = rho**2*fav["fird"]/1000                             # Eq T1
+        prop["s"] = -fav["firt"]                                        # Eq T2
+        prop["cp"] = -T*fav["firtt"]+T*rho*fav["firdt"]**2/(            # Eq T3
             2*fav["fird"]+rho*fav["firdd"])
-        prop["h"] = fav["fir"]-T*fav["firt"]+rho*fav["fird"]           # Eq T4
-        prop["g"] = fav["fir"]+rho*fav["fird"]                         # Eq T5
-        prop["alfa"] = fav["firdt"]/(2*fav["fird"]+rho*fav["firdd"])   # Eq T6
-        prop["betas"] = 1000*fav["firdt"]/rho/(                        # Eq T7
+        prop["h"] = fav["fir"]-T*fav["firt"]+rho*fav["fird"]            # Eq T4
+        prop["g"] = fav["fir"]+rho*fav["fird"]                          # Eq T5
+        prop["alfav"] = fav["firdt"]/(2*fav["fird"]+rho*fav["firdd"])   # Eq T6
+        prop["betas"] = 1000*fav["firdt"]/rho/(                         # Eq T7
             rho*fav["firdt"]**2-fav["firtt"]*(2*fav["fird"]+rho*fav["firdd"]))
-        prop["kt"] = 1000/(rho**2*(2*fav["fird"]+rho*fav["firdd"]))    # Eq T8
-        prop["ks"] = 1000*fav["firtt"]/rho**2/(                        # Eq T9
+        prop["xkappa"] = 1e3/(rho**2*(2*fav["fird"]+rho*fav["firdd"]))  # Eq T8
+        prop["ks"] = 1000*fav["firtt"]/rho**2/(                         # Eq T9
             fav["firtt"]*(2*fav["fird"]+rho*fav["firdd"])-rho*fav["firdt"]**2)
         prop["w"] = (rho**2*1000*(fav["firtt"]*fav["firdd"]-fav["firdt"]**2) /
                      fav["firtt"]+2*rho*fav["fird"]*1000)**0.5         # Eq T10
