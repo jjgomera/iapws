@@ -445,6 +445,7 @@ def _Tf(P, S):
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
 
+        print(T, P)
         gih = _Ice(T, P)["g"]
 
         ps = SeaWater._saline(T, P, S)

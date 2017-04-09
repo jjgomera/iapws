@@ -2298,8 +2298,8 @@ class Test(unittest.TestCase):
         st = Air()
         self.assertEqual(round(st._thermo(0, 100), 8), 9.35902e-3)
         self.assertEqual(round(st._thermo(0, 300), 7), 26.3529e-3)
-        # self.assertEqual(round(Air(rho=28*28.9586, T=100).k, 6), 119.221e-3)
-        # self.assertEqual(round(Air(rho=10*28.9586, T=200).k, 6), 35.3185e-3)
+        self.assertEqual(round(Air(rho=28*28.9586, T=100).k, 6), 119.222e-3)
+        self.assertEqual(round(Air(rho=10*28.9586, T=200).k, 7), 35.3186e-3)
         self.assertEqual(round(Air(rho=5*28.9586, T=300).k, 7), 32.6062e-3)
         # self.assertEqual(round(Air(rho=10.4*28.9586, T=132.64).k, 7), 75.6231e-3)
 

@@ -7,7 +7,7 @@ Ammonia-Water Mistures
 
 
 from __future__ import division
-from math import exp, log
+from math import exp, log, pi, atan
 import warnings
 
 from scipy.optimize import fsolve
@@ -482,36 +482,39 @@ class Air(MEoSBlend):
             lr += n*tau**t*delta**d*exp(-g*delta**l)
 
         lc = 0
-        # TODO: Critical enchancement
-        # if fase:
-        #     qd = 0.31e-9
-        #     Gamma = 0.055
-        #     Xio = 0.11e-9
-        #     Tref = 265.262
-        #     k = 1.380658e-23  # J/K
+        # FIXME: Tiny desviation in the test in paper, 0.06% at critical point
+        if fase:
+            qd = 0.31
+            Gamma = 0.055
+            Xio = 0.11
+            Tref = 265.262
+            k = 1.380658e-23  # J/K
 
-        #     # Eq 11
-        #     X = self.Pc*rho/rhoc**2*fase.drhodP_T
-        #     refst = self._Helmholtz(rho, Tref)
-        #     drhodP_T = 1/refst["dpdrho"]
-        #     Xref = 3.78502*rho/rhoc**2*drhodP_T
+            # Eq 11
+            X = self.Pc*1e-3*rho/rhoc**2*fase.drhodP_T
 
-        #     # Eq 10
-        #     bracket = X-Xref*Tref/T
-        #     if bracket > 0:
-        #         Xi = Xio*(bracket/Gamma)**(0.63/1.2415)
+            ref = Air()
+            st = ref._Helmholtz(rho, Tref)
+            drho = 1e3/self.R/Tref/(1+2*delta*st["fird"]+delta**2*st["firdd"])
 
-        #         Xq = Xi/qd
-        #         # Eq 8
-        #         Omega = 2/pi*((fase.cp-fase.cv)/fase.cp*atan(Xq) +
-        #                       fase.cv/fase.cp*(Xq))
-        #         # Eq 9
-        #         Omega0 = 2/pi*(1-exp(-1/(1/Xq+Xq**2/3*rhoc**2/rho**2)))
+            Xref = self.Pc*1e-3*rho/rhoc**2*drho
 
-        #         # Eq 7
-        #         lc = rho*fase.cp*k*1.01*T/6/pi/Xi/fase.mu*(Omega-Omega0)
-        #     else:
-        #         lc = 0
+            # Eq 10
+            bracket = X-Xref*Tref/T
+            if bracket > 0:
+                Xi = Xio*(bracket/Gamma)**(0.63/1.2415)
+
+                Xq = Xi/qd
+                # Eq 8
+                Omega = 2/pi*((fase.cp-fase.cv)/fase.cp*atan(Xq) +
+                              fase.cv/fase.cp*(Xq))
+                # Eq 9
+                Omega0 = 2/pi*(1-exp(-1/(1/Xq+Xq**2/3*rhoc**2/rho**2)))
+
+                # Eq 7
+                lc = rho*fase.cp*k*1.01*T/6/pi/Xi/fase.mu*(Omega-Omega0)*1e15
+            else:
+                lc = 0
 
         # Eq 4
         k = lo+lr+lc
