@@ -442,6 +442,7 @@ def _Tf(P, S):
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 12
     """
     def f(T):
+        T = float(T)
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
 
