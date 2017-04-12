@@ -118,7 +118,6 @@ IAPWS-08 for seawater
 TODO
 ====
 
-* FIXME: D2O residual helmholtz calculation
 * FIXME: Electrolytic conductiviy
 * TODO: Improve convergence in two phase region for IAPWS95 and D2O class
 * TODO: Implement SBTL method for fast calculation

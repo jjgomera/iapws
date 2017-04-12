@@ -678,6 +678,7 @@ class HumidAir(object):
         self.cp = prop["cp"]
         self.h = prop["h"]
         self.g = prop["g"]
+        self.u = self.h-self.P*1000*self.v
         self.alfav = prop["alfav"]
         self.betas = prop["betas"]
         self.xkappa = prop["xkappa"]
