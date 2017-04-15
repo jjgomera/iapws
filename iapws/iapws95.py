@@ -950,7 +950,11 @@ class MEoS(_fase):
         fase.alfa = fase.k/1000/fase.rho/fase.cp
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
         if self.name == "water":
-            fase.epsilon = _Dielectric(fase.rho, self.T)
+            try:
+                fase.epsilon = _Dielectric(fase.rho, self.T)
+            except NotImplementedError:
+                fase.epsilon = None
+
             try:
                 fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
             except NotImplementedError:

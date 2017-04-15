@@ -897,6 +897,11 @@ def _Dielectric(rho, T):
     epsilon : float
         Dielectric constant [-]
 
+    Raises
+    ------
+    NotImplementedError : If input isn't in limit
+        * 238 ≤ T ≤ 1200
+
     Examples
     --------
     >>> _Dielectric(999.242866, 298.15)
@@ -910,6 +915,10 @@ def _Dielectric(rho, T):
     Substance for Temperatures from 238 K to 873 K and Pressures up to 1000
     MPa, http://www.iapws.org/relguide/Dielec.html
     """
+    # Check input parameters
+    if T < 238 or T > 1200:
+        raise NotImplementedError("Incoming out of bound")
+
     k = 1.380658e-23
     Na = 6.0221367e23
     alfa = 1.636e-40
