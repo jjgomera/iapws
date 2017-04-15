@@ -20,7 +20,7 @@ fluid = iapws.IAPWS97
 # fluid = iapws.IAPWS95
 
 # Define kind of plot
-xAxis = "h"
+xAxis = "s"
 yAxis = "P"
 
 # Point count for line, high value get more definition but slow calculate time
@@ -46,7 +46,7 @@ labelP_kw = {"size": "xx-small", "ha": "center", "va": "center"}
 
 # Isoenthalpic lines to plot
 isoh = np.arange(200, 4400, 200)
-isoh_kw = {"ls": "-", "color": "red", "lw": 0.5}
+isoh_kw = {"ls": "-", "color": "green", "lw": 0.5}
 labelh_kw = {"size": "xx-small", "ha": "center", "va": "center"}
 
 # Isoentropic lines to plot
@@ -55,8 +55,8 @@ isos_kw = {"ls": "-", "color": "brown", "lw": 0.5}
 labels_kw = {"size": "xx-small", "ha": "center", "va": "center"}
 
 # # Isochor lines to plot
-# isov = [0.1, 1, 10, 100]
-# isov_kw = {"ls": "-", "color": "green", "lw": 0.5}
+isov = [0.1, 1, 10, 100]
+isov_kw = {"ls": "-", "color": "green", "lw": 0.5}
 
 # Show region limits
 regionBoundary = True
@@ -291,19 +291,19 @@ if xAxis != "s" and yAxis != "s":
         S_["%s" % s]["x"] = x
         S_["%s" % s]["y"] = y
 
-# # Calculate isochor lines
-# if xAxis != "v" and yAxis != "v":
-    # print("Calculating isochor lines...")
-    # for v in isov:
-        # print("    v=%s" % v)
-        # pts = [fluid(P=p, v=v) for p in Pl]
-        # x = []
-        # y = []
-        # for p in pts:
-        #     if p.status:
-        #         x.append(p.__getattribute__(xAxis))
-        #         y.append(p.__getattribute__(yAxis))
-        # plt.plot(x, y, **isov_kw)
+# Calculate isochor lines
+if xAxis != "v" and yAxis != "v":
+    print("Calculating isochor lines...")
+    for v in isov:
+        print("    v=%s" % v)
+        pts = [iapws.IAPWS95(T=t, v=v) for t in Tl]
+        x = []
+        y = []
+        for p in pts:
+            if p.status:
+                x.append(p.__getattribute__(xAxis))
+                y.append(p.__getattribute__(yAxis))
+        plt.plot(x, y, **isov_kw)
 
 
 # Plot region limits
