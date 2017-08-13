@@ -194,7 +194,7 @@ class SeaWater(object):
         self.alfav = prop["gtp"]/prop["gp"]
         self.betas = -prop["gtp"]/prop["gtt"]
         self.xkappa = -prop["gpp"]/prop["gp"]
-        self.ks = (prop["gtp"]**2-prop["gt"]*prop["gpp"])/prop["gp"] / \
+        self.ks = (prop["gtp"]**2-prop["gtt"]*prop["gpp"])/prop["gp"] / \
             prop["gtt"]
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
