@@ -177,7 +177,7 @@ class SeaWater(object):
         ps = self._saline(T, P, S)
 
         prop = {}
-        for key in pw:
+        for key in ps:
             prop[key] = pw[key]+ps[key]
             self.__setattr__(key, prop[key])
 
@@ -199,8 +199,11 @@ class SeaWater(object):
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
 
-        try:
+        if "thcond" in pw:
+            kw = pw["thcond"]
+        else:
             kw = _ThCond(1/pw["gp"], T)
+        try:
             self.k = _ThCond_SeaWater(T, P, S)+kw
         except NotImplementedError:
             self.k = None
@@ -236,6 +239,7 @@ class SeaWater(object):
         prop["gpp"] = -1e6/(water.rho*water.w)**2-water.betas**2*1e3*water.cp/T
         prop["gs"] = 0
         prop["gsp"] = 0
+        prop["thcond"] = water.k
         return prop
 
     @classmethod
