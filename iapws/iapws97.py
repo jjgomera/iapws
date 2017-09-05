@@ -4650,7 +4650,8 @@ class IAPWS97(object):
 
         fase.joule = self.derivative("T", "P", "h", fase)
         fase.deltat = self.derivative("h", "P", "T", fase)
-        fase.gamma = -self.v/self.P/1000*self.derivative("P", "v", "s", fase)
+        fase.gamma = -fase.cp_cv*fase.v/self.P*self.derivative(
+                "P", "v", "s", fase)
 
         fase.alfap = fase.alfav/self.P/fase.xkappa
         fase.betap = -1/self.P*self.derivative("P", "v", "T", fase)
