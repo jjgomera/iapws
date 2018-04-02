@@ -168,9 +168,16 @@ class MEoS(_fase):
 
     def __call__(self, **kwargs):
         """Make instance callable to can add input parameter one to one"""
-        if kwargs.get("v", 0):
+        # Alternative rho input
+        if "rhom" in kwargs:
+            kwargs["rho"] = kwargs["rhom"]*self.M
+            del kwargs["rhom"]
+        elif kwargs.get("v", 0):
             kwargs["rho"] = 1./kwargs["v"]
             del kwargs["v"]
+        elif kwargs.get("vm", 0):
+            kwargs["rho"] = self.M/kwargs["vm"]
+            del kwargs["vm"]
         self.kwargs.update(kwargs)
 
         if self.calculable:
