@@ -65,8 +65,6 @@ class Test(unittest.TestCase):
 
     def test_phase(self):
         """Table 7 from IAPWS95, pag 14"""
-        fluid = IAPWS95()
-
         state = IAPWS95(rho=996.556, T=300)
         # See footnote for imprecise P value in last significant figures
         self.assertEqual(round(state.P*1e3, 7), 99.241835)
@@ -1217,69 +1215,121 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS95, **{"P": 25, "x": 1})
 
     def test_D2O(self):
-        """Table 5 pag 11"""
+        # Table 6, pag 12
         fluid = D2O()
-        Tr = 643.847
-        rhor = 358
-        ar = 21.671*1000/358
-        sr = 21.671*1000/358./643.89
-        pr = 21.671*1000
+        delta = 46.26*fluid.M/fluid.rhoc
+        tau = fluid.Tc/500
 
-        rho = 0.0002*rhor
-        T = 0.5*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -2.644979)
-        # self.assertEqual(round(state["P"]/pr, 7), 0.0004402)
-        # self.assertEqual(round(state["cv"]/sr, 4), 14.2768)
+        ideal = fluid._phi0(tau, delta)
+        self.assertEqual(round(ideal["fio"], 8), 0.196026959e1)
+        self.assertEqual(round(ideal["fiod"], 9), 0.384253134)
+        self.assertEqual(round(ideal["fiodd"], 9), -0.147650471)
+        self.assertEqual(round(ideal["fiot"], 8), 0.939589569e1)
+        self.assertEqual(round(ideal["fiott"], 8), -0.209517144e1)
+        self.assertEqual(round(ideal["fiodt"], 8), 0)
 
-        rho = 3.18*rhor
-        T = 0.5*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -0.217388)
-        # self.assertEqual(round(state["P"]/pr, 7), 4.3549719)
-        # self.assertEqual(round(state["cv"]/sr, 4), 41.4463)
+        res = fluid._phir(tau, delta)
+        self.assertEqual(round(res["fir"], 8), -0.342285760e1)
+        self.assertEqual(round(res["fird"], 9), -0.366996322)
+        self.assertEqual(round(res["firdd"], 9), 0.835582360)
+        self.assertEqual(round(res["firt"], 8), -0.589810764e1)
+        self.assertEqual(round(res["firtt"], 8), -0.244654026e1)
+        self.assertEqual(round(res["firdt"], 8), -0.113453328e1)
 
-        rho = 0.0295*rhor
-        T = 0.75*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -7.272543)
-        # self.assertEqual(round(state["P"]/pr, 7), 0.0870308)
-        # self.assertEqual(round(state["cv"]/sr, 4), 20.1586)
+        # Table 7, Single phase region selected point
+        st = D2O(T=300, rho=55.126*fluid.M)
+        self.assertEqual(round(st.P, 10), 0.0769726647)
+        self.assertEqual(round(st.cvM, 7), 83.8021206)
+        self.assertEqual(round(st.w, 5), 1403.82481)
+        self.assertEqual(round(st.sM, 8), 6.79005151)
 
-        rho = 2.83*rhor
-        T = 0.75*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -4.292707)
-        # self.assertEqual(round(state["P"]/pr, 7), 4.4752958)
-        # self.assertEqual(round(state["cv"]/sr, 4), 33.4367)
+        st = D2O(T=300, rho=60*fluid.M)
+        self.assertEqual(round(st.P, 6), 238.232461)
+        self.assertEqual(round(st.cvM, 7), 74.1687428)
+        self.assertEqual(round(st.w, 5), 1771.39316)
+        self.assertEqual(round(st.sM, 8), 5.45863860)
 
-        rho = 0.3*rhor
-        T = Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -15.163326)
-        # self.assertEqual(round(state["P"]/pr, 7), 0.8014044)
-        # self.assertEqual(round(state["cv"]/sr, 4), 30.8587)
+        st = D2O(T=300, rho=65*fluid.M)
+        self.assertEqual(round(st.P, 6), 623.823936)
+        self.assertEqual(round(st.cvM, 7), 70.1406088)
+        self.assertEqual(round(st.w, 5), 2281.72318)
+        self.assertEqual(round(st.sM, 8), 2.80312863)
 
-        rho = 1.55*rhor
-        T = Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -12.643811)
-        # self.assertEqual(round(state["P"]/pr, 7), 1.0976283)
-        # self.assertEqual(round(state["cv"]/sr, 4), 33.0103)
+        st = D2O(T=500, rho=0.05*fluid.M)
+        self.assertEqual(round(st.P, 9), 0.206052849)
+        self.assertEqual(round(st.cvM, 7), 29.4270645)
+        self.assertEqual(round(st.w, 6), 514.481350)
+        self.assertEqual(round(st.sM, 6), 140.941847)
 
-        rho = 0.4*rhor
-        T = 1.2*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -25.471535)
-        # self.assertEqual(round(state["P"]/pr, 7), 1.4990994)
-        # self.assertEqual(round(state["cv"]/sr, 4), 23.6594)
+        st = D2O(T=500, rho=0.5*fluid.M)
+        self.assertEqual(round(st.P, 8), 1.88978723)
+        self.assertEqual(round(st.cvM, 7), 36.5500382)
+        self.assertEqual(round(st.w, 6), 489.681127)
+        self.assertEqual(round(st.sM, 6), 120.296840)
 
-        rho = 1.61*rhor
-        T = 1.2*Tr
-        state = fluid._Helmholtz(rho, T)
-        # self.assertEqual(round((state["h"]-state["P"]*1000/rho-T*state["s"])/ar, 6), -21.278164)
-        # self.assertEqual(round(state["P"]/pr, 7), 4.5643798)
-        # self.assertEqual(round(state["cv"]/sr, 4), 25.4800)
+        st = D2O(T=500, rho=46.26*fluid.M)
+        self.assertEqual(round(st.P, 8), 8.63679942)
+        self.assertEqual(round(st.cvM, 7), 62.6150807)
+        self.assertEqual(round(st.w, 5), 1180.54395)
+        self.assertEqual(round(st.sM, 7), 49.6096271)
+
+        st = D2O(T=500, rho=50*fluid.M)
+        self.assertEqual(round(st.P, 6), 107.843032)
+        self.assertEqual(round(st.cvM, 7), 61.6765862)
+        self.assertEqual(round(st.w, 5), 1484.86405)
+        self.assertEqual(round(st.sM, 7), 46.9893566)
+
+        st = D2O(T=500, rho=60*fluid.M)
+        self.assertEqual(round(st.P, 6), 718.164137)
+        self.assertEqual(round(st.cvM, 7), 57.7780154)
+        self.assertEqual(round(st.w, 5), 2395.79704)
+        self.assertEqual(round(st.sM, 7), 39.4344288)
+
+        st = D2O(T=643.8, rho=20*fluid.M)
+        self.assertEqual(round(st.P, 7), 21.6436864)
+        self.assertEqual(round(st.cvM, 6), 101.648572)
+        self.assertEqual(round(st.w, 6), 250.365829)
+        self.assertEqual(round(st.sM, 7), 81.7985464)
+
+        st = D2O(T=800, rho=0.01*fluid.M)
+        self.assertEqual(round(st.P, 10), 0.0664864054)
+        self.assertEqual(round(st.cvM, 7), 34.0033367)
+        self.assertEqual(round(st.w, 6), 642.794795)
+        self.assertEqual(round(st.sM, 6), 169.130005)
+
+        st = D2O(T=800, rho=0.25*fluid.M)
+        self.assertEqual(round(st.P, 8), 1.64466073)
+        self.assertEqual(round(st.cvM, 7), 34.4322768)
+        self.assertEqual(round(st.w, 6), 639.287536)
+        self.assertEqual(round(st.sM, 6), 142.187731)
+
+        # Table 8, saturation state
+        st = D2O(T=280, x=0.5)
+        self.assertEqual(round(st.P, 12), 0.000822981146)
+        self.assertEqual(round(st.Liquid.rhoM, 7), 55.2036867)
+        self.assertEqual(round(st.Gas.rhoM, 12), 0.000353715935)
+        self.assertEqual(round(st.Liquid.hM, 6), 260.035930)
+        self.assertEqual(round(st.Gas.hM, 4), 46628.3044)
+        self.assertEqual(round(st.Liquid.sM, 9), 0.933712599)
+        self.assertEqual(round(st.Gas.sM, 6), 166.534672)
+
+        st = D2O(T=450, x=0.5)
+        self.assertEqual(round(st.P, 9), 0.921135794)
+        self.assertEqual(round(st.Liquid.rhoM, 7), 49.2883097)
+        self.assertEqual(round(st.Gas.rhoM, 9), 0.264016992)
+        self.assertEqual(round(st.Liquid.hM, 4), 14528.0634)
+        self.assertEqual(round(st.Gas.hM, 4), 51523.7547)
+        self.assertEqual(round(st.Liquid.sM, 7), 40.7157082)
+        self.assertEqual(round(st.Gas.sM, 6), 122.928355)
+
+        st = D2O(T=625, x=0.5)
+        self.assertEqual(round(st.P, 7), 17.2108749)
+        self.assertEqual(round(st.Liquid.rhoM, 7), 30.6541687)
+        self.assertEqual(round(st.Gas.rhoM, 8), 6.94095402)
+        self.assertEqual(round(st.Liquid.hM, 4), 32468.9025)
+        self.assertEqual(round(st.Gas.hM, 4), 47260.6343)
+        self.assertEqual(round(st.Liquid.sM, 7), 73.1638526)
+        self.assertEqual(round(st.Gas.sM, 7), 96.8306235)
 
     def test_D2O_Viscosity(self):
         """Table A5 pag 10"""

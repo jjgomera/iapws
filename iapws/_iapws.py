@@ -26,7 +26,7 @@ Pc = 22.064       # MPa
 rhoc = 322.       # kg/m³
 Tc_D2O = 643.847  # K
 Pc_D2O = 21.671   # MPa
-rhoc_D2O = 356    # kg/m³
+rhoc_D2O = 355.9999698294    # kg/m³
 
 Tt = 273.16       # K
 Pt = 611.657e-6   # MPa

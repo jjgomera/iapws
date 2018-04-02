@@ -31,7 +31,7 @@ Python implementation of standard from IAPWS (http://www.iapws.org/release.html)
     IAPWS-95
     IAPWS-06 for Ice
     IAPWS-08 for seawater
-    IAPWS-05 for Heavy water
+    IAPWS-17 for Heavy water
     ...
     
 
