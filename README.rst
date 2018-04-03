@@ -88,7 +88,7 @@ IAPWS-95
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
 
-IAPWS-05 for Heavy water
+IAPWS-17 for Heavy water
 
 .. code:: python
 
