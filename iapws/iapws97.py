@@ -4234,7 +4234,7 @@ class IAPWS97(object):
         * g: Specific Gibbs free energy [kJ/kg]
         * a: Specific Helmholtz free energy [kJ/kg]
         * v: Specific volume [m³/kg]
-        * r: Density [kg/m³]
+        * rho: Density [kg/m³]
         * h: Specific enthalpy [kJ/kg]
         * u: Specific internal energy [kJ/kg]
         * s: Specific entropy [kJ/kg·K]
@@ -4667,7 +4667,10 @@ class IAPWS97(object):
 
         fase.nu = fase.mu/fase.rho
         fase.alfa = fase.k/1000/fase.rho/fase.cp
-        fase.epsilon = _Dielectric(fase.rho, self.T)
+        try:
+            fase.epsilon = _Dielectric(fase.rho, self.T)
+        except NotImplementedError:
+            fase.epsilon = None
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
         try:
             fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
