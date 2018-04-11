@@ -12,8 +12,6 @@ import warnings
 
 from scipy.optimize import minimize
 
-from ._utils import deriv_H
-
 
 # Constants
 M = 18.015268     # g/mol
@@ -698,7 +696,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
            0.188797e1, 0.126613e1, 0.120573, -0.281378, -0.906851, -0.772479,
            -0.489837, -0.257040, 0.161913, 0.257399, -0.325372e-1, 0.698452e-1,
            0.872102e-2, -0.435673e-2, -0.593264e-3]
-    mu1 = exp(Dr*sum([(1/Tr-1)**i*H*(Dr-1)**j for i, j, H in zip(I, J, Hij)]))
+    mu1 = exp(Dr*sum([(1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(I, J, Hij)]))
 
     # Critical enhancement
     if fase and drho:
