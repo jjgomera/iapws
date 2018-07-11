@@ -744,6 +744,9 @@ def _Region1(T, P):
     >>> _Region1(500,3)["kt"]
     0.00112892188
     """
+    if P < Pmin:
+        P = Pmin
+
     I = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4,
          4, 4, 5, 8, 8, 21, 23, 29, 30, 31, 32]
     J = [-2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0,
@@ -981,6 +984,9 @@ def _Region2(T, P):
     >>> _Region2(300,0.0035)["kt"]
     286.239651
     """
+    if P < Pmin:
+        P = Pmin
+
     Tr = 540/T
     Pr = P/1
 
@@ -3711,6 +3717,9 @@ def _Region5(T, P):
     >>> _Region5(2000,30)["kt"]
     0.0329193892
     """
+    if P < Pmin:
+        P = Pmin
+
     Tr = 1000/T
     Pr = P/1
 
@@ -4145,7 +4154,7 @@ def _Bound_hs(h, s):
         def funcion(par):
             return (_Region5(par[0], par[1])["h"]-h,
                     _Region5(par[0], par[1])["s"]-s)
-        T, P = fsolve(funcion, [1400, 0.001])
+        T, P = fsolve(funcion, [1400, 1])
         if 1073.15 < T <= 2273.15 and Pmin <= P <= 50:
             region = 5
 
