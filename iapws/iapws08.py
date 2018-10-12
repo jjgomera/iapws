@@ -1,7 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-IAPWS standard for Seawater IAPWS08
+IAPWS standard for Seawater IAPWS08 and related functionality. The module
+include:
+
+:class:`SeaWater`: Global module class with all the functionality integrated
+
+Other functionality:
+   * :func:`_Tb`: Boiling temperature of seawater
+   * :func:`_Tf`: Freezing temperature of seawater
+   * :func:`_Triple`: Triple point properties of seawater
+   * :func:`_OsmoticPressure`: Osmotic pressure of seawater
+   * :func:`_ThCond_SeaWater`: Thermal conductivity of seawater
+   * :func:`_solNa2SO4`: Solubility of sodium sulfate in aqueous mixtures of
+     sodium chloride and sulfuric acid
+   * :func:`_critNaCl`: Critical locus of aqueous solutions of sodium chloride
 """
 
 from __future__ import division
@@ -34,78 +47,79 @@ class SeaWater(object):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
-    fast : Boolean, default False
+    fast : bool, default False
         Use the Supplementary release SR7-09 to speed up the calculation
-    IF97 : Boolean, default False
+    IF97 : bool, default False
         Use the Advisory Note No. 5 with industrial formulation
 
     Returns
     -------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kg·K]
+        Specific entropy, [kJ/kg·K]
     u : float
-        Specific internal energy [kJ/kg]
+        Specific internal energy, [kJ/kg]
     g : float
-        Specific Gibbs free energy [kJ/kg]
+        Specific Gibbs free energy, [kJ/kg]
     a : float
-        Specific Helmholtz free energy [kJ/kg]
+        Specific Helmholtz free energy, [kJ/kg]
     cp : float
-        Specific isobaric heat capacity [kJ/kg·K]
+        Specific isobaric heat capacity, [kJ/kg·K]
     cv : float
-        Specific isochoric heat capacity [kJ/kg·K]
+        Specific isochoric heat capacity, [kJ/kg·K]
     gt : float
-        Derivative Gibbs energy with temperature [kJ/kg·K]
+        Derivative Gibbs energy with temperature, [kJ/kg·K]
     gp : float
-        Derivative Gibbs energy with pressure [m³/kg]
+        Derivative Gibbs energy with pressure, [m³/kg]
     gtt : float
-        Derivative Gibbs energy with temperature square [kJ/kg·K²]
+        Derivative Gibbs energy with temperature square, [kJ/kg·K²]
     gtp : float
-        Derivative Gibbs energy with pressure and temperature [m³/kg·K]
+        Derivative Gibbs energy with pressure and temperature, [m³/kg·K]
     gpp : float
-        Derivative Gibbs energy with temperature square [m³/kg·MPa]
+        Derivative Gibbs energy with temperature square, [m³/kg·MPa]
     gs : float
-        Derivative Gibbs energy with salinity [kJ/kg]
+        Derivative Gibbs energy with salinity, [kJ/kg]
     gsp : float
-        Derivative Gibbs energy with salinity and pressure [m³/kg]
+        Derivative Gibbs energy with salinity and pressure, [m³/kg]
     alfav : float
-        Thermal expansion coefficient [1/K]
+        Thermal expansion coefficient, [1/K]
     betas : float
-        Isentropic temperature-pressure coefficient [K/MPa]
+        Isentropic temperature-pressure coefficient, [K/MPa]
     xkappa : float
-        Isothermal compressibility [1/MPa]
+        Isothermal compressibility, [1/MPa]
     ks : float
-        Isentropic compressibility [1/MPa]
+        Isentropic compressibility, [1/MPa]
     w : float
-        Sound Speed [m/s]
+        Sound Speed, [m/s]
 
     m : float
-        Molality of seawater [mol/kg]
+        Molality of seawater, [mol/kg]
     mu : float
-        Relative chemical potential [kJ/kg]
+        Relative chemical potential, [kJ/kg]
     muw : float
-        Chemical potential of H2O [kJ/kg]
+        Chemical potential of H2O, [kJ/kg]
     mus : float
-        Chemical potential of sea salt [kJ/kg]
+        Chemical potential of sea salt, [kJ/kg]
     osm : float
         Osmotic coefficient, [-]
     haline : float
-        Haline contraction coefficient [kg/kg]
+        Haline contraction coefficient, [kg/kg]
 
-    Raises
+    Notes
     ------
-    Warning : If input isn't in limit
+    :class:`Warning` if input isn't in limit:
+
         * 261 ≤ T ≤ 353
         * 0 < P ≤ 100
         * 0 ≤ S ≤ 0.12
@@ -397,14 +411,14 @@ def _Tb(P, S):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
     Returns
     -------
     Tb : float
-        Boiling temperature [K]
+        Boiling temperature, [K]
 
     References
     ----------
@@ -431,14 +445,14 @@ def _Tf(P, S):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
     Returns
     -------
     Tf : float
-        Freezing temperature [K]
+        Freezing temperature, [K]
 
     References
     ----------
@@ -466,14 +480,15 @@ def _Triple(S):
     Parameters
     ----------
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
     Returns
     -------
-    Tt : float
-        Triple point temperature [K]
-    Pt: float
-        Triple point pressure [MPa]
+    prop : dict
+        Dictionary with the triple point properties:
+
+            * Tt: Triple point temperature, [K]
+            * Pt: Triple point pressure, [MPa]
 
     References
     ----------
@@ -507,16 +522,16 @@ def _OsmoticPressure(T, P, S):
     Parameters
     ----------
     T : float
-        Tmperature [K]
+        Tmperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
     Returns
     -------
     Posm : float
-        Osmotic pressure [MPa]
+        Osmotic pressure, [MPa]
 
     References
     ----------
@@ -542,20 +557,21 @@ def _ThCond_SeaWater(T, P, S):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     S : float
-        Salinity [kg/kg]
+        Salinity, [kg/kg]
 
     Returns
     -------
     k : float
-        Thermal conductivity excess relative to that of the pure water [W/mK]
+        Thermal conductivity excess relative to that of the pure water, [W/mK]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 273.15 ≤ T ≤ 523.15
         * 0 ≤ P ≤ 140
         * 0 ≤ S ≤ 0.17
@@ -597,20 +613,21 @@ def _solNa2SO4(T, mH2SO4, mNaCl):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     mH2SO4 : float
-        Molality of sufuric acid [mol/kg(water)]
+        Molality of sufuric acid, [mol/kg(water)]
     mNaCl : float
-        Molality of sodium chloride [mol/kg(water)]
+        Molality of sodium chloride, [mol/kg(water)]
 
     Returns
     -------
     S : float
-        Molal solutility of sodium sulfate [mol/kg(water)]
+        Molal solutility of sodium sulfate, [mol/kg(water)]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 523.15 ≤ T ≤ 623.15
         * 0 ≤ mH2SO4 ≤ 0.75
         * 0 ≤ mNaCl ≤ 2.25
@@ -652,17 +669,21 @@ def _critNaCl(x):
     Parameters
     ----------
     x : float
-        Mole fraction of NaCl [-]
+        Mole fraction of NaCl, [-]
 
     Returns
     -------
-    Tc: critical temperature [K]
-    Pc: critical pressure [MPa]
-    rhoc: critical density [kg/m³]
+    prop : dict
+        A dictionary withe the properties:
 
-    Raises
+            * Tc: critical temperature, [K]
+            * Pc: critical pressure, [MPa]
+            * rhoc: critical density, [kg/m³]
+
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 0 ≤ x ≤ 0.12
 
     Examples

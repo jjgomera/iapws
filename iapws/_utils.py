@@ -1,7 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Miscelaneous utilities
+Miscelaneous internal utilities. This module include:
+
+    * :func:`getphase`: Get phase string of state
+    * :class:`_fase`: Base class to define a phase state
+    * :func:`deriv_H`: Calculate generic partial derivative with a fundamental
+      Helmholtz free energy equation of state
+    * :func:`deriv_G`: Calculate generic partial derivative with a fundamental
+      Gibbs free energy equation of state
 """
 
 from __future__ import division
@@ -13,21 +20,21 @@ def getphase(Tc, Pc, T, P, x, region):
     Parameters
     ----------
     Tc : float
-        Critical temperature [K]
+        Critical temperature, [K]
     Pc : float
-        Critical pressure [MPa]
+        Critical pressure, [MPa]
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     x : float
-        Quality [-]
-    region: integer
-        Region number, specific to IAPWS97 region definition
+        Quality, [-]
+    region: int
+        Region number, used only for IAPWS97 region definition
 
     Returns
     -------
-    phase : string
+    phase : str
         Phase name
     """
     # Avoid round problem
@@ -110,17 +117,36 @@ class _fase(object):
 
 
 def deriv_H(state, z, x, y, fase):
-    """Calculate generic partial derivative: (∂z/∂x)y from a fundamental
+    r"""Calculate generic partial derivative
+    :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     helmholtz free energy equation of state
 
     Parameters
     ----------
     state : any python object
-        Only need define P and T properties
-    x, y, z : string
-        Name of variables of derivate, can be: P, T, v, rho, u, h, s, g, a
+        Only need to define P and T properties, non phase specific properties
+    z : str
+        Name of variables in numerator term of derivatives
+    x : str
+        Name of variables in denominator term of derivatives
+    y : str
+        Name of constant variable in partial derivaritive
     fase : any python object
-        Define other phase properties v, cv, alfap, s, betap
+        Define phase specific properties (v, cv, alfap, s, betap)
+
+    Notes
+    -----
+    x, y and z can be the following values:
+
+        * P: Pressure
+        * T: Temperature
+        * v: Specific volume
+        * rho: Density
+        * u: Internal Energy
+        * h: Enthalpy
+        * s: Entropy
+        * g: Gibbs free energy
+        * a: Helmholtz free energy
 
     Returns
     -------
@@ -166,17 +192,36 @@ def deriv_H(state, z, x, y, fase):
 
 
 def deriv_G(state, z, x, y, fase):
-    """Calculate generic partial derivative: (∂z/∂x)y from a fundamental
+    r"""Calculate generic partial derivative
+    :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     Gibbs free energy equation of state
 
     Parameters
     ----------
     state : any python object
-        Only need define P and T properties
-    x, y, z : string
-        Name of variables of derivate, can be: P, T, v, rho, u, h, s, g, a
+        Only need to define P and T properties, non phase specific properties
+    z : str
+        Name of variables in numerator term of derivatives
+    x : str
+        Name of variables in denominator term of derivatives
+    y : str
+        Name of constant variable in partial derivaritive
     fase : any python object
-        Define other phase properties v, cp, alfav, s, xkappa
+        Define phase specific properties (v, cp, alfav, s, xkappa)
+
+    Notes
+    -----
+    x, y and z can be the following values:
+
+        * P: Pressure
+        * T: Temperature
+        * v: Specific volume
+        * rho: Density
+        * u: Internal Energy
+        * h: Enthalpy
+        * s: Entropy
+        * g: Gibbs free energy
+        * a: Helmholtz free energy
 
     Returns
     -------

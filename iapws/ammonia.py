@@ -1,8 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Guideline on the IAPWS Formulation 2001 for the Thermodynamic Properties of
-Ammonia-Water Mistures
+Module with Ammonia-water mixture properties and related properties. The module
+include:
+
+    * :class:`NH3`: Multiparameter equation of state for ammonia
+    * :class:`H2ONH3`:  Thermodynamic properties of ammonia-water mixtures
+    * :class:`Ttr`: Triple point of ammonia-water mixtures
 """
 
 
@@ -11,11 +15,21 @@ from math import exp, log, pi
 import warnings
 
 from scipy.constants import Boltzmann as kb
-from .iapws95 import MEoS, IAPWS95
+from .iapws95 import MEoS, IAPWS95, mainClassDoc
 
 
+@mainClassDoc()
 class NH3(MEoS):
-    """Multiparameter equation of state for ammonia"""
+    """Multiparameter equation of state for ammonia
+    for internal procedures, see MEoS base class
+
+    References
+    ----------
+    Baehr, H.D., Tillner-Roth, R.; Thermodynamic Properties of Environmentally
+    Acceptable Refrigerants: Equations of State and Tables for Ammonia, R22,
+    R134a, R152a, and R123. Springer-Verlag, Berlin, 1994.
+    http://doi.org/10.1007/978-3-642-79400-1
+    """
     name = "ammonia"
     CASNumber = "7664-41-7"
     formula = "NH3"
@@ -131,9 +145,9 @@ class NH3(MEoS):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
         fase: dict
             phase properties
 
@@ -207,19 +221,21 @@ class H2ONH3(object):
 
         Returns
         -------
-        prop : dictionary with thermodynamic properties of humid air
-            M: Mixture molecular mass [g/mol]
-            P: Pressure [MPa]
-            u: Specific internal energy [kJ/kg]
-            s: Specific entropy [kJ/kgK]
-            h: Specific enthalpy [kJ/kg]
-            a: Specific Helmholtz energy [kJ/kg]
-            g: Specific gibbs energy [kJ/kg]
-            cv: Specific isochoric heat capacity [kJ/kgK]
-            cp: Specific isobaric heat capacity [kJ/kgK]
-            w: Speed of sound [m/s]
-            fugH2O: Fugacity of water [-]
-            fugNH3: Fugacity of ammonia [-]
+        prop : dict
+            Dictionary with thermodynamic properties of ammonia-water mixtures:
+
+                * M: Mixture molecular mass, [g/mol]
+                * P: Pressure, [MPa]
+                * u: Specific internal energy, [kJ/kg]
+                * s: Specific entropy, [kJ/kgK]
+                * h: Specific enthalpy, [kJ/kg]
+                * a: Specific Helmholtz energy, [kJ/kg]
+                * g: Specific gibbs energy, [kJ/kg]
+                * cv: Specific isochoric heat capacity, [kJ/kgK]
+                * cp: Specific isobaric heat capacity, [kJ/kgK]
+                * w: Speed of sound, [m/s]
+                * fugH2O: Fugacity of water, [-]
+                * fugNH3: Fugacity of ammonia, [-]
 
         References
         ----------
@@ -275,23 +291,26 @@ class H2ONH3(object):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
         x : float
-            Mole fraction of ammonia in mixture [mol/mol]
+            Mole fraction of ammonia in mixture, [mol/mol]
 
         Returns
         -------
-        prop : dictionary with ideal adimensional helmholtz energy and deriv
-            tau: the adimensional temperature variable [-]
-            delta: the adimensional density variable [-]
-            fio  [-]
-            fiot: [∂fio/∂τ]δ  [-]
-            fiod: [∂fio/∂δ]τ  [-]
-            fiott: [∂²fio/∂τ²]δ  [-]
-            fiodt: [∂²fio/∂τ∂δ]  [-]
-            fiodd: [∂²fio/∂δ²]τ  [-]
+        prop : dict
+            Dictionary with ideal adimensional helmholtz energy and
+            derivatives:
+
+                * tau: the adimensional temperature variable, [-]
+                * delta: the adimensional density variable, [-]
+                * fio,[-]
+                * fiot: [∂fio/∂τ]δ  [-]
+                * fiod: [∂fio/∂δ]τ  [-]
+                * fiott: [∂²fio/∂τ²]δ  [-]
+                * fiodt: [∂²fio/∂τ∂δ]  [-]
+                * fiodd: [∂²fio/∂δ²]τ  [-]
 
         References
         ----------
@@ -366,25 +385,28 @@ class H2ONH3(object):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
         x : float
-            Mole fraction of ammonia in mixture [mol/mol]
+            Mole fraction of ammonia in mixture, [mol/mol]
 
         Returns
         -------
-        prop : dictionary with residual adimensional helmholtz energy and deriv
-            tau: the adimensional temperature variable [-]
-            delta: the adimensional density variable [-]
-            fir  [-]
-            firt: [∂fir/∂τ]δ,x  [-]
-            fird: [∂fir/∂δ]τ,x  [-]
-            firtt: [∂²fir/∂τ²]δ,x  [-]
-            firdt: [∂²fir/∂τ∂δ]x  [-]
-            firdd: [∂²fir/∂δ²]τ,x  [-]
-            firx: [∂fir/∂x]τ,δ  [-]
-            F: Function for fugacity calculation [-]
+        prop : dict
+            dictionary with residual adimensional helmholtz energy and
+            derivatives:
+
+                * tau: the adimensional temperature variable, [-]
+                * delta: the adimensional density variable, [-]
+                * fir, [-]
+                * firt: [∂fir/∂τ]δ,x  [-]
+                * fird: [∂fir/∂δ]τ,x  [-]
+                * firtt: [∂²fir/∂τ²]δ,x  [-]
+                * firdt: [∂²fir/∂τ∂δ]x  [-]
+                * firdd: [∂²fir/∂δ²]τ,x  [-]
+                * firx: [∂fir/∂x]τ,δ  [-]
+                * F: Function for fugacity calculation, [-]
 
         References
         ----------
@@ -441,23 +463,25 @@ class H2ONH3(object):
         Parameters
         ----------
         tau : float
-            Adimensional temperature [-]
+            Adimensional temperature, [-]
         delta : float
-            Adimensional density [-]
+            Adimensional density, [-]
         x : float
-            Mole fraction of ammonia in mixture [mol/mol]
+            Mole fraction of ammonia in mixture, [mol/mol]
 
         Returns
         -------
-        prop : dictionary with departure contribution to the residual
-        adimensional helmholtz energy and deriv
-            fir  [-]
-            firt: [∂Δfir/∂τ]δ,x  [-]
-            fird: [∂Δfir/∂δ]τ,x  [-]
-            firtt: [∂²Δfir/∂τ²]δ,x  [-]
-            firdt: [∂²Δfir/∂τ∂δ]x  [-]
-            firdd: [∂²Δfir/∂δ²]τ,x  [-]
-            firx: [∂Δfir/∂x]τ,δ  [-]
+        prop : dict
+            Dictionary with departure contribution to the residual adimensional
+            helmholtz energy and derivatives:
+
+                * fir  [-]
+                * firt: [∂Δfir/∂τ]δ,x  [-]
+                * fird: [∂Δfir/∂δ]τ,x  [-]
+                * firtt: [∂²Δfir/∂τ²]δ,x  [-]
+                * firdt: [∂²Δfir/∂τ∂δ]x  [-]
+                * firdd: [∂²Δfir/∂δ²]τ,x  [-]
+                * firx: [∂Δfir/∂x]τ,δ  [-]
 
         References
         ----------
@@ -545,16 +569,17 @@ def Ttr(x):
     Parameters
     ----------
     x : float
-        Mole fraction of ammonia in mixture [mol/mol]
+        Mole fraction of ammonia in mixture, [mol/mol]
 
     Returns
     -------
     Ttr : float
-        Triple point temperature [K]
+        Triple point temperature, [K]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 0 ≤ x ≤ 1
 
     References

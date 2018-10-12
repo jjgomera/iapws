@@ -5,3 +5,4 @@ iapws.humidAir module
     :members:
     :private-members:
     :undoc-members:
+    :member-order: bysource

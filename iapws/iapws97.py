@@ -8,7 +8,7 @@
 The module implement the fundamental equation for the five regions (rectangular
 boxes) and the backward equation (marked in grey).
 
-:func:`IAPWS97`: Global module class with all the functionality integrated
+:class:`IAPWS97`: Global module class with all the functionality integrated
 
 Fundamental equations:
    * :func:`_Region1`
@@ -109,16 +109,17 @@ def _h13_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * s(100MPa,623.15K) ≤ s ≤ s'(623.15K)
 
     References
@@ -159,12 +160,12 @@ def _P23_T(T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -187,12 +188,12 @@ def _t_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -215,18 +216,19 @@ def _t_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 5.048096828 ≤ s ≤ 5.260578707
         * 2.563592004e3 ≤ h ≤ 2.812942061e3
 
@@ -279,16 +281,17 @@ def _PSat_T(T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 273.15 ≤ T ≤ 647.096
 
     References
@@ -323,16 +326,17 @@ def _TSat_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 0.00061121 ≤ P ≤ 22.064
 
     References
@@ -368,16 +372,17 @@ def _PSat_h(h):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * h'(623.15K) ≤ h ≤ h''(623.15K)
 
     References
@@ -421,16 +426,17 @@ def _PSat_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * s'(623.15K) ≤ s ≤ s''(623.15K)
 
     References
@@ -473,16 +479,17 @@ def _h1_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * s'(273.15K) ≤ s ≤ s'(623.15K)
 
     References
@@ -531,16 +538,17 @@ def _h3a_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * s'(623.15K) ≤ s ≤ sc
 
     References
@@ -585,16 +593,17 @@ def _h2ab_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 5.85 ≤ s ≤ s"(273.15K)
 
     References
@@ -645,16 +654,17 @@ def _h2c3b_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * sc ≤ s ≤ 5.85
 
     References
@@ -699,23 +709,23 @@ def _Region1(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isocoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s]
-            * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -797,14 +807,14 @@ def _Backward1_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -843,14 +853,14 @@ def _Backward1_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -889,14 +899,14 @@ def _Backward1_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -939,23 +949,23 @@ def _Region2(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isocoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s]
-            * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -1049,9 +1059,9 @@ def Region2_cp0(Tr, Pr):
     Parameters
     ----------
     Tr : float
-        Reduced temperature [-]
+        Reduced temperature, [-]
     Pr : float
-        Reduced pressure [-]
+        Reduced pressure, [-]
 
     Returns
     -------
@@ -1059,11 +1069,11 @@ def Region2_cp0(Tr, Pr):
         Array with ideal Gibbs energy partial derivatives:
 
             * g: Ideal Specific Gibbs energy [kJ/kg]
-            * gp: [∂g/∂P]T
-            * gpp: [∂²g/∂P²]T
-            * gt: [∂g/∂T]P
-            * gtt: [∂²g/∂T²]P
-            * gpt: [∂²g/∂T∂P]
+            * gp: ∂g/∂P|T
+            * gpp: ∂²g/∂P²|T
+            * gt: ∂g/∂T|P
+            * gtt: ∂²g/∂T²|P
+            * gpt: ∂²g/∂T∂P
 
     References
     ----------
@@ -1093,12 +1103,12 @@ def _P_2bc(h):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -1120,12 +1130,12 @@ def _hbc_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     References
     ----------
@@ -1147,12 +1157,12 @@ def _hab_s(s):
     Parameters
     ----------
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     References
     ----------
@@ -1184,14 +1194,14 @@ def _Backward2a_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1237,14 +1247,14 @@ def _Backward2b_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1291,14 +1301,14 @@ def _Backward2c_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1340,14 +1350,14 @@ def _Backward2_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
     """
     if P <= 4:
         T = _Backward2a_T_Ph(P, h)
@@ -1372,14 +1382,14 @@ def _Backward2a_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1432,14 +1442,14 @@ def _Backward2b_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1489,14 +1499,14 @@ def _Backward2c_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1540,14 +1550,14 @@ def _Backward2_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
     """
     if P <= 4:
         T = _Backward2a_T_Ps(P, s)
@@ -1568,14 +1578,14 @@ def _Backward2a_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -1622,14 +1632,14 @@ def _Backward2b_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -1677,14 +1687,14 @@ def _Backward2c_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -1732,14 +1742,14 @@ def _Backward2_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     """
     sfbc = 5.85
     hamin = _hab_s(s)
@@ -1759,23 +1769,23 @@ def _Region3(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isocoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s]
-            * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -1861,12 +1871,12 @@ def _h_3ab(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Examples
     --------
@@ -1883,12 +1893,12 @@ def _tab_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1919,12 +1929,12 @@ def _top_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1955,12 +1965,12 @@ def _twx_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -1991,12 +2001,12 @@ def _tef_P(P):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2019,14 +2029,14 @@ def _txx_P(P, xy):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     xy: string
         Subregions options: cd, gh, ij, jk, mn, qu, rx, uv
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2086,9 +2096,9 @@ def _Backward3a_v_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     References
     ----------
@@ -2100,7 +2110,7 @@ def _Backward3a_v_Ph(P, h):
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     Examples
     --------
@@ -2139,14 +2149,14 @@ def _Backward3b_v_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     References
     ----------
@@ -2191,14 +2201,14 @@ def _Backward3_v_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
     """
     hf = _h_3ab(P)
     if h <= hf:
@@ -2213,14 +2223,14 @@ def _Backward3a_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2266,14 +2276,14 @@ def _Backward3b_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2319,14 +2329,14 @@ def _Backward3_T_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
     """
     hf = _h_3ab(P)
     if h <= hf:
@@ -2342,14 +2352,14 @@ def _Backward3a_v_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     References
     ----------
@@ -2394,14 +2404,14 @@ def _Backward3b_v_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     References
     ----------
@@ -2447,14 +2457,14 @@ def _Backward3_v_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
     """
     if s <= sc:
         return _Backward3a_v_Ps(P, s)
@@ -2468,14 +2478,14 @@ def _Backward3a_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2521,14 +2531,14 @@ def _Backward3b_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -2573,14 +2583,14 @@ def _Backward3_T_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
     """
     sc = 4.41202148223476
     if s <= sc:
@@ -2596,14 +2606,14 @@ def _Backward3a_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -2652,14 +2662,14 @@ def _Backward3b_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     References
     ----------
@@ -2710,14 +2720,14 @@ def _Backward3_P_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     """
     sc = 4.41202148223476
     if s <= sc:
@@ -2732,16 +2742,16 @@ def _Backward3_sat_v_P(P, T, x):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     x : integer
-        Vapor quality [-]
+        Vapor quality, [-]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     Notes
     -----
@@ -2775,14 +2785,14 @@ def _Backward3_v_PT(P, T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     References
     ----------
@@ -2957,16 +2967,16 @@ def _Backward3x_v_PT(T, P, x):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     x : char
         Region 3 subregion code
 
     Returns
     -------
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
 
     References
     ----------
@@ -3566,21 +3576,21 @@ def _Region4(P, x):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     x : float
-        Vapor quality [-]
+        Vapor quality, [-]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * T: Saturated temperature [K]
-            * P: Saturated pressure [MPa]
-            * x: Vapor quality [-]
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
+            * T: Saturated temperature, [K]
+            * P: Saturated pressure, [MPa]
+            * x: Vapor quality, [-]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
     """
     T = _TSat_P(P)
     if T > 623.15:
@@ -3614,14 +3624,14 @@ def _Backward4_T_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     References
     ----------
@@ -3672,23 +3682,23 @@ def _Region5(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isocoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s]
-            * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -3762,16 +3772,16 @@ def Region5_cp0(Tr, Pr):
     Parameters
     ----------
     Tr : float
-        Reduced temperature [-]
+        Reduced temperature, [-]
     Pr : float
-        Reduced pressure [-]
+        Reduced pressure, [-]
 
     Returns
     -------
     prop : array
         Array with ideal Gibbs energy partial derivatives:
 
-            * g: Ideal Specific Gibbs energy [kJ/kg]
+            * g: Ideal Specific Gibbs energy, [kJ/kg]
             * gp: [∂g/∂P]T
             * gpp: [∂²g/∂P²]T
             * gt: [∂g/∂T]P
@@ -3806,9 +3816,9 @@ def _Bound_TP(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
@@ -3847,9 +3857,9 @@ def _Bound_Ph(P, h):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
 
     Returns
     -------
@@ -3921,9 +3931,9 @@ def _Bound_Ps(P, s):
     Parameters
     ----------
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
@@ -3995,9 +4005,9 @@ def _Bound_hs(h, s):
     Parameters
     ----------
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
 
     Returns
     -------
@@ -4167,23 +4177,23 @@ def prop0(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties. The available properties are:
 
-            * v: Specific volume [m³/kg]
-            * h: Specific enthalpy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isocoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s]
-            * alfav: Cubic expansion coefficient [1/K]
-            * kt: Isothermal compressibility [1/MPa]
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
     """
     if T <= 1073.15:
         Tr = 540/T
@@ -4213,21 +4223,22 @@ class IAPWS97(object):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
     x : float
-        Vapor quality [-]
+        Vapor quality, [-]
     l : float, optional
-        Wavelength of light, for refractive index [nm]
+        Wavelength of light, for refractive index, [nm]
 
     Notes
     -----
     Definitions options:
+
         * T, P: Not valid for two-phases region
         * P, h
         * P, s
@@ -4237,66 +4248,70 @@ class IAPWS97(object):
 
     Returns
     -------
-    The calculated instance has the following properties:
-        * P: Pressure [MPa]
-        * T: Temperature [K]
-        * g: Specific Gibbs free energy [kJ/kg]
-        * a: Specific Helmholtz free energy [kJ/kg]
-        * v: Specific volume [m³/kg]
-        * rho: Density [kg/m³]
-        * h: Specific enthalpy [kJ/kg]
-        * u: Specific internal energy [kJ/kg]
-        * s: Specific entropy [kJ/kg·K]
-        * cp: Specific isobaric heat capacity [kJ/kg·K]
-        * cv: Specific isochoric heat capacity [kJ/kg·K]
-        * Z: Compression factor [-]
-        * fi: Fugacity coefficient [-]
-        * f: Fugacity [MPa]
+    prop : dict
+        The calculated instance has the following properties:
 
-        * gamma: Isoentropic exponent [-]
-        * alfav: Isobaric cubic expansion coefficient [1/K]
-        * xkappa: Isothermal compressibility [1/MPa]
-        * kappas: Adiabatic compresibility [1/MPa]
-        * alfap: Relative pressure coefficient [1/K]
-        * betap: Isothermal stress coefficient [kg/m³]
-        * joule: Joule-Thomson coefficient [K/MPa]
-        * deltat: Isothermal throttling coefficient [kJ/kg·MPa]
-        * region: Region
+            * P: Pressure, [MPa]
+            * T: Temperature, [K]
+            * g: Specific Gibbs free energy, [kJ/kg]
+            * a: Specific Helmholtz free energy, [kJ/kg]
+            * v: Specific volume, [m³/kg]
+            * rho: Density, [kg/m³]
+            * h: Specific enthalpy, [kJ/kg]
+            * u: Specific internal energy, [kJ/kg]
+            * s: Specific entropy, [kJ/kg·K]
+            * cp: Specific isobaric heat capacity, [kJ/kg·K]
+            * cv: Specific isochoric heat capacity, [kJ/kg·K]
+            * Z: Compression factor, [-]
+            * fi: Fugacity coefficient, [-]
+            * f: Fugacity, [MPa]
 
-        * v0: Ideal specific volume [m³/kg]
-        * u0: Ideal specific internal energy [kJ/kg]
-        * h0: Ideal specific enthalpy [kJ/kg]
-        * s0: Ideal specific entropy [kJ/kg·K]
-        * a0: Ideal specific Helmholtz free energy [kJ/kg]
-        * g0: Ideal specific Gibbs free energy [kJ/kg]
-        * cp0: Ideal specific isobaric heat capacity [kJ/kg·K]
-        * cv0: Ideal specific isochoric heat capacity [kJ/kg·K]
-        * w0: Ideal speed of sound [m/s]
-        * gamma0: Ideal isoentropic exponent [-]
+            * gamma: Isoentropic exponent, [-]
+            * alfav: Isobaric cubic expansion coefficient, [1/K]
+            * xkappa: Isothermal compressibility, [1/MPa]
+            * kappas: Adiabatic compresibility, [1/MPa]
+            * alfap: Relative pressure coefficient, [1/K]
+            * betap: Isothermal stress coefficient, [kg/m³]
+            * joule: Joule-Thomson coefficient, [K/MPa]
+            * deltat: Isothermal throttling coefficient, [kJ/kg·MPa]
+            * region: Region
 
-        * w: Speed of sound [m/s]
-        * mu: Dynamic viscosity [Pa·s]
-        * nu: Kinematic viscosity [m²/s]
-        * k: Thermal conductivity [W/m·K]
-        * alfa: Thermal diffusivity [m²/s]
-        * sigma: Surface tension [N/m]
-        * epsilon: Dielectric constant [-]
-        * n: Refractive index [-]
-        * Prandt: Prandtl number [-]
-        * Pr: Reduced Pressure [-]
-        * Tr: Reduced Temperature [-]
-        * Hvap: Vaporization heat [kJ/kg]
-        * Svap: Vaporization entropy [kJ/kg·K]
+            * v0: Ideal specific volume, [m³/kg]
+            * u0: Ideal specific internal energy, [kJ/kg]
+            * h0: Ideal specific enthalpy, [kJ/kg]
+            * s0: Ideal specific entropy, [kJ/kg·K]
+            * a0: Ideal specific Helmholtz free energy, [kJ/kg]
+            * g0: Ideal specific Gibbs free energy, [kJ/kg]
+            * cp0: Ideal specific isobaric heat capacity, [kJ/kg·K]
+            * cv0: Ideal specific isochoric heat capacity [kJ/kg·K]
+            * w0: Ideal speed of sound, [m/s]
+            * gamma0: Ideal isoentropic exponent, [-]
+
+            * w: Speed of sound, [m/s]
+            * mu: Dynamic viscosity, [Pa·s]
+            * nu: Kinematic viscosity, [m²/s]
+            * k: Thermal conductivity, [W/m·K]
+            * alfa: Thermal diffusivity, [m²/s]
+            * sigma: Surface tension, [N/m]
+            * epsilon: Dielectric constant, [-]
+            * n: Refractive index, [-]
+            * Prandt: Prandtl number, [-]
+            * Pr: Reduced Pressure, [-]
+            * Tr: Reduced Temperature, [-]
+            * Hvap: Vaporization heat, [kJ/kg]
+            * Svap: Vaporization entropy, [kJ/kg·K]
 
     Examples
     --------
-    >>> water=IAPWS97(T=170+273.15,x=0.5)
+    >>> water=IAPWS97(T=170+273.15, x=0.5)
     >>> water.Liquid.cp, water.Vapor.cp, water.Liquid.w, water.Vapor.w
     4.3695 2.5985 1418.3 498.78
-    >>> water=IAPWS97(T=325+273.15,x=0.5)
+
+    >>> water=IAPWS97(T=325+273.15, x=0.5)
     >>> water.P, water.Liquid.v, water.Vapor.v, water.Liquid.h, water.Vapor.h
     12.0505 0.00152830 0.0141887 1493.37 2684.48
-    >>> water=IAPWS97(T=50+273.15,P=0.0006112127)
+
+    >>> water=IAPWS97(T=50+273.15, P=0.0006112127)
     >>> water.cp0, water.cv0, water.h0, water.s0, water.w0
     1.8714 1.4098 2594.66 9.471 444.93
     """

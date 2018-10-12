@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """
-Implemented multiparameter equation of state as a Helmholtz free energy
-    * IAPWS-95 implementation
-    * Heavy water formulation 2017
+Implemented multiparameter equation of state as a Helmholtz free energy:
+
+    * :class:`MEoS`: Base class of multiparameter equation of state
+    * :class:`IAPWS95`: 2016 revision of 1995 formulation for ordinaty water
+    * :class:`D2O`: 2017 formulation for heavy water.
 """
 
 
 from __future__ import division
 from itertools import product
+import os
 import warnings
 
 from scipy import exp, log, ndarray
@@ -23,35 +26,35 @@ from ._utils import _fase, getphase, deriv_H
 
 
 class MEoS(_fase):
-    """
+    r"""
     General implementation of multiparameter equation of state. From this
     derived all child class specified per individual compounds
 
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
     h : float
-        Specific enthalpy [kJ/kg]
+        Specific enthalpy, [kJ/kg]
     s : float
-        Specific entropy [kJ/kgK]
+        Specific entropy, [kJ/kgK]
     u : float
-        Specific internal energy [kJ/kg]
+        Specific internal energy, [kJ/kg]
     x : float
-        Vapor quality [-]
+        Vapor quality, [-]
 
     l : float, optional
-        Wavelength of light, for refractive index [nm]
+        Wavelength of light, for refractive index, [nm]
     rho0 : float, optional
-        Initial value of density, to improve iteration [kg/m³]
+        Initial value of density, to improve iteration, [kg/m³]
     T0 : float, optional
-        Initial value of temperature, to improve iteration [K]
+        Initial value of temperature, to improve iteration, [K]
     x0 : Initial value of vapor quality, necessary in bad input pair definition
         where there are two valid solution (T-h, T-s)
 
@@ -61,83 +64,82 @@ class MEoS(_fase):
     * v as a alternate input parameter to rho
     * T-x, P-x, preferred input pair to specified a point in two phases region
 
-    Returns
-    -------
     The calculated instance has the following properties:
-        * P: Pressure [MPa]
-        * T: Temperature [K]
-        * x: Vapor quality [-]
-        * g: Specific Gibbs free energy [kJ/kg]
-        * a: Specific Helmholtz free energy [kJ/kg]
-        * v: Specific volume [m³/kg]
-        * r: Density [kg/m³]
-        * h: Specific enthalpy [kJ/kg]
-        * u: Specific internal energy [kJ/kg]
-        * s: Specific entropy [kJ/kg·K]
-        * cp: Specific isobaric heat capacity [kJ/kg·K]
-        * cv: Specific isochoric heat capacity [kJ/kg·K]
+
+        * P: Pressure, [MPa]
+        * T: Temperature, [K]
+        * x: Vapor quality, [-]
+        * g: Specific Gibbs free energy, [kJ/kg]
+        * a: Specific Helmholtz free energy, [kJ/kg]
+        * v: Specific volume, [m³/kg]
+        * r: Density, [kg/m³]
+        * h: Specific enthalpy, [kJ/kg]
+        * u: Specific internal energy, [kJ/kg]
+        * s: Specific entropy, [kJ/kg·K]
+        * cp: Specific isobaric heat capacity, [kJ/kg·K]
+        * cv: Specific isochoric heat capacity, [kJ/kg·K]
         * cp_cv: Heat capacity ratio, [-]
-        * Z: Compression factor [-]
-        * fi: Fugacity coefficient [-]
-        * f: Fugacity [MPa]
-        * gamma: Isoentropic exponent [-]
+        * Z: Compression factor, [-]
+        * fi: Fugacity coefficient, [-]
+        * f: Fugacity, [MPa]
+        * gamma: Isoentropic exponent, [-]
 
-        * alfav: Isobaric cubic expansion coefficient [1/K]
-        * kappa: Isothermal compressibility [1/MPa]
-        * kappas: Adiabatic compresibility [1/MPa]
-        * alfap: Relative pressure coefficient [1/K]
-        * betap: Isothermal stress coefficient [kg/m³]
-        * joule: Joule-Thomson coefficient [K/MPa]
+        * alfav: Isobaric cubic expansion coefficient, [1/K]
+        * kappa: Isothermal compressibility, [1/MPa]
+        * kappas: Adiabatic compresibility, [1/MPa]
+        * alfap: Relative pressure coefficient, [1/K]
+        * betap: Isothermal stress coefficient, [kg/m³]
+        * joule: Joule-Thomson coefficient, [K/MPa]
 
-        * betas: Isoentropic temperature-pressure coefficient [-]
-        * Gruneisen: Gruneisen parameter [-]
-        * virialB: Second virial coefficient [m³/kg]
-        * virialC: Third virial coefficient [m⁶/kg²]
-        * dpdT_rho: Derivatives, dp/dT at constant rho [MPa/K]
-        * dpdrho_T: Derivatives, dp/drho at constant T [MPa·m³/kg]
-        * drhodT_P: Derivatives, drho/dT at constant P [kg/m³·K]
-        * drhodP_T: Derivatives, drho/dP at constant T [kg/m³·MPa]
-        * dhdT_rho: Derivatives, dh/dT at constant rho [kJ/kg·K]
-        * dhdP_T: Isothermal throttling coefficient [kJ/kg·MPa]
-        * dhdT_P: Derivatives, dh/dT at constant P [kJ/kg·K]
-        * dhdrho_T: Derivatives, dh/drho at constant T [kJ·m³/kg²]
-        * dhdrho_P: Derivatives, dh/drho at constant P [kJ·m³/kg²]
-        * dhdP_rho: Derivatives, dh/dP at constant rho [kJ/kg·MPa]
-        * kt: Isothermal Expansion Coefficient [-]
-        * ks: Adiabatic Compressibility [1/MPa]
-        * Ks: Adiabatic bulk modulus [MPa]
-        * Kt: Isothermal bulk modulus [MPa]
+        * betas: Isoentropic temperature-pressure coefficient, [-]
+        * Gruneisen: Gruneisen parameter, [-]
+        * virialB: Second virial coefficient, [m³/kg]
+        * virialC: Third virial coefficient, [m⁶/kg²]
+        * dpdT_rho: Derivatives, dp/dT at constant rho, [MPa/K]
+        * dpdrho_T: Derivatives, dp/drho at constant T, [MPa·m³/kg]
+        * drhodT_P: Derivatives, drho/dT at constant P, [kg/m³·K]
+        * drhodP_T: Derivatives, drho/dP at constant T, [kg/m³·MPa]
+        * dhdT_rho: Derivatives, dh/dT at constant rho, [kJ/kg·K]
+        * dhdP_T: Isothermal throttling coefficient, [kJ/kg·MPa]
+        * dhdT_P: Derivatives, dh/dT at constant P, [kJ/kg·K]
+        * dhdrho_T: Derivatives, dh/drho at constant T, [kJ·m³/kg²]
+        * dhdrho_P: Derivatives, dh/drho at constant P, [kJ·m³/kg²]
+        * dhdP_rho: Derivatives, dh/dP at constant rho, [kJ/kg·MPa]
+        * kt: Isothermal Expansion Coefficient, [-]
+        * ks: Adiabatic Compressibility, [1/MPa]
+        * Ks: Adiabatic bulk modulus, [MPa]
+        * Kt: Isothermal bulk modulus, [MPa]
 
-        * v0: Ideal specific volume [m³/kg]
-        * rho0: Ideal gas density [kg/m³]
-        * u0: Ideal specific internal energy [kJ/kg]
-        * h0: Ideal specific enthalpy [kJ/kg]
-        * s0: Ideal specific entropy [kJ/kg·K]
-        * a0: Ideal specific Helmholtz free energy [kJ/kg]
-        * g0: Ideal specific Gibbs free energy [kJ/kg]
-        * cp0: Ideal specific isobaric heat capacity [kJ/kg·K]
-        * cv0: Ideal specific isochoric heat capacity [kJ/kg·K]
-        * w0: Ideal speed of sound [m/s]
-        * gamma0: Ideal isoentropic exponent [-]
+        * v0: Ideal specific volume, [m³/kg]
+        * rho0: Ideal gas density, [kg/m³]
+        * u0: Ideal specific internal energy, [kJ/kg]
+        * h0: Ideal specific enthalpy, [kJ/kg]
+        * s0: Ideal specific entropy, [kJ/kg·K]
+        * a0: Ideal specific Helmholtz free energy, [kJ/kg]
+        * g0: Ideal specific Gibbs free energy, [kJ/kg]
+        * cp0: Ideal specific isobaric heat capacity, [kJ/kg·K]
+        * cv0: Ideal specific isochoric heat capacity, [kJ/kg·K]
+        * w0: Ideal speed of sound, [m/s]
+        * gamma0: Ideal isoentropic exponent, [-]
 
-        * w: Speed of sound [m/s]
-        * mu: Dynamic viscosity [Pa·s]
-        * nu: Kinematic viscosity [m²/s]
-        * k: Thermal conductivity [W/m·K]
-        * alfa: Thermal diffusivity [m²/s]
-        * sigma: Surface tension [N/m]
-        * epsilon: Dielectric constant [-]
-        * n: Refractive index [-]
-        * Prandt: Prandtl number [-]
-        * Pr: Reduced Pressure [-]
-        * Tr: Reduced Temperature [-]
-        * Hvap: Vaporization heat [kJ/kg]
-        * Svap: Vaporization entropy [kJ/kg·K]
+        * w: Speed of sound, [m/s]
+        * mu: Dynamic viscosity, [Pa·s]
+        * nu: Kinematic viscosity, [m²/s]
+        * k: Thermal conductivity, [W/m·K]
+        * alfa: Thermal diffusivity, [m²/s]
+        * sigma: Surface tension, [N/m]
+        * epsilon: Dielectric constant, [-]
+        * n: Refractive index, [-]
+        * Prandt: Prandtl number, [-]
+        * Pr: Reduced Pressure, [-]
+        * Tr: Reduced Temperature, [-]
+        * Hvap: Vaporization heat, [kJ/kg]
+        * Svap: Vaporization entropy, [kJ/kg·K]
 
-        * Z_rho: (Z-1) over the density [m³/kg]
-        * IntP: Internal pressure [MPa]
-        * invT: Negative reciprocal temperature [1/K]
-        * hInput: Specific heat input [kJ/kg]
+        * Z_rho: :math:`(Z-1)/\rho`, [m³/kg]
+        * IntP: Internal pressure, [MPa]
+        * invT: Negative reciprocal temperature, [1/K]
+        * hInput: Specific heat input, [kJ/kg]
     """
     CP = None
     _Pv = None
@@ -1013,23 +1015,24 @@ class MEoS(_fase):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
-        prop : dictionary with calculated properties
-            fir:  [-]
-            fird: [∂fir/∂δ]τ  [-]
-            firdd: [∂²fir/∂δ²]τ  [-]
-            delta: Reducen density, rho/rhoc [-]
-            P: Pressure [kPa]
-            h: Enthalpy [kJ/kg]
-            s: Entropy [kJ/kgK]
-            cv: Isochoric specific heat [kJ/kgK]
-            alfav: Thermal expansion coefficient [1/K]
-            betap: Isothermal compressibility [1/kPa]
+        prop : dict
+            Dictionary with calculated properties:
+                * fir: [-]
+                * fird: ∂fir/∂δ|τ
+                * firdd: ∂²fir/∂δ²|τ
+                * delta: Reducen density rho/rhoc, [-]
+                * P: Pressure, [kPa]
+                * h: Enthalpy, [kJ/kg]
+                * s: Entropy, [kJ/kgK]
+                * cv: Isochoric specific heat, [kJ/kgK]
+                * alfav: Thermal expansion coefficient, [1/K]
+                * betap: Isothermal compressibility, [1/kPa]
 
         References
         ----------
@@ -1105,19 +1108,19 @@ class MEoS(_fase):
         Parameters
         ----------
         tau : float
-            Inverse reduced temperature, Tc/T [-]
+            Inverse reduced temperature Tc/T, [-]
         delta : float
-            Reduced density, rho/rhoc [-]
+            Reduced density rho/rhoc, [-]
 
         Returns
         -------
         prop : dictionary with ideal adimensional helmholtz energy and deriv
-            fio  [-]
-            fiot: [∂fio/∂τ]δ  [-]
-            fiod: [∂fio/∂δ]τ  [-]
-            fiott: [∂²fio/∂τ²]δ  [-]
-            fiodt: [∂²fio/∂τ∂δ]  [-]
-            fiodd: [∂²fio/∂δ²]τ  [-]
+            fio, [-]
+            fiot: ∂fio/∂τ|δ
+            fiod: ∂fio/∂δ|τ
+            fiott: ∂²fio/∂τ²|δ
+            fiodt: ∂²fio/∂τ∂δ
+            fiodd: ∂²fio/∂δ²|τ
 
         References
         ----------
@@ -1170,19 +1173,20 @@ class MEoS(_fase):
         Parameters
         ----------
         tau : float
-            Inverse reduced temperature, Tc/T [-]
+            Inverse reduced temperature Tc/T, [-]
         delta : float
-            Reduced density, rho/rhoc [-]
+            Reduced density rho/rhoc, [-]
 
         Returns
         -------
-        prop : dictionary with residual adimensional helmholtz energy and deriv
-            fir  [-]
-            firt: [∂fir/∂τ]δ,x  [-]
-            fird: [∂fir/∂δ]τ,x  [-]
-            firtt: [∂²fir/∂τ²]δ,x  [-]
-            firdt: [∂²fir/∂τ∂δ]x  [-]
-            firdd: [∂²fir/∂δ²]τ,x  [-]
+        prop : dict
+          Dictionary with residual adimensional helmholtz energy and deriv:
+            * fir
+            * firt: ∂fir/∂τ|δ,x
+            * fird: ∂fir/∂δ|τ,x
+            * firtt: ∂²fir/∂τ²|δ,x
+            * firdt: ∂²fir/∂τ∂δ|x
+            * firdd: ∂²fir/∂δ²|τ,x
 
         References
         ----------
@@ -1307,9 +1311,10 @@ class MEoS(_fase):
 
         Returns
         -------
-        prop : dictionary with residual adimensional helmholtz energy and deriv
-            B: [∂fir/∂δ]δ->0  [-]
-            C: [∂²fir/∂δ²]δ->0  [-]
+        prop : dict
+            Dictionary with residual adimensional helmholtz energy:
+                * B: ∂fir/∂δ|δ->0
+                * C: ∂²fir/∂δ²|δ->0
         """
         Tc = self._constants.get("Tref", self.Tc)
         tau = Tc/T
@@ -1390,19 +1395,21 @@ class MEoS(_fase):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
-        prop : dictionary with residual helmholtz energy and derivatives
-            fir  [kJ/kg]
-            firt: [∂fir/∂T]ρ  [kJ/kgK]
-            fird: [∂fir/∂ρ]T  [kJ/m³kg²]
-            firtt: [∂²fir/∂T²]ρ  [kJ/kgK²]
-            firdt: [∂²fir/∂T∂ρ]  [kJ/m³kg²K]
-            firdd: [∂²fir/∂ρ²]T  [kJ/m⁶kg]
+        prop : dict
+            Dictionary with residual helmholtz energy and derivatives:
+
+                * fir, [kJ/kg]
+                * firt: ∂fir/∂T|ρ, [kJ/kgK]
+                * fird: ∂fir/∂ρ|T, [kJ/m³kg²]
+                * firtt: ∂²fir/∂T²|ρ, [kJ/kgK²]
+                * firdt: ∂²fir/∂T∂ρ, [kJ/m³kg²K]
+                * firdd: ∂²fir/∂ρ²|T, [kJ/m⁶kg]
 
         References
         ----------
@@ -1457,12 +1464,12 @@ class MEoS(_fase):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
-        sigma : float
-            Surface tension [N/m]
+        σ : float
+            Surface tension, [N/m]
 
         Notes
         -----
@@ -1483,12 +1490,12 @@ class MEoS(_fase):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         Pv : float
-            Vapour pressure [Pa]
+            Vapour pressure, [Pa]
 
         References
         ----------
@@ -1511,12 +1518,12 @@ class MEoS(_fase):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         rho : float
-            Saturated liquid density [kg/m³]
+            Saturated liquid density, [kg/m³]
 
         References
         ----------
@@ -1542,12 +1549,12 @@ class MEoS(_fase):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         rho : float
-            Saturated vapor density [kg/m³]
+            Saturated vapor density, [kg/m³]
 
         References
         ----------
@@ -1573,12 +1580,12 @@ class MEoS(_fase):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         dPdT : float
-            dPdT [MPa/K]
+            dPdT, [MPa/K]
 
         References
         ----------
@@ -1597,9 +1604,30 @@ class MEoS(_fase):
         return dPdT
 
 
+def mainClassDoc():
+    """Function decorator used to automatic adiction of base class MEoS in
+    subclass"""
+    def decorator(f):
+        doc = f.__doc__.split(os.linesep)
+        try:
+            ind = doc.index("")
+        except ValueError:
+            ind = 1
+
+        doc1 = os.linesep.join(doc[:ind])
+        doc3 = os.linesep.join(doc[ind:])
+        doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
+
+        f.__doc__ = doc1 + os.linesep + os.linesep + \
+            doc2 + os.linesep + os.linesep + doc3
+        return f
+    return decorator
+
+
+@mainClassDoc()
 class IAPWS95(MEoS):
     """Implementation of IAPWS Formulation 1995 for ordinary water substance,
-    (revised release of 2016), see MEoS __doc__
+    (revised release of 2016), for internal procedures, see MEoS base class
 
     Examples
     --------
@@ -1696,10 +1724,13 @@ class IAPWS95(MEoS):
     IAPWS, Revised Release on the IAPWS Formulation 1995 for the Thermodynamic
     Properties of Ordinary Water Substance for General and Scientific Use,
     September 2016, http://www.iapws.org/relguide/IAPWS-95.html
+
     IAPWS, Revised Supplementary Release on Saturation Properties of Ordinary
     Water Substance September 1992, http://www.iapws.org/relguide/Supp-sat.html
+
     IAPWS, Guideline on a Low-Temperature Extension of the IAPWS-95 Formulation
     for Water Vapor, http://www.iapws.org/relguide/LowT.html
+
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
@@ -1821,12 +1852,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         alfa : float
-            alfa coefficient [kJ/kg]
+            alfa coefficient, [kJ/kg]
 
         References
         ----------
@@ -1851,12 +1882,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         phi : float
-            phi coefficient [kJ/kgK]
+            phi coefficient, [kJ/kgK]
 
         References
         ----------
@@ -1884,12 +1915,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         h : float
-            Saturated liquid enthalpy [kJ/kg]
+            Saturated liquid enthalpy, [kJ/kg]
 
         References
         ----------
@@ -1910,12 +1941,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         h : float
-            Saturated vapor enthalpy [kJ/kg]
+            Saturated vapor enthalpy, [kJ/kg]
 
         References
         ----------
@@ -1936,12 +1967,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         s : float
-            Saturated liquid entropy [kJ/kgK]
+            Saturated liquid entropy, [kJ/kgK]
 
         References
         ----------
@@ -1962,12 +1993,12 @@ class IAPWS95(MEoS):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
         s : float
-            Saturated liquid entropy [kJ/kgK]
+            Saturated liquid entropy, [kJ/kgK]
 
         References
         ----------
@@ -2030,9 +2061,10 @@ class IAPWS95_Tx(IAPWS95):
         IAPWS95.__init__(self, T=T, x=x)
 
 
+@mainClassDoc()
 class D2O(MEoS):
     """Implementation of IAPWS Formulation for heavy water substance,
-    see MEoS __doc__
+    for internal procedures, see MEoS base class
 
     Examples
     --------
@@ -2046,10 +2078,6 @@ class D2O(MEoS):
     Properties of Heavy Water, http://www.iapws.org/relguide/Heavy-2017.pdf
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
-
-    Notes
-    -----
-    This correlation replace the old 2005 formulation.
     """
     name = "heavy water"
     CASNumber = "7789-20-0"

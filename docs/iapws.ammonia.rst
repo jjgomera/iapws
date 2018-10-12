@@ -5,3 +5,4 @@ iapws.ammonia module
     :members:
     :private-members:
     :undoc-members:
+    :member-order: bysource

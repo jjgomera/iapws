@@ -1,8 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Guideline on the IAPWS Formulation 2001 for the Thermodynamic Properties of
-Ammonia-Water Mistures
+Module with Air-water mixture properties and related properties. The module
+include:
+
+    * :func:`_virial`: Virial equations for humid air
+    * :func:`_fugacity`: Fugacity equation for humid air
+    * :class:`MEoSBlend`: Special MEoS subclass to implement pseudocomponent
+      blend with ancillary dew and bubble point
+    * :class:`Air`: Multiparameter equation of state for Air as pseudocomponent
+    * :class:`HumidAir`: Humid air mixture with complete functionality
 """
 
 
@@ -15,7 +22,7 @@ from scipy.optimize import fsolve
 from ._iapws import M as Mw
 from ._iapws import _Ice
 from ._utils import deriv_G
-from .iapws95 import MEoS, IAPWS95
+from .iapws95 import MEoS, IAPWS95, mainClassDoc
 
 
 Ma = 28.96546  # g/mol
@@ -32,25 +39,27 @@ def _virial(T):
 
     Returns
     -------
-    prop : float
-        dictionary with critical coefficient
-        Baa: Second virial coefficient of dry air [m³/mol]
-        Baw: Second air-water cross virial coefficient [m³/mol]
-        Bww: Second virial coefficient of water [m³/mol]
-        Caaa: Third virial coefficient of dry air [m⁶/mol]
-        Caaw: Third air-water cross virial coefficient [m⁶/mol]
-        Caww: Third air-water cross virial coefficient [m⁶/mol]
-        Cwww: Third virial coefficient of dry air [m⁶/mol]
-        Bawt: dBaw/dT [m³/molK]
-        Bawtt: d²Baw/dT² [m³/molK²]
-        Caawt: dCaaw/dT [m⁶/molK]
-        Caawtt: d²Caaw/dT² [m⁶/molK²]
-        Cawwt: dCaww/dT [m⁶/molK]
-        Cawwtt: d²Caww/dT² [m⁶/molK²]
+    prop : dict
+        Dictionary with critical coefficient:
 
-    Raises
+            * Baa: Second virial coefficient of dry air, [m³/mol]
+            * Baw: Second air-water cross virial coefficient, [m³/mol]
+            * Bww: Second virial coefficient of water, [m³/mol]
+            * Caaa: Third virial coefficient of dry air, [m⁶/mol]
+            * Caaw: Third air-water cross virial coefficient, [m⁶/mol]
+            * Caww: Third air-water cross virial coefficient, [m⁶/mol]
+            * Cwww: Third virial coefficient of dry air, [m⁶/mol]
+            * Bawt: dBaw/dT, [m³/molK]
+            * Bawtt: d²Baw/dT², [m³/molK²]
+            * Caawt: dCaaw/dT, [m⁶/molK]
+            * Caawtt: d²Caaw/dT², [m⁶/molK²]
+            * Cawwt: dCaww/dT, [m⁶/molK]
+            * Cawwtt: d²Caww/dT², [m⁶/molK²]
+
+    Notes
     ------
-    Warning : If T isn't in range of validity
+    Raise :class:`Warning` if T isn't in range of validity:
+
         * Baa: 60 ≤ T ≤ 2000
         * Baw: 130 ≤ T ≤ 2000
         * Bww: 130 ≤ T ≤ 1273
@@ -68,6 +77,7 @@ def _virial(T):
     ----------
     IAPWS, Guideline on a Virial Equation for the Fugacity of H2O in Humid Air,
     http://www.iapws.org/relguide/VirialFugacity.html
+
     IAPWS, Guideline on an Equation of State for Humid Air in Contact with
     Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
     Thermodynamic Properties of Seawater, Table 10,
@@ -194,24 +204,26 @@ def _fugacity(T, P, x):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     x : float
-        Mole fraction of water-vapor [-]
+        Mole fraction of water-vapor, [-]
 
     Returns
     -------
     fv : float
-        fugacity coefficient [MPa]
+        fugacity coefficient, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in range of validity
+    Raise :class:`NotImplementedError` if input isn't in range of validity:
+
         * 193 ≤ T ≤ 473
         * 0 ≤ P ≤ 5
         * 0 ≤ x ≤ 1
-        Really the xmax is the xsaturation but isn't implemented
+
+    Really the xmax is the xsaturation but isn't implemented
 
     Examples
     --------
@@ -247,7 +259,7 @@ def _fugacity(T, P, x):
 
 
 class MEoSBlend(MEoS):
-    """Special meos class to im:plement pseudocomponent blend and defining its
+    """Special meos class to implement pseudocomponent blend and defining its
     ancillary dew and bubble point"""
     @classmethod
     def _dewP(cls, T):
@@ -278,8 +290,18 @@ class MEoSBlend(MEoS):
         return P
 
 
+@mainClassDoc()
 class Air(MEoSBlend):
-    """Multiparameter equation of state for Air as pseudocomponent"""
+    """Multiparameter equation of state for Air as pseudocomponent
+    for internal procedures, see MEoS base class
+
+    References
+    ----------
+    Lemmon, E.W., Jacobsen, R.T, Penoncello, S.G., Friend, D.G.; Thermodynamic
+    Properties of Air and Mixtures of Nitrogen, Argon, and Oxygen From 60 to
+    2000 K at Pressures to 2000 MPa. J. Phys. Chem. Ref. Data 29, 331 (2000).
+    http://dx.doi.org/10.1063/1.1285884
+    """
     name = "air"
     CASNumber = "1"
     formula = "N2+Ar+O2"
@@ -378,20 +400,20 @@ class Air(MEoSBlend):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
 
         Returns
         -------
-        mu : float
-            Viscosity [Pa·s]
+        μ : float
+            Viscosity, [Pa·s]
 
         References
         ----------
-        Lemmon, E.W. and Jacobsen, R.T., Viscosity and Thermal Conductivity
-        Equations for Nitrogen, Oxygen, Argon, and Air, Int. J. Thermophys.,
-        25:21-69, 2004. doi:10.1023/B:IJOT.0000022327.04529.f3
+        Lemmon, E.W., Jacobsen, R.T. Viscosity and Thermal Conductivity
+        Equations for Nitrogen, Oxygen, Argon, and Air. Int. J. Thermophys. 25
+        (1) (2004) 21-69. http://dx.doi.org/10.1023/B:IJOT.0000022327.04529.f3
         """
         ek = 103.3
         sigma = 0.36
@@ -431,22 +453,22 @@ class Air(MEoSBlend):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         T : float
-            Temperature [K]
+            Temperature, [K]
         fase: dict
             phase properties
 
         Returns
         -------
         k : float
-            Thermal conductivity [W/mK]
+            Thermal conductivity, [W/mK]
 
         References
         ----------
-        Lemmon, E.W. and Jacobsen, R.T., Viscosity and Thermal Conductivity
-        Equations for Nitrogen, Oxygen, Argon, and Air, Int. J. Thermophys.,
-        25:21-69, 2004. doi:10.1023/B:IJOT.0000022327.04529.f3
+        Lemmon, E.W., Jacobsen, R.T. Viscosity and Thermal Conductivity
+        Equations for Nitrogen, Oxygen, Argon, and Air. Int. J. Thermophys. 25
+        (1) (2004) 21-69. http://dx.doi.org/10.1023/B:IJOT.0000022327.04529.f3
         """
         ek = 103.3
         sigma = 0.36
@@ -529,21 +551,21 @@ class HumidAir(object):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     v : float
-        Specific volume [m³/kg]
+        Specific volume, [m³/kg]
     A : float
-        Mass fraction of dry air in humid air [kg/kg]
+        Mass fraction of dry air in humid air, [kg/kg]
     xa : float
-        Mole fraction of dry air in humid air [-]
+        Mole fraction of dry air in humid air, [-]
     W : float
-        Mass fraction of water in humid air [kg/kg]
+        Mass fraction of water in humid air, [kg/kg]
     xw : float
-        Mole fraction of water in humid air [-]
+        Mole fraction of water in humid air, [-]
 
     Notes
     -----
@@ -551,38 +573,37 @@ class HumidAir(object):
     * v as a alternate input parameter to rho
     * For composition need one of A, xa, W, xw.
 
-    Returns
-    -------
     The calculated instance has the following properties:
-        * P: Pressure [MPa]
-        * T: Temperature [K]
-        * g: Specific Gibbs free energy [kJ/kg]
-        * a: Specific Helmholtz free energy [kJ/kg]
-        * v: Specific volume [m³/kg]
-        * rho: Density [kg/m³]
-        * h: Specific enthalpy [kJ/kg]
-        * u: Specific internal energy [kJ/kg]
-        * s: Specific entropy [kJ/kg·K]
-        * cp: Specific isobaric heat capacity [kJ/kg·K]
-        * w: Speed of sound [m/s]
 
-        * alfav: Isobaric cubic expansion coefficient [1/K]
-        * betas: Isoentropic temperature-pressure coefficient [-]
-        * xkappa: Isothermal Expansion Coefficient [-]
-        * ks: Adiabatic Compressibility [1/MPa]
+        * P: Pressure, [MPa]
+        * T: Temperature, [K]
+        * g: Specific Gibbs free energy, [kJ/kg]
+        * a: Specific Helmholtz free energy, [kJ/kg]
+        * v: Specific volume, [m³/kg]
+        * rho: Density, [kg/m³]
+        * h: Specific enthalpy, [kJ/kg]
+        * u: Specific internal energy, [kJ/kg]
+        * s: Specific entropy, [kJ/kg·K]
+        * cp: Specific isobaric heat capacity, [kJ/kg·K]
+        * w: Speed of sound, [m/s]
 
-        * A: Mass fraction of dry air in humid air [kg/kg]
-        * xa: Mole fraction of dry air in humid air [-]
-        * W: Mass fraction of water in humid air [kg/kg]
-        * xw: Mole fraction of water in humid air [-]
-        * mu: Relative chemical potential [kJ/kg]
-        * muw: Chemical potential of water [kJ/kg]
-        * M: Molar mass of humid air [g/mol]
-        * HR: Humidity ratio [-]
-        * xa: Mole fraction of dry air [-]
-        * xw: Mole fraction of water [-]
-        * xa_sat: Mole fraction of dry air at saturation state [-]
-        * RH: Relative humidity
+        * alfav: Isobaric cubic expansion coefficient, [1/K]
+        * betas: Isoentropic temperature-pressure coefficient, [-]
+        * xkappa: Isothermal Expansion Coefficient, [-]
+        * ks: Adiabatic Compressibility, [1/MPa]
+
+        * A: Mass fraction of dry air in humid air, [kg/kg]
+        * xa: Mole fraction of dry air in humid air, [-]
+        * W: Mass fraction of water in humid air, [kg/kg]
+        * xw: Mole fraction of water in humid air, [-]
+        * mu: Relative chemical potential, [kJ/kg]
+        * muw: Chemical potential of water, [kJ/kg]
+        * M: Molar mass of humid air, [g/mol]
+        * HR: Humidity ratio, [-]
+        * xa: Mole fraction of dry air, [-]
+        * xw: Mole fraction of water, [-]
+        * xa_sat: Mole fraction of dry air at saturation state, [-]
+        * RH: Relative humidity, [-]
     """
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -744,25 +765,27 @@ class HumidAir(object):
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         fav : dict
             dictionary with helmholtz energy and derivatives
 
         Returns
         -------
-        prop : dictionary with thermodynamic properties of humid air
-            P: Pressure [MPa]
-            s: Specific entropy [kJ/kgK]
-            cp: Specific isobaric heat capacity [kJ/kgK]
-            h: Specific enthalpy [kJ/kg]
-            g: Specific gibbs energy [kJ/kg]
-            alfav: Thermal expansion coefficient [1/K]
-            betas: Isentropic T-P coefficient [K/MPa]
-            xkappa: Isothermal compressibility [1/MPa]
-            ks: Isentropic compressibility [1/MPa]
-            w: Speed of sound [m/s]
+        prop : dict
+            Dictionary with thermodynamic properties of humid air:
+
+                * P: Pressure, [MPa]
+                * s: Specific entropy, [kJ/kgK]
+                * cp: Specific isobaric heat capacity, [kJ/kgK]
+                * h: Specific enthalpy, [kJ/kg]
+                * g: Specific gibbs energy, [kJ/kg]
+                * alfav: Thermal expansion coefficient, [1/K]
+                * betas: Isentropic T-P coefficient, [K/MPa]
+                * xkappa: Isothermal compressibility, [1/MPa]
+                * ks: Isentropic compressibility, [1/MPa]
+                * w: Speed of sound, [m/s]
 
         References
         ----------
@@ -794,21 +817,23 @@ class HumidAir(object):
         Parameters
         ----------
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         A : float
-            Mass fraction of dry air in humid air [kg/kg]
+            Mass fraction of dry air in humid air, [kg/kg]
         fav : dict
             dictionary with helmholtz energy and derivatives
 
         Returns
         -------
-        prop : dictionary with calculated properties
-            mu: Relative chemical potential [kJ/kg]
-            muw: Chemical potential of water [kJ/kg]
-            M: Molar mass of humid air [g/mol]
-            HR: Humidity ratio [-]
-            xa: Mole fraction of dry air [-]
-            xw: Mole fraction of water [-]
+        prop : dict
+            Dictionary with calculated properties:
+
+                * mu: Relative chemical potential, [kJ/kg]
+                * muw: Chemical potential of water, [kJ/kg]
+                * M: Molar mass of humid air, [g/mol]
+                * HR: Humidity ratio, [-]
+                * xa: Mole fraction of dry air, [-]
+                * xw: Mole fraction of water, [-]
 
         References
         ----------
@@ -827,30 +852,32 @@ class HumidAir(object):
         return prop
 
     def _fav(self, T, rho, A):
-        """Specific Helmholtz energy of humid air and derivatives
+        r"""Specific Helmholtz energy of humid air and derivatives
 
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         A : float
-            Mass fraction of dry air in humid air [kg/kg]
+            Mass fraction of dry air in humid air, [kg/kg]
 
         Returns
         -------
-        prop : dictionary with helmholtz energy and derivatives
-            fir  [kJ/kg]
-            fira: [∂fav/∂A]T,ρ  [kJ/kg]
-            firt: [∂fav/∂T]A,ρ  [kJ/kgK]
-            fird: [∂fav/∂ρ]A,T  [kJ/m³kg²]
-            firaa: [∂²fav/∂A²]T,ρ  [kJ/kg]
-            firat: [∂²fav/∂A∂T]ρ  [kJ/kgK]
-            firad: [∂²fav/∂A∂ρ]T  [kJ/m³kg²]
-            firtt: [∂²fav/∂T²]A,ρ  [kJ/kgK²]
-            firdt: [∂²fav/∂T∂ρ]A  [kJ/m³kg²K]
-            firdd: [∂²fav/∂ρ²]A,T  [kJ/m⁶kg³]
+        prop : dict
+          Dictionary with helmholtz energy and derivatives:
+
+            * fir, [kJ/kg]
+            * fira: :math:`\left.\frac{\partial f_{av}}{\partial A}\right|_{T,\rho}`, [kJ/kg]
+            * firt: :math:`\left.\frac{\partial f_{av}}{\partial T}\right|_{A,\rho}`, [kJ/kgK]
+            * fird: :math:`\left.\frac{\partial f_{av}}{\partial \rho}\right|_{A,T}`, [kJ/m³kg²]
+            * firaa: :math:`\left.\frac{\partial^2 f_{av}}{\partial A^2}\right|_{T, \rho}`, [kJ/kg]
+            * firat: :math:`\left.\frac{\partial^2 f_{av}}{\partial A \partial T}\right|_{\rho}`, [kJ/kgK]
+            * firad: :math:`\left.\frac{\partial^2 f_{av}}{\partial A \partial \rho}\right|_T`, [kJ/m³kg²]
+            * firtt: :math:`\left.\frac{\partial^2 f_{av}}{\partial T^2}\right|_{A, \rho}`, [kJ/kgK²]
+            * firdt: :math:`\left.\frac{\partial^2 f_{av}}{\partial \rho \partial T}\right|_A`, [kJ/m³kg²K]
+            * firdd: :math:`\left.\frac{\partial^2 f_{av}}{\partial \rho^2}\right|_{A, T}`, [kJ/m⁶kg³]
 
         References
         ----------
@@ -897,30 +924,32 @@ class HumidAir(object):
         return prop
 
     def _fmix(self, T, rho, A):
-        """Specific Helmholtz energy of air-water interaction
+        r"""Specific Helmholtz energy of air-water interaction
 
         Parameters
         ----------
         T : float
-            Temperature [K]
+            Temperature, [K]
         rho : float
-            Density [kg/m³]
+            Density, [kg/m³]
         A : float
-            Mass fraction of dry air in humid air [kg/kg]
+            Mass fraction of dry air in humid air, [kg/kg]
 
         Returns
         -------
-        prop : dictionary with helmholtz energy and derivatives
-            fir
-            fira: [∂fmix/∂A]T,ρ
-            firt: [∂fmix/∂T]A,ρ
-            fird: [∂fmix/∂ρ]A,T
-            firaa: [∂²fmix/∂A²]T,ρ
-            firat: [∂²fmix/∂A∂T]ρ
-            firad: [∂²fmix/∂A∂ρ]T
-            firtt: [∂²fmix/∂T²]A,ρ
-            firdt: [∂²fmix/∂T∂ρ]A
-            firdd: [∂²fmix/∂ρ²]A,T
+        prop : dict
+          Dictionary with helmholtz energy and derivatives:
+
+            * fir, [kJ/kg]
+            * fira: :math:`\left.\frac{\partial f_{mix}}{\partial A}\right|_{T,\rho}`, [kJ/kg]
+            * firt: :math:`\left.\frac{\partial f_{mix}}{\partial T}\right|_{A,\rho}`, [kJ/kgK]
+            * fird: :math:`\left.\frac{\partial f_{mix}}{\partial \rho}\right|_{A,T}`, [kJ/m³kg²]
+            * firaa: :math:`\left.\frac{\partial^2 f_{mix}}{\partial A^2}\right|_{T, \rho}`, [kJ/kg]
+            * firat: :math:`\left.\frac{\partial^2 f_{mix}}{\partial A \partial T}\right|_{\rho}`, [kJ/kgK]
+            * firad: :math:`\left.\frac{\partial^2 f_{mix}}{\partial A \partial \rho}\right|_T`, [kJ/m³kg²]
+            * firtt: :math:`\left.\frac{\partial^2 f_{mix}}{\partial T^2}\right|_{A, \rho}`, [kJ/kgK²]
+            * firdt: :math:`\left.\frac{\partial^2 f_{mix}}{\partial \rho \partial T}\right|_A`, [kJ/m³kg²K]
+            * firdd: :math:`\left.\frac{\partial^2 f_{mix}}{\partial \rho^2}\right|_{A, T}`, [kJ/m⁶kg³]
 
         References
         ----------

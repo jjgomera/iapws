@@ -1,7 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Miscelaneous IAPWS standards
+Miscelaneous IAPWS standards. This module include:
+
+    * :func:`_Ice`: Ice Ih state equation
+    * :func:`_Liquid`: Properties of liquid water at 0.1 MPa
+    * :func:`_Supercooled`: Thermodynamic properties of supercooled water
+    * :func:`_Sublimation_Pressure`: Sublimation pressure correlation
+    * :func:`_Melting_Pressure`: Melting pressure correlation
+    * :func:`_Viscosity`: Viscosity correlation
+    * :func:`_ThCond`: Themal conductivity correlation
+    * :func:`_Tension`: Surface tension correlation
+    * :func:`_Dielectric`: Dielectric constant correlation
+    * :func:`_Refractive`: Refractive index correlation
+    * :func:`_Kw`: Ionization constant correlation for ordinary water
+    * :func:`_Conductivity`: Electrolytic conductivity correlation
+    * :func:`_D2O_Viscosity`: Viscosity correlation for heavy water
+    * :func:`_D2O_ThCond`: Thermal conductivity correlation for heavy water
+    * :func:`_D2O_Tension`: Surface tension correlation for heavy water
+    * :func:`_Henry`: Henry constant for liquid-gas equilibrium
+    * :func:`_Kvalue`: Vapor-liquid distribution constant
 """
 
 from __future__ import division
@@ -43,35 +61,36 @@ def _Ice(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties of ice. The available properties are:
 
-            * rho: Density [kg/m³]
-            * h: Specific enthalpy [kJ/kg]
-            * u: Specific internal energy [kJ/kg]
-            * a: Specific Helmholtz energy [kJ/kg]
-            * g: Specific Gibbs energy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * alfav: Cubic expansion coefficient [1/K]
-            * beta: Pressure coefficient [MPa/K]
-            * xkappa: Isothermal compressibility [1/MPa]
-            * ks: Isentropic compressibility [1/MPa]
+            * rho: Density, [kg/m³]
+            * h: Specific enthalpy, [kJ/kg]
+            * u: Specific internal energy, [kJ/kg]
+            * a: Specific Helmholtz energy, [kJ/kg]
+            * g: Specific Gibbs energy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * beta: Pressure coefficient, [MPa/K]
+            * xkappa: Isothermal compressibility, [1/MPa]
+            * ks: Isentropic compressibility, [1/MPa]
             * gt: [∂g/∂T]P
             * gtt: [∂²g/∂T²]P
             * gp: [∂g/∂P]T
             * gpp: [∂²g/∂P²]T
             * gtp: [∂²g/∂T∂P]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * T ≤ 273.16
         * P ≤ 208.566
         * State below the melting and sublimation lines
@@ -81,9 +100,11 @@ def _Ice(T, P):
     >>> st1 = _Ice(100, 100)
     >>> st1["rho"], st1["h"], st1["s"]
     941.678203297 -483.491635676 -2.61195122589
+
     >>> st2 = _Ice(273.152519,0.101325)
     >>> st2["a"], st2["u"], st2["cp"]
     -0.00918701567 -333.465403393 2.09671391024
+
     >>> st3 = _Ice(273.16,611.657e-6)
     >>> st3["alfav"], st3["beta"], st3["xkappa"], st3["ks"]
     0.000159863102566 1.35714764659 1.17793449348e-04 1.14161597779e-04
@@ -188,41 +209,42 @@ def _Liquid(T, P=0.1):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
-    optional, although this relation is for P=0.1MPa, can be extrapoled at
-    pressure 0.3MPa
+        Pressure, [MPa]
+        Although this relation is for P=0.1MPa, can be extrapoled at pressure
+        0.3 MPa
 
     Returns
     -------
     prop : dict
         Dict with calculated properties of water. The available properties are:
 
-            * h: Specific enthalpy [kJ/kg]
-            * u: Specific internal energy [kJ/kg]
-            * a: Specific Helmholtz energy [kJ/kg]
-            * g: Specific Gibbs energy [kJ/kg]
-            * s: Specific entropy [kJ/kgK]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isochoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s²]
-            * rho: Density [kg/m³]
-            * v: Specific volume [m³/kg]
-            * vt: [∂v/∂T]P [m³/kgK]
-            * vtt: [∂²v/∂T²]P [m³/kgK²]
-            * vp: [∂v/∂P]T [m³/kg/MPa]
-            * vtp: [∂²v/∂T∂P] [m³/kg/MPa]
-            * alfav: Cubic expansion coefficient [1/K]
-            * xkappa : Isothermal compressibility [1/MPa]
-            * ks: Isentropic compressibility [1/MPa]
-            * mu: Viscosity [mPas]
-            * k: Thermal conductivity [W/mK]
-            * epsilon: Dielectric constant [-]
+            * h: Specific enthalpy, [kJ/kg]
+            * u: Specific internal energy, [kJ/kg]
+            * a: Specific Helmholtz energy, [kJ/kg]
+            * g: Specific Gibbs energy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isochoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s²]
+            * rho: Density, [kg/m³]
+            * v: Specific volume, [m³/kg]
+            * vt: [∂v/∂T]P, [m³/kgK]
+            * vtt: [∂²v/∂T²]P, [m³/kgK²]
+            * vp: [∂v/∂P]T, [m³/kg/MPa]
+            * vtp: [∂²v/∂T∂P], [m³/kg/MPa]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * xkappa : Isothermal compressibility, [1/MPa]
+            * ks: Isentropic compressibility, [1/MPa]
+            * mu: Viscosity, [mPas]
+            * k: Thermal conductivity, [W/mK]
+            * epsilon: Dielectric constant, [-]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 253.15 ≤ T ≤ 383.15
         * 0.1 ≤ P ≤ 0.3
 
@@ -366,32 +388,33 @@ def _Supercooled(T, P):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     P : float
-        Pressure [MPa]
+        Pressure, [MPa]
 
     Returns
     -------
     prop : dict
         Dict with calculated properties of water. The available properties are:
 
-            * L: Ordering field [-]
-            * x: Mole fraction of low-density structure [-]
-            * rho: Density [kg/m³]
-            * s: Specific entropy [kJ/kgK]
-            * h: Specific enthalpy [kJ/kg]
-            * u: Specific internal energy [kJ/kg]
-            * a: Specific Helmholtz energy [kJ/kg]
-            * g: Specific Gibbs energy [kJ/kg]
-            * alfap: Thermal expansion coefficient [1/K]
-            * xkappa : Isothermal compressibility [1/MPa]
-            * cp: Specific isobaric heat capacity [kJ/kgK]
-            * cv: Specific isochoric heat capacity [kJ/kgK]
-            * w: Speed of sound [m/s²]
+            * L: Ordering field, [-]
+            * x: Mole fraction of low-density structure, [-]
+            * rho: Density, [kg/m³]
+            * s: Specific entropy, [kJ/kgK]
+            * h: Specific enthalpy, [kJ/kg]
+            * u: Specific internal energy, [kJ/kg]
+            * a: Specific Helmholtz energy, [kJ/kg]
+            * g: Specific Gibbs energy, [kJ/kg]
+            * alfap: Thermal expansion coefficient, [1/K]
+            * xkappa : Isothermal compressibility, [1/MPa]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isochoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s²]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * Tm ≤ T ≤ 300
         * 0 < P ≤ 1000
 
@@ -540,16 +563,17 @@ def _Sublimation_Pressure(T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     P : float
-        Pressure at sublimation line [MPa]
+        Pressure at sublimation line, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 50 ≤ T ≤ 273.16
 
     Examples
@@ -580,7 +604,7 @@ def _Melting_Pressure(T, ice="Ih"):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     ice: string
         Type of ice: Ih, III, V, VI, VII.
         Below 273.15 is a mandatory input, the ice Ih is the default value.
@@ -589,11 +613,12 @@ def _Melting_Pressure(T, ice="Ih"):
     Returns
     -------
     P : float
-        Pressure at sublimation line [MPa]
+        Pressure at sublimation line, [MPa]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 251.165 ≤ T ≤ 715
 
     Examples
@@ -656,19 +681,18 @@ def _Viscosity(rho, T, fase=None, drho=None):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
-    fase: dict
+        Temperature, [K]
+    fase: dict, optional for calculate critical enhancement
         phase properties
-    drho: float
+    drho: float, optional for calculate critical enhancement
         [∂ρ/∂P]T at reference state,
-        optional for calculate critical enhancement
 
     Returns
     -------
-    mu : float
-        Viscosity [Pa·s]
+    μ : float
+        Viscosity, [Pa·s]
 
     Examples
     --------
@@ -746,19 +770,18 @@ def _ThCond(rho, T, fase=None, drho=None):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
-    fase: dict
+        Temperature, [K]
+    fase: dict, optional for calculate critical enhancement
         phase properties
-    drho: float
+    drho: float, optional for calculate critical enhancement
         [∂ρ/∂P]T at reference state,
-        optional for calculate critical enhancement
 
     Returns
     -------
     k : float
-        Thermal conductivity [W/mK]
+        Thermal conductivity, [W/mK]
 
     Examples
     --------
@@ -848,16 +871,17 @@ def _Tension(T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
-    sigma : float
-        Surface tension [N/m]
+    σ : float
+        Surface tension, [N/m]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 248.15 ≤ T ≤ 647
         * Estrapolate to -25ºC in supercooled liquid metastable state
 
@@ -886,18 +910,19 @@ def _Dielectric(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     epsilon : float
-        Dielectric constant [-]
+        Dielectric constant, [-]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 238 ≤ T ≤ 1200
 
     Examples
@@ -947,20 +972,21 @@ def _Refractive(rho, T, l=0.5893):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
     l : float, optional
-        Light Wavelength [μm]
+        Light Wavelength, [μm]
 
     Returns
     -------
     n : float
-        Refractive index [-]
+        Refractive index, [-]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 0 ≤ ρ ≤ 1060
         * 261.15 ≤ T ≤ 773.15
         * 0.2 ≤ λ ≤ 1.1
@@ -1000,18 +1026,19 @@ def _Kw(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     pKw : float
-        Ionization constant in -log10(kw) [-]
+        Ionization constant in -log10(kw), [-]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 0 ≤ ρ ≤ 1250
         * 273.15 ≤ T ≤ 1073.15
 
@@ -1053,18 +1080,19 @@ def _Conductivity(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     K : float
-        Electrolytic conductivity [S/m]
+        Electrolytic conductivity, [S/m]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 600 ≤ ρ ≤ 1200
         * 273.15 ≤ T ≤ 1073.15
 
@@ -1105,14 +1133,14 @@ def _D2O_Viscosity(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
-    mu : float
-        Viscosity [Pa·s]
+    μ : float
+        Viscosity, [Pa·s]
 
     Examples
     --------
@@ -1154,14 +1182,14 @@ def _D2O_ThCond(rho, T):
     Parameters
     ----------
     rho : float
-        Density [kg/m³]
+        Density, [kg/m³]
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
     k : float
-        Thermal conductivity [W/mK]
+        Thermal conductivity, [W/mK]
 
     Examples
     --------
@@ -1203,16 +1231,17 @@ def _D2O_Tension(T):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
 
     Returns
     -------
-    sigma : float
-        Surface tension [N/m]
+    σ : float
+        Surface tension, [N/m]
 
-    Raises
+    Notes
     ------
-    NotImplementedError : If input isn't in limit
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
         * 269.65 ≤ T ≤ 643.847
 
     Examples
@@ -1240,7 +1269,7 @@ def _Henry(T, gas, liquid="H2O"):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     gas : string
         Name of gas to calculate solubility
     liquid : string
@@ -1249,14 +1278,15 @@ def _Henry(T, gas, liquid="H2O"):
     Returns
     -------
     kw : float
-        Henry's constant [MPa]
+        Henry's constant, [MPa]
 
     Notes
     -----
-    The gas availables for H2O solvent are:
-        He, Ne, Ar, Kr, Xe, H2, N2, O2, CO, CO2, H2S, CH4, C2H6, SF6
-    For D2O as solvent:
-        He, Ne, Ar, Kr, Xe, D2, CH4
+    The gas availables for H2O solvent are He, Ne, Ar, Kr, Xe, H2, N2, O2, CO,
+    CO2, H2S, CH4, C2H6, SF6
+    For D2O as solvent He, Ne, Ar, Kr, Xe, D2, CH4
+
+    Raise :class:`NotImplementedError` if input gas or liquid are unsupported
 
     Examples
     --------
@@ -1363,7 +1393,7 @@ def _Kvalue(T, gas, liquid="H2O"):
     Parameters
     ----------
     T : float
-        Temperature [K]
+        Temperature, [K]
     gas : string
         Name of gas to calculate solubility
     liquid : string
@@ -1372,14 +1402,16 @@ def _Kvalue(T, gas, liquid="H2O"):
     Returns
     -------
     kd : float
-        Vapor-liquid distribution constant [-]
+        Vapor-liquid distribution constant, [-]
 
     Notes
     -----
-    The gas availables for H2O solvent are:
-        He, Ne, Ar, Kr, Xe, H2, N2, O2, CO, CO2, H2S, CH4, C2H6, SF6
-    For D2O as solvent:
-        He, Ne, Ar, Kr, Xe, D2, CH4
+    The gas availables for H2O solvent are He, Ne, Ar, Kr, Xe, H2, N2, O2, CO,
+    CO2, H2S, CH4, C2H6, SF6
+
+    For D2O as solvent He, Ne, Ar, Kr, Xe, D2, CH4
+
+    Raise :class:`NotImplementedError` if input gas or liquid are unsupported
 
     Examples
     --------
