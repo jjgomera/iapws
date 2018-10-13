@@ -66,7 +66,7 @@ To see the full documentation of package, see `readthedocs <http://iapws.readthe
 For a rapid usage demostration, see this examples 
 
 
-IAPWS-IF97 (:func:`see full documentation <iapws.iapws97.IAPWS97>`)
+IAPWS-IF97 (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.iapws97.html#iapws.iapws97.IAPWS97>`)
 
 .. code:: python
 
@@ -77,7 +77,7 @@ IAPWS-IF97 (:func:`see full documentation <iapws.iapws97.IAPWS97>`)
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
 
-IAPWS-95 (:func:`see full documentation <iapws.iapws95.IAPWS95>`)
+IAPWS-95 (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.iapws95.html#iapws.iapws95.IAPWS95>`)
 
 .. code:: python
 
@@ -88,7 +88,7 @@ IAPWS-95 (:func:`see full documentation <iapws.iapws95.IAPWS95>`)
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
 
-IAPWS-17 for Heavy water (:func:`see full documentation <iapws.iapws95.D2O>`)
+IAPWS-17 for Heavy water (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.iapws95.html#iapws.iapws95.D2O>`)
 
 .. code:: python
 
@@ -97,7 +97,7 @@ IAPWS-17 for Heavy water (:func:`see full documentation <iapws.iapws95.D2O>`)
 	print(sat_liquid.h)                   #calculated enthalpy
 
 
-IAPWS-06 for Ice Ih (:func:`see full documentation <iapws._iapws._Ice>`)
+IAPWS-06 for Ice Ih (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws._iapws.html#iapws._iapws._Ice>`)
 
 .. code:: python
 
@@ -106,7 +106,7 @@ IAPWS-06 for Ice Ih (:func:`see full documentation <iapws._iapws._Ice>`)
     print(ice["rho"])                     #Calculated density
 
 
-IAPWS-08 for seawater (:func:`see full documentation <iapws.iapws08.SeaWater>`)
+IAPWS-08 for seawater (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.iapws08.html#iapws.iapws08.SeaWater>`)
 
 .. code:: python
 
