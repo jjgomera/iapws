@@ -13,6 +13,7 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
 from __future__ import division
 from itertools import product
 import os
+import platform
 import warnings
 
 from scipy import exp, log, ndarray
@@ -1619,21 +1620,26 @@ class MEoS(_fase):
 
 def mainClassDoc():
     """Function decorator used to automatic adiction of base class MEoS in
-    subclass"""
+    subclass __doc__"""
     def decorator(f):
-        doc = f.__doc__.split(os.linesep)
-        try:
-            ind = doc.index("")
-        except ValueError:
-            ind = 1
+        # __doc__ is only writable in python3.
+        # The doc build must be done with python3 so this snnippet do the work
+        py_version = platform.python_version()
+        if py_version[0] == "3":
+            doc = f.__doc__.split(os.linesep)
+            try:
+                ind = doc.index("")
+            except ValueError:
+                ind = 1
 
-        doc1 = os.linesep.join(doc[:ind])
-        doc3 = os.linesep.join(doc[ind:])
-        doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
+            doc1 = os.linesep.join(doc[:ind])
+            doc3 = os.linesep.join(doc[ind:])
+            doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
 
-        f.__doc__ = doc1 + os.linesep + os.linesep + \
-            doc2 + os.linesep + os.linesep + doc3
+            f.__doc__ = doc1 + os.linesep + os.linesep + \
+                doc2 + os.linesep + os.linesep + doc3
         return f
+
     return decorator
 
 
