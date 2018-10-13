@@ -304,12 +304,18 @@ class MEoS(_fase):
                 rho = fsolve(
                     lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)[0]
 
-                if T > self.Tc:
-                    x = 1
-                elif self._Vapor_Pressure(T) > P:
+                if T > Tc:
                     x = 1
                 else:
-                    x = 0
+                    Ps = self._Vapor_Pressure(T)
+                    if Ps*0.95 < P < Ps*1.05:
+                        rhol, rhov, Ps = self._saturation(T)
+                        Ps *= 1e-3
+
+                    if Ps > P:
+                        x = 1
+                    else:
+                        x = 0
 
             elif self._mode == "Th":
                 def f(rho):
