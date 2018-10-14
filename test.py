@@ -1817,6 +1817,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Tb(0.04, 0.10), 2), 350.52)
         self.assertEqual(round(_Tb(0.04, 0.12), 2), 350.94)
 
+        # Table A2
         self.assertEqual(round(_Tf(0.001, 0), 4), 273.1600)
         self.assertEqual(round(_Tf(0.001, 0.02), 4), 272.0823)
         self.assertEqual(round(_Tf(0.001, 0.04), 4), 270.9611)

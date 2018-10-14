@@ -754,7 +754,7 @@ def _Region1(T, P):
     >>> _Region1(500,3)["kt"]
     0.00112892188
     """
-    if P < Pmin:
+    if P < 0:
         P = Pmin
 
     I = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4,
@@ -994,7 +994,7 @@ def _Region2(T, P):
     >>> _Region2(300,0.0035)["kt"]
     286.239651
     """
-    if P < Pmin:
+    if P < 0:
         P = Pmin
 
     Tr = 540/T
@@ -3727,7 +3727,7 @@ def _Region5(T, P):
     >>> _Region5(2000,30)["kt"]
     0.0329193892
     """
-    if P < Pmin:
+    if P < 0:
         P = Pmin
 
     Tr = 1000/T
