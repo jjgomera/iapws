@@ -38,7 +38,9 @@ Python implementation of standard from IAPWS (http://www.iapws.org/release.html)
 dependences
 --------------------
 
-* python 2x, 3x, compatible with both versions
+* Support for both python branch:
+  * python 2.7
+  * python 3.4 or later
 * Numpy-scipy: library with mathematic and scientific tools
 
 
