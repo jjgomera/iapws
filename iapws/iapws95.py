@@ -11,7 +11,6 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
 
 
 from __future__ import division
-from itertools import product
 import os
 import platform
 import warnings
@@ -24,6 +23,233 @@ from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H
+
+
+def _phir(tau, delta, coef):
+    """Residual contribution to the adimensional free Helmholtz energy
+
+    Parameters
+    ----------
+    tau : float
+        Inverse reduced temperature Tc/T, [-]
+    delta : float
+        Reduced density rho/rhoc, [-]
+    coef : dict
+        Dictionary with equation of state parameters
+
+    Returns
+    -------
+    fir : float
+        Adimensional free Helmholtz energy
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+    Thermodynamic Properties of Ordinary Water Substance for General and
+    Scientific Use, September 2016, Table 5
+    http://www.iapws.org/relguide/IAPWS-95.html
+    """
+    fir = 0
+
+    # Polinomial terms
+    nr1 = coef.get("nr1", [])
+    d1 = coef.get("d1", [])
+    t1 = coef.get("t1", [])
+    for n, d, t in zip(nr1, d1, t1):
+        fir += n*delta**d*tau**t
+
+    # Exponential terms
+    nr2 = coef.get("nr2", [])
+    d2 = coef.get("d2", [])
+    g2 = coef.get("gamma2", [])
+    t2 = coef.get("t2", [])
+    c2 = coef.get("c2", [])
+    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
+        fir += n*delta**d*tau**t*exp(-g*delta**c)
+
+    # Gaussian terms
+    nr3 = coef.get("nr3", [])
+    d3 = coef.get("d3", [])
+    t3 = coef.get("t3", [])
+    a3 = coef.get("alfa3", [])
+    e3 = coef.get("epsilon3", [])
+    b3 = coef.get("beta3", [])
+    g3 = coef.get("gamma3", [])
+    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
+        fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
+
+    # Non analitic terms
+    nr4 = coef.get("nr4", [])
+    a4 = coef.get("a4", [])
+    b4 = coef.get("b4", [])
+    Ai = coef.get("A", [])
+    Bi = coef.get("B", [])
+    Ci = coef.get("C", [])
+    Di = coef.get("D", [])
+    bt4 = coef.get("beta4", [])
+    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
+        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+        Delta = Tita**2+B*((delta-1)**2)**a
+        fir += n*Delta**b*delta*F
+
+    return fir
+
+
+def _phird(tau, delta, coef):
+    r"""Residual contribution to the adimensional free Helmholtz energy, delta
+    derivative
+
+    Parameters
+    ----------
+    tau : float
+        Inverse reduced temperature Tc/T, [-]
+    delta : float
+        Reduced density rho/rhoc, [-]
+    coef : dict
+        Dictionary with equation of state parameters
+
+    Returns
+    -------
+    fird : float
+        .. math::
+          \left.\frac{\partial \phi^r_{\delta}}{\partial \delta}\right|_{\tau}
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+    Thermodynamic Properties of Ordinary Water Substance for General and
+    Scientific Use, September 2016, Table 5
+    http://www.iapws.org/relguide/IAPWS-95.html
+    """
+    fird = 0
+
+    # Polinomial terms
+    nr1 = coef.get("nr1", [])
+    d1 = coef.get("d1", [])
+    t1 = coef.get("t1", [])
+    for n, d, t in zip(nr1, d1, t1):
+        fird += n*d*delta**(d-1)*tau**t
+
+    # Exponential terms
+    nr2 = coef.get("nr2", [])
+    d2 = coef.get("d2", [])
+    g2 = coef.get("gamma2", [])
+    t2 = coef.get("t2", [])
+    c2 = coef.get("c2", [])
+    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
+        fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+
+    # Gaussian terms
+    nr3 = coef.get("nr3", [])
+    d3 = coef.get("d3", [])
+    t3 = coef.get("t3", [])
+    a3 = coef.get("alfa3", [])
+    e3 = coef.get("epsilon3", [])
+    b3 = coef.get("beta3", [])
+    g3 = coef.get("gamma3", [])
+    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
+        fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                d/delta-2*a*(delta-e))
+
+    # Non analitic terms
+    nr4 = coef.get("nr4", [])
+    a4 = coef.get("a4", [])
+    b4 = coef.get("b4", [])
+    Ai = coef.get("A", [])
+    Bi = coef.get("B", [])
+    Ci = coef.get("C", [])
+    Di = coef.get("D", [])
+    bt4 = coef.get("beta4", [])
+    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
+        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+        Fd = -2*C*F*(delta-1)
+
+        Delta = Tita**2+B*((delta-1)**2)**a
+        Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1) +
+                            2*B*a*((delta-1)**2)**(a-1))
+        DeltaBd = b*Delta**(b-1)*Deltad
+
+        fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
+
+    return fird
+
+
+def _phirt(tau, delta, coef):
+    r"""Residual contribution to the adimensional free Helmholtz energy, tau
+    derivative
+
+    Parameters
+    ----------
+    tau : float
+        Inverse reduced temperature Tc/T, [-]
+    delta : float
+        Reduced density rho/rhoc, [-]
+    coef : dict
+        Dictionary with equation of state parameters
+
+    Returns
+    -------
+    firt : float
+        .. math::
+            \left.\frac{\partial \phi^r_{\tau}}{\partial \tau}\right|_{\delta}
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+    Thermodynamic Properties of Ordinary Water Substance for General and
+    Scientific Use, September 2016, Table 5
+    http://www.iapws.org/relguide/IAPWS-95.html
+    """
+    firt = 0
+
+    # Polinomial terms
+    nr1 = coef.get("nr1", [])
+    d1 = coef.get("d1", [])
+    t1 = coef.get("t1", [])
+    for n, d, t in zip(nr1, d1, t1):
+        firt += n*t*delta**d*tau**(t-1)
+
+    # Exponential terms
+    nr2 = coef.get("nr2", [])
+    d2 = coef.get("d2", [])
+    g2 = coef.get("gamma2", [])
+    t2 = coef.get("t2", [])
+    c2 = coef.get("c2", [])
+    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
+        firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
+
+    # Gaussian terms
+    nr3 = coef.get("nr3", [])
+    d3 = coef.get("d3", [])
+    t3 = coef.get("t3", [])
+    a3 = coef.get("alfa3", [])
+    e3 = coef.get("epsilon3", [])
+    b3 = coef.get("beta3", [])
+    g3 = coef.get("gamma3", [])
+    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
+        firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                t/tau-2*b*(tau-g))
+
+    # Non analitic terms
+    nr4 = coef.get("nr4", [])
+    a4 = coef.get("a4", [])
+    b4 = coef.get("b4", [])
+    Ai = coef.get("A", [])
+    Bi = coef.get("B", [])
+    Ci = coef.get("C", [])
+    Di = coef.get("D", [])
+    bt4 = coef.get("beta4", [])
+    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
+        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+        Ft = -2*D*F*(tau-1)
+        Delta = Tita**2+B*((delta-1)**2)**a
+        DeltaBt = -2*Tita*b*Delta**(b-1)
+        firt += n*delta*(DeltaBt*F+Delta**b*Ft)
+
+    return firt
 
 
 class MEoS(_fase):
@@ -279,6 +505,8 @@ class MEoS(_fase):
                     rhoo = 900
 
         self.R = self._constants["R"]/self._constants.get("M", self.M)
+        rhoc = self._constants.get("rhoref", self.rhoc)
+        Tc = self._constants.get("Tref", self.Tc)
 
         propiedades = None
 
@@ -302,9 +530,18 @@ class MEoS(_fase):
                         rhoo = self.rhoc*3
                 except ValueError:
                     rhoo = 1e-3
-                rho = fsolve(
-                    lambda rho: self._Helmholtz(rho, T)["P"]-P*1000, rhoo)[0]
 
+                def f(rho):
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    fird = _phird(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    return Po-P*1000
+
+                rho = fsolve(f, rhoo)[0]
+
+                # Calculate quality
                 if T > self.Tc:
                     x = 1
                 else:
@@ -319,8 +556,16 @@ class MEoS(_fase):
                         x = 0
 
             elif self._mode == "Th":
+                tau = Tc/T
+                ideal = self._phi0(tau, 1)
+                fiot = ideal["fiot"]
+
                 def f(rho):
-                    return self._Helmholtz(rho, T)["h"]-h
+                    delta = rho/rhoc
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    return ho-h
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
@@ -329,8 +574,15 @@ class MEoS(_fase):
                     x0 = self.kwargs["x0"]
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    hl = self._Helmholtz(rhol, T)["h"]
-                    hv = self._Helmholtz(rhov, T)["h"]
+                    deltaL = rhol/rhoc
+                    deltaG = rhov/rhoc
+
+                    firdL = _phird(tau, deltaL, self._constants)
+                    firtL = _phirt(tau, deltaL, self._constants)
+                    firdG = _phird(tau, deltaG, self._constants)
+                    firtG = _phirt(tau, deltaG, self._constants)
+                    hl = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                    hv = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
                     if x0 not in (0, 1) and hl <= h <= hv:
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
@@ -348,10 +600,20 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Ts":
+                tau = Tc/T
+
                 def f(rho):
                     if rho < 0:
                         rho = 1e-20
-                    return self._Helmholtz(rho, T)["s"]-s
+                    delta = rho/rhoc
+
+                    ideal = self._phi0(tau, delta)
+                    fio = ideal["fio"]
+                    fiot = ideal["fiot"]
+                    fir = _phir(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    return so-s
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
@@ -359,8 +621,21 @@ class MEoS(_fase):
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    sl = self._Helmholtz(rhol, T)["s"]
-                    sv = self._Helmholtz(rhov, T)["s"]
+                    deltaL = rhol/rhoc
+                    deltaG = rhov/rhoc
+
+                    idealL = self._phi0(tau, deltaL)
+                    idealG = self._phi0(tau, deltaG)
+                    fioL = idealL["fio"]
+                    fioG = idealG["fio"]
+                    fiot = idealL["fiot"]
+                    firL = _phir(tau, deltaL, self._constants)
+                    firtL = _phirt(tau, deltaL, self._constants)
+                    sl = self.R*(tau*(fiot+firtL)-fioL-firL)
+                    firG = _phir(tau, deltaG, self._constants)
+                    firtG = _phirt(tau, deltaG, self._constants)
+                    sv = self.R*(tau*(fiot+firtG)-fioG-firG)
+
                     if sl <= s <= sv:
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
@@ -378,9 +653,19 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Tu":
+                tau = Tc/T
+                ideal = self._phi0(tau, 1)
+                fiot = ideal["fiot"]
+
                 def f(rho):
-                    prop = self._Helmholtz(rho, T)
-                    return prop["h"]-prop["P"]/rho-u
+                    delta = rho/rhoc
+
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+
+                    return ho-Po/rho-u
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
@@ -388,10 +673,20 @@ class MEoS(_fase):
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    uv = vapor["h"]-vapor["P"]/rhov
-                    ul = liquido["h"]-liquido["P"]/rhol
+                    deltaL = rhol/rhoc
+                    deltaG = rhov/rhoc
+
+                    firdL = _phird(tau, deltaL, self._constants)
+                    firtL = _phirt(tau, deltaL, self._constants)
+                    firdG = _phird(tau, deltaG, self._constants)
+                    firtG = _phirt(tau, deltaG, self._constants)
+                    PoL = (1+deltaL*firdL)*self.R*T*rhol
+                    PoG = (1+deltaG*firdG)*self.R*T*rhov
+                    hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                    hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                    uv = hoG-PoG/rhov
+                    ul = hoL-PoL/rhol
                     if ul <= u <= uv:
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
@@ -409,23 +704,35 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Prho":
-                T = fsolve(
-                    lambda T: self._Helmholtz(rho, T)["P"]-P*1000, To)[0]
+                delta = rho/rhoc
+
+                def f(T):
+                    tau = Tc/T
+
+                    fird = _phird(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    return Po-P*1000
+
+                T = fsolve(f, To)[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
 
                     def f(parr):
                         T, rhol, rhog = parr
+                        tau = Tc/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
-                        liquido = self._Helmholtz(rhol, T)
-                        vapor = self._Helmholtz(rhog, T)
-                        Jl = rhol*(1+deltaL*liquido["fird"])
-                        Jv = rhog*(1+deltaG*vapor["fird"])
-                        K = liquido["fir"]-vapor["fir"]
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
-                            liquido["fir"]-vapor["fir"]+log(rhol/rhog))
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
                         return (Jl-Jv,
                                 Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
                                 Ps - P*1000)
@@ -450,26 +757,67 @@ class MEoS(_fase):
 
             elif self._mode == "Ph":
                 def funcion(parr):
-                    par = self._Helmholtz(parr[0], parr[1])
-                    return par["P"]-P*1000, par["h"]-h
+                    rho, T = parr
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    return Po-P*1000, ho-h
+
                 rho, T = fsolve(funcion, [rhoo, To])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or rhov <= rho <= rhol:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return Ps-P*1000, vapor["h"]*x+liquido["h"]*(1-x)-h
-                    rho, T = fsolve(funcion, [2., 500.])
-                    rhol, rhov, Ps = self._saturation(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    hv = vapor["h"]
-                    hl = liquido["h"]
-                    x = (h-hl)/(hv-hl)
+
+                    def f(parr):
+                        T, rhol, rhog, x = parr
+                        tau = Tc/T
+                        deltaL = rhol/self.rhoc
+                        deltaG = rhog/self.rhoc
+
+                        ideal = self._phi0(tau, deltaL)
+                        fiot = ideal["fiot"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+
+                        return (Jl-Jv,
+                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                hoL*(1-x)+hoG*x - h,
+                                Ps - P*1000)
+
+                    for to in [To, 300, 400, 500, 600]:
+                        rLo = self._Liquid_Density(to)
+                        rGo = self._Vapor_Density(to)
+                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
+                        T, rhoL, rhoG, x = sol[0]
+                        if sol[2] == 1 and 0 <= x <= 1 and \
+                                sum(abs(sol[1]["fvec"])) < 1e-5:
+                            break
+
+                    if sum(abs(sol[1]["fvec"])) > 1e-5:
+                        raise(RuntimeError(sol[3]))
+
+                    liquido = self._Helmholtz(rhoL, T)
+                    vapor = self._Helmholtz(rhoG, T)
+                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "Ps":
                 try:
@@ -478,10 +826,22 @@ class MEoS(_fase):
                     x0 = None
 
                 if x0 is None or x0 == 0 or x0 == 1:
-                    def funcion(parr):
-                        par = self._Helmholtz(parr[0], parr[1])
-                        return par["P"]-P*1000, par["s"]-s
-                    rho, T = fsolve(funcion, [rhoo, To])
+                    def f(parr):
+                        rho, T = parr
+                        delta = rho/rhoc
+                        tau = Tc/T
+
+                        ideal = self._phi0(tau, delta)
+                        fio = ideal["fio"]
+                        fiot = ideal["fiot"]
+                        fird = _phird(tau, delta, self._constants)
+                        fir = _phir(tau, delta, self._constants)
+                        firt = _phirt(tau, delta, self._constants)
+                        Po = (1+delta*fird)*self.R*T*rho
+                        so = self.R*(tau*(fiot+firt)-fio-fir)
+                        return Po-P*1000, so-s
+
+                    rho, T = fsolve(f, [rhoo, To])
 
                 else:
                     def funcion(parr):
@@ -500,50 +860,112 @@ class MEoS(_fase):
                     x = (s-sl)/(sv-sl)
 
             elif self._mode == "Pu":
-                def funcion(parr):
+                def f(parr):
                     rho, T = parr
-                    par = self._Helmholtz(rho, T)
-                    return par["h"]-par["P"]/rho-u, par["P"]-P*1000
-                sol = fsolve(funcion, [rhoo, To], full_output=True)
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    return ho-Po/rho-u, Po-P*1000
+
+                sol = fsolve(f, [rhoo, To], full_output=True)
                 rho, T = sol[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or sol[2] != 1:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        vu = vapor["h"]-Ps/rhov
-                        lu = liquido["h"]-Ps/rhol
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return Ps-P*1000, vu*x+lu*(1-x)-u
-                    rho, T = fsolve(funcion, [2., 500.])
-                    rhol, rhov, Ps = self._saturation(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    uv = vapor["h"]-Ps/rhov
-                    ul = liquido["h"]-Ps/rhol
-                    x = (u-ul)/(uv-ul)
+
+                    def f(parr):
+                        T, rhol, rhog, x = parr
+                        tau = Tc/T
+                        deltaL = rhol/self.rhoc
+                        deltaG = rhog/self.rhoc
+
+                        ideal = self._phi0(tau, deltaL)
+                        fiot = ideal["fiot"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        vu = hoG-Ps/rhog
+                        lu = hoL-Ps/rhol
+                        return (Jl-Jv,
+                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                lu*(1-x)+vu*x - u,
+                                Ps - P*1000)
+
+                    for to in [To, 300, 400, 500, 600]:
+                        rLo = self._Liquid_Density(to)
+                        rGo = self._Vapor_Density(to)
+                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
+                        T, rhoL, rhoG, x = sol[0]
+                        if sol[2] == 1 and 0 <= x <= 1 and \
+                                sum(abs(sol[1]["fvec"])) < 1e-5:
+                            break
+
+                    if sum(abs(sol[1]["fvec"])) > 1e-5:
+                        raise(RuntimeError(sol[3]))
+
+                    liquido = self._Helmholtz(rhoL, T)
+                    vapor = self._Helmholtz(rhoG, T)
+                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhoh":
-                T = fsolve(lambda T: self._Helmholtz(rho, T)["h"]-h, To)[0]
+                delta = rho/rhoc
+
+                def f(T):
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    return ho-h
+
+                T = fsolve(f, To)[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
                     def f(parr):
                         T, rhol, rhog = parr
+                        tau = Tc/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
-                        liquido = self._Helmholtz(rhol, T)
-                        vapor = self._Helmholtz(rhog, T)
-                        Jl = rhol*(1+deltaL*liquido["fird"])
-                        Jv = rhog*(1+deltaG*vapor["fird"])
-                        K = liquido["fir"]-vapor["fir"]
+
+                        ideal = self._phi0(tau, deltaL)
+                        fiot = ideal["fiot"]
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
                         return (Jl-Jv,
                                 Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                liquido["h"]*(1-x)+vapor["h"]*x - h)
+                                hoL*(1-x)+hoG*x - h)
 
                     for to in [To, 300, 400, 500, 600]:
                         rhoLo = self._Liquid_Density(to)
@@ -564,23 +986,51 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhos":
-                T = fsolve(lambda T: self._Helmholtz(rho, T)["s"]-s, To)[0]
+                delta = rho/rhoc
+
+                def f(T):
+                    tau = Tc/T
+                    ideal = self._phi0(tau, delta)
+                    fio = ideal["fio"]
+                    fiot = ideal["fiot"]
+                    fir = _phir(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    return so-s
+
+                T = fsolve(f, To)[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
+
                     def f(parr):
                         T, rhol, rhog = parr
+                        tau = Tc/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
-                        liquido = self._Helmholtz(rhol, T)
-                        vapor = self._Helmholtz(rhog, T)
-                        Jl = rhol*(1+deltaL*liquido["fird"])
-                        Jv = rhog*(1+deltaG*vapor["fird"])
-                        K = liquido["fir"]-vapor["fir"]
+
+                        idealL = self._phi0(tau, deltaL)
+                        fioL = idealL["fio"]
+                        fiot = idealL["fiot"]
+                        idealG = self._phi0(tau, deltaG)
+                        fioG = idealG["fio"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
                         return (Jl-Jv,
                                 Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                liquido["s"]*(1-x)+vapor["s"]*x - s)
+                                soL*(1-x)+soG*x - s)
 
                     for to in [To, 300, 400, 500, 600]:
                         rhoLo = self._Liquid_Density(to)
@@ -601,27 +1051,47 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhou":
-                def funcion(T):
-                    par = self._Helmholtz(rho, T)
-                    return par["h"]-par["P"]/rho-u
-                T = fsolve(funcion, To)[0]
+                delta = rho/rhoc
+
+                def f(T):
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    return ho-Po/rho-u
+
+                T = fsolve(f, To)[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
                     def f(parr):
                         T, rhol, rhog = parr
+                        tau = Tc/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
-                        liquido = self._Helmholtz(rhol, T)
-                        vapor = self._Helmholtz(rhog, T)
-                        Jl = rhol*(1+deltaL*liquido["fird"])
-                        Jv = rhog*(1+deltaG*vapor["fird"])
-                        K = liquido["fir"]-vapor["fir"]
+
+                        ideal = self._phi0(tau, deltaL)
+                        fiot = ideal["fiot"]
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
-                            liquido["fir"]-vapor["fir"]+log(rhol/rhog))
-                        vu = vapor["h"]-Ps/rhog
-                        lu = liquido["h"]-Ps/rhol
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        vu = hoG-Ps/rhog
+                        lu = hoL-Ps/rhol
                         return (Jl-Jv,
                                 Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
                                 lu*(1-x)+vu*x - u)
@@ -645,123 +1115,218 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "hs":
-                def funcion(parr):
-                    par = self._Helmholtz(parr[0], parr[1])
-                    return par["h"]-h, par["s"]-s
-                rho, T = fsolve(funcion, [rhoo, To])
+                def f(parr):
+                    rho, T = parr
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fio = ideal["fio"]
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    fir = _phir(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    return ho-h, so-s
+
+                rho, T = fsolve(f, [rhoo, To])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rhov <= rho <= rhol:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return (vapor["h"]*x+liquido["h"]*(1-x)-h,
-                                vapor["s"]*x+liquido["s"]*(1-x)-s)
-                    rho, T = fsolve(funcion, [0.5, 400.])
-                    rhol, rhov, Ps = self._saturation(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    sv = vapor["s"]
-                    sl = liquido["s"]
-                    x = (s-sl)/(sv-sl)
-                    P = Ps/1000
+
+                    def f(parr):
+                        T, rhol, rhog, x = parr
+                        tau = Tc/T
+                        deltaL = rhol/self.rhoc
+                        deltaG = rhog/self.rhoc
+
+                        idealL = self._phi0(tau, deltaL)
+                        fiot = idealL["fiot"]
+                        fioL = idealL["fio"]
+                        idealG = self._phi0(tau, deltaG)
+                        fioG = idealG["fio"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+                        return (Jl-Jv,
+                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                hoL*(1-x)+hoG*x - h,
+                                soL*(1-x)+soG*x - s)
+
+                    for to in [To, 300, 400, 500, 600]:
+                        rLo = self._Liquid_Density(to)
+                        rGo = self._Vapor_Density(to)
+                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
+                        T, rhoL, rhoG, x = sol[0]
+                        if sol[2] == 1 and 0 <= x <= 1 and \
+                                sum(abs(sol[1]["fvec"])) < 1e-5:
+                            break
+
+                    if sum(abs(sol[1]["fvec"])) > 1e-5:
+                        raise(RuntimeError(sol[3]))
+
+                    liquido = self._Helmholtz(rhoL, T)
+                    vapor = self._Helmholtz(rhoG, T)
+                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "hu":
-                def funcion(parr):
+                def f(parr):
                     rho, T = parr
-                    par = self._Helmholtz(rho, T)
-                    return par["h"]-par["P"]/rho-u, par["h"]-h
-                sol = fsolve(funcion, [rhoo, To], full_output=True)
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+
+                    return ho-Po/rho-u, ho-h
+
+                sol = fsolve(f, [rhoo, To], full_output=True)
                 rho, T = sol[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        vu = vapor["h"]-Ps/rhov
-                        lu = liquido["h"]-Ps/rhol
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return (vapor["h"]*x+liquido["h"]*(1-x)-h,
-                                vu*x+lu*(1-x)-u)
 
-                    To = [500, 700, 300, 900]
-                    if self.kwargs["T0"]:
-                        To.insert(0, self.kwargs["T0"])
-                    rhov = self._Vapor_Density(self.Tt)
-                    rhol = self._Liquid_Density(self.Tt)
-                    ro = [1, 1e-3, rhov, rhol]
-                    if self.kwargs["rho0"]:
-                        ro.insert(0, self.kwargs["rho0"])
+                    def f(parr):
+                        T, rhol, rhog, x = parr
+                        tau = Tc/T
+                        deltaL = rhol/self.rhoc
+                        deltaG = rhog/self.rhoc
 
-                    for r, t in product(ro, To):
-                        sol = fsolve(funcion, [r, t], full_output=True)
-                        rho, T = sol[0]
-                        if sol[2] == 1 and sum(abs(sol[1]["fvec"])) < 1e-5:
+                        ideal = self._phi0(tau, deltaL)
+                        fiot = ideal["fiot"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        vu = hoG-Ps/rhog
+                        lu = hoL-Ps/rhol
+
+                        return (Jl-Jv,
+                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                hoL*(1-x)+hoG*x - h,
+                                lu*(1-x)+vu*x - u)
+
+                    for to in [To, 300, 400, 500, 600]:
+                        rLo = self._Liquid_Density(to)
+                        rGo = self._Vapor_Density(to)
+                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
+                        T, rhoL, rhoG, x = sol[0]
+                        if sol[2] == 1 and 0 <= x <= 1 and \
+                                sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
                         raise(RuntimeError(sol[3]))
 
-                    rhol, rhov, Ps = self._saturation(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    hv = vapor["h"]
-                    hl = liquido["h"]
-                    x = (h-hl)/(hv-hl)
-                    P = Ps/1000
+                    liquido = self._Helmholtz(rhoL, T)
+                    vapor = self._Helmholtz(rhoG, T)
+                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "su":
-                def funcion(parr):
+                def f(parr):
                     rho, T = parr
-                    par = self._Helmholtz(rho, T)
-                    return par["h"]-par["P"]/rho-u, par["s"]-s
-                sol = fsolve(funcion, [rhoo, To], full_output=True)
+                    delta = rho/rhoc
+                    tau = Tc/T
+
+                    ideal = self._phi0(tau, delta)
+                    fio = ideal["fio"]
+                    fiot = ideal["fiot"]
+                    fird = _phird(tau, delta, self._constants)
+                    fir = _phir(tau, delta, self._constants)
+                    firt = _phirt(tau, delta, self._constants)
+                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    Po = (1+delta*fird)*self.R*T*rho
+                    return ho-Po/rho-u, so-s
+
+                sol = fsolve(f, [rhoo, To], full_output=True)
                 rho, T = sol[0]
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        vu = vapor["h"]-Ps/rhov
-                        lu = liquido["h"]-Ps/rhol
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return (vapor["s"]*x+liquido["s"]*(1-x)-s,
-                                vu*x+lu*(1-x)-u)
 
-                    To = [500, 700, 300, 900]
-                    if self.kwargs["T0"]:
-                        To.insert(0, self.kwargs["T0"])
-                    rhov = self._Vapor_Density(self.Tt)
-                    rhol = self._Liquid_Density(self.Tt)
-                    ro = [1, 1e-3, rhov, rhol]
-                    if self.kwargs["rho0"]:
-                        ro.insert(0, self.kwargs["rho0"])
+                    def f(parr):
+                        T, rhol, rhog, x = parr
+                        tau = Tc/T
+                        deltaL = rhol/self.rhoc
+                        deltaG = rhog/self.rhoc
 
-                    for r, t in product(ro, To):
-                        sol = fsolve(funcion, [r, t], full_output=True)
-                        rho, T = sol[0]
-                        if sol[2] == 1 and sum(abs(sol[1]["fvec"])) < 1e-5:
+                        idealL = self._phi0(tau, deltaL)
+                        fiot = idealL["fiot"]
+                        fioL = idealL["fio"]
+                        idealG = self._phi0(tau, deltaG)
+                        fioG = idealG["fio"]
+
+                        firL = _phir(tau, deltaL, self._constants)
+                        firdL = _phird(tau, deltaL, self._constants)
+                        firtL = _phirt(tau, deltaL, self._constants)
+                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        firG = _phir(tau, deltaG, self._constants)
+                        firdG = _phird(tau, deltaG, self._constants)
+                        firtG = _phirt(tau, deltaG, self._constants)
+                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+
+                        Jl = rhol*(1+deltaL*firdL)
+                        Jv = rhog*(1+deltaG*firdG)
+                        K = firL-firG
+
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        vu = hoG-Ps/rhog
+                        lu = hoL-Ps/rhol
+
+                        return (Jl-Jv,
+                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                soL*(1-x)+soG*x - s,
+                                lu*(1-x)+vu*x - u)
+
+                    for to in [To, 300, 400, 500, 600]:
+                        rLo = self._Liquid_Density(to)
+                        rGo = self._Vapor_Density(to)
+                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
+                        T, rhoL, rhoG, x = sol[0]
+                        if sol[2] == 1 and 0 <= x <= 1 and \
+                                sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
                         raise(RuntimeError(sol[3]))
 
-                    rhol, rhov, Ps = self._saturation(T)
-                    vapor = self._Helmholtz(rhov, T)
-                    liquido = self._Helmholtz(rhol, T)
-                    sv = vapor["s"]
-                    sl = liquido["s"]
-                    x = (s-sl)/(sv-sl)
-                    P = Ps/1000
+                    liquido = self._Helmholtz(rhoL, T)
+                    vapor = self._Helmholtz(rhoG, T)
+                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "Trho":
                 if T < self.Tc:
@@ -807,16 +1372,19 @@ class MEoS(_fase):
                 raise NotImplementedError("Incoming out of bound")
 
             # Iterate over saturation routine to get T
-            def funcion(T):
+            def f(T):
                 rhol = self._Liquid_Density(T)
                 rhog = self._Vapor_Density(T)
 
                 deltaL = rhol/self.rhoc
                 deltaG = rhog/self.rhoc
-                liquido = self._Helmholtz(rhol, T)
-                vapor = self._Helmholtz(rhog, T)
+
+                tau = Tc/T
+
+                firL = _phir(tau, deltaL, self._constants)
+                firG = _phir(tau, deltaG, self._constants)
                 Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
-                    liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+                    firL-firG+log(deltaL/deltaG))
                 return Ps/1000-P
 
             if T0:
@@ -825,7 +1393,7 @@ class MEoS(_fase):
                 To = _TSat_P(P)
             else:
                 To = (self.Tc+self.Tt)/2
-            T = fsolve(funcion, To)[0]
+            T = fsolve(f, To)[0]
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
             liquido = self._Helmholtz(rhol, T)
@@ -993,34 +1561,40 @@ class MEoS(_fase):
 
     def _saturation(self, T):
         """Saturation calculation for two phase search"""
-        if T > self.Tc:
-            T = self.Tc
+        rhoc = self._constants.get("rhoref", self.rhoc)
+        Tc = self._constants.get("Tref", self.Tc)
+
+        if T > Tc:
+            T = Tc
+        tau = Tc/T
+
         rhoLo = self._Liquid_Density(T)
         rhoGo = self._Vapor_Density(T)
 
         def f(parr):
             rhol, rhog = parr
-            deltaL = rhol/self.rhoc
-            deltaG = rhog/self.rhoc
-            liquido = self._Helmholtz(rhol, T)
-            vapor = self._Helmholtz(rhog, T)
-            Jl = deltaL*(1+deltaL*liquido["fird"])
-            Jv = deltaG*(1+deltaG*vapor["fird"])
-            Kl = deltaL*liquido["fird"]+liquido["fir"]+log(deltaL)
-            Kv = deltaG*vapor["fird"]+vapor["fir"]+log(deltaG)
+            deltaL = rhol/rhoc
+            deltaG = rhog/rhoc
+            phirL = _phir(tau, deltaL, self._constants)
+            phirG = _phir(tau, deltaG, self._constants)
+            phirdL = _phird(tau, deltaL, self._constants)
+            phirdG = _phird(tau, deltaG, self._constants)
+            Jl = deltaL*(1+deltaL*phirdL)
+            Jv = deltaG*(1+deltaG*phirdG)
+            Kl = deltaL*phirdL+phirL+log(deltaL)
+            Kv = deltaG*phirdG+phirG+log(deltaG)
             return Kv-Kl, Jv-Jl
 
         rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
         if rhoL == rhoG:
             Ps = self.Pc
         else:
-            liquido = self._Helmholtz(rhoL, T)
-            vapor = self._Helmholtz(rhoG, T)
             deltaL = rhoL/self.rhoc
             deltaG = rhoG/self.rhoc
+            firL = _phir(tau, deltaL, self._constants)
+            firG = _phir(tau, deltaG, self._constants)
 
-            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                liquido["fir"]-vapor["fir"]+log(deltaL/deltaG))
+            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
     def _Helmholtz(self, rho, T):
