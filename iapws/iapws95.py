@@ -1334,11 +1334,11 @@ class MEoS(_fase):
                     rhol = self._Liquid_Density(T)
                     if rhol > rho > rhov:
                         rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        x = (1/rho-1/rhol)/(1/rhov-1/rhol)
-                        rho = 1/(x/rhov-(1-x)/rhol)
-                        P = Ps/1000
+                        if rhol > rho > rhov:
+                            vapor = self._Helmholtz(rhov, T)
+                            liquido = self._Helmholtz(rhol, T)
+                            x = (1/rho-1/rhol)/(1/rhov-1/rhol)
+                            P = Ps/1000
 
             rho = float(rho)
             T = float(T)
