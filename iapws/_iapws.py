@@ -1263,6 +1263,108 @@ def _D2O_Tension(T):
         raise NotImplementedError("Incoming out of bound")
 
 
+def _D2O_Sublimation_Pressure(T):
+    """Sublimation Pressure correlation for heavy water
+
+    Parameters
+    ----------
+    T : float
+        Temperature, [K]
+
+    Returns
+    -------
+    P : float
+        Pressure at sublimation line, [MPa]
+
+    Notes
+    ------
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
+        * 210 ≤ T ≤ 276.969
+
+    Examples
+    --------
+    >>> _Sublimation_Pressure(245)
+    3.27390934e-5
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Formulation 2017 for the Thermodynamic
+    Properties of Heavy Water, http://www.iapws.org/relguide/Heavy.html.
+    """
+    if 210 <= T <= 276.969:
+        Tita = T/276.969
+        suma = 0
+        ai = [-0.1314226e2, 0.3212969e2]
+        ti = [-1.73, -1.42]
+        for a, t in zip(ai, ti):
+            suma += a*(1-Tita**t)
+        return exp(suma)*0.00066159
+    else:
+        raise NotImplementedError("Incoming out of bound")
+
+
+def _D2O_Melting_Pressure(T, ice="Ih"):
+    """Melting Pressure correlation for heavy water
+
+    Parameters
+    ----------
+    T : float
+        Temperature, [K]
+    ice: string
+        Type of ice: Ih, III, V, VI, VII.
+        Below 276.969 is a mandatory input, the ice Ih is the default value.
+        Above 276.969, the ice type is unnecesary.
+
+    Returns
+    -------
+    P : float
+        Pressure at sublimation line, [MPa]
+
+    Notes
+    ------
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
+        * 254.415 ≤ T ≤ 315
+
+    Examples
+    --------
+    >>> _Melting_Pressure(260)
+    8.947352740189152e-06
+    >>> _Melting_Pressure(254, "III")
+    268.6846466336108
+
+    References
+    ----------
+    IAPWS, Revised Release on the Pressure along the Melting and Sublimation
+    Curves of Ordinary Water Substance, http://iapws.org/relguide/MeltSub.html.
+    """
+    if ice == "Ih" and 254.415 <= T <= 276.969:
+        # Ice Ih, Eq 9
+        Tita = T/276.969
+        ai = [-0.30153e5, 0.692503e6]
+        ti = [5.5, 8.2]
+        suma = 1
+        for a, t in zip(ai, ti):
+            suma += a*(1-Tita**t)
+        P = suma*0.00066159
+    elif ice == "III" and 254.415 < T <= 258.661:
+        # Ice III, Eq 10
+        Tita = T/254.415
+        P = 222.41*(1-0.802871*(1-Tita**33))
+    elif ice == "V" and 258.661 < T <= 275.748:
+        # Ice V, Eq 11
+        Tita = T/258.661
+        P = 352.19*(1-1.280388*(1-Tita**7.6))
+    elif (ice == "VI" and 275.748 < T <= 276.969) or 276.969 < T <= 315:
+        # Ice VI
+        Tita = T/275.748
+        P = 634.53*(1-1.276026*(1-Tita**4))
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return P
+
+
 def _Henry(T, gas, liquid="H2O"):
     """Equation for the calculation of Henry's constant
 

@@ -23,6 +23,7 @@ from iapws.iapws08 import (SeaWater, _ThCond_SeaWater, _solNa2SO4, _critNaCl,
 from iapws._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,
                           _Viscosity, _ThCond, _Tension, _Kw, _Liquid,
                           _D2O_Viscosity, _D2O_ThCond, _D2O_Tension,
+                          _D2O_Sublimation_Pressure, _D2O_Melting_Pressure,
                           _Conductivity, _Henry, _Kvalue, _Supercooled)
 from iapws.humidAir import _virial, _fugacity, Air, HumidAir
 from iapws.ammonia import NH3, H2ONH3, Ttr
@@ -1329,6 +1330,25 @@ class Test(unittest.TestCase):
         self.assertEqual(round(st.Gas.hM, 4), 47246.0343)
         self.assertEqual(round(st.Liquid.sM, 7), 73.1042291)
         self.assertEqual(round(st.Gas.sM, 7), 96.7725149)
+
+        # Sublimation-pressure equation
+        # Inline point in section 6, pag 10
+        P = _D2O_Sublimation_Pressure(245)
+        self.assertEqual(round(P, 13), 3.27390934e-5)
+
+        # Melting-pressure equation
+        # Inline point in section 6, pag 10
+        P = _D2O_Melting_Pressure(270)
+        self.assertEqual(round(P, 7), 83.7888413)
+
+        P = _D2O_Melting_Pressure(255, "III")
+        self.assertEqual(round(P, 6), 236.470168)
+
+        P = _D2O_Melting_Pressure(275, "V")
+        self.assertEqual(round(P, 6), 619.526971)
+
+        P = _D2O_Melting_Pressure(300, "VI")
+        self.assertEqual(round(P, 6), 959.203594)
 
     def test_D2O_Viscosity(self):
         """Table A5 pag 10"""
