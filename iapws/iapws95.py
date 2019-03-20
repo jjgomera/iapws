@@ -510,7 +510,7 @@ class MEoS(_fase):
 
         propiedades = None
 
-        if x is None:
+        if self._mode not in ("Tx", "Px"):
             # Method with iteration necessary to get x
             if self._mode == "TP":
                 try:
