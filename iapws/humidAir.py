@@ -593,16 +593,14 @@ class HumidAir(object):
         * ks: Adiabatic Compressibility, [1/MPa]
 
         * A: Mass fraction of dry air in humid air, [kg/kg]
-        * xa: Mole fraction of dry air in humid air, [-]
         * W: Mass fraction of water in humid air, [kg/kg]
-        * xw: Mole fraction of water in humid air, [-]
+        * xa: Mole fraction of dry air, [-]
+        * xw: Mole fraction of water, [-]
+        * xa_sat: Mole fraction of dry air at saturation state, [-]
         * mu: Relative chemical potential, [kJ/kg]
         * muw: Chemical potential of water, [kJ/kg]
         * M: Molar mass of humid air, [g/mol]
         * HR: Humidity ratio, [-]
-        * xa: Mole fraction of dry air, [-]
-        * xw: Mole fraction of water, [-]
-        * xa_sat: Mole fraction of dry air at saturation state, [-]
         * RH: Relative humidity, [-]
     """
     kwargs = {"T": 0.0,
@@ -746,17 +744,20 @@ class HumidAir(object):
         if T <= 273.16:
             ice = _Ice(T, P)
             gw = ice["g"]
-            rho = ice["rho"]
         else:
             water = IAPWS95(T=T, P=P)
             gw = water.g
-            rho = water.rho
 
-        def f(a):
+        def f(parr):
+            rho, a = parr
+            if a > 1:
+                a = 1
             fa = self._fav(T, rho, a)
             muw = fa["fir"]+rho*fa["fird"]-a*fa["fira"]
-            return gw-muw
-        Asat = fsolve(f, 0.9)[0]
+            return gw-muw, rho**2*fa["fird"]/1000-P
+
+        rinput = fsolve(f, [1, 0.95], full_output=True)
+        Asat = rinput[0][1]
         return Asat
 
     def _prop(self, T, rho, fav):

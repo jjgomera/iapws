@@ -18,6 +18,10 @@ Miscelaneous IAPWS standards. This module include:
     * :func:`_D2O_Viscosity`: Viscosity correlation for heavy water
     * :func:`_D2O_ThCond`: Thermal conductivity correlation for heavy water
     * :func:`_D2O_Tension`: Surface tension correlation for heavy water
+    * :func:`_D2O_Sublimation_Pressure`: Sublimation Pressure correlation for
+    heavy water
+    * :func:`_D2O_Melting_Pressure`: Melting Pressure correlation for heavy
+    water
     * :func:`_Henry`: Henry constant for liquid-gas equilibrium
     * :func:`_Kvalue`: Vapor-liquid distribution constant
 """
@@ -1319,7 +1323,7 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
     Returns
     -------
     P : float
-        Pressure at sublimation line, [MPa]
+        Pressure at melting line, [MPa]
 
     Notes
     ------
@@ -1329,9 +1333,9 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
 
     Examples
     --------
-    >>> _Melting_Pressure(260)
+    >>> _D2O__Melting_Pressure(260)
     8.947352740189152e-06
-    >>> _Melting_Pressure(254, "III")
+    >>> _D2O__Melting_Pressure(254, "III")
     268.6846466336108
 
     References
