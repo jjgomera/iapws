@@ -100,47 +100,14 @@ def _virial(T):
         warnings.warn("Cwww out of validity range")
 
     T_ = T/100
-    tau = IAPWS95.Tc/T
 
-    # Table 1
-    # Reorganizated to easy use in equations
-    tb = [-0.5, 0.875, 1, 4, 6, 12, 7]
-    nb = [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
-          -0.66856572307965, 0.20433810950965, -0.66212605039687e-4,
-          -0.10793600908932]
-    bc = [0.5, 0.75, 1, 5, 1, 9, 10]
-    nc = [0.31802509345418, -0.26145533859358, -0.19232721156002,
-          -0.25709043003438, 0.17611491008752e-1, 0.22132295167546,
-          -0.40247669763528]
-    bc2 = [4, 6, 12]
-    nc2 = [-0.66856572307965, 0.20433810950965, -0.66212605039687e-4]
-
-    # Table 2
-    ai = [3.5, 3.5]
-    bi = [0.85, 0.95]
-    Bi = [0.2, 0.2]
-    ni = [-0.14874640856724, 0.31806110878444]
-    Ci = [28, 32]
-    Di = [700, 800]
-    Ai = [0.32, 0.32]
-    betai = [0.3, 0.3]
-
-    # Eq 5
-    sum1 = sum([n*tau**t for n, t in zip(nb, tb)])
-    sum2 = 0
-    for n, b, B, A, C, D in zip(ni, bi, Bi, Ai, Ci, Di):
-        sum2 += n*((A+1-tau)**2+B)**b*exp(-C-D*(tau-1)**2)
-    Bww = Mw/IAPWS95.rhoc*(sum1+sum2)
-
-    # Eq 6
-    sum1 = sum([n*tau**t for n, t in zip(nc, bc)])
-    sum2 = sum([n*tau**t for n, t in zip(nc2, bc2)])
-    sum3 = 0
-    for a, b, B, n, C, D, A, beta in zip(ai, bi, Bi, ni, Ci, Di, Ai, betai):
-        Tita = A+1-tau
-        sum3 += n*(C*(Tita**2+B)-b*(A*Tita/beta+B*a))*(Tita**2+B)**(b-1) * \
-            exp(-C-D*(tau-1)**2)
-    Cwww = 2*(Mw/IAPWS95.rhoc)**2*(sum1-sum2+2*sum3)
+    # Virial coefficient for water
+    # The paper use the specific formulation of virial, here using the general
+    # formulation from helmholtz mEoS
+    wt = IAPWS95()
+    vir = wt._virial(T)
+    Bww = vir["B"]/wt.rhoc*wt.M
+    Cwww = vir["C"]/wt.rhoc**2*wt.M**2
 
     # Table 3
     ai = [0.482737e-3, 0.105678e-2, -0.656394e-2, 0.294442e-1, -0.319317e-1]
@@ -171,15 +138,11 @@ def _virial(T):
         sum([i*b*T_**(-i-1) for i, b in enumerate(bi)])**2) *
         exp(sum([b/T_**i for i, b in enumerate(bi)])))
 
-    # Table 4
-    # Reorganizated to easy use in equations
-    ji = [0, 0.33, 1.01, 1.6, 3.6, 3.5]
-    ni = [0.118160747229, 0.713116392079, -0.161824192067e1, -0.101365037912,
-          -0.146629609713, 0.148287891978e-1]
-    tau = 132.6312/T
-
-    Baa = 1/10.4477*sum([n*tau**j for j, n in zip(ji, ni)])          # Eq 10
-    Caaa = 2/10.4477**2*(0.714140178971e-1+0.101365037912*tau**1.6)  # Eq 11
+    # Virial coefficient for air, using too the general virial procedure
+    air = Air()
+    vir = air._virial(T)
+    Baa = vir["B"]/air.rhoc*air.M
+    Caaa = vir["C"]/air.rhoc**2*air.M**2
 
     prop = {}
     prop["Baa"] = Baa/1000
