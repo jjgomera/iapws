@@ -64,6 +64,12 @@ class Test(unittest.TestCase):
         self.assertEqual(round(res["firtt"], 8), -2.23440737)
         self.assertEqual(round(res["firdt"], 8), -1.12176915)
 
+        # Revised release of 2018
+        # Virial coefficient in Table 3
+        vir = fluid._virial(600)
+        self.assertEqual(round(vir["B"]/fluid.rhoc, 11), -0.555366808e-2)
+        self.assertEqual(round(vir["C"]/fluid.rhoc**2, 14), -0.669015050e-5)
+
     def test_phase(self):
         """Table 7 from IAPWS95, pag 14"""
         state = IAPWS95(rho=996.556, T=300)

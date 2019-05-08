@@ -1953,20 +1953,20 @@ class MEoS(_fase):
         Ci = self._constants.get("C", [])
         Di = self._constants.get("D", [])
         bt4 = self._constants.get("beta4", [])
-        for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
+        for n, a, b, A, B_, C_, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
             Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-            Delta = Tita**2+B*((delta-1)**2)**a
+            Delta = Tita**2+B_*((delta-1)**2)**a
             Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(
-                0.5/bt-1)+2*B*a*((delta-1)**2)**(a-1))
+                0.5/bt-1)+2*B_*a*((delta-1)**2)**(a-1))
             Deltadd = Deltad/(delta-1) + (delta-1)**2*(
-                4*B*a*(a-1)*((delta-1)**2)**(a-2) +
+                4*B_*a*(a-1)*((delta-1)**2)**(a-2) +
                 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2 +
                 A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
             DeltaBd = b*Delta**(b-1)*Deltad
             DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-            Fd = -2*C*F*(delta-1)
-            Fdd = 2*C*F*(2*C*(delta-1)**2-1)
+            F = exp(-C_*(delta-1)**2-D*(tau-1)**2)
+            Fd = -2*C_*F*(delta-1)
+            Fdd = 2*C_*F*(2*C_*(delta-1)**2-1)
 
             B += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
             C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd) +
