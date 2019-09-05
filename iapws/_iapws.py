@@ -513,7 +513,7 @@ def _Supercooled(T, P):
     def f(x):
         return abs(L+log(x/(1-x))+omega*(1-2*x))
 
-    x = minimize(f, ((xmin+xmax)/2,), bounds=((xmin, xmax),))["x"][0]
+    x = minimize(f, (xmin+((xmin+xmax)/2),), bounds=((xmin, xmax),))["x"][0]
 
     # Eq 12
     fi = 2*x-1
