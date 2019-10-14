@@ -70,10 +70,10 @@ __doi__ = {
                   "Ih",
          "ref": "2009",
          "doi": ""},
-    "R11-07":
+    "R11-19":
         {"autor": "IAPWS",
          "title": "Release on the Ionization Constant of H2O",
-         "ref": "2007",
+         "ref": "2019",
          "doi": ""},
     "R12-08":
         {"autor": "IAPWS",
