@@ -514,8 +514,8 @@ class MEoS(_fase):
             # Method with iteration necessary to get x
             if self._mode == "TP":
                 try:
-                    if self.name == "air":
-                        raise ValueError
+                    if self.name != "water":
+                        raise NotImplementedError
                     st0 = IAPWS97(**self.kwargs)
                     rhoo = st0.rho
                 except NotImplementedError:
@@ -528,8 +528,6 @@ class MEoS(_fase):
                         rhoo = self._Vapor_Density(T)
                     else:
                         rhoo = self.rhoc*3
-                except ValueError:
-                    rhoo = 1e-3
 
                 def f(rho):
                     delta = rho/rhoc

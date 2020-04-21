@@ -36,7 +36,7 @@ class NH3(MEoS):
     synonym = "R-717"
     rhoc = 225.
     Tc = 405.40
-    Pc = 11333.0  # kPa
+    Pc = 11.333   # MPa
     M = 17.03026  # g/mol
     Tt = 195.495
     Tb = 239.823

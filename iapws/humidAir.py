@@ -271,7 +271,7 @@ class Air(MEoSBlend):
     synonym = "R-729"
     rhoc = 10.4477*Ma
     Tc = 132.6306
-    Pc = 3786.0  # kPa
+    Pc = 3.786  # MPa
     M = Ma
     Tt = 59.75
     Tb = 78.903
