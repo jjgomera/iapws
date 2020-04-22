@@ -271,7 +271,7 @@ class Air(MEoSBlend):
     synonym = "R-729"
     rhoc = 10.4477*Ma
     Tc = 132.6306
-    Pc = 3.786  # MPa
+    Pc = 3.7860  # MPa
     M = Ma
     Tt = 59.75
     Tb = 78.903
@@ -476,13 +476,13 @@ class Air(MEoSBlend):
             k = 1.380658e-23  # J/K
 
             # Eq 11
-            X = self.Pc*1e-3*rho/rhoc**2*fase.drhodP_T
+            X = self.Pc*rho/rhoc**2*fase.drhodP_T
 
             ref = Air()
             st = ref._Helmholtz(rho, Tref)
             drho = 1e3/self.R/Tref/(1+2*delta*st["fird"]+delta**2*st["firdd"])
 
-            Xref = self.Pc*1e-3*rho/rhoc**2*drho
+            Xref = self.Pc*rho/rhoc**2*drho
 
             # Eq 10
             bracket = X-Xref*Tref/T

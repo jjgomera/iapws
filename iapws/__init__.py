@@ -10,7 +10,7 @@ from .iapws08 import SeaWater  # noqa
 from .humidAir import HumidAir  # noqa
 from .ammonia import H2ONH3  # noqa
 
-__version__ = "1.4"
+__version__ = "1.4.1"
 
 
 __doi__ = {
