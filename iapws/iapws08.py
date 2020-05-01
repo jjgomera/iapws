@@ -142,6 +142,9 @@ class SeaWater(object):
     IAPWS, Guideline on the Thermal Conductivity of Seawater,
     http://www.iapws.org/relguide/Seawater-ThCond.html
 
+    IAPWS, Guideline on the Surface Tension of Seawater,
+    http://www.iapws.org/relguide/Seawater-Surf.html
+
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
 
@@ -639,7 +642,6 @@ def _Tension_SeaWater(T, S):
 
         * 0 ≤ S ≤ 0.131  for 274.15 ≤ T ≤ 365.15
         * 0 ≤ S ≤ 0.038  for 248.15 ≤ T ≤ 274.15
-        * 0.038 ≤ S ≤ 0.131
 
     Examples
     --------

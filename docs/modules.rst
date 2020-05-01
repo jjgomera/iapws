@@ -45,17 +45,17 @@ Releases:
 * R2-83(1992): Release on the Values of Temperature, Pressure and Density of Ordynary and Heavy Water Substances at their Respectives Critical Points, :func:`iapws._iapws`
 * R4-84(2007): Revised Release on Viscosity and Thermal Conductivity of Heavy Water Substance, :func:`iapws._iapws._D2O_Viscosity`, :func:`iapws._iapws._D2O_ThCond`
 * R5-85(1994): Release on Surface Tension of Heavy Water Substance, :func:`iapws._iapws._D2O_Tension`
-* R6-95(2016): Revised Release on the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use, :func:`iapws.iapws95.IAPWS95`
+* R6-95(2018): Revised Release on the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use, :func:`iapws.iapws95.IAPWS95`
 * R7-97(2012): Revised Release on the IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam, :func:`iapws.iapws97`
 * R8-97: Release on the Static Dielectric Constant of Ordinary Water Substance for Temperatures from 238 K to 873 K and Pressures up to 1000 MPa, :func:`iapws._iapws._Dielectric`
 * R9-97: Release on the Refractive Index of Ordinary Water Substance as a Function of Wavelength, Temperature and Pressure, :func:`iapws._iapws._Refractive`
 * R10-06(2009): Revised Release on the Equation of State 2006 for H2O Ice Ih, :func:`iapws._iapws._Ice`
-* R11-07: Release on the Ionization Constant of H2O, :func:`iapws._iapws._Kw`
+* R11-07(2019): Release on the Ionization Constant of H2O, :func:`iapws._iapws._Kw`
 * R12-08: Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance, :func:`iapws._iapws._Viscosity`
 * R13-08: Release on the IAPWS Formulation 2008 for the Thermodynamic Properties of Seawater, :func:`iapws.iapws08`
 * R14-08(2011): Revised Release on the Pressure along the Melting and Sublimation Curves of Ordinary Water Substance, :func:`iapws._iapws._Melting_Pressure`, :func:`iapws._iapws._Sublimation_Pressure`
 * R15-11: Release on the IAPWS Formulation 2011 for the Thermal Conductivity of Ordinary Water Substance, :func:`iapws._iapws._ThCond`
-* R16-17: Release on the IAPWS Formulation 2017 for the Thermodynamic Properties of Heavy Water, :func:`iapws.iapws95.D2O`
+* R16-17(2018): Release on the IAPWS Formulation 2017 for the Thermodynamic Properties of Heavy Water, :func:`iapws.iapws95.D2O`
 
 Supplementary Releases:
 
@@ -83,13 +83,14 @@ Guidelines:
 * G11-15: Guideline on a Virial Equation for the Fugacity of H2O in Humid Air, :func:`iapws.humidAir._virial`
 * G12-15: Guideline on Thermodynamic Properties of Supercooled Water, :func:`iapws._iapws._Supercooled`
 * G13-15: Guideline on the Fast Calculation of Steam and Water Properties with the Spline-Based Table Look-Up Method (SBTL) (Not implemented)
+* G14-19: Guideline on the Surface Tension of Seawater, :func:`iapws.iapws08._Tension_SeaWater` 
 
 
 Advisory Notes:
 
 * AN1-03: Uncertainties in Enthalpy for the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use (IAPWS-95) and the IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam (IAPWS-IF97)
 * AN2-04(2013): Role of Various IAPWS Documents Concerning the Thermodynamic Properties of Ordinary Water Substance
-* AN3-07(2014): Thermodynamic Derivatives from IAPWS Formulations, :func:`iapws._utils.deriv_G`, :func:`iapws._utils.deriv_H`
+* AN3-07(2018): Thermodynamic Derivatives from IAPWS Formulations, :func:`iapws._utils.deriv_G`, :func:`iapws._utils.deriv_H`
 * AN4-09: Roles of IAPWS and CIPM Standards for the Density of Water
 * AN5-13(2016): Industrial Calculation of the Thermodynamic Properties of Seawater, :func:`iapws.iapws08.Seawater._waterIF97`, :func:`iapws.iapws08._Tb`, :func:`iapws.iapws08._Tf`, :func:`iapws.iapws08._Triple`, :func:`iapws.iapws08._OsmoticPressure`
 * AN6-16: Relationship between Various IAPWS Documents and the International Thermodynamic Equation of Seawater - 2010 (TEOS-10)
