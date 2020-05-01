@@ -12,6 +12,7 @@ Other functionality:
    * :func:`_Triple`: Triple point properties of seawater
    * :func:`_OsmoticPressure`: Osmotic pressure of seawater
    * :func:`_ThCond_SeaWater`: Thermal conductivity of seawater
+   * :func:`_Tension_SeaWater`: Surface tension of seawater
    * :func:`_solNa2SO4`: Solubility of sodium sulfate in aqueous mixtures of
      sodium chloride and sulfuric acid
    * :func:`_critNaCl`: Critical locus of aqueous solutions of sodium chloride
@@ -25,7 +26,7 @@ from scipy.optimize import fsolve
 
 from .iapws95 import IAPWS95
 from .iapws97 import IAPWS97, _Region1, _Region2
-from ._iapws import _ThCond, Tc, Pc, rhoc, _Ice
+from ._iapws import _ThCond, Tc, Pc, rhoc, _Ice, _Tension
 from ._utils import deriv_G
 
 
@@ -102,6 +103,11 @@ class SeaWater(object):
         Isentropic compressibility, [1/MPa]
     w : float
         Sound Speed, [m/s]
+
+    k : float
+        Thermal conductivity, [W/m·K]
+    sigma: float
+        Surface tension, [N/m]
 
     m : float
         Molality of seawater, [mol/kg]
@@ -213,6 +219,7 @@ class SeaWater(object):
         self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
                              prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
 
+        # Thermal conductivity calculation
         if "thcond" in pw:
             kw = pw["thcond"]
         else:
@@ -221,6 +228,12 @@ class SeaWater(object):
             self.k = _ThCond_SeaWater(T, P, S)+kw
         except NotImplementedError:
             self.k = None
+
+        # Surface tension calculation
+        try:
+            self.sigma = _Tension_SeaWater(T, S)
+        except NotImplementedError:
+            self.sigma = None
 
         if S:
             self.mu = prop["gs"]
@@ -605,6 +618,53 @@ def _ThCond_SeaWater(T, P, S):
     DL = a*(1000*S)**(1+b)
     return DL
 
+def _Tension_SeaWater(T, S):
+    """Equation for the surface tension of seawater
+
+    Parameters
+    ----------
+    T : float
+        Temperature, [K]
+    S : float
+        Salinity, [kg/kg]
+
+    Returns
+    -------
+    σ : float
+        Surface tension, [N/m]
+
+    Notes
+    ------
+    Raise :class:`NotImplementedError` if input isn't in limit:
+
+        * 0 ≤ S ≤ 0.131  for 274.15 ≤ T ≤ 365.15
+        * 0 ≤ S ≤ 0.038  for 248.15 ≤ T ≤ 274.15
+        * 0.038 ≤ S ≤ 0.131
+
+    Examples
+    --------
+    >>> _Tension_Seawater(253.15, 0.035)
+    -0.07922517961
+
+    References
+    ----------
+    IAPWS, Guideline on the Surface Tension of Seawater,
+    http://www.iapws.org/relguide/Seawater-Surf.html
+    """
+
+    # Check input parameters
+    if 248.15 < T < 274.15:
+        if S < 0 or S > 0.038:
+            raise NotImplementedError("Incoming out of bound")
+    elif 274.15 < T < 365.15:
+        if S < 0 or S > 0.131:
+            raise NotImplementedError("Incoming out of bound")
+    else:
+            raise NotImplementedError("Incoming out of bound")
+
+    sw = _Tension(T)
+    sigma = sw*(1+3.766e-1*S+2.347e-3*S*(T-273.15))
+    return sigma
 
 def _solNa2SO4(T, mH2SO4, mNaCl):
     """Equation for the solubility of sodium sulfate in aqueous mixtures of

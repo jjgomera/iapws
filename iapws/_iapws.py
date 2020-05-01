@@ -902,8 +902,11 @@ def _Tension(T):
     June 2014, http://www.iapws.org/relguide/Surf-H2O.html
     """
     if 248.15 <= T <= Tc:
-        Tr = T/Tc
-        return 1e-3*(235.8*(1-Tr)**1.256*(1-0.625*(1-Tr)))
+        tau = 1-T/Tc
+        sigma = 235.8 * tau**1.256 * (1-0.625*tau)
+
+        # The equation give surface tension in mN/m², converted to N/m²
+        return 1e-3*sigma
     else:
         raise NotImplementedError("Incoming out of bound")
 
