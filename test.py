@@ -398,22 +398,22 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, _Liquid, *(375, 0.2))
         self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
 
-    def test_supperCooled(self):
+    def test_superCooled(self):
         """Table 5, pag 9"""
         liq = _Supercooled(273.15, 0.101325)
-        self.assertEqual(round(liq["x"], 8), 0.09665471)
+        self.assertEqual(round(liq["x"], 8), 0.09665472)
         self.assertEqual(round(liq["L"], 8), 0.62120474)
         self.assertEqual(round(liq["rho"], 5), 999.84229)
         self.assertEqual(round(liq["alfap"]*1e4, 6), -0.683042)
         self.assertEqual(round(liq["xkappa"]*1e4, 6), 5.088499)
-        self.assertEqual(round(liq["cp"], 7), 4.2183001)
+        self.assertEqual(round(liq["cp"], 7), 4.2183002)
         self.assertEqual(round(liq["w"], 4), 1402.3886)
 
         liq = _Supercooled(235.15, 0.101325)
-        self.assertEqual(round(liq["x"], 8), 0.25510285)
+        self.assertEqual(round(liq["x"], 8), 0.25510286)
         self.assertEqual(round(liq["L"], 8), 0.09176368)
         self.assertEqual(round(liq["rho"], 5), 968.09999)
-        self.assertEqual(round(liq["alfap"]*1e4, 5), -29.63381)
+        self.assertEqual(round(liq["alfap"]*1e4, 5), -29.63382)
         self.assertEqual(round(liq["xkappa"]*1e4, 6), 11.580785)
         self.assertEqual(round(liq["cp"], 6), 5.997563)
         self.assertEqual(round(liq["w"], 4), 1134.5855)
@@ -437,13 +437,13 @@ class Test(unittest.TestCase):
         self.assertEqual(round(liq["w"], 4), 1899.3294)
 
         liq = _Supercooled(250, 400)
-        self.assertEqual(round(liq["x"], 8), 0.00535883)
+        self.assertEqual(round(liq["x"], 8), 0.00535884)
         self.assertEqual(round(liq["L"], 7), 1.4345145)
         self.assertEqual(round(liq["rho"], 4), 1151.7152)
         self.assertEqual(round(liq["alfap"]*1e4, 5), 4.92993)
         self.assertEqual(round(liq["xkappa"]*1e4, 6), 2.277029)
         self.assertEqual(round(liq["cp"], 7), 3.7572144)
-        self.assertEqual(round(liq["w"], 4), 2015.8784)
+        self.assertEqual(round(liq["w"], 4), 2015.8782)
 
         self.assertRaises(NotImplementedError, _Supercooled, *(200, 100))
         self.assertRaises(NotImplementedError, _Supercooled, *(180, 300))
