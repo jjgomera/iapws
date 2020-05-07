@@ -32,6 +32,7 @@ from cmath import log as log_c
 from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
 import warnings
 
+from scipy.optimize import minimize
 
 
 # Constants
@@ -392,9 +393,9 @@ class _Supercooled_minimize(object):
         self.xmin = xmin
         self.xmax = xmax
         self.f_inner_value_sign = 0.0
-        
+
     def f(self, x):
-        f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x) 
+        f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x)
         self.f_inner_value_sign = copysign(1.0, f_inner_value)
         return abs(f_inner_value)
 
@@ -403,9 +404,9 @@ class _Supercooled_minimize(object):
 
     @property
     def x(self):
-        from scipy.optimize import minimize
-        return minimize(self.f, x0=((self.xmin+self.xmax)/2,), bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
-      
+        return minimize(self.f, x0=((self.xmin+self.xmax)/2,),
+                        bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+
 
 # IAPWS-15 for supercooled liquid water
 def _Supercooled(T, P):

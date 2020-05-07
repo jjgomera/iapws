@@ -24,6 +24,10 @@ sys.path.insert(0, os.path.abspath('..'))
 import iapws  # noqa
 
 
+with open(os.path.join("..", 'VERSION')) as version_file:
+    __version__ = version_file.read().strip()
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -68,7 +72,6 @@ author = u'Juan José Gómez Romera'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-__version__ = "1.1.3"
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.
