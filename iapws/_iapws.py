@@ -29,10 +29,9 @@ Miscelaneous IAPWS standards. This module include:
 from __future__ import division
 
 from cmath import log as log_c
-from math import log, exp, tan, atan, acos, sin, pi, log10
+from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
 import warnings
 
-from scipy.optimize import minimize
 
 
 # Constants
@@ -385,6 +384,29 @@ def _Liquid(T, P=0.1):
     return propiedades
 
 
+class _Supercooled_minimize(object):
+
+    def __init__(self, L, omega, xmin, xmax):
+        self.L = L
+        self.omega = omega
+        self.xmin = xmin
+        self.xmax = xmax
+        self.f_inner_value_sign = 0.0
+        
+    def f(self, x):
+        f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x) 
+        self.f_inner_value_sign = copysign(1.0, f_inner_value)
+        return abs(f_inner_value)
+
+    def jac(self, x):
+        return self.f_inner_value_sign*(1/(x*(1 - x)) - 2*self.omega)
+
+    @property
+    def x(self):
+        from scipy.optimize import minimize
+        return minimize(self.f, x0=((self.xmin+self.xmax)/2,), bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+      
+
 # IAPWS-15 for supercooled liquid water
 def _Supercooled(T, P):
     """Guideline on thermodynamic properties of supercooled water
@@ -510,10 +532,7 @@ def _Supercooled(T, P):
         xmin = 0.99*exp(-50/49*L-omega)
         xmax = min(1.1*exp(-L-omega), 0.0101)
 
-    def f(x):
-        return abs(L+log(x/(1-x))+omega*(1-2*x))
-
-    x = minimize(f, ((xmin+xmax)/2,), bounds=((xmin, xmax),))["x"][0]
+    x = _Supercooled_minimize(L=L, omega=omega, xmin=xmin, xmax=xmax).x
 
     # Eq 12
     fi = 2*x-1
