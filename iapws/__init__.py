@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
 
 from ._iapws import (_Ice, _Sublimation_Pressure, _Melting_Pressure,  # noqa
                      _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive)
@@ -10,6 +11,9 @@ from .iapws08 import SeaWater  # noqa
 from .humidAir import HumidAir  # noqa
 from .ammonia import H2ONH3  # noqa
 
+basepath = os.path.dirname(os.path.dirname(__file__))
+with open(os.path.join(basepath, 'VERSION')) as version_file:
+    __version__ = version_file.read().strip()
 
 __doi__ = {
     "R1-76":
