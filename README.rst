@@ -58,11 +58,11 @@ In debian you can find in official repositories in jessie, testing and sid. In u
 
 	pip install iapws
  
-or directly cloning the github repository::
+or directly from the github repository::
 
-    git clone https://github.com/jjgomera/iapws.git
+    pip install git+https://github.com/jjgomera/iapws.git
 
-and adding the folder to a python path. This is the recommended option to have the latest version.
+This is the recommended option to have the latest version.
 
 
 documentation
