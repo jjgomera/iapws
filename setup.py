@@ -14,7 +14,7 @@ setup(
     name='iapws',
     version=__version__,
     packages=['iapws'],
-    package_data={'': ['LICENSE']},
+    include_package_data=True,
     author='jjgomera',
     author_email='jjgomera@gmail.com',
     url='https://github.com/jjgomera/iapws',
