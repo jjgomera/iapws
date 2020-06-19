@@ -1,9 +1,10 @@
 from setuptools import setup
 
 import io  # for backwards compatibility with Python 2
+import os
 
 
-with open('VERSION') as version_file:
+with open(os.path.join("iapws", "VERSION")) as version_file:
     __version__ = version_file.read().strip()
 
 with io.open('README.rst', encoding="utf8") as file:

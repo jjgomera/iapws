@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath('..'))
 import iapws  # noqa
 
 
-with open(os.path.join("..", 'VERSION')) as version_file:
+with open(os.path.join("..", "iapws", "VERSION")) as version_file:
     __version__ = version_file.read().strip()
 
 
