@@ -205,6 +205,7 @@ class NH3(MEoS):
 
 
 class H2ONH3(object):
+    """Ammonia-water mixtures."""
 
     # TODO: Add equilibrium routine
 
