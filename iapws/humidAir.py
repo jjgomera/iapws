@@ -222,8 +222,10 @@ def _fugacity(T, P, x):
 
 
 class MEoSBlend(MEoS):
-    """Special meos class to implement pseudocomponent blend and defining its
-    ancillary dew and bubble point"""
+    """
+    Special meos class to implement pseudocomponent blend and defining its
+    ancillary dew and bubble point
+    """
     @classmethod
     def _dewP(cls, T):
         """Using ancillary equation return the pressure of dew point"""
@@ -685,8 +687,10 @@ class HumidAir(object):
         self.RH = (1-self.xa)/(1-self.xa_sat)
 
     def derivative(self, z, x, y):
-        """Wrapper derivative for custom derived properties
-        where x, y, z can be: P, T, v, rho, u, h, s, g, a"""
+        """
+        Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, rho, u, h, s, g, a
+        """
         return deriv_G(self, z, x, y, self)
 
     def _eq(self, T, P):

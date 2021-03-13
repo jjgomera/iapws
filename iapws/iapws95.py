@@ -1553,8 +1553,10 @@ class MEoS(_fase):
             fase.n = None
 
     def derivative(self, z, x, y, fase):
-        """Wrapper derivative for custom derived properties
-        where x, y, z can be: P, T, v, rho, u, h, s, g, a"""
+        """
+        Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, rho, u, h, s, g, a
+        """
         return deriv_H(self, z, x, y, fase)
 
     def _saturation(self, T):
@@ -2191,8 +2193,10 @@ class MEoS(_fase):
 
 
 def mainClassDoc():
-    """Function decorator used to automatic adiction of base class MEoS in
-    subclass __doc__"""
+    """
+    Function decorator used to automatic adiction of base class MEoS in
+    subclass __doc__
+    """
     def decorator(f):
         # __doc__ is only writable in python3.
         # The doc build must be done with python3 so this snnippet do the work
