@@ -1224,6 +1224,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS95, **{"P": 25, "x": 1})
 
     def test_D2O(self):
+        """Tables 6-8, page 12-13."""
         # Table 6, pag 12"""
         fluid = D2O()
 
@@ -2091,6 +2092,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _critNaCl, 0.2)
 
     def test_Henry(self):
+        """Table 6, Henry constants."""
         # Table 6 for Henry constants
         self.assertRaises(NotImplementedError, _Henry, *(300, "He", "He"))
         self.assertRaises(NotImplementedError, _Henry, *(300, "SF6", "D2O"))
@@ -2276,6 +2278,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Conductivity(1100, 473.15), 9), 22.8e-6)
 
     def test_virial(self):
+        """Tables 7 & 8, page 10"""
         # Table 7, page 10
         st = _virial(200)
         self.assertEqual(round(st["Baa"], 13), -0.392722567e-4)
@@ -2317,6 +2320,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _fugacity, *(190, 1, 0.1))
 
     def test_Air(self):
+        """Tables A1 & A2, page 363 & 366."""
         # Table A1, Pag 363
         self.assertEqual(round(Air._bubbleP(59.75), 6), 0.005265)
         self.assertEqual(round(Air._bubbleP(59.75), 6), 0.005265)
@@ -2690,6 +2694,7 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, st._thermo, *(235, st.Tc, st))
 
     def test_AmmoniaVisco(self):
+        """Appendix II & III, page 1664 & 1667."""
         # Appendix II, pag 1664
         st = NH3(T=680, P=0.1)
         self.assertEqual(round(st.mu*1e6, 2), 24.66)
@@ -2721,7 +2726,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(st.Liquid.mu*1e6, 2), 39.20)
 
     def test_nh3h2o(self):
-
+        """Test outstanding problems in H2ONH3."""
         # Range of validity
         Tt1 = Ttr(0)
         Tt2 = Ttr(0.5)
