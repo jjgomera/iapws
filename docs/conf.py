@@ -312,4 +312,3 @@ numpydoc_class_members_toctree = False
 
 # Autosummary configuration
 autosummary_generate = True
-
