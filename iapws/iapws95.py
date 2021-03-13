@@ -150,7 +150,7 @@ def _phird(tau, delta, coef):
     g3 = coef.get("gamma3", [])
     for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
         fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                d/delta-2*a*(delta-e))
+            d/delta-2*a*(delta-e))
 
     # Non analitic terms
     nr4 = coef.get("nr4", [])
@@ -230,7 +230,7 @@ def _phirt(tau, delta, coef):
     g3 = coef.get("gamma3", [])
     for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
         firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                t/tau-2*b*(tau-g))
+            t/tau-2*b*(tau-g))
 
     # Non analitic terms
     nr4 = coef.get("nr4", [])
@@ -1822,16 +1822,16 @@ class MEoS(_fase):
         for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
             fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
             fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    d/delta-2*a*(delta-e))
+                d/delta-2*a*(delta-e))
             firdd += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2 -
-                    4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
+                -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2 -
+                4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
             firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    t/tau-2*b*(tau-g))
+                t/tau-2*b*(tau-g))
             firtt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    (t/tau-2*b*(tau-g))**2-t/tau**2-2*b)
+                (t/tau-2*b*(tau-g))**2-t/tau**2-2*b)
             firdt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    t/tau-2*b*(tau-g))*(d/delta-2*a*(delta-e))
+                t/tau-2*b*(tau-g))*(d/delta-2*a*(delta-e))
 
         # Non analitic terms
         nr4 = self._constants.get("nr4", [])
@@ -1936,11 +1936,11 @@ class MEoS(_fase):
         g3 = self._constants.get("gamma3", [])
         for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
             B += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    d/delta-2*a*(delta-e))
+                d/delta-2*a*(delta-e))
             C += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    -2*a*delta**d+4*a**2*delta**d*(
-                        delta-e)**2-4*d*a*delta**2*(
-                            delta-e)+d*2*delta)
+                -2*a*delta**d+4*a**2*delta**d*(
+                    delta-e)**2-4*d*a*delta**2*(
+                        delta-e)+d*2*delta)
 
         # Non analitic terms
         nr4 = self._constants.get("nr4", [])
