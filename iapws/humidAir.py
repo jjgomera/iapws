@@ -226,6 +226,7 @@ class MEoSBlend(MEoS):
     Special meos class to implement pseudocomponent blend and defining its
     ancillary dew and bubble point
     """
+
     @classmethod
     def _dewP(cls, T):
         """Using ancillary equation return the pressure of dew point"""
@@ -267,6 +268,7 @@ class Air(MEoSBlend):
     2000 K at Pressures to 2000 MPa. J. Phys. Chem. Ref. Data 29, 331 (2000).
     http://dx.doi.org/10.1063/1.1285884
     """
+
     name = "air"
     CASNumber = "1"
     formula = "N2+Ar+O2"
@@ -568,6 +570,7 @@ class HumidAir(object):
         * HR: Humidity ratio, [-]
         * RH: Relative humidity, [-]
     """
+
     kwargs = {"T": 0.0,
               "P": 0.0,
               "rho": 0.0,
