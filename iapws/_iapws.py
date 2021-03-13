@@ -290,38 +290,38 @@ def _Liquid(T, P=0.1):
     n = [None, 4, 5, 7, None, None, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
     m = [None, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(1, 4)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(1, 5)])
+    suma1 = sum(a[i]*alfa**n[i] for i in range(1, 4))
+    suma2 = sum(b[i]*beta**m[i] for i in range(1, 5))
     go = R*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(6, 11)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(5, 11)])
+    suma1 = sum(a[i]*alfa**n[i] for i in range(6, 11))
+    suma2 = sum(b[i]*beta**m[i] for i in range(5, 11))
     vo = R*Tr/Po/1000*(a[5]+suma1+suma2)
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(11, 16)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(11, 18)])
+    suma1 = sum(a[i]*alfa**n[i] for i in range(11, 16))
+    suma2 = sum(b[i]*beta**m[i] for i in range(11, 18))
     vpo = R*Tr/Po**2/1000*(suma1+suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5)])
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5))
     so = -R*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
 
-    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4)])
-    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5)])
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5))
     cpo = -R*(c[3]+tau*suma1+tau*suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11)])
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11))
     vto = R/Po/1000*(suma1-suma2)
 
     # This properties are only neccessary for computing thermodynamic
     # properties at pressures different from 0.1 MPa
-    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11)])
-    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11)])
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11))
     vtto = R/Tr/Po/1000*(suma1+suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18)])
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18))
     vpto = R/Po**2/1000*(suma1-suma2)
 
     if P != 0.1:
@@ -367,19 +367,19 @@ def _Liquid(T, P=0.1):
     a = [None, 280.68, 511.45, 61.131, 0.45903]
     b = [None, -1.9, -7.7, -19.6, -40]
     T_ = T/300
-    mu = sum([a[i]*T_**b[i] for i in range(1, 5)])/1e6
+    mu = sum(a[i]*T_**b[i] for i in range(1, 5))/1e6
     propiedades["mu"] = mu
 
     # Thermal conductivity correlation, Eq 8
     c = [None, 1.6630, -1.7781, 1.1567, -0.432115]
     d = [None, -1.15, -3.4, -6.0, -7.6]
-    k = sum([c[i]*T_**d[i] for i in range(1, 5)])
+    k = sum(c[i]*T_**d[i] for i in range(1, 5))
     propiedades["k"] = k
 
     # Dielectric constant correlation, Eq 9
     e = [None, -43.7527, 299.504, -399.364, 221.327]
     f = [None, -0.05, -1.47, -2.11, -2.31]
-    epsilon = sum([e[i]*T_**f[i] for i in range(1, 5)])
+    epsilon = sum(e[i]*T_**f[i] for i in range(1, 5))
     propiedades["epsilon"] = epsilon
 
     return propiedades
@@ -735,7 +735,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
 
     # Eq 11
     H = [1.67752, 2.20462, 0.6366564, -0.241605]
-    mu0 = 100*Tr**0.5/sum([Hi/Tr**i for i, Hi in enumerate(H)])
+    mu0 = 100*Tr**0.5/sum(Hi/Tr**i for i, Hi in enumerate(H))
 
     # Eq 12
     I = [0, 1, 2, 3, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 0, 1, 0, 3, 4, 3, 5]
@@ -744,7 +744,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
            0.188797e1, 0.126613e1, 0.120573, -0.281378, -0.906851, -0.772479,
            -0.489837, -0.257040, 0.161913, 0.257399, -0.325372e-1, 0.698452e-1,
            0.872102e-2, -0.435673e-2, -0.593264e-3]
-    mu1 = exp(Dr*sum([(1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(I, J, Hij)]))
+    mu1 = exp(Dr*sum((1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(I, J, Hij)))
 
     # Critical enhancement
     if fase and drho:
@@ -824,7 +824,7 @@ def _ThCond(rho, T, fase=None, drho=None):
 
     # Eq 16
     no = [2.443221e-3, 1.323095e-2, 6.770357e-3, -3.454586e-3, 4.096266e-4]
-    k0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+    k0 = Tr**0.5/sum(n/Tr**i for i, n in enumerate(no))
 
     # Eq 17
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4,
@@ -837,7 +837,7 @@ def _ThCond(rho, T, fase=None, drho=None):
            -1.40944978, 0.275418278, -0.0205938816, -1.21051378, 1.60812989,
            -0.621178141, 0.0716373224, -2.7203370, 4.57586331, -3.18369245,
            1.1168348, -0.19268305, 0.012913842]
-    k1 = exp(d*sum([(1/Tr-1)**i*n*(d-1)**j for i, j, n in zip(I, J, nij)]))
+    k1 = exp(d*sum((1/Tr-1)**i*n*(d-1)**j for i, j, n in zip(I, J, nij)))
 
     # Critical enhancement
     if fase:
@@ -861,7 +861,7 @@ def _ThCond(rho, T, fase=None, drho=None):
             else:
                 ai = [1.11999926419994, 0.595748562571649, 9.88952565078920,
                       -10.3255051147040, 4.66861294457414, -0.503243546373828]
-            drho = 1/sum([a*d**i for i, a in enumerate(ai)])*rhoc/Pc
+            drho = 1/sum(a*d**i for i, a in enumerate(ai))*rhoc/Pc
 
         DeltaX = d*(Pc/rhoc*fase.drhodP_T-Pc/rhoc*drho*1.5/Tr)
         if DeltaX < 0:
@@ -1142,8 +1142,8 @@ def _Conductivity(rho, T):
     B = [16., 11.6, 3.26e-4, -2.3e-6, 1.1e-8]
     t = T-273.15
 
-    Loo = A[0]-1/(1/A[1]+sum([A[i+2]*t**(i+1) for i in range(4)]))      # Eq 5
-    rho_h = B[0]-1/(1/B[1]+sum([B[i+2]*t**(i+1) for i in range(3)]))    # Eq 6
+    Loo = A[0]-1/(1/A[1]+sum(A[i+2]*t**(i+1) for i in range(4)))      # Eq 5
+    rho_h = B[0]-1/(1/B[1]+sum(B[i+2]*t**(i+1) for i in range(3)))    # Eq 6
 
     # Eq 4
     L_o = (rho_h-rho_)*Loo/rho_h
@@ -1185,7 +1185,7 @@ def _D2O_Viscosity(rho, T):
     rhor = rho/358.0
 
     no = [1.0, 0.940695, 0.578377, -0.202044]
-    fi0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+    fi0 = Tr**0.5/sum(n/Tr**i for i, n in enumerate(no))
 
     Li = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 5, 0, 1, 2, 3, 0, 1, 3,
           5, 0, 1, 5, 3]
@@ -1235,11 +1235,11 @@ def _D2O_ThCond(rho, T):
     tau = Tr/(abs(Tr-1.1)+1.1)
 
     no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
-    Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
+    Lo = sum(Li*Tr**i for i, Li in enumerate(no))
 
     nr = [483.656, -191.039, 73.0358, -7.57467]
     Lr = -167.31*(1-exp(-2.506*rhor))+sum(
-        [Li*rhor**(i+1) for i, Li in enumerate(nr)])
+        Li*rhor**(i+1) for i, Li in enumerate(nr))
 
     f1 = exp(0.144847*Tr-5.64493*Tr**2)
     f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
@@ -1484,7 +1484,7 @@ def _Henry(T, gas, liquid="H2O"):
     else:
         ai = [-7.896657, 24.73308, -27.81128, 9.355913, -9.220083]
         bi = [1, 1.89, 2, 3, 3.6]
-    ps = Pc*exp(1/Tr*sum([a*tau**b for a, b in zip(ai, bi)]))
+    ps = Pc*exp(1/Tr*sum(a*tau**b for a, b in zip(ai, bi)))
 
     # Select values from Table 2
     par = {
@@ -1609,7 +1609,7 @@ def _Kvalue(T, gas, liquid="H2O"):
         ci = [2.7072, 0.58662, -1.3069, -45.663]
         di = [0.374, 1.45, 2.6, 12.3]
         q = -0.024552
-    f = sum([c*tau**d for c, d in zip(ci, di)])
+    f = sum(c*tau**d for c, d in zip(ci, di))
 
     # Select values from Table 2
     par = {"He": (2267.4082, -2.9616, -3.2604, 7.8819),

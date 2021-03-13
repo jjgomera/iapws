@@ -114,7 +114,7 @@ class NH3(MEoS):
 
         # Eq 4
         a = [4.99318220, -0.61122364, 0.0, 0.18535124, -0.11160946]
-        omega = exp(sum([ai*log(T_)**i for i, ai in enumerate(a)]))
+        omega = exp(sum(ai*log(T_)**i for i, ai in enumerate(a)))
 
         # Eq 2, Zero-Density Limit
         muo = 2.1357*(T*self.M)**0.5/sigma**2/omega
@@ -124,7 +124,7 @@ class NH3(MEoS):
               -0.13019164e5, 0.33414230e5, -0.58711743e5, 0.71426686e5,
               -0.59834012e5, 0.33652741e5, -0.1202735e5, 0.24348205e4,
               -0.20807957e3]
-        Bn = 0.6022137*sigma**3*sum([c*T_**(-i/2) for i, c in enumerate(cv)])
+        Bn = 0.6022137*sigma**3*sum(c*T_**(-i/2) for i, c in enumerate(cv))
         # Eq 7
         mub = Bn*muo*rho
 
@@ -133,7 +133,7 @@ class NH3(MEoS):
                1.67668649e-4, -1.49710093e-4, 0.77012274e-4]
         ji = [2, 4, 0, 1, 2, 3, 4]
         ii = [2, 2, 3, 3, 4, 4, 4]
-        mur = sum([d/T_**j*rho**i for d, j, i in zip(dij, ji, ii)])
+        mur = sum(d/T_**j*rho**i for d, j, i in zip(dij, ji, ii))
 
         # Eq 1
         mu = muo + mub + mur
@@ -172,11 +172,11 @@ class NH3(MEoS):
 
         # Eq 6
         no = [0.3589e-1, -0.1750e-3, 0.4551e-6, 0.1685e-9, -0.4828e-12]
-        Lo = sum([n*T**i for i, n in enumerate(no)])
+        Lo = sum(n*T**i for i, n in enumerate(no))
 
         # Eq 7
         nb = [0.16207e-3, 0.12038e-5, -0.23139e-8, 0.32749e-11]
-        L_ = sum([n*rho**(i+1) for i, n in enumerate(nb)])
+        L_ = sum(n*rho**(i+1) for i, n in enumerate(nb))
 
         # Critical enchancement
         t = abs(T-405.4)/405.4
