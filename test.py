@@ -2740,6 +2740,9 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st["u"], 5), 0)
         # self.assertEqual(round(st["s"], 5), 0)
 
+        # Suppress flake8 error until tests are working.
+        self.assertIsInstance(st["u"], float)
+
         nh3 = NH3(T=NH3.Tt, x=0)
         st = cl._prop(nh3.rho, NH3.Tt, 1)
         # self.assertEqual(round(st["u"], 5), 0)
