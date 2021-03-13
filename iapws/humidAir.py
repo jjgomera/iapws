@@ -19,7 +19,7 @@ import warnings
 
 from scipy.optimize import fsolve
 
-from ._iapws import M as Mw
+from ._iapws import M as MW
 from ._iapws import _Ice
 from ._utils import deriv_G
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
@@ -633,7 +633,7 @@ class HumidAir(object):
             A = self.kwargs["A"]
         elif self._composition == "xa":
             xa = self.kwargs["xa"]
-            A = xa/(1-(1-xa)*(1-Mw/Ma))
+            A = xa/(1-(1-xa)*(1-MW/Ma))
 
         # Thermodynamic definition
         if self._mode == "TP":
@@ -681,7 +681,7 @@ class HumidAir(object):
 
         # Saturation related properties
         A_sat = self._eq(self.T, self.P)
-        self.xa_sat = A_sat*Mw/Ma/(1-A_sat*(1-Mw/Ma))
+        self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
         self.RH = (1-self.xa)/(1-self.xa_sat)
 
     def derivative(self, z, x, y):
@@ -809,9 +809,9 @@ class HumidAir(object):
         prop = {}
         prop["mu"] = fav["fira"]
         prop["muw"] = fav["fir"]+rho*fav["fird"]-A*fav["fira"]
-        prop["M"] = 1/((1-A)/Mw+A/Ma)
+        prop["M"] = 1/((1-A)/MW+A/Ma)
         prop["HR"] = 1/A-1
-        prop["xa"] = A*Mw/Ma/(1-A*(1-Mw/Ma))
+        prop["xa"] = A*MW/Ma/(1-A*(1-MW/Ma))
         prop["xw"] = 1-prop["xa"]
         return prop
 
