@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
 import io  # for backwards compatibility with Python 2
