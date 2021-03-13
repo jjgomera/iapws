@@ -14,7 +14,7 @@ from __future__ import division
 from math import exp, log, pi
 import warnings
 
-from scipy.constants import Boltzmann as kb
+from scipy.constants import Boltzmann
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
 
 
@@ -183,7 +183,7 @@ class NH3(MEoS):
         dPT = 1e5*(2.18-0.12/exp(17.8*t))
         nb = 1e-5*(2.6+1.6*t)
 
-        DL = 1.2*kb*T**2/6/pi/nb/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
+        DL = 1.2*Boltzmann*T**2/6/pi/nb/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
             0.423e-8/t**1.24*(1+t**0.5/0.7)
 
         # Add correction for entire range of temperature, Eq 10
