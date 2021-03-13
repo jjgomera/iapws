@@ -63,6 +63,7 @@ def getphase(Tc, Pc, T, P, x, region):
 
 class _fase(object):
     """Class to implement a null phase"""
+
     v = None
     rho = None
 

@@ -161,6 +161,7 @@ class SeaWater(object):
     >>> salt.haline
     0.7311487666026304
     """
+
     kwargs = {"T": 0.0,
               "P": 0.0,
               "S": None,

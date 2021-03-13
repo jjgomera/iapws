@@ -30,6 +30,7 @@ class NH3(MEoS):
     R134a, R152a, and R123. Springer-Verlag, Berlin, 1994.
     http://doi.org/10.1007/978-3-642-79400-1
     """
+
     name = "ammonia"
     CASNumber = "7664-41-7"
     formula = "NH3"

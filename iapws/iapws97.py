@@ -4314,6 +4314,7 @@ class IAPWS97(object):
     >>> water.cp0, water.cv0, water.h0, water.s0, water.w0
     1.8714 1.4098 2594.66 9.471 444.93
     """
+
     kwargs = {"T": 0.0,
               "P": 0.0,
               "x": None,
@@ -4723,29 +4724,34 @@ class IAPWS97(object):
 
 class IAPWS97_PT(IAPWS97):
     """Derivated class for direct P and T input"""
+
     def __init__(self, P, T):
         IAPWS97.__init__(self, T=T, P=P)
 
 
 class IAPWS97_Ph(IAPWS97):
     """Derivated class for direct P and h input"""
+
     def __init__(self, P, h):
         IAPWS97.__init__(self, P=P, h=h)
 
 
 class IAPWS97_Ps(IAPWS97):
     """Derivated class for direct P and s input"""
+
     def __init__(self, P, s):
         IAPWS97.__init__(self, P=P, s=s)
 
 
 class IAPWS97_Px(IAPWS97):
     """Derivated class for direct P and x input"""
+
     def __init__(self, P, x):
         IAPWS97.__init__(self, P=P, x=x)
 
 
 class IAPWS97_Tx(IAPWS97):
     """Derivated class for direct T and x input"""
+
     def __init__(self, T, x):
         IAPWS97.__init__(self, T=T, x=x)
