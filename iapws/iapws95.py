@@ -15,7 +15,7 @@ import os
 import platform
 import warnings
 
-from scipy import exp, log, ndarray
+from numpy import exp, log, ndarray
 from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
