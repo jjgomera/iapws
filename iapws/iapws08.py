@@ -662,7 +662,7 @@ def _Tension_SeaWater(T, S):
         if S < 0 or S > 0.131:
             raise NotImplementedError("Incoming out of bound")
     else:
-            raise NotImplementedError("Incoming out of bound")
+        raise NotImplementedError("Incoming out of bound")
 
     sw = _Tension(T)
     sigma = sw*(1+3.766e-1*S+2.347e-3*S*(T-273.15))
