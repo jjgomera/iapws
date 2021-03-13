@@ -1042,8 +1042,8 @@ def _Region2(T, P):
     propiedades["h"] = Tr*(got+grt)*R*T
     propiedades["s"] = R*(Tr*(got+grt)-(go+gr))
     propiedades["cp"] = -R*Tr**2*(gott+grtt)
-    propiedades["cv"] = R*(-Tr**2*(gott+grtt)-(1+Pr*grp-Tr*Pr*grpt)**2 /
-                           (1-Pr**2*grpp))
+    propiedades["cv"] = R*(-Tr**2*(gott+grtt)-(1+Pr*grp-Tr*Pr*grpt)**2
+                           / (1-Pr**2*grpp))
     propiedades["w"] = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
         1+Pr*grp-Tr*Pr*grpt)**2/Tr**2/(gott+grtt)))**0.5
     propiedades["alfav"] = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
@@ -1856,8 +1856,8 @@ def _Region3(rho, T):
     propiedades["s"] = R*(Tr*gt-g)
     propiedades["cp"] = R*(-Tr**2*gtt+(d*gd-d*Tr*gdt)**2/(2*d*gd+d**2*gdd))
     propiedades["cv"] = -R*Tr**2*gtt
-    propiedades["w"] = sqrt(R*T*1000*(2*d*gd+d**2*gdd-(d*gd-d*Tr*gdt)**2 /
-                                      Tr**2/gtt))
+    propiedades["w"] = sqrt(R*T*1000*(2*d*gd+d**2*gdd-(d*gd-d*Tr*gdt)**2
+                                      / Tr**2/gtt))
     propiedades["alfav"] = (gd-Tr*gdt)/(2*gd+d*gdd)/T
     propiedades["kt"] = 1/(2*d*gd+d**2*gdd)/rho/R/T*1000
     propiedades["region"] = 3
@@ -3755,8 +3755,8 @@ def _Region5(T, P):
     propiedades["h"] = Tr*(got+grt)*R*T
     propiedades["s"] = R*(Tr*(got+grt)-(go+gr))
     propiedades["cp"] = -R*Tr**2*(gott+grtt)
-    propiedades["cv"] = R*(-Tr**2*(gott+grtt)+((gop+grp)-Tr*(gopt+grpt))**2 /
-                           (gopp+grpp))
+    propiedades["cv"] = R*(-Tr**2*(gott+grtt)+((gop+grp)-Tr*(gopt+grpt))**2
+                           / (gopp+grpp))
     propiedades["w"] = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
         1+Pr*grp-Tr*Pr*grpt)**2/Tr**2/(gott+grtt)))**0.5
     propiedades["alfav"] = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
