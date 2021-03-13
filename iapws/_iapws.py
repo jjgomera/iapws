@@ -557,8 +557,8 @@ def _Supercooled(T, P):
     prop["g"] = phir+(tau+1)*(x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))
 
     # Eq 14
-    prop["s"] = -R*((tau+1)/2*Lt*(fi+1) +
-                    (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
+    prop["s"] = -R*((tau+1)/2*Lt*(fi+1)
+                    + (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
 
     # Basic derived state properties
     prop["h"] = prop["g"]+T*prop["s"]
@@ -569,8 +569,8 @@ def _Supercooled(T, P):
     prop["xkappa"] = prop["rho"]/rho0**2/R*1000/Tll*(
         (tau+1)/2*(Xi*(Lp-omega0*fi)**2-(fi+1)*Lpp)-phirpp)
     prop["alfap"] = prop["rho"]/rho0/Tll*(
-        Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2 -
-        (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
+        Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2
+        - (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
     prop["cp"] = -R*(tau+1)*(Lt*(fi+1)+(tau+1)/2*(Ltt*(fi+1)-Lt**2*Xi)+phirtt)
 
     # Eq 16
@@ -691,8 +691,8 @@ def _Melting_Pressure(T, ice="Ih"):
         Tref = 355
         Pref = 2216.000
         Tita = T/Tref
-        P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5) +
-                     0.806106e-7*(1-Tita**22))
+        P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5)
+                     + 0.806106e-7*(1-Tita**22))
     else:
         raise NotImplementedError("Incoming out of bound")
     return P

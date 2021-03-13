@@ -277,10 +277,10 @@ class H2ONH3(object):
         prop["a"] = prop["u"]-T*prop["s"]
         cvR = -tau0**2*fiott - tau**2*firtt
         prop["cv"] = R*cvR
-        prop["cp"] = R*(cvR+(1+delta*fird-delta*tau*firdt)**2 /
-                        (1+2*delta*fird+delta**2*firdd))
-        prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd +
-                               (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
+        prop["cp"] = R*(cvR+(1+delta*fird-delta*tau*firdt)**2
+                        / (1+2*delta*fird+delta**2*firdd))
+        prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd
+                               + (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
         prop["fugH2O"] = Z*exp(fir+delta*fird-x*F)
         prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
         return prop
@@ -424,12 +424,12 @@ class H2ONH3(object):
         # Density reducing value, Eq 5
         b = 0.8978069
         rhoc12 = 1/(1.2395117/2*(1/IAPWS95.rhoc+1/NH3.rhoc))
-        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc +
-                  2*x*(1-x**b)/rhoc12)
-        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12 +
-                   2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
-                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc +
-                       (1-x)**2/IAPWS95.rhoc)**2
+        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc
+                  + 2*x*(1-x**b)/rhoc12)
+        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12
+                   + 2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
+                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc
+                       + (1-x)**2/IAPWS95.rhoc)**2
 
         tau = Tn/T
         delta = rho/rhon

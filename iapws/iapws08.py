@@ -219,8 +219,8 @@ class SeaWater(object):
         self.xkappa = -prop["gpp"]/prop["gp"]
         self.ks = (prop["gtp"]**2-prop["gtt"]*prop["gpp"])/prop["gp"] / \
             prop["gtt"]
-        self.w = prop["gp"]*(prop["gtt"]*1000/(prop["gtp"]**2 -
-                             prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
+        self.w = prop["gp"]*(prop["gtt"]*1000/(
+            prop["gtp"]**2 - prop["gtt"]*1000*prop["gpp"]*1e-6))**0.5
 
         # Thermal conductivity calculation
         if "thcond" in pw:
@@ -763,8 +763,8 @@ def _critNaCl(x):
         raise NotImplementedError("Incoming out of bound")
 
     T1 = Tc*(1 + 2.3e1*x - 3.3e2*x**1.5 - 1.8e3*x**2)
-    T2 = Tc*(1 + 1.757e1*x - 3.026e2*x**1.5 + 2.838e3*x**2 - 1.349e4*x**2.5 +
-             3.278e4*x**3 - 3.674e4*x**3.5 + 1.437e4*x**4)
+    T2 = Tc*(1 + 1.757e1*x - 3.026e2*x**1.5 + 2.838e3*x**2 - 1.349e4*x**2.5
+             + 3.278e4*x**3 - 3.674e4*x**3.5 + 1.437e4*x**4)
     f1 = (abs(10000*x-10-1)-abs(10000*x-10+1))/4+0.5
     f2 = (abs(10000*x-10+1)-abs(10000*x-10-1))/4+0.5
 
@@ -772,9 +772,9 @@ def _critNaCl(x):
     tc = f1*T1+f2*T2
 
     # Eq 7
-    rc = rhoc*(1 + 1.7607e2*x - 2.9693e3*x**1.5 + 2.4886e4*x**2 -
-               1.1377e5*x**2.5 + 2.8847e5*x**3 - 3.8195e5*x**3.5 +
-               2.0633e5*x**4)
+    rc = rhoc*(1 + 1.7607e2*x - 2.9693e3*x**1.5 + 2.4886e4*x**2
+               - 1.1377e5*x**2.5 + 2.8847e5*x**3 - 3.8195e5*x**3.5
+               + 2.0633e5*x**4)
 
     # Eq 8
     DT = tc-Tc

@@ -167,8 +167,8 @@ def _phird(tau, delta, coef):
         Fd = -2*C*F*(delta-1)
 
         Delta = Tita**2+B*((delta-1)**2)**a
-        Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1) +
-                            2*B*a*((delta-1)**2)**(a-1))
+        Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
+                            + 2*B*a*((delta-1)**2)**(a-1))
         DeltaBd = b*Delta**(b-1)*Deltad
 
         fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
@@ -1486,8 +1486,8 @@ class MEoS(_fase):
         fase.g = fase.h-self.T*fase.s
 
         fase.Z = self.P*fase.v/self.T/self.R*1e3
-        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"] -
-                      log(1+estado["delta"]*estado["fird"]))
+        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"]
+                      - log(1+estado["delta"]*estado["fird"]))
         fase.f = fase.fi*self.P
         fase.cv = estado["cv"]
 
@@ -1824,8 +1824,8 @@ class MEoS(_fase):
             fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
                 d/delta-2*a*(delta-e))
             firdd += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2 -
-                4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
+                -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2
+                - 4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
             firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
                 t/tau-2*b*(tau-g))
             firtt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
@@ -1852,15 +1852,15 @@ class MEoS(_fase):
             Fdt = 4*C*D*F*(delta-1)*(tau-1)
 
             Delta = Tita**2+B*((delta-1)**2)**a
-            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1) +
-                                2*B*a*((delta-1)**2)**(a-1))
+            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
+                                + 2*B*a*((delta-1)**2)**(a-1))
             if delta == 1:
                 Deltadd = 0
             else:
                 Deltadd = Deltad/(delta-1)+(delta-1)**2*(
-                    4*B*a*(a-1)*((delta-1)**2)**(a-2) +
-                    2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2 +
-                    A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
+                    4*B*a*(a-1)*((delta-1)**2)**(a-2)
+                    + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
+                    + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
 
             DeltaBd = b*Delta**(b-1)*Deltad
             DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
@@ -1871,12 +1871,12 @@ class MEoS(_fase):
 
             fir += n*Delta**b*delta*F
             fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            firdd += n*(Delta**b*(2*Fd+delta*Fdd) + 2*DeltaBd*(F+delta*Fd) +
-                        DeltaBdd*delta*F)
+            firdd += n*(Delta**b*(2*Fd+delta*Fdd) + 2*DeltaBd*(F+delta*Fd)
+                        + DeltaBdd*delta*F)
             firt += n*delta*(DeltaBt*F+Delta**b*Ft)
             firtt += n*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b*Ftt)
-            firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft +
-                        DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
+            firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft
+                        + DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
 
         prop = {}
         prop["fir"] = fir
@@ -1957,9 +1957,9 @@ class MEoS(_fase):
             Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(
                 0.5/bt-1)+2*B_*a*((delta-1)**2)**(a-1))
             Deltadd = Deltad/(delta-1) + (delta-1)**2*(
-                4*B_*a*(a-1)*((delta-1)**2)**(a-2) +
-                2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2 +
-                A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
+                4*B_*a*(a-1)*((delta-1)**2)**(a-2)
+                + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
+                + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
             DeltaBd = b*Delta**(b-1)*Deltad
             DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
             F = exp(-C_*(delta-1)**2-D*(tau-1)**2)
@@ -1967,8 +1967,8 @@ class MEoS(_fase):
             Fdd = 2*C_*F*(2*C_*(delta-1)**2-1)
 
             B += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd) +
-                    DeltaBdd*delta*F)
+            C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd)
+                    + DeltaBdd*delta*F)
 
         prop = {}
         prop["B"] = B
@@ -2429,8 +2429,8 @@ class IAPWS95(MEoS):
         tau = self.Tc/T
         E = 0.278296458178592
         ep = self.Tc/130
-        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2 +
-                 tau**2/2/ep**3)
+        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2
+                 + tau**2/2/ep**3)
         fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
         fextt = E*(-1/tau+1/ep)**3
         return fex, fext, fextt

@@ -134,9 +134,9 @@ def _virial(T):
         exp(sum(b/T_**i for i, b in enumerate(bi)))
     # Eq T63
     Cawwtt = -1e-6*T_**2/T**2*((
-        sum(i*(i+1)*b*T_**(-i-2) for i, b in enumerate(bi)) +
-        sum(i*b*T_**(-i-1) for i, b in enumerate(bi))**2) *
-        exp(sum(b/T_**i for i, b in enumerate(bi))))
+        sum(i*(i+1)*b*T_**(-i-2) for i, b in enumerate(bi))
+        + sum(i*b*T_**(-i-1) for i, b in enumerate(bi))**2)
+        * exp(sum(b/T_**i for i, b in enumerate(bi))))
 
     # Virial coefficient for air, using too the general virial procedure
     air = Air()
@@ -491,8 +491,8 @@ class Air(MEoSBlend):
 
                 Xq = Xi/qd
                 # Eq 8
-                Omega = 2/pi*((fase.cp-fase.cv)/fase.cp*atan(Xq) +
-                              fase.cv/fase.cp*(Xq))
+                Omega = 2/pi*((fase.cp-fase.cv)/fase.cp*atan(Xq)
+                              + fase.cv/fase.cp*(Xq))
                 # Eq 9
                 Omega0 = 2/pi*(1-exp(-1/(1/Xq+Xq**2/3*rhoc**2/rho**2)))
 
@@ -771,8 +771,8 @@ class HumidAir(object):
         prop["xkappa"] = 1e3/(rho**2*(2*fav["fird"]+rho*fav["firdd"]))  # Eq T8
         prop["ks"] = 1000*fav["firtt"]/rho**2/(                         # Eq T9
             fav["firtt"]*(2*fav["fird"]+rho*fav["firdd"])-rho*fav["firdt"]**2)
-        prop["w"] = (rho**2*1000*(fav["firtt"]*fav["firdd"]-fav["firdt"]**2) /
-                     fav["firtt"]+2*rho*fav["fird"]*1000)**0.5         # Eq T10
+        prop["w"] = (rho**2*1000*(fav["firtt"]*fav["firdd"]-fav["firdt"]**2)
+                     / fav["firtt"]+2*rho*fav["fird"]*1000)**0.5        # Eq T10
         return prop
 
     def _coligative(self, rho, A, fav):
@@ -871,8 +871,8 @@ class HumidAir(object):
         # Eq T14
         prop["fird"] = (1-A)**2*fv["fird"]+A**2*fa["fird"]+fmix["fird"]
         # Eq T15
-        prop["firaa"] = rho*(2*fv["fird"]+rhov*fv["firdd"] +
-                             2*fa["fird"]+rhoa*fa["firdd"])+fmix["firaa"]
+        prop["firaa"] = rho*(2*fv["fird"]+rhov*fv["firdd"]
+                             + 2*fa["fird"]+rhoa*fa["firdd"])+fmix["firaa"]
         # Eq T16
         prop["firat"] = -fv["firt"]-rhov*fv["firdt"]+fa["firt"] + \
             rhoa*fa["firdt"]+fmix["firat"]
