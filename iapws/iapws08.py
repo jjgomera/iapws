@@ -341,7 +341,6 @@ class SeaWater(object):
     @classmethod
     def _saline(cls, T, P, S):
         """Eq 4"""
-
         # Check input in range of validity
         if T <= 261 or T > 353 or P <= 0 or P > 100 or S < 0 or S > 0.12:
             warnings.warn("Incoming out of bound")
@@ -653,7 +652,6 @@ def _Tension_SeaWater(T, S):
     IAPWS, Guideline on the Surface Tension of Seawater,
     http://www.iapws.org/relguide/Seawater-Surf.html
     """
-
     # Check input parameters
     if 248.15 < T < 274.15:
         if S < 0 or S > 0.038:
