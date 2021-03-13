@@ -625,6 +625,7 @@ def _ThCond_SeaWater(T, P, S):
     DL = a*(1000*S)**(1+b)
     return DL
 
+
 def _Tension_SeaWater(T, S):
     """Equation for the surface tension of seawater
 
@@ -670,6 +671,7 @@ def _Tension_SeaWater(T, S):
     sw = _Tension(T)
     sigma = sw*(1+3.766e-1*S+2.347e-3*S*(T-273.15))
     return sigma
+
 
 def _solNa2SO4(T, mH2SO4, mNaCl):
     """Equation for the solubility of sodium sulfate in aqueous mixtures of
