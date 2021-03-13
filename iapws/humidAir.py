@@ -286,7 +286,7 @@ class Air(MEoSBlend):
            "titao": [25.36365, 16.90741],
            "ao_exp2": [-0.197938904],
            "titao2": [87.31279],
-           "sum2": [2./3]
+           "sum2": [2./3],
            }
 
     _constants = {
