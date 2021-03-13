@@ -4714,8 +4714,10 @@ class IAPWS97(object):
             fase.n = None
 
     def derivative(self, z, x, y, fase):
-        """Wrapper derivative for custom derived properties
-        where x, y, z can be: P, T, v, u, h, s, g, a"""
+        """
+        Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, u, h, s, g, a
+        """
         return deriv_G(self, z, x, y, fase)
 
 

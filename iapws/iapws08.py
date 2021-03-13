@@ -252,8 +252,10 @@ class SeaWater(object):
             self.haline = None
 
     def derivative(self, z, x, y):
-        """Wrapper derivative for custom derived properties
-        where x, y, z can be: P, T, v, u, h, s, g, a"""
+        """
+        Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, u, h, s, g, a
+        """
         return deriv_G(self, z, x, y, self)
 
     @classmethod
@@ -289,8 +291,10 @@ class SeaWater(object):
 
     @classmethod
     def _waterSupp(cls, T, P):
-        """Get properties of pure water using the supplementary release SR7-09,
-        Table4 pag 6"""
+        """
+        Get properties of pure water using the supplementary release SR7-09,
+        Table4 pag 6
+        """
         tau = (T-273.15)/40
         pi = (P-0.101325)/100
 
