@@ -4330,6 +4330,7 @@ class IAPWS97(object):
         self.__call__(**kwargs)
 
     def __call__(self, **kwargs):
+        """Invoke the solver."""
         self.kwargs.update(kwargs)
 
         if self.calculable:
@@ -4361,6 +4362,7 @@ class IAPWS97(object):
         return self._thermo
 
     def calculo(self):
+        """Calculate procedure"""
         propiedades = None
         args = (self.kwargs[self._thermo[0]], self.kwargs[self._thermo[1]])
         if self._thermo == "TP":
@@ -4667,6 +4669,7 @@ class IAPWS97(object):
             self.Svap = vapor["s"]-liquido["s"]
 
     def fill(self, fase, estado):
+        """Fill phase properties"""
         fase.v = estado["v"]
         fase.rho = 1/fase.v
 
