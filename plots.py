@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+"""Generate various plots using IAPWS."""
 
 from math import pi, atan, log
 import matplotlib.pyplot as plt

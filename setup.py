@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Install IAPWS module using setuptools."""
+
 from setuptools import setup
 
 import io  # for backwards compatibility with Python 2

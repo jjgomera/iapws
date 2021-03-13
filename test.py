@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Test IAPWS mopdule."""
 
 from math import log
 import sys
