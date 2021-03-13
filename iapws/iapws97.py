@@ -4021,7 +4021,7 @@ def _Bound_hs(h, s):
     """
     region = None
     s13 = _Region1(623.15, 100)["s"]
-    s13s = _Region1(623.15,  Ps_623)["s"]
+    s13s = _Region1(623.15, Ps_623)["s"]
     sTPmax = _Region2(1073.15, 100)["s"]
     s2ab = _Region2(1073.15, 4)["s"]
 
