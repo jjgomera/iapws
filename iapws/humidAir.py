@@ -115,28 +115,28 @@ def _virial(T):
     ci = [66.5687, -238.834, -176.755]
     di = [-0.237, -1.048, -3.183]
 
-    Baw = 1e-6*sum([c*T_**d for c, d in zip(ci, di)])                  # Eq 7
-    Caaw = 1e-6*sum([a/T_**i for i, a in enumerate(ai)])               # Eq 8
-    Caww = -1e-6*exp(sum([b/T_**i for i, b in enumerate(bi)]))         # Eq 9
+    Baw = 1e-6*sum(c*T_**d for c, d in zip(ci, di))                  # Eq 7
+    Caaw = 1e-6*sum(a/T_**i for i, a in enumerate(ai))               # Eq 8
+    Caww = -1e-6*exp(sum(b/T_**i for i, b in enumerate(bi)))         # Eq 9
 
     # Eq T56
-    Bawt = 1e-6*T_/T*sum([c*d*T_**(d-1) for c, d in zip(ci, di)])
+    Bawt = 1e-6*T_/T*sum(c*d*T_**(d-1) for c, d in zip(ci, di))
     # Eq T57
     Bawtt = 1e-6*T_**2/T**2*sum(
-        [c*d*(d-1)*T_**(d-2) for c, d in zip(ci, di)])
+        c*d*(d-1)*T_**(d-2) for c, d in zip(ci, di))
     # Eq T59
-    Caawt = -1e-6*T_/T*sum([i*a*T_**(-i-1) for i, a in enumerate(ai)])
+    Caawt = -1e-6*T_/T*sum(i*a*T_**(-i-1) for i, a in enumerate(ai))
     # Eq T60
     Caawtt = 1e-6*T_**2/T**2*sum(
-        [i*(i+1)*a*T_**(-i-2) for i, a in enumerate(ai)])
+        i*(i+1)*a*T_**(-i-2) for i, a in enumerate(ai))
     # Eq T62
-    Cawwt = 1e-6*T_/T*sum([i*b*T_**(-i-1) for i, b in enumerate(bi)]) * \
-        exp(sum([b/T_**i for i, b in enumerate(bi)]))
+    Cawwt = 1e-6*T_/T*sum(i*b*T_**(-i-1) for i, b in enumerate(bi)) * \
+        exp(sum(b/T_**i for i, b in enumerate(bi)))
     # Eq T63
     Cawwtt = -1e-6*T_**2/T**2*((
-        sum([i*(i+1)*b*T_**(-i-2) for i, b in enumerate(bi)]) +
-        sum([i*b*T_**(-i-1) for i, b in enumerate(bi)])**2) *
-        exp(sum([b/T_**i for i, b in enumerate(bi)])))
+        sum(i*(i+1)*b*T_**(-i-2) for i, b in enumerate(bi)) +
+        sum(i*b*T_**(-i-1) for i, b in enumerate(bi))**2) *
+        exp(sum(b/T_**i for i, b in enumerate(bi))))
 
     # Virial coefficient for air, using too the general virial procedure
     air = Air()
