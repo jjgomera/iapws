@@ -459,7 +459,6 @@ def _Supercooled(T, P):
     IAPWS, Guideline on Thermodynamic Properties of Supercooled Water,
     http://iapws.org/relguide/Supercooled.html
     """
-
     # Check input in range of validity
     if P < 198.9:
         Tita = T/235.15

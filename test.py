@@ -487,7 +487,6 @@ class Test(unittest.TestCase):
 
     def test_IAPWS97_1(self):
         """Table 5, pag 9"""
-
         fluid = _Region1(300, 3)
         self.assertEqual(round(fluid["v"], 11), 0.00100215168)
         self.assertEqual(round(fluid["h"], 6), 115.331273)

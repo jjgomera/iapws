@@ -414,7 +414,6 @@ class H2ONH3(object):
         Properties of Ammonia-Water Mixtures,
         http://www.iapws.org/relguide/nh3h2o.pdf, Eq 3
         """
-
         # Temperature reducing value, Eq 4
         Tc12 = 0.9648407/2*(IAPWS95.Tc+NH3.Tc)
         Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-x**1.125455)*Tc12
