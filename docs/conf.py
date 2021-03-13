@@ -1,4 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Sphinx documentation config file."""
 #
 # pychemqt documentation build configuration file, created by
 # sphinx-quickstart on Wed Jan 13 22:26:06 2016.
