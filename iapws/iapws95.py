@@ -395,6 +395,8 @@ class MEoS(_fase):
     # is a little messy.  By statically typing them here, we at least
     # let mypy know that they're supposed to be set...
     rhoc: float
+    Tc: float
+    Pc: float
     _constants: Dict[str, List[float]]
 
     def __init__(self, **kwargs):
@@ -2106,7 +2108,7 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/Supp-sat.html, Eq.1
         """
         Tita = 1-T/cls.Tc
-        suma = 0
+        suma = 0.0
         for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
             suma += n*Tita**x
         Pr = exp(cls.Tc/T*suma)
