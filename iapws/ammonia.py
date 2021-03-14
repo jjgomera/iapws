@@ -183,9 +183,9 @@ class NH3(MEoS):
         # Critical enchancement
         t = abs(T-405.4)/405.4
         dPT = 1e5*(2.18-0.12/exp(17.8*t))
-        nb = 1e-5*(2.6+1.6*t)
+        nbx = 1e-5*(2.6+1.6*t)
 
-        DL = 1.2*Boltzmann*T**2/6/pi/nb/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
+        DL = 1.2*Boltzmann*T**2/6/pi/nbx/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
             0.423e-8/t**1.24*(1+t**0.5/0.7)
 
         # Add correction for entire range of temperature, Eq 10
@@ -326,45 +326,44 @@ class H2ONH3(object):
         tau = 500/T
         delta = rho/15/M
 
-        # Table 2
-        Fi0 = {
-            "log_water": 3.006320,
-            "ao_water": [-7.720435, 8.649358],
-            "pow_water": [0, 1],
-            "ao_exp": [0.012436, 0.97315, 1.279500, 0.969560, 0.248730],
-            "titao": [1.666, 4.578, 10.018, 11.964, 35.600],
-            "log_nh3": -1.0,
-            "ao_nh3": [-16.444285, 4.036946, 10.69955, -1.775436, 0.82374034],
-            "pow_nh3": [0, 1, 1/3, -3/2, -7/4]}
+        # Table 2, previously an Fi0 dict
+        log_water = 3.006320
+        ao_water = [-7.720435, 8.649358]
+        pow_water = [0, 1]
+        ao_exp = [0.012436, 0.97315, 1.279500, 0.969560, 0.248730]
+        titao = [1.666, 4.578, 10.018, 11.964, 35.600]
+        log_nh3 = -1.0
+        ao_nh3 = [-16.444285, 4.036946, 10.69955, -1.775436, 0.82374034]
+        pow_nh3 = [0.0, 1.0, 1/3, -3/2, -7/4]
 
         fiod = 1/delta
         fiodd = -1/delta**2
-        fiodt = 0
-        fiow = fiotw = fiottw = 0
-        fioa = fiota = fiotta = 0
+        fiodt = 0.0
+        fiow = fiotw = fiottw = 0.0
+        fioa = fiota = fiotta = 0.0
 
         # Water section
         if x < 1:
-            fiow = Fi0["log_water"]*log(tau) + log(1-x)
-            fiotw = Fi0["log_water"]/tau
-            fiottw = -Fi0["log_water"]/tau**2
-            for n, t in zip(Fi0["ao_water"], Fi0["pow_water"]):
-                fiow += n*tau**t
-                if t != 0:
-                    fiotw += t*n*tau**(t-1)
-                if t not in [0, 1]:
-                    fiottw += n*t*(t-1)*tau**(t-2)
-            for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
+            fiow = log_water*log(tau) + log(1-x)
+            fiotw = log_water/tau
+            fiottw = -log_water/tau**2
+            for n, ti in zip(ao_water, pow_water):
+                fiow += n*tau**ti
+                if ti != 0:
+                    fiotw += ti*n*tau**(ti-1)
+                if ti not in [0, 1]:
+                    fiottw += n*ti*(ti-1)*tau**(ti-2)
+            for n, t in zip(ao_exp, titao):
                 fiow += n*log(1-exp(-tau*t))
                 fiotw += n*t*((1-exp(-t*tau))**-1-1)
                 fiottw -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
 
         # ammonia section
         if x > 0:
-            fioa = Fi0["log_nh3"]*log(tau) + log(x)
-            fiota = Fi0["log_nh3"]/tau
-            fiotta = -Fi0["log_nh3"]/tau**2
-            for n, t in zip(Fi0["ao_nh3"], Fi0["pow_nh3"]):
+            fioa = log_nh3*log(tau) + log(x)
+            fiota = log_nh3/tau
+            fiotta = -log_nh3/tau**2
+            for n, t in zip(ao_nh3, pow_nh3):
                 fioa += n*tau**t
                 if t != 0:
                     fiota += t*n*tau**(t-1)
