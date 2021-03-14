@@ -26,7 +26,7 @@ from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H
 
 
-def _phir(tau, delta, coef):
+def _phir(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     """Residual contribution to the adimensional free Helmholtz energy
 
     Parameters
@@ -50,7 +50,7 @@ def _phir(tau, delta, coef):
     Scientific Use, September 2016, Table 5
     http://www.iapws.org/relguide/IAPWS-95.html
     """
-    fir = 0
+    fir = 0.0
 
     # Polinomial terms
     nr1 = coef.get("nr1", [])
@@ -395,11 +395,11 @@ class MEoS(_fase):
     # is a little messy.  By statically typing them here, we at least
     # let mypy know that they're supposed to be set...
     rhoc: float
-    _constants: Dict[str, Union[float, List[float]]]
+    _constants: Dict[str, List[float]]
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
-        self.R = self._constants["R"]/self._constants.get("M", self.M)
+        self.R = self._constants["R"][0]/self._constants.get("M", self.M)
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
@@ -513,9 +513,9 @@ class MEoS(_fase):
                     To = 300
                     rhoo = 900
 
-        self.R = self._constants["R"]/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        self.R = self._constants["R"][0]/self._constants.get("M", self.M)
+        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
+        Tc = self._constants.get("Tref", [self.Tc])[0]
 
         propiedades = None
 
@@ -1575,8 +1575,8 @@ class MEoS(_fase):
 
     def _saturation(self, T):
         """Saturation calculation for two phase search"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
+        Tc = self._constants.get("Tref", [self.Tc])[0]
 
         if T > Tc:
             T = Tc
@@ -1651,8 +1651,8 @@ class MEoS(_fase):
             rho = 1e-20
         if T < 50:
             T = 50
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
+        Tc = self._constants.get("Tref", [self.Tc])[0]
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
@@ -1686,8 +1686,8 @@ class MEoS(_fase):
 
     def _prop0(self, rho, T):
         """Ideal gas properties"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
+        Tc = self._constants.get("Tref", [self.Tc])[0]
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
@@ -1918,7 +1918,7 @@ class MEoS(_fase):
                 * B: ∂fir/∂δ|δ->0
                 * C: ∂²fir/∂δ²|δ->0
         """
-        Tc = self._constants.get("Tref", self.Tc)
+        Tc = self._constants.get("Tref", [self.Tc])[0]
         tau = Tc/T
         B = C = 0
         delta = 1e-200
@@ -2030,9 +2030,9 @@ class MEoS(_fase):
             prop["firdd"] = 0
             return prop
 
-        R = self._constants.get("R")/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        R = self._constants.get("R")[0]/self._constants.get("M", self.M)
+        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
+        Tc = self._constants.get("Tref", [self.Tc])[0]
         delta = rho/rhoc
         tau = Tc/T
 
@@ -2365,7 +2365,7 @@ class IAPWS95(MEoS):
                      27.5075105]}
 
     _constants = {
-        "R": 8.314371357587,
+        "R": [8.314371357587],
 
         "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
                 0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
@@ -2716,7 +2716,7 @@ class D2O(MEoS):
            "ao_hyp": [], "hyp": []}
 
     _constants = {
-        "R": 8.3144598,
+        "R": [8.3144598],
 
         "nr1": [0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
                 -0.922466250, -0.139604190e-1],
