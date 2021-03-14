@@ -16,7 +16,7 @@ include:
 from __future__ import division
 from math import exp, log, pi, atan
 import warnings
-from typing import Tuple
+from typing import Tuple, Dict, Any
 
 from scipy.optimize import fsolve
 
@@ -30,7 +30,7 @@ Ma = 28.96546  # g/mol
 R = 8.314472  # J/molK
 
 
-def _virial(T):
+def _virial(T: float) -> Dict[str, float]:
     """Virial equations for humid air
 
     Parameters
@@ -162,7 +162,7 @@ def _virial(T):
     return prop
 
 
-def _fugacity(T, P, x):
+def _fugacity(T: float, P: float, x: float) -> float:
     """Fugacity equation for humid air
 
     Parameters
@@ -228,8 +228,10 @@ class MEoSBlend(MEoS):
     ancillary dew and bubble point
     """
 
+    _blend: Dict[str, Any]
+
     @classmethod
-    def _dewP(cls, T):
+    def _dewP(cls, T: float) -> float:
         """Using ancillary equation return the pressure of dew point"""
         c = cls._blend["dew"]
         Tj = cls._blend["Tj"]
@@ -243,7 +245,7 @@ class MEoSBlend(MEoS):
         return P
 
     @classmethod
-    def _bubbleP(cls, T):
+    def _bubbleP(cls, T: float) -> float:
         """Using ancillary equation return the pressure of bubble point"""
         c = cls._blend["bubble"]
         Tj = cls._blend["Tj"]
@@ -336,7 +338,7 @@ class Air(MEoSBlend):
         "exp": [0.5, 1, 2.5, 4]}
 
     @classmethod
-    def _Liquid_Density(cls, T):
+    def _Liquid_Density(cls, T: float) -> float:
         """Auxiliary equation for the density or saturated liquid
 
         Parameters
@@ -362,7 +364,7 @@ class Air(MEoSBlend):
         return rho
 
     @staticmethod
-    def _visco(rho, T, fase=None):
+    def _visco(rho: float, T: float, fase=None) -> float:
         """Equation for the Viscosity
 
         Parameters
@@ -392,7 +394,7 @@ class Air(MEoSBlend):
 
         b = [0.431, -0.4623, 0.08406, 0.005341, -0.00331]
         T_ = log(T/ek)
-        suma = 0
+        suma = 0.0
         for i, bi in enumerate(b):
             suma += bi*T_**i
         omega = exp(suma)
@@ -407,7 +409,7 @@ class Air(MEoSBlend):
         g_poly = [0, 0, 0, 1, 1]
 
         # Eq 3
-        mur = 0
+        mur = 0.0
         for n, t, d, l, g in zip(n_poly, t_poly, d_poly, l_poly, g_poly):
             mur += n*tau**t*delta**d*exp(-g*delta**l)
 
@@ -415,7 +417,7 @@ class Air(MEoSBlend):
         mu = muo+mur
         return mu*1e-6
 
-    def _thermo(self, rho, T, fase=None):
+    def _thermo(self, rho: float, T: float, fase=None) -> float:
         """Equation for the thermal conductivity
 
         Parameters
@@ -447,7 +449,7 @@ class Air(MEoSBlend):
 
         b = [0.431, -0.4623, 0.08406, 0.005341, -0.00331]
         T_ = log(T/ek)
-        suma = 0
+        suma = 0.0
         for i, bi in enumerate(b):
             suma += bi*T_**i
         omega = exp(suma)
@@ -467,11 +469,11 @@ class Air(MEoSBlend):
         l_poly = [0, 0, 2, 2, 2, 2]
 
         # Eq 6
-        lr = 0
+        lr = 0.0
         for n, t, d, l, g in zip(n_poly, t_poly, d_poly, l_poly, g_poly):
             lr += n*tau**t*delta**d*exp(-g*delta**l)
 
-        lc = 0
+        lc = 0.0
         # FIXME: Tiny desviation in the test in paper, 0.06% at critical point
         if fase:
             qd = 0.31
@@ -504,7 +506,7 @@ class Air(MEoSBlend):
                 # Eq 7
                 lc = rho*fase.cp*k*1.01*T/6/pi/Xi/fase.mu*(Omega-Omega0)*1e15
             else:
-                lc = 0
+                lc = 0.0
 
         # Eq 4
         k = lo+lr+lc
@@ -609,7 +611,7 @@ class HumidAir(object):
             self.msg = ""
 
     @property
-    def calculable(self):
+    def calculable(self) -> bool:
         """Check if inputs are enough to define state"""
         self._mode = ""
         if self.kwargs["T"] and self.kwargs["P"]:
@@ -628,7 +630,7 @@ class HumidAir(object):
 
         return bool(self._mode) and bool(self._composition)
 
-    def calculo(self):
+    def calculo(self) -> None:
         """Calculate procedure"""
         T = self.kwargs["T"]
         rho = self.kwargs["rho"]
@@ -690,14 +692,14 @@ class HumidAir(object):
         self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
         self.RH = (1-self.xa)/(1-self.xa_sat)
 
-    def derivative(self, z, x, y):
+    def derivative(self, z: str, x: str, y: str):
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, rho, u, h, s, g, a
         """
         return deriv_G(self, z, x, y, self)
 
-    def _eq(self, T, P):
+    def _eq(self, T: float, P: float) -> float:
         """Procedure for calculate the composition in saturation state
 
         Parameters
@@ -731,7 +733,7 @@ class HumidAir(object):
         Asat = rinput[0][1]
         return Asat
 
-    def _prop(self, T, rho, fav):
+    def _prop(self, T: float, rho: float, fav: Dict[str, float]) -> Dict[str, float]:
         """Thermodynamic properties of humid air
 
         Parameters
@@ -783,7 +785,7 @@ class HumidAir(object):
                      / fav["firtt"]+2*rho*fav["fird"]*1000)**0.5        # Eq T10
         return prop
 
-    def _coligative(self, rho, A, fav):
+    def _coligative(self, rho: float, A: float, fav: Dict[str, float]) -> Dict[str, float]:
         """Miscelaneous properties of humid air
 
         Parameters
@@ -823,7 +825,7 @@ class HumidAir(object):
         prop["xw"] = 1-prop["xa"]
         return prop
 
-    def _fav(self, T, rho, A):
+    def _fav(self, T: float, rho: float, A: float) -> Dict[str, float]:
         r"""Specific Helmholtz energy of humid air and derivatives
 
         Parameters
@@ -895,7 +897,7 @@ class HumidAir(object):
         prop["firdd"] = (1-A)**3*fv["firdd"]+A**3*fa["firdd"]+fmix["firdd"]
         return prop
 
-    def _fmix(self, T, rho, A):
+    def _fmix(self, T: float, rho: float, A: float) -> Dict[str, float]:
         r"""Specific Helmholtz energy of air-water interaction
 
         Parameters

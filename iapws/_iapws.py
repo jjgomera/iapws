@@ -31,6 +31,7 @@ from __future__ import division
 from cmath import log as log_c
 from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
 import warnings
+from typing import Dict, Optional, Any
 
 from scipy.optimize import minimize
 
@@ -59,7 +60,7 @@ Dipole = 1.85498  # Debye
 
 
 # IAPWS-06 for Ice
-def _Ice(T, P):
+def _Ice(T: float, P: float) -> Dict[str, float]:
     """Basic state equation for Ice Ih
 
     Parameters
@@ -150,14 +151,14 @@ def _Ice(T, P):
     t2 = complex(0.337315741065416, 0.335449415919309)
     r1 = complex(0.447050716285388e2, 0.656876847463481e2)*1e-3
 
-    go = gop = gopp = 0
+    go = gop = gopp = 0.0
     for k in range(5):
         go += gok[k]*1e-3*(Pr-P0)**k
     for k in range(1, 5):
         gop += gok[k]*1e-3*k/Pt*(Pr-P0)**(k-1)
     for k in range(2, 5):
         gopp += gok[k]*1e-3*k*(k-1)/Pt**2*(Pr-P0)**(k-2)
-    r2 = r2p = 0
+    r2 = r2p = 0.0
     for k in range(3):
         r2 += r2k[k]*(Pr-P0)**k
     for k in range(1, 3):
@@ -207,7 +208,7 @@ def _Ice(T, P):
 
 
 # IAPWS-08 for Liquid water at 0.1 MPa
-def _Liquid(T, P=0.1):
+def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     """Supplementary release on properties of liquid water at 0.1 MPa
 
     Parameters
@@ -387,29 +388,29 @@ def _Liquid(T, P=0.1):
 
 class _Supercooled_minimize(object):
 
-    def __init__(self, L, omega, xmin, xmax):
+    def __init__(self, L: float, omega: float, xmin: float, xmax: float):
         self.L = L
         self.omega = omega
         self.xmin = xmin
         self.xmax = xmax
         self.f_inner_value_sign = 0.0
 
-    def f(self, x):
+    def f(self, x: float) -> float:
         f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x)
         self.f_inner_value_sign = copysign(1.0, f_inner_value)
         return abs(f_inner_value)
 
-    def jac(self, x):
+    def jac(self, x: float) -> float:
         return self.f_inner_value_sign*(1/(x*(1 - x)) - 2*self.omega)
 
     @property
-    def x(self):
+    def x(self) -> float:
         return minimize(self.f, x0=((self.xmin+self.xmax)/2,),
                         bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
 
 
 # IAPWS-15 for supercooled liquid water
-def _Supercooled(T, P):
+def _Supercooled(T: float, P: float):
     """Guideline on thermodynamic properties of supercooled water
 
     Parameters
@@ -493,16 +494,16 @@ def _Supercooled(T, P):
           4.3773754, -2.9967770e-3, -9.6558018e-1, 3.7595286, 1.2632441,
           2.8542697e-1, -8.5994947e-1, -3.2916153e-1, 9.0019616e-2,
           8.1149726e-2, -3.2788213]
-    ai = [0, 0, 1, -0.2555, 1.5762, 1.6400, 3.6385, -0.3828, 1.6219, 4.3287,
+    ai = [0.0, 0.0, 1.0, -0.2555, 1.5762, 1.6400, 3.6385, -0.3828, 1.6219, 4.3287,
           3.4763, 5.1556, -0.3593, 5.0361, 2.9786, 6.2373, 4.0460, 5.3558,
           9.0157, 1.2194]
-    bi = [0, 1, 0, 2.1051, 1.1422, 0.9510, 0, 3.6402, 2.0760, -0.0016, 2.2769,
+    bi = [0.0, 1.0, 0.0, 2.1051, 1.1422, 0.9510, 0.0, 3.6402, 2.0760, -0.0016, 2.2769,
           0.0008, 0.3706, -0.3975, 2.9730, -0.3180, 2.9805, 2.9265, 0.4456,
           0.1298]
-    di = [0, 0, 0, -0.0016, 0.6894, 0.0130, 0.0002, 0.0435, 0.0500, 0.0004,
+    di = [0.0, 0.0, 0.0, -0.0016, 0.6894, 0.0130, 0.0002, 0.0435, 0.0500, 0.0004,
           0.0528, 0.0147, 0.8584, 0.9924, 1.0041, 1.0961, 1.0228, 1.0303,
           1.6180, 0.5213]
-    phir = phirt = phirp = phirtt = phirtp = phirpp = 0
+    phir = phirt = phirp = phirtt = phirtp = phirpp = 0.0
     for c, a, b, d in zip(ci, ai, bi, di):
         phir += c*tau_**a*p_**b*exp(-d*p_)
         phirt += c*a*tau_**(a-1)*p_**b*exp(-d*p_)
@@ -580,7 +581,7 @@ def _Supercooled(T, P):
     return prop
 
 
-def _Sublimation_Pressure(T):
+def _Sublimation_Pressure(T: float) -> float:
     """Sublimation Pressure correlation
 
     Parameters
@@ -621,7 +622,7 @@ def _Sublimation_Pressure(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _Melting_Pressure(T, ice="Ih"):
+def _Melting_Pressure(T: float, ice: str = "Ih") -> float:
     """Melting Pressure correlation
 
     Parameters
@@ -698,7 +699,8 @@ def _Melting_Pressure(T, ice="Ih"):
 
 
 # Transport properties
-def _Viscosity(rho, T, fase=None, drho=None):
+def _Viscosity(rho: float, T: float, fase: Optional[Any] = None,
+               drho: float = None) -> float:
     """Equation for the Viscosity
 
     Parameters
@@ -787,7 +789,8 @@ def _Viscosity(rho, T, fase=None, drho=None):
     return mu*1e-6
 
 
-def _ThCond(rho, T, fase=None, drho=None):
+def _ThCond(rho: float, T: float, fase: Optional[Any] = None,
+            drho: Optional[float] = None) -> float:
     """Equation for the thermal conductivity
 
     Parameters
@@ -888,7 +891,7 @@ def _ThCond(rho, T, fase=None, drho=None):
     return 1e-3*k
 
 
-def _Tension(T):
+def _Tension(T: float) -> float:
     """Equation for the surface tension
 
     Parameters
@@ -930,7 +933,7 @@ def _Tension(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _Dielectric(rho, T):
+def _Dielectric(rho: float, T: float) -> float:
     """Equation for the Dielectric constant
 
     Parameters
@@ -992,7 +995,7 @@ def _Dielectric(rho, T):
     return e
 
 
-def _Refractive(rho, T, l=0.5893):
+def _Refractive(rho: float, T: float, l: float = 0.5893) -> float:
     """Equation for the refractive index
 
     Parameters
@@ -1046,7 +1049,7 @@ def _Refractive(rho, T, l=0.5893):
     return ((2*A+1)/(1-A))**0.5
 
 
-def _Kw(rho, T):
+def _Kw(rho: float, T: float) -> float:
     """Equation for the ionization constant of ordinary water
 
     Parameters
@@ -1099,7 +1102,7 @@ def _Kw(rho, T):
     return pKw
 
 
-def _Conductivity(rho, T):
+def _Conductivity(rho: float, T: float) -> float:
     """Equation for the electrolytic conductivity of liquid and dense
     supercrítical water
 
@@ -1153,7 +1156,7 @@ def _Conductivity(rho, T):
 
 
 # Heavy water transport properties
-def _D2O_Viscosity(rho, T):
+def _D2O_Viscosity(rho: float, T: float) -> float:
     """Equation for the Viscosity of heavy water
 
     Parameters
@@ -1202,7 +1205,7 @@ def _D2O_Viscosity(rho, T):
     return 55.2651e-6*fi0*fi1
 
 
-def _D2O_ThCond(rho, T):
+def _D2O_ThCond(rho: float, T: float) -> float:
     """Equation for the thermal conductivity of heavy water
 
     Parameters
@@ -1251,7 +1254,7 @@ def _D2O_ThCond(rho, T):
     return 0.742128e-3*(Lo+Lr+Lc+Ll)
 
 
-def _D2O_Tension(T):
+def _D2O_Tension(T: float) -> float:
     """Equation for the surface tension of heavy water
 
     Parameters
@@ -1289,7 +1292,7 @@ def _D2O_Tension(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _D2O_Sublimation_Pressure(T):
+def _D2O_Sublimation_Pressure(T: float) -> float:
     """Sublimation Pressure correlation for heavy water
 
     Parameters
@@ -1330,7 +1333,7 @@ def _D2O_Sublimation_Pressure(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _D2O_Melting_Pressure(T, ice="Ih"):
+def _D2O_Melting_Pressure(T: float, ice: str = "Ih") -> float:
     """Melting Pressure correlation for heavy water
 
     Parameters
@@ -1391,7 +1394,7 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
     return P
 
 
-def _Henry(T, gas, liquid="H2O"):
+def _Henry(T: float, gas: str, liquid: str = "H2O") -> float:
     """Equation for the calculation of Henry's constant
 
     Parameters
@@ -1515,7 +1518,7 @@ def _Henry(T, gas, liquid="H2O"):
     return kh
 
 
-def _Kvalue(T, gas, liquid="H2O"):
+def _Kvalue(T: float, gas: str, liquid: str = "H2O") -> float:
     """Equation for the vapor-liquid distribution constant
 
     Parameters

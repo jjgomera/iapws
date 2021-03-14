@@ -12,9 +12,10 @@ Miscelaneous internal utilities. This module include:
 """
 
 from __future__ import division
+from typing import Any
 
 
-def getphase(Tc, Pc, T, P, x, region):
+def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) -> str:
     """Return fluid phase string name
 
     Parameters
@@ -117,7 +118,7 @@ class _fase(object):
     hInput = None
 
 
-def deriv_H(state, z, x, y, fase):
+def deriv_H(state: Any, z: str, x: str, y: str, fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     helmholtz free energy equation of state
@@ -192,7 +193,7 @@ def deriv_H(state, z, x, y, fase):
     return mul*deriv
 
 
-def deriv_G(state, z, x, y, fase):
+def deriv_G(state: Any, z: str, x: str, y: str, fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     Gibbs free energy equation of state

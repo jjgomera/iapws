@@ -97,7 +97,7 @@ def _phir(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     return fir
 
 
-def _phird(tau, delta, coef):
+def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     r"""Residual contribution to the adimensional free Helmholtz energy, delta
     derivative
 
@@ -123,7 +123,7 @@ def _phird(tau, delta, coef):
     Scientific Use, September 2016, Table 5
     http://www.iapws.org/relguide/IAPWS-95.html
     """
-    fird = 0
+    fird = 0.0
 
     # Polinomial terms
     nr1 = coef.get("nr1", [])
@@ -177,7 +177,7 @@ def _phird(tau, delta, coef):
     return fird
 
 
-def _phirt(tau, delta, coef):
+def _phirt(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     r"""Residual contribution to the adimensional free Helmholtz energy, tau
     derivative
 
@@ -203,7 +203,7 @@ def _phirt(tau, delta, coef):
     Scientific Use, September 2016, Table 5
     http://www.iapws.org/relguide/IAPWS-95.html
     """
-    firt = 0
+    firt = 0.0
 
     # Polinomial terms
     nr1 = coef.get("nr1", [])
@@ -440,7 +440,7 @@ class MEoS(_fase):
                               "extension")
 
     @property
-    def calculable(self):
+    def calculable(self) -> bool:
         """Check if inputs are enough to define state"""
         self._mode = ""
         if self.kwargs["T"] and self.kwargs["P"]:
@@ -1566,14 +1566,14 @@ class MEoS(_fase):
             fase.epsilon = None
             fase.n = None
 
-    def derivative(self, z, x, y, fase):
+    def derivative(self, z: str, x: str, y: str, fase: _fase):
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, rho, u, h, s, g, a
         """
         return deriv_H(self, z, x, y, fase)
 
-    def _saturation(self, T):
+    def _saturation(self, T: float) -> Tuple[float, float, float]:
         """Saturation calculation for two phase search"""
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
@@ -1611,7 +1611,7 @@ class MEoS(_fase):
             Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
-    def _Helmholtz(self, rho, T):
+    def _Helmholtz(self, rho: float, T: float) -> Dict[str, float]:
         """Calculated properties from helmholtz free energy and derivatives
 
         Parameters
@@ -1684,7 +1684,7 @@ class MEoS(_fase):
             1+(delta*fird+delta**2*firdd)/(1+delta*fird))
         return propiedades
 
-    def _prop0(self, rho, T):
+    def _prop0(self, rho: float, T: float) -> _fase:
         """Ideal gas properties"""
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
@@ -1700,11 +1700,11 @@ class MEoS(_fase):
         propiedades.s = self.R*(tau*fiot-fio)
         propiedades.cv = -self.R*tau**2*fiott
         propiedades.cp = self.R*(-tau**2*fiott+1)
-        propiedades.alfap = 1/T
+        propiedades.alfap = 1.0/T
         propiedades.betap = rho
         return propiedades
 
-    def _phi0(self, tau, delta):
+    def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
         """Ideal gas Helmholtz free energy and derivatives
 
         Parameters
@@ -1769,7 +1769,7 @@ class MEoS(_fase):
         prop["fiodt"] = fiodt
         return prop
 
-    def _phir(self, tau, delta):
+    def _phir(self, tau: float, delta: float) -> Dict[str, float]:
         """Residual contribution to the free Helmholtz energy
 
         Parameters
@@ -1797,7 +1797,7 @@ class MEoS(_fase):
         Scientific Use, September 2016, Table 5
         http://www.iapws.org/relguide/IAPWS-95.html
         """
-        fir = fird = firdd = firt = firtt = firdt = 0
+        fir = fird = firdd = firt = firtt = firdt = 0.0
 
         # Polinomial terms
         nr1 = self._constants.get("nr1", [])
@@ -1903,7 +1903,7 @@ class MEoS(_fase):
         prop["firdt"] = firdt
         return prop
 
-    def _virial(self, T):
+    def _virial(self, T: float) -> Dict[str, float]:
         """Virial coefficient
 
         Parameters
@@ -1920,7 +1920,7 @@ class MEoS(_fase):
         """
         Tc = self._constants.get("Tref", [self.Tc])[0]
         tau = Tc/T
-        B = C = 0
+        B = C = 0.0
         delta = 1e-200
 
         # Polinomial terms
@@ -1991,7 +1991,7 @@ class MEoS(_fase):
         prop["C"] = C
         return prop
 
-    def _derivDimensional(self, rho, T):
+    def _derivDimensional(self, rho: float, T: float) -> Dict[str, float]:
         """Calcule the dimensional form or Helmholtz free energy derivatives
 
         Parameters
@@ -2022,12 +2022,12 @@ class MEoS(_fase):
         """
         if not rho:
             prop = {}
-            prop["fir"] = 0
-            prop["firt"] = 0
-            prop["fird"] = 0
-            prop["firtt"] = 0
-            prop["firdt"] = 0
-            prop["firdd"] = 0
+            prop["fir"] = 0.0
+            prop["firt"] = 0.0
+            prop["fird"] = 0.0
+            prop["firtt"] = 0.0
+            prop["firdt"] = 0.0
+            prop["firdd"] = 0.0
             return prop
 
         R = self._constants.get("R")[0]/self._constants.get("M", self.M)
@@ -2060,7 +2060,7 @@ class MEoS(_fase):
         prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
         return prop
 
-    def _surface(self, T):
+    def _surface(self, T: float) -> float:
         """Generic equation for the surface tension
 
         Parameters
@@ -2086,7 +2086,7 @@ class MEoS(_fase):
         return sigma
 
     @classmethod
-    def _Vapor_Pressure(cls, T):
+    def _Vapor_Pressure(cls, T: float) -> float:
         """Auxiliary equation for the vapour pressure
 
         Parameters
@@ -2114,7 +2114,7 @@ class MEoS(_fase):
         return Pv
 
     @classmethod
-    def _Liquid_Density(cls, T):
+    def _Liquid_Density(cls, T: float) -> float:
         """Auxiliary equation for the density of saturated liquid
 
         Parameters
@@ -2145,7 +2145,7 @@ class MEoS(_fase):
         return rho
 
     @classmethod
-    def _Vapor_Density(cls, T):
+    def _Vapor_Density(cls, T: float) -> float:
         """Auxiliary equation for the density of saturated vapor
 
         Parameters
@@ -2176,7 +2176,7 @@ class MEoS(_fase):
         return rho
 
     @classmethod
-    def _dPdT_sat(cls, T):
+    def _dPdT_sat(cls, T: float) -> float:
         """Auxiliary equation for the dP/dT along saturation line
 
         Parameters
@@ -2213,7 +2213,7 @@ def mainClassDoc():
     """
     def decorator(f):
         # __doc__ is only writable in python3.
-        # The doc build must be done with python3 so this snnippet do the work
+        # The doc build must be done with python3 so this snippet do the work
         py_version = platform.python_version()
         if py_version[0] == "3":
             doc = f.__doc__.split(os.linesep)
@@ -2431,7 +2431,7 @@ class IAPWS95(MEoS):
                -63.9201063],
         "exp": [1, 2, 4, 9, 18.5, 35.5]}
 
-    def _phi0(self, tau, delta):
+    def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
         """Low temperature extension of the IAPWS-95"""
         prop = MEoS._phi0(self, tau, delta)
 
@@ -2443,7 +2443,7 @@ class IAPWS95(MEoS):
             prop["fiott"] += fextt
         return prop
 
-    def _phiex(self, T):
+    def _phiex(self, T: float) -> Tuple[float, float, float]:
         """Low temperature extension"""
         tau = self.Tc/T
         E = 0.278296458178592
@@ -2455,7 +2455,7 @@ class IAPWS95(MEoS):
         return fex, fext, fextt
 
     @classmethod
-    def _alfa_sat(cls, T):
+    def _alfa_sat(cls, T: float) -> float:
         """Auxiliary equation for the alfa coefficient for calculate the
         enthalpy along the saturation line
 
@@ -2479,13 +2479,13 @@ class IAPWS95(MEoS):
               -135.003439, 0.981825814]
         expi = [0, -19, 1, 4.5, 5, 54.5]
         Tita = T/cls.Tc
-        alfa = 0
+        alfa = 0.0
         for d, x in zip(di, expi):
             alfa += d*Tita**x
         return alfa
 
     @classmethod
-    def _phi_sat(cls, T):
+    def _phi_sat(cls, T: float) -> float:
         """Auxiliary equation for the phi coefficient for calculate the
         entropy along the saturation line
 
@@ -2509,7 +2509,7 @@ class IAPWS95(MEoS):
               -135.003439*5/4, 0.981825814*109/107]
         expi = [0, -20, None, 3.5, 4, 53.5]
         Tita = T/cls.Tc
-        suma = 0
+        suma = 0.0
         for d, x in zip(di, expi):
             if x is None:
                 suma += d*log(Tita)
@@ -2519,7 +2519,7 @@ class IAPWS95(MEoS):
         return phi
 
     @classmethod
-    def _Liquid_Enthalpy(cls, T):
+    def _Liquid_Enthalpy(cls, T: float) -> float:
         """Auxiliary equation for the specific enthalpy for saturated liquid
 
         Parameters
@@ -2545,7 +2545,7 @@ class IAPWS95(MEoS):
         return h
 
     @classmethod
-    def _Vapor_Enthalpy(cls, T):
+    def _Vapor_Enthalpy(cls, T: float) -> float:
         """Auxiliary equation for the specific enthalpy for saturated vapor
 
         Parameters
@@ -2571,7 +2571,7 @@ class IAPWS95(MEoS):
         return h
 
     @classmethod
-    def _Liquid_Entropy(cls, T):
+    def _Liquid_Entropy(cls, T: float) -> float:
         """Auxiliary equation for the specific entropy for saturated liquid
 
         Parameters
@@ -2597,7 +2597,7 @@ class IAPWS95(MEoS):
         return s
 
     @classmethod
-    def _Vapor_Entropy(cls, T):
+    def _Vapor_Entropy(cls, T: float) -> float:
         """Auxiliary equation for the specific entropy for saturated vapor
 
         Parameters
@@ -2622,21 +2622,21 @@ class IAPWS95(MEoS):
         s = phi+dpdT/rho*1000
         return s
 
-    def _visco(self, rho, T, fase):
+    def _visco(self, rho: float, T: float, fase: Optional[Dict[str, float]]) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
         drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _Viscosity(rho, T, fase, drho)
 
-    def _thermo(self, rho, T, fase):
+    def _thermo(self, rho: float, T: float, fase: Optional[Dict[str, float]]) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
         drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _ThCond(rho, T, fase, drho)
 
-    def _surface(self, T):
+    def _surface(self, T: float) -> float:
         s = _Tension(T)
         return s
 
@@ -2644,35 +2644,35 @@ class IAPWS95(MEoS):
 class IAPWS95_PT(IAPWS95):
     """Derivated class for direct P and T input"""
 
-    def __init__(self, P, T):
+    def __init__(self, P: float, T: float):
         IAPWS95.__init__(self, T=T, P=P)
 
 
 class IAPWS95_Ph(IAPWS95):
     """Derivated class for direct P and h input"""
 
-    def __init__(self, P, h):
+    def __init__(self, P: float, h: float):
         IAPWS95.__init__(self, P=P, h=h)
 
 
 class IAPWS95_Ps(IAPWS95):
     """Derivated class for direct P and s input"""
 
-    def __init__(self, P, s):
+    def __init__(self, P: float, s: float):
         IAPWS95.__init__(self, P=P, s=s)
 
 
 class IAPWS95_Px(IAPWS95):
     """Derivated class for direct P and v input"""
 
-    def __init__(self, P, x):
+    def __init__(self, P: float, x):
         IAPWS95.__init__(self, P=P, x=x)
 
 
 class IAPWS95_Tx(IAPWS95):
     """Derivated class for direct T and x input"""
 
-    def __init__(self, T, x):
+    def __init__(self, T: float, x):
         IAPWS95.__init__(self, T=T, x=x)
 
 
@@ -2758,12 +2758,12 @@ class D2O(MEoS):
                -0.70412e2],
         "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
 
-    def _visco(self, rho, T, fase):
+    def _visco(self, rho: float, T: float, fase) -> float:
         return _D2O_Viscosity(rho, T)
 
-    def _thermo(self, rho, T, fase):
+    def _thermo(self, rho: float, T: float, fase) -> float:
         return _D2O_ThCond(rho, T)
 
-    def _surface(self, T):
+    def _surface(self, T: float) -> float:
         s = _D2O_Tension(T)
         return s

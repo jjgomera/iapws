@@ -21,6 +21,7 @@ Other functionality:
 from __future__ import division
 from math import exp, log
 import warnings
+from typing import Dict, Tuple
 
 from scipy.optimize import fsolve
 
@@ -252,7 +253,7 @@ class SeaWater(object):
             self.osm = None
             self.haline = None
 
-    def derivative(self, z, x, y):
+    def derivative(self, z: str, x: str, y: str):
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, u, h, s, g, a
@@ -260,7 +261,7 @@ class SeaWater(object):
         return deriv_G(self, z, x, y, self)
 
     @classmethod
-    def _water(cls, T, P):
+    def _water(cls, T: float, P: float) -> Dict[str, float]:
         """Get properties of pure water, Table4 pag 8"""
         water = IAPWS95(P=P, T=T)
         prop = {}
@@ -276,7 +277,7 @@ class SeaWater(object):
         return prop
 
     @classmethod
-    def _waterIF97(cls, T, P):
+    def _waterIF97(cls, T: float, P: float) -> Dict[str, float]:
         water = IAPWS97(P=P, T=T)
         betas = water.derivative("T", "P", "s", water)
         prop = {}
@@ -291,7 +292,7 @@ class SeaWater(object):
         return prop
 
     @classmethod
-    def _waterSupp(cls, T, P):
+    def _waterSupp(cls, T: float, P: float) -> Dict[str, float]:
         """
         Get properties of pure water using the supplementary release SR7-09,
         Table4 pag 6
@@ -318,7 +319,7 @@ class SeaWater(object):
              0.635113936641785e2, -0.222897317140459e2, 0.817060541818112e1,
              0.305081646487967e1, -0.963108119393062e1]
 
-        g, gt, gp, gtt, gtp, gpp = 0, 0, 0, 0, 0, 0
+        g = gt = gp = gtt = gtp = gpp = 0.0
         for j, k, gi in zip(J, K, G):
             g += gi*tau**j*pi**k
             if j >= 1:
@@ -339,12 +340,12 @@ class SeaWater(object):
         prop["gtt"] = gtt/40**2*1e-3
         prop["gtp"] = gtp/40/100*1e-6
         prop["gpp"] = gpp/100**2*1e-6
-        prop["gs"] = 0
-        prop["gsp"] = 0
+        prop["gs"] = 0.0
+        prop["gsp"] = 0.0
         return prop
 
     @classmethod
-    def _saline(cls, T, P, S):
+    def _saline(cls, T: float, P: float, S: float) -> Dict[str, float]:
         """Eq 4"""
         # Check input in range of validity
         if T <= 261 or T > 353 or P <= 0 or P > 100 or S < 0 or S > 0.12:
@@ -387,7 +388,7 @@ class SeaWater(object):
              -0.111282734326413e2, -0.262480156590992e1, 0.704658803315449e1,
              -0.792001547211682e1]
 
-        g, gt, gp, gtt, gtp, gpp, gs, gsp = 0, 0, 0, 0, 0, 0, 0, 0
+        g = gt = gp = gtt = gtp = gpp = gs = gsp = 0.0
 
         # Calculate only for some salinity
         if S != 0:
@@ -425,7 +426,7 @@ class SeaWater(object):
         return prop
 
 
-def _Tb(P, S):
+def _Tb(P: float, S: float) -> float:
     """Procedure to calculate the boiling temperature of seawater
 
     Parameters
@@ -445,7 +446,7 @@ def _Tb(P, S):
     IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 7
     """
-    def f(T):
+    def f(T: float) -> float:
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
 
@@ -459,7 +460,7 @@ def _Tb(P, S):
     return Tb
 
 
-def _Tf(P, S):
+def _Tf(P: float, S: float) -> float:
     """Procedure to calculate the freezing temperature of seawater
 
     Parameters
@@ -479,7 +480,7 @@ def _Tf(P, S):
     IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 12
     """
-    def f(T):
+    def f(T: float) -> float:
         T = float(T)
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
@@ -493,7 +494,7 @@ def _Tf(P, S):
     return Tf
 
 
-def _Triple(S):
+def _Triple(S: float) -> Dict[str, float]:
     """Procedure to calculate the triple point pressure and temperature for
     seawater
 
@@ -515,7 +516,7 @@ def _Triple(S):
     IAPWS,  Advisory Note No. 5: Industrial Calculation of the Thermodynamic
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 7
     """
-    def f(parr):
+    def f(parr: Tuple[float, float]) -> Tuple[float, float]:
         T, P = parr
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
@@ -536,7 +537,7 @@ def _Triple(S):
     return prop
 
 
-def _OsmoticPressure(T, P, S):
+def _OsmoticPressure(T: float, P: float, S: float) -> float:
     """Procedure to calculate the osmotic pressure of seawater
 
     Parameters
@@ -561,7 +562,7 @@ def _OsmoticPressure(T, P, S):
     pw = _Region1(T, P)
     gw = pw["h"]-T*pw["s"]
 
-    def f(Posm):
+    def f(Posm: float) -> float:
         pw2 = _Region1(T, P+Posm)
         gw2 = pw2["h"]-T*pw2["s"]
         ps = SeaWater._saline(T, P+Posm, S)
@@ -571,7 +572,7 @@ def _OsmoticPressure(T, P, S):
     return Posm
 
 
-def _ThCond_SeaWater(T, P, S):
+def _ThCond_SeaWater(T: float, P: float, S: float) -> float:
     """Equation for the thermal conductivity of seawater
 
     Parameters
@@ -626,7 +627,7 @@ def _ThCond_SeaWater(T, P, S):
     return DL
 
 
-def _Tension_SeaWater(T, S):
+def _Tension_SeaWater(T: float, S: float) -> float:
     """Equation for the surface tension of seawater
 
     Parameters
@@ -673,7 +674,7 @@ def _Tension_SeaWater(T, S):
     return sigma
 
 
-def _solNa2SO4(T, mH2SO4, mNaCl):
+def _solNa2SO4(T: float, mH2SO4: float, mNaCl: float) -> float:
     """Equation for the solubility of sodium sulfate in aqueous mixtures of
     sodium chloride and sulfuric acid
 
@@ -730,7 +731,7 @@ def _solNa2SO4(T, mH2SO4, mNaCl):
     return S
 
 
-def _critNaCl(x):
+def _critNaCl(x: float) -> Dict[str, float]:
     """Equation for the critical locus of aqueous solutions of sodium chloride
 
     Parameters

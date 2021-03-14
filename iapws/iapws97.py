@@ -84,7 +84,7 @@ doi: 10.1007/978-3-540-74234-0
 
 from __future__ import division
 from math import sqrt, log, exp
-from typing import Tuple, List
+from typing import Tuple, Dict, List, Optional
 
 from scipy.optimize import fsolve, newton
 
@@ -104,7 +104,7 @@ Ps_623 = 16.5291642526
 
 
 # Boundary Region1-Region3
-def _h13_s(s):
+def _h13_s(s: float) -> float:
     """Define the boundary between Region 1 and 3, h=f(s)
 
     Parameters
@@ -148,14 +148,14 @@ def _h13_s(s):
     n = [0.913965547600543, -0.430944856041991e-4, 0.603235694765419e2,
          0.117518273082168e-17, 0.220000904781292, -0.690815545851641e2]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (sigma-0.884)**i * (sigma-0.864)**j
     return 1700 * suma
 
 
 # Boundary Region2-Region3
-def _P23_T(T):
+def _P23_T(T: float) -> float:
     """Define the boundary between Region 2 and 3, P=f(T)
 
     Parameters
@@ -183,7 +183,7 @@ def _P23_T(T):
     return n[0]+n[1]*T+n[2]*T**2
 
 
-def _t_P(P):
+def _t_P(P: float) -> float:
     """Define the boundary between Region 2 and 3, T=f(P)
 
     Parameters
@@ -211,7 +211,7 @@ def _t_P(P):
     return n[1]+((P-n[2])/n[0])**0.5
 
 
-def _t_hs(h, s):
+def _t_hs(h: float, s: float) -> float:
     """Define the boundary between Region 2 and 3, T=f(h,s)
 
     Parameters
@@ -269,14 +269,14 @@ def _t_hs(h, s):
          0.261907376402688e-5, -0.291626417025961e5, 0.140660774926165e-4,
          0.783237062349385e7]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.727)**i * (sigma-0.864)**j
     return 900*suma
 
 
 # Saturated line
-def _PSat_T(T):
+def _PSat_T(T: float) -> float:
     """Define the saturated line, P=f(T)
 
     Parameters
@@ -321,7 +321,7 @@ def _PSat_T(T):
     return (2*C/(-B+(B**2-4*A*C)**0.5))**4
 
 
-def _TSat_P(P):
+def _TSat_P(P: float) -> float:
     """Define the saturated line, T=f(P)
 
     Parameters
@@ -367,7 +367,7 @@ def _TSat_P(P):
     return (n[10]+D-((n[10]+D)**2-4*(n[9]+n[10]*D))**0.5)/2
 
 
-def _PSat_h(h):
+def _PSat_h(h: float) -> float:
     """Define the saturated line, P=f(h) for region 3
 
     Parameters
@@ -415,13 +415,13 @@ def _PSat_h(h):
          -0.333775713645296e23, 0.356499469636328e11, -0.148547544720641e27,
          0.330611514838798e19, 0.813641294467829e38]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-1.02)**i * (nu-0.608)**j
     return 22*suma
 
 
-def _PSat_s(s):
+def _PSat_s(s: float) -> float:
     """Define the saturated line, P=f(s) for region 3
 
     Parameters
@@ -468,13 +468,13 @@ def _PSat_s(s):
          -0.955586736431328e35, 0.187269814676188e24, 0.119254746466473e12,
          0.110649277244882e37]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (sigma-1.03)**i * (sigma-0.699)**j
     return 22*suma
 
 
-def _h1_s(s):
+def _h1_s(s: float) -> float:
     """Define the saturated line boundary between Region 1 and 4, h=f(s)
 
     Parameters
@@ -527,13 +527,13 @@ def _h1_s(s):
          0.573953875852936e7, 0.173226193407919e3, -0.363968822121321e-1,
          0.834596332878346e-6, 0.503611916682674e1, 0.655444787064505e2]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
 
-def _h3a_s(s):
+def _h3a_s(s: float) -> float:
     """Define the saturated line boundary between Region 4 and 3a, h=f(s)
 
     Parameters
@@ -582,13 +582,13 @@ def _h3a_s(s):
          -0.317714386511207e5, -0.945890406632871e5, -0.139273847088690e-5,
          0.631052532240980]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
 
-def _h2ab_s(s):
+def _h2ab_s(s: float) -> float:
     """Define the saturated line boundary between Region 4 and 2a-2b, h=f(s)
 
     Parameters
@@ -643,13 +643,13 @@ def _h2ab_s(s):
          0.297478906557467e35, -0.953588761745473e20, 0.166957699620939e25,
          -0.175407764869978e33, 0.347581490626396e35, -0.710971318427851e39]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (1/sigma1-0.513)**i * (sigma2-0.524)**j
     return 2800*exp(suma)
 
 
-def _h2c3b_s(s):
+def _h2c3b_s(s: float) -> float:
     """Define the saturated line boundary between Region 4 and 2c-3b, h=f(s)
 
     Parameters
@@ -697,14 +697,14 @@ def _h2c3b_s(s):
          0.396611982166538e12, -0.414716268484468e41, 0.359080103867382e19,
          -0.116994334851995e41]
 
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (sigma-1.02)**i * (sigma-0.726)**j
     return 2800*suma**4
 
 
 # Region 1
-def _Region1(T, P):
+def _Region1(T: float, P: float) -> Dict[str, float]:
     """Basic equation for region 1
 
     Parameters
@@ -776,7 +776,7 @@ def _Region1(T, P):
          -0.93537087292458e-25]
     Tr = 1386/T
     Pr = P/16.53
-    g = gp = gpp = gt = gtt = gpt = 0
+    g = gp = gpp = gt = gtt = gpt = 0.0
     for i, j, ni in zip(I, J, n):
         g += ni * (7.1-Pr)**i * (Tr-1.222)**j
         gp -= ni*i * (7.1-Pr)**(i-1) * (Tr-1.222)**j
@@ -801,7 +801,7 @@ def _Region1(T, P):
     return propiedades
 
 
-def _Backward1_T_Ph(P, h):
+def _Backward1_T_Ph(P: float, h: float) -> float:
     """
     Backward equation for region 1, T=f(P,h)
 
@@ -842,13 +842,13 @@ def _Backward1_T_Ph(P, h):
 
     Pr = P/1
     nu = h/2500
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (nu+1)**j
     return T
 
 
-def _Backward1_T_Ps(P, s):
+def _Backward1_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 1, T=f(P,s)
 
     Parameters
@@ -888,13 +888,13 @@ def _Backward1_T_Ps(P, s):
 
     Pr = P/1
     sigma = s/1
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (sigma+2)**j
     return T
 
 
-def _Backward1_P_hs(h, s):
+def _Backward1_P_hs(h: float, s: float) -> float:
     """Backward equation for region 1, P=f(h,s)
 
     Parameters
@@ -937,14 +937,14 @@ def _Backward1_P_hs(h, s):
 
     nu = h/3400
     sigma = s/7.6
-    P = 0
+    P = 0.0
     for i, j, ni in zip(I, J, n):
         P += ni * (nu+0.05)**i * (sigma+0.05)**j
     return 100*P
 
 
 # Region 2
-def _Region2(T, P):
+def _Region2(T: float, P: float) -> Dict[str, float]:
     """Basic equation for region 2
 
     Parameters
@@ -1027,7 +1027,7 @@ def _Region2(T, P):
           -1.2768608934681e-15, 7.3087610595061e-29, 5.5414715350778001e-17,
           -9.4369707241209998e-07]
 
-    gr = grp = grpp = grt = grtt = grpt = 0
+    gr = grp = grpp = grt = grtt = grpt = 0.0
     for i, j, ni in zip(Ir, Jr, nr):
         gr += ni * Pr**i * (Tr-0.5)**j
         grp += ni*i * Pr**(i-1) * (Tr-0.5)**j
@@ -1054,7 +1054,7 @@ def _Region2(T, P):
     return propiedades
 
 
-def Region2_cp0(Tr, Pr):
+def Region2_cp0(Tr: float, Pr: float) -> Tuple[float, float, float, float, float, float]:
     """Ideal properties for Region 2
 
     Parameters
@@ -1090,7 +1090,7 @@ def Region2_cp0(Tr, Pr):
     go = log(Pr)
     gop = Pr**-1
     gopp = -Pr**-2
-    got = gott = gopt = 0
+    got = gott = gopt = 0.0
     for j, ni in zip(Jo, no):
         go += ni * Tr**j
         got += ni*j * Tr**(j-1)
@@ -1098,7 +1098,7 @@ def Region2_cp0(Tr, Pr):
     return go, gop, gopp, got, gott, gopt
 
 
-def _P_2bc(h):
+def _P_2bc(h: float) -> float:
     """Define the boundary between Region 2b and 2c, P=f(h)
 
     Parameters
@@ -1125,7 +1125,7 @@ def _P_2bc(h):
     return 905.84278514723-0.67955786399241*h+1.2809002730136e-4*h**2
 
 
-def _hbc_P(P):
+def _hbc_P(P: float) -> float:
     """Define the boundary between Region 2b and 2c, h=f(P)
 
     Parameters
@@ -1152,7 +1152,7 @@ def _hbc_P(P):
     return 0.26526571908428e4+((P-0.45257578905948e1)/1.2809002730136e-4)**0.5
 
 
-def _hab_s(s):
+def _hab_s(s: float) -> float:
     """Define the boundary between Region 2a and 2b, h=f(s)
 
     Parameters
@@ -1180,16 +1180,16 @@ def _hab_s(s):
     smin = _Region2(_TSat_P(4), 4)["s"]
     smax = _Region2(1073.15, 4)["s"]
     if s < smin:
-        h = 0
+        h = 0.0
     elif s > smax:
-        h = 5000
+        h = 5000.0
     else:
         h = -0.349898083432139e4 + 0.257560716905876e4*s - \
             0.421073558227969e3*s**2+0.276349063799944e2*s**3
     return h
 
 
-def _Backward2a_T_Ph(P, h):
+def _Backward2a_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 2a, T=f(P,h)
 
     Parameters
@@ -1236,13 +1236,13 @@ def _Backward2a_T_Ph(P, h):
 
     Pr = P/1
     nu = h/2000
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (nu-2.1)**j
     return T
 
 
-def _Backward2b_T_Ph(P, h):
+def _Backward2b_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 2b, T=f(P,h)
 
     Parameters
@@ -1290,13 +1290,13 @@ def _Backward2b_T_Ph(P, h):
 
     Pr = P/1
     nu = h/2000
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * (Pr-2)**i * (nu-2.6)**j
     return T
 
 
-def _Backward2c_T_Ph(P, h):
+def _Backward2c_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 2c, T=f(P,h)
 
     Parameters
@@ -1339,13 +1339,13 @@ def _Backward2c_T_Ph(P, h):
 
     Pr = P/1
     nu = h/2000
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * (Pr+25)**i * (nu-1.8)**j
     return T
 
 
-def _Backward2_T_Ph(P, h):
+def _Backward2_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 2, T=f(P,h)
 
     Parameters
@@ -1377,7 +1377,7 @@ def _Backward2_T_Ph(P, h):
     return T
 
 
-def _Backward2a_T_Ps(P, s):
+def _Backward2a_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 2a, T=f(P,s)
 
     Parameters
@@ -1431,13 +1431,13 @@ def _Backward2a_T_Ps(P, s):
 
     Pr = P/1
     sigma = s/2
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (sigma-2)**j
     return T
 
 
-def _Backward2b_T_Ps(P, s):
+def _Backward2b_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 2b, T=f(P,s)
 
     Parameters
@@ -1488,13 +1488,13 @@ def _Backward2b_T_Ps(P, s):
 
     Pr = P/1
     sigma = s/0.7853
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (10-sigma)**j
     return T
 
 
-def _Backward2c_T_Ps(P, s):
+def _Backward2c_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 2c, T=f(P,s)
 
     Parameters
@@ -1539,13 +1539,13 @@ def _Backward2c_T_Ps(P, s):
 
     Pr = P/1
     sigma = s/2.9251
-    T = 0
+    T = 0.0
     for i, j, ni in zip(I, J, n):
         T += ni * Pr**i * (2-sigma)**j
     return T
 
 
-def _Backward2_T_Ps(P, s):
+def _Backward2_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 2, T=f(P,s)
 
     Parameters
@@ -1573,7 +1573,7 @@ def _Backward2_T_Ps(P, s):
     return T
 
 
-def _Backward2a_P_hs(h, s):
+def _Backward2a_P_hs(h: float, s: float) -> float:
     """Backward equation for region 2a, P=f(h,s)
 
     Parameters
@@ -1621,13 +1621,13 @@ def _Backward2a_P_hs(h, s):
 
     nu = h/4200
     sigma = s/12
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.5)**i * (sigma-1.2)**j
     return 4*suma**4
 
 
-def _Backward2b_P_hs(h, s):
+def _Backward2b_P_hs(h: float, s: float) -> float:
     """Backward equation for region 2b, P=f(h,s)
 
     Parameters
@@ -1676,13 +1676,13 @@ def _Backward2b_P_hs(h, s):
 
     nu = h/4100
     sigma = s/7.9
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.6)**i * (sigma-1.01)**j
     return 100*suma**4
 
 
-def _Backward2c_P_hs(h, s):
+def _Backward2c_P_hs(h: float, s: float) -> float:
     """Backward equation for region 2c, P=f(h,s)
 
     Parameters
@@ -1731,13 +1731,13 @@ def _Backward2c_P_hs(h, s):
 
     nu = h/3500
     sigma = s/5.9
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.7)**i * (sigma-1.1)**j
     return 100*suma**4
 
 
-def _Backward2_P_hs(h, s):
+def _Backward2_P_hs(h: float, s: float) -> float:
     """Backward equation for region 2, P=f(h,s)
 
     Parameters
@@ -1764,7 +1764,7 @@ def _Backward2_P_hs(h, s):
 
 
 # Region 3
-def _Region3(rho, T):
+def _Region3(rho: float, T: float) -> Dict[str, float]:
     """Basic equation for region 3
 
     Parameters
@@ -1839,7 +1839,7 @@ def _Region3(rho, T):
     g = 1.0658070028513*log(d)
     gd = 1.0658070028513/d
     gdd = -1.0658070028513/d**2
-    gt = gtt = gdt = 0
+    gt = gtt = gdt = 0.0
     for i, j, ni in zip(I, J, n):
         g += ni * d**i * Tr**j
         gd += ni*i * d**(i-1) * Tr**j
@@ -1887,7 +1887,7 @@ def _h_3ab(P):
         0.0219921901054187*P**2+0.875131686009950e-4*P**3
 
 
-def _tab_P(P):
+def _tab_P(P: float) -> float:
     """Define the boundary between Region 3a-3b, T=f(P)
 
     Parameters
@@ -1917,13 +1917,13 @@ def _tab_P(P):
          -0.191887498864292e4, 0.918419702359447e3]
 
     Pr = P/1
-    T = 0
+    T = 0.0
     for i, ni in zip(I, n):
         T += ni * log(Pr)**i
     return T
 
 
-def _top_P(P):
+def _top_P(P: float) -> float:
     """Define the boundary between Region 3o-3p, T=f(P)
 
     Parameters
@@ -1953,13 +1953,13 @@ def _top_P(P):
          0.773845935768222e3, -0.152313732937084e4]
 
     Pr = P/1
-    T = 0
+    T = 0.0
     for i, ni in zip(I, n):
         T += ni * log(Pr)**i
     return T
 
 
-def _twx_P(P):
+def _twx_P(P: float) -> float:
     """Define the boundary between Region 3w-3x, T=f(P)
 
     Parameters
@@ -1989,13 +1989,13 @@ def _twx_P(P):
          0.329196213998375e3, 0.873371668682417e3]
 
     Pr = P/1
-    T = 0
+    T = 0.0
     for i, ni in zip(I, n):
         T += ni * log(Pr)**i
     return T
 
 
-def _tef_P(P):
+def _tef_P(P: float) -> float:
     """Define the boundary between Region 3e-3f, T=f(P)
 
     Parameters
@@ -2023,7 +2023,7 @@ def _tef_P(P):
     return 3.727888004*(P-22.064)+647.096
 
 
-def _txx_P(P, xy):
+def _txx_P(P: float, xy: str) -> float:
     """Define the boundary between 3x-3y, T=f(P)
 
     Parameters
@@ -2084,13 +2084,13 @@ def _txx_P(P, xy):
 
     n = ng[xy]
     Pr = P/1
-    T = 0
+    T = 0.0
     for i, ni in enumerate(n):
         T += ni * Pr**i
     return T
 
 
-def _Backward3a_v_Ph(P, h):
+def _Backward3a_v_Ph(P: float, h: float) -> float:
     """Backward equation for region 3a, v=f(P,h)
 
     Parameters
@@ -2137,13 +2137,13 @@ def _Backward3a_v_Ph(P, h):
 
     Pr = P/100
     nu = h/2100
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.128)**i * (nu-0.727)**j
     return 0.0028*suma
 
 
-def _Backward3b_v_Ph(P, h):
+def _Backward3b_v_Ph(P: float, h: float) -> float:
     """Backward equation for region 3b, v=f(P,h)
 
     Parameters
@@ -2189,13 +2189,13 @@ def _Backward3b_v_Ph(P, h):
 
     Pr = P/100
     nu = h/2800
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.0661)**i * (nu-0.72)**j
     return 0.0088*suma
 
 
-def _Backward3_v_Ph(P, h):
+def _Backward3_v_Ph(P: float, h: float) -> float:
     """Backward equation for region 3, v=f(P,h)
 
     Parameters
@@ -2217,7 +2217,7 @@ def _Backward3_v_Ph(P, h):
         return _Backward3b_v_Ph(P, h)
 
 
-def _Backward3a_T_Ph(P, h):
+def _Backward3a_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 3a, T=f(P,h)
 
     Parameters
@@ -2264,13 +2264,13 @@ def _Backward3a_T_Ph(P, h):
 
     Pr = P/100.
     nu = h/2300.
-    suma = 0
+    suma = 0.0
     for i, j, n in zip(I, J, n):
         suma += n*(Pr+0.240)**i*(nu-0.615)**j
     return 760*suma
 
 
-def _Backward3b_T_Ph(P, h):
+def _Backward3b_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 3b, T=f(P,h)
 
     Parameters
@@ -2317,13 +2317,13 @@ def _Backward3b_T_Ph(P, h):
 
     Pr = P/100.
     nu = h/2800.
-    suma = 0
+    suma = 0.0
     for i, j, n in zip(I, J, n):
         suma += n*(Pr+0.298)**i*(nu-0.72)**j
     return 860*suma
 
 
-def _Backward3_T_Ph(P, h):
+def _Backward3_T_Ph(P: float, h: float) -> float:
     """Backward equation for region 3, T=f(P,h)
 
     Parameters
@@ -2346,7 +2346,7 @@ def _Backward3_T_Ph(P, h):
     return T
 
 
-def _Backward3a_v_Ps(P, s):
+def _Backward3a_v_Ps(P: float, s: float) -> float:
     """Backward equation for region 3a, v=f(P,s)
 
     Parameters
@@ -2392,13 +2392,13 @@ def _Backward3a_v_Ps(P, s):
 
     Pr = P/100
     sigma = s/4.4
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.187)**i * (sigma-0.755)**j
     return 0.0028*suma
 
 
-def _Backward3b_v_Ps(P, s):
+def _Backward3b_v_Ps(P: float, s: float) -> float:
     """Backward equation for region 3b, v=f(P,s)
 
     Parameters
@@ -2445,13 +2445,13 @@ def _Backward3b_v_Ps(P, s):
 
     Pr = P/100
     sigma = s/5.3
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.298)**i * (sigma-0.816)**j
     return 0.0088*suma
 
 
-def _Backward3_v_Ps(P, s):
+def _Backward3_v_Ps(P: float, s: float) -> float:
     """Backward equation for region 3, v=f(P,s)
 
     Parameters
@@ -2472,7 +2472,7 @@ def _Backward3_v_Ps(P, s):
         return _Backward3b_v_Ps(P, s)
 
 
-def _Backward3a_T_Ps(P, s):
+def _Backward3a_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 3a, T=f(P,s)
 
     Parameters
@@ -2519,13 +2519,13 @@ def _Backward3a_T_Ps(P, s):
 
     Pr = P/100
     sigma = s/4.4
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.240)**i * (sigma-0.703)**j
     return 760*suma
 
 
-def _Backward3b_T_Ps(P, s):
+def _Backward3b_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 3b, T=f(P,s)
 
     Parameters
@@ -2571,13 +2571,13 @@ def _Backward3b_T_Ps(P, s):
 
     Pr = P/100
     sigma = s/5.3
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (Pr+0.760)**i * (sigma-0.818)**j
     return 860*suma
 
 
-def _Backward3_T_Ps(P, s):
+def _Backward3_T_Ps(P: float, s: float) -> float:
     """Backward equation for region 3, T=f(P,s)
 
     Parameters
@@ -2600,7 +2600,7 @@ def _Backward3_T_Ps(P, s):
     return T
 
 
-def _Backward3a_P_hs(h, s):
+def _Backward3a_P_hs(h: float, s: float) -> float:
     """Backward equation for region 3a, P=f(h,s)
 
     Parameters
@@ -2650,13 +2650,13 @@ def _Backward3a_P_hs(h, s):
 
     nu = h/2300
     sigma = s/4.4
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-1.01)**i * (sigma-0.75)**j
     return 99*suma
 
 
-def _Backward3b_P_hs(h, s):
+def _Backward3b_P_hs(h: float, s: float) -> float:
     """Backward equation for region 3b, P=f(h,s)
 
     Parameters
@@ -2708,13 +2708,13 @@ def _Backward3b_P_hs(h, s):
 
     nu = h/2800
     sigma = s/5.3
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.681)**i * (sigma-0.792)**j
     return 16.6/suma
 
 
-def _Backward3_P_hs(h, s):
+def _Backward3_P_hs(h: float, s: float) -> float:
     """Backward equation for region 3, P=f(h,s)
 
     Parameters
@@ -2736,7 +2736,7 @@ def _Backward3_P_hs(h, s):
         return _Backward3b_P_hs(h, s)
 
 
-def _Backward3_sat_v_P(P, T, x):
+def _Backward3_sat_v_P(P: float, T: float, x: int) -> float:
     """Backward equation for region 3 for saturated state, vs=f(P,x)
 
     Parameters
@@ -2779,7 +2779,7 @@ def _Backward3_sat_v_P(P, T, x):
     return _Backward3x_v_PT(T, P, region)
 
 
-def _Backward3_v_PT(P, T):
+def _Backward3_v_PT(P: float, T: float) -> float:
     """Backward equation for region 3, v=f(P,T)
 
     Parameters
@@ -2961,7 +2961,7 @@ def _Backward3_v_PT(P, T):
     return _Backward3x_v_PT(T, P, region)
 
 
-def _Backward3x_v_PT(T, P, x):
+def _Backward3x_v_PT(T: float, P: float, x: str) -> float:
     """Backward equation for region 3x, v=f(P,T)
 
     Parameters
@@ -3558,7 +3558,7 @@ def _Backward3x_v_PT(T, P, x):
 
     Pr = P/P_
     Tr = T/T_
-    suma = 0
+    suma = 0.0
     if x == "n":
         for i, j, ni in zip(I, J, n):
             suma += ni * (Pr-a)**i * (Tr-b)**j
@@ -3570,7 +3570,7 @@ def _Backward3x_v_PT(T, P, x):
 
 
 # Region 4
-def _Region4(P, x):
+def _Region4(P: float, x: float) -> Dict[str, Optional[float]]:
     """Basic equation for region 4
 
     Parameters
@@ -3618,7 +3618,7 @@ def _Region4(P, x):
     return propiedades
 
 
-def _Backward4_T_hs(h, s):
+def _Backward4_T_hs(h: float, s: float) -> float:
     """Backward equation for region 4, T=f(h,s)
 
     Parameters
@@ -3669,14 +3669,14 @@ def _Backward4_T_hs(h, s):
 
     nu = h/2800
     sigma = s/9.2
-    suma = 0
+    suma = 0.0
     for i, j, ni in zip(I, J, n):
         suma += ni * (nu-0.119)**i * (sigma-1.07)**j
     return 550*suma
 
 
 # Region 5
-def _Region5(T, P):
+def _Region5(T: float, P: float) -> Dict[str, float]:
     """Basic equation for region 5
 
     Parameters
@@ -3739,7 +3739,7 @@ def _Region5(T, P):
     Jr = [1, 2, 3, 3, 9, 7]
     nr = [0.15736404855259e-2, 0.90153761673944e-3, -0.50270077677648e-2,
           0.22440037409485e-5, -0.41163275453471e-5, 0.37919454822955e-7]
-    gr = grp = grpp = grt = grtt = grpt = 0
+    gr = grp = grpp = grt = grtt = grpt = 0.0
     for i, j, ni in zip(Ir, Jr, nr):
         gr += ni * Pr**i * Tr**j
         grp += ni*i * Pr**(i-1) * Tr**j
@@ -3766,7 +3766,7 @@ def _Region5(T, P):
     return propiedades
 
 
-def Region5_cp0(Tr, Pr):
+def Region5_cp0(Tr: float, Pr: float) -> Tuple[float, float, float, float, float, float]:
     """Ideal properties for Region 5
 
     Parameters
@@ -3800,7 +3800,7 @@ def Region5_cp0(Tr, Pr):
     go = log(Pr)
     gop = Pr**-1
     gopp = -Pr**-2
-    got = gott = gopt = 0
+    got = gott = gopt = 0.0
     for j, ni in zip(Jo, no):
         go += ni * Tr**j
         got += ni*j * Tr**(j-1)
@@ -3810,7 +3810,7 @@ def Region5_cp0(Tr, Pr):
 
 
 # Region definitions
-def _Bound_TP(T, P):
+def _Bound_TP(T: float, P: float) -> Optional[int]:
     """Region definition for input T and P
 
     Parameters
@@ -3851,7 +3851,7 @@ def _Bound_TP(T, P):
     return region
 
 
-def _Bound_Ph(P, h):
+def _Bound_Ph(P: float, h: float) -> Optional[int]:
     """Region definition for input P y h
 
     Parameters
@@ -3925,7 +3925,7 @@ def _Bound_Ph(P, h):
     return region
 
 
-def _Bound_Ps(P, s):
+def _Bound_Ps(P: float, s: float) -> Optional[int]:
     """Region definition for input P and s
 
     Parameters
@@ -3999,7 +3999,7 @@ def _Bound_Ps(P, s):
     return region
 
 
-def _Bound_hs(h, s):
+def _Bound_hs(h: float, s: float) -> float:
     """Region definition for input h and s
 
     Parameters
@@ -4171,7 +4171,7 @@ def _Bound_hs(h, s):
     return region
 
 
-def prop0(T, P):
+def prop0(T: float, P: float) -> Dict[str, float]:
     """Ideal gas properties
 
     Parameters
@@ -4340,7 +4340,7 @@ class IAPWS97(object):
             self.msg = "Solved"
 
     @property
-    def calculable(self):
+    def calculable(self) -> str:
         """Check if class is calculable by its kwargs"""
         self._thermo = ""
         if self.kwargs["T"] and self.kwargs["P"]:
@@ -4682,7 +4682,7 @@ class IAPWS97(object):
             self.Hvap = vapor["h"]-liquido["h"]
             self.Svap = vapor["s"]-liquido["s"]
 
-    def fill(self, fase, estado):
+    def fill(self, fase, estado: Dict[str, float]):
         """Fill phase properties"""
         fase.v = estado["v"]
         fase.rho = 1/fase.v
@@ -4731,7 +4731,7 @@ class IAPWS97(object):
         except NotImplementedError:
             fase.n = None
 
-    def derivative(self, z, x, y, fase):
+    def derivative(self, z: str, x: str, y: str, fase):
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, u, h, s, g, a
@@ -4742,33 +4742,33 @@ class IAPWS97(object):
 class IAPWS97_PT(IAPWS97):
     """Derivated class for direct P and T input"""
 
-    def __init__(self, P, T):
+    def __init__(self, P: float, T: float):
         IAPWS97.__init__(self, T=T, P=P)
 
 
 class IAPWS97_Ph(IAPWS97):
     """Derivated class for direct P and h input"""
 
-    def __init__(self, P, h):
+    def __init__(self, P: float, h: float):
         IAPWS97.__init__(self, P=P, h=h)
 
 
 class IAPWS97_Ps(IAPWS97):
     """Derivated class for direct P and s input"""
 
-    def __init__(self, P, s):
+    def __init__(self, P: float, s: float):
         IAPWS97.__init__(self, P=P, s=s)
 
 
 class IAPWS97_Px(IAPWS97):
     """Derivated class for direct P and x input"""
 
-    def __init__(self, P, x):
+    def __init__(self, P: float, x):
         IAPWS97.__init__(self, P=P, x=x)
 
 
 class IAPWS97_Tx(IAPWS97):
     """Derivated class for direct T and x input"""
 
-    def __init__(self, T, x):
+    def __init__(self, T: float, x):
         IAPWS97.__init__(self, T=T, x=x)

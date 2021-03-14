@@ -13,6 +13,7 @@ include:
 from __future__ import division
 from math import exp, log, pi
 import warnings
+from typing import Dict, Optional
 
 from scipy.constants import Boltzmann
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
@@ -86,7 +87,7 @@ class NH3(MEoS):
         "ao": [-.38435, -4.0846, -6.6634, -0.31881e2, 0.21306e3, -0.24648e3],
         "exp": [0.218, 0.55, 1.5, 3.7, 5.5, 5.8]}
 
-    def _visco(self, rho, T, fase=None):
+    def _visco(self, rho: float, T: float, fase=None) -> Optional[float]:
         """Equation for the Viscosity
 
         Parameters
@@ -140,7 +141,7 @@ class NH3(MEoS):
         mu = muo + mub + mur
         return mu*1e-6
 
-    def _thermo(self, rho, T, fase):
+    def _thermo(self, rho: float, T: float, fase) -> Optional[float]:
         """Equation for the thermal conductivity
 
         Parameters
@@ -209,7 +210,7 @@ class H2ONH3(object):
 
     # TODO: Add equilibrium routine
 
-    def _prop(self, rho, T, x):
+    def _prop(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Thermodynamic properties of ammonia-water mixtures
 
         Parameters
@@ -287,7 +288,7 @@ class H2ONH3(object):
         prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
         return prop
 
-    def _phi0(self, rho, T, x):
+    def _phi0(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Ideal gas Helmholtz energy of binary mixtures and derivatives
 
         Parameters
@@ -381,7 +382,7 @@ class H2ONH3(object):
         prop["fiodt"] = fiodt
         return prop
 
-    def _phir(self, rho, T, x):
+    def _phir(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Residual contribution to the free Helmholtz energy
 
         Parameters
@@ -457,7 +458,7 @@ class H2ONH3(object):
             tau/Tn*dTnx*prop["firt"]
         return prop
 
-    def _Dphir(self, tau, delta, x):
+    def _Dphir(self, tau: float, delta: float, x: float) -> Dict[str, float]:
         """Departure function to the residual contribution to the free
         Helmholtz energy
 
@@ -564,7 +565,7 @@ class H2ONH3(object):
         return prop
 
 
-def Ttr(x):
+def Ttr(x: float) -> float:
     """Equation for the triple point of ammonia-water mixture
 
     Parameters
