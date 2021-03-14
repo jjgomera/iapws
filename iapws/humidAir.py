@@ -16,6 +16,7 @@ include:
 from __future__ import division
 from math import exp, log, pi, atan
 import warnings
+from typing import Tuple
 
 from scipy.optimize import fsolve
 
@@ -642,15 +643,15 @@ class HumidAir(object):
 
         # Thermodynamic definition
         if self._mode == "TP":
-            def f(rho):
+            def rho_func(rho: float) -> float:
                 fav = self._fav(T, rho, A)
                 return rho**2*fav["fird"]/1000-P
-            rho = fsolve(f, 1)[0]
+            rho = fsolve(rho_func, 1)[0]
         elif self._mode == "Prho":
-            def f(T):
+            def t_func(T: float) -> float:
                 fav = self._fav(T, rho, A)
                 return rho**2*fav["fird"]/1000-P
-            T = fsolve(f, 300)[0]
+            T = fsolve(t_func, 300)[0]
 
         # General calculation procedure
         fav = self._fav(T, rho, A)
@@ -718,7 +719,7 @@ class HumidAir(object):
             water = IAPWS95(T=T, P=P)
             gw = water.g
 
-        def f(parr):
+        def f(parr: Tuple[float, float]) -> Tuple[float, float]:
             rho, a = parr
             if a > 1:
                 a = 1
