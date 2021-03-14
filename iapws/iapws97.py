@@ -84,7 +84,7 @@ doi: 10.1007/978-3-540-74234-0
 
 from __future__ import division
 from math import sqrt, log, exp
-from typing import Tuple
+from typing import Tuple, List
 
 from scipy.optimize import fsolve, newton
 
@@ -4512,25 +4512,38 @@ class IAPWS97(object):
                     if To < 273.15 or To > Tc:
                         To = 300
 
-                    def funcion2(par: Tuple[float, float]) -> Tuple[float, float]:
-                        if par[1] < 0:
-                            par[1] = 0
-                        elif par[1] > 1:
-                            par[1] = 1
-                        if par[0] < 273.15:
-                            par[0] = 273.15
-                        elif par[0] > Tc:
-                            par[0] = Tc
+                    def funcion2(par: List[float]) -> Tuple[float, float]:
+                        # This passes tests, but these assignments modify the CALLERS
+                        # par tuple, instead of our copy.  Was that intended?
+                        if True:
+                            if par[1] < 0:
+                                par[1] = 0
+                            elif par[1] > 1:
+                                par[1] = 1
+                            pp1 = par[1]
+                        # And this does not.
+                        else:
+                            pp1 = par[1]
+                            if pp1 < 0:
+                                pp1 = 0
+                            elif pp1 > 1:
+                                pp1 = 1
 
-                        Po = _PSat_T(par[0])
-                        liquid = _Region1(par[0], Po)
-                        vapor = _Region2(par[0], Po)
+                        pp0 = par[0]
+                        if pp0 < 273.15:
+                            pp0 = 273.15
+                        elif pp0 > Tc:
+                            pp0 = Tc
+
+                        Po = _PSat_T(pp0)
+                        liquid = _Region1(pp0, Po)
+                        vapor = _Region2(pp0, Po)
                         hl = liquid["h"]
                         sl = liquid["s"]
                         hv = vapor["h"]
                         sv = vapor["s"]
-                        return (hv*par[1]+hl*(1-par[1])-h,
-                                sv*par[1]+sl*(1-par[1])-s)
+                        return (hv*pp1+hl*(1-pp1)-h,
+                                sv*pp1+sl*(1-pp1)-s)
                     T, x = fsolve(funcion2, [To, 0.5])
                     P = _PSat_T(T)
 
