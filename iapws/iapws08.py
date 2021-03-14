@@ -264,6 +264,8 @@ class SeaWater(object):
     def _water(cls, T: float, P: float) -> Dict[str, float]:
         """Get properties of pure water, Table4 pag 8"""
         water = IAPWS95(P=P, T=T)
+        assert(isinstance(water.h, float))
+        assert(isinstance(water.s, float))
         prop = {}
         prop["g"] = water.h-T*water.s
         prop["gt"] = -water.s
