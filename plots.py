@@ -5,6 +5,7 @@
 from math import pi, atan, log
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Dict, List, Any
 
 import iapws
 from iapws._iapws import Pt, Pc, Tc
@@ -144,7 +145,7 @@ plt.plot(xvap, yvap, **isosat_kw)
 
 # Calculate isoquality lines
 print("Calculating isoquality lines...")
-Q = {}
+Q: Dict[str, Dict[str, List[Any]]] = {}
 for q in isoq:
     Q["%s" % q] = {}
     txt = "x=%s" % q
@@ -160,7 +161,7 @@ for q in isoq:
 # Calculate isotherm lines
 if xAxis != "T" and yAxis != "T":
     print("Calculating isotherm lines...")
-    T_ = {}
+    T_: Dict[str, Dict[str, List[Any]]] = {}
     for T in isoT:
         T_["%s" % T] = {}
         print("    T=%sºC" % T)
@@ -200,7 +201,7 @@ if xAxis != "T" and yAxis != "T":
 # Calculate isobar lines
 if xAxis != "P" and yAxis != "P":
     print("Calculating isobar lines...")
-    P_ = {}
+    P_: Dict[str, Dict[str, List[Any]]] = {}
     for P in isoP:
         print("    P=%sMPa" % P)
         P_["%s" % P] = {}
@@ -240,7 +241,7 @@ if xAxis != "P" and yAxis != "P":
 # Calculate isoenthalpic lines
 if xAxis != "h" and yAxis != "h":
     print("Calculating isoenthalpic lines...")
-    H_ = {}
+    H_: Dict[str, Dict[str, List[Any]]] = {}
     for h in isoh:
         print("    h=%skJ/kg" % h)
         H_["%s" % h] = {}
@@ -267,7 +268,7 @@ if xAxis != "h" and yAxis != "h":
 # Calculate isoentropic lines
 if xAxis != "s" and yAxis != "s":
     print("Calculating isoentropic lines...")
-    S_ = {}
+    S_: Dict[str, Dict[str, List[Any]]] = {}
     for s in isos:
         print("    s=%skJ/kgK" % s)
         S_["%s" % s] = {}
@@ -296,10 +297,10 @@ if xAxis != "v" and yAxis != "v":
     print("Calculating isochor lines...")
     for v in isov:
         print("    v=%s" % v)
-        pts = [iapws.IAPWS95(T=t, v=v) for t in Tl]
+        pts95 = [iapws.IAPWS95(T=t, v=v) for t in Tl]
         x = []
         y = []
-        for p in pts:
+        for p in pts95:
             if p.status:
                 x.append(p.__getattribute__(xAxis))
                 y.append(p.__getattribute__(yAxis))
@@ -310,17 +311,19 @@ if xAxis != "v" and yAxis != "v":
 if regionBoundary:
     # Boundary 1-3
     Po = _PSat_T(623.15)
-    P = np.linspace(Po, 100, points)
-    pts = [fluid(P=p, T=623.15) for p in P]
+    # Mypy was confused about the np.linspace return type.
+    numpy_pressure_points: List[float] = np.linspace(Po, 100, points)
+    pts = [fluid(P=p, T=623.15) for p in numpy_pressure_points]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
 
     # Boundary 2-3
-    T = np.linspace(623.15, 863.15)
-    P = [_P23_T(t) for t in T]
-    P[-1] = 100  # Avoid round problem with value out of range > 100 MPa
-    pts = [fluid(P=p, T=t) for p, t in zip(P, T)]
+    # Mypy was confused about the np.linspace return type.
+    numpy_temp_points: List[float] = np.linspace(623.15, 863.15)
+    Ps = [_P23_T(t) for t in numpy_temp_points]
+    Ps[-1] = 100  # Avoid round problem with value out of range > 100 MPa
+    pts = [fluid(P=p, T=t) for p, t in zip(Ps, numpy_temp_points)]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
