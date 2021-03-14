@@ -612,7 +612,7 @@ def _Sublimation_Pressure(T: float) -> float:
     """
     if 50 <= T <= 273.16:
         Tita = T/Tt
-        suma = 0
+        suma = 0.0
         a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
         expo = [0.333333333e-2, 1.20666667, 1.70333333]
         for ai, expi in zip(a, expo):
@@ -664,7 +664,7 @@ def _Melting_Pressure(T: float, ice: str = "Ih") -> float:
         Tita = T/Tref
         a = [0.119539337e7, 0.808183159e5, 0.33382686e4]
         expo = [3., 0.2575e2, 0.10375e3]
-        suma = 1
+        suma = 1.0
         for ai, expi in zip(a, expo):
             suma += ai*(1-Tita**expi)
         P = suma*Pref
@@ -1092,7 +1092,7 @@ def _Kw(rho: float, T: float) -> float:
     Mw = 18.015268
 
     gamma = [6.1415e-1, 4.825133e4, -6.770793e4, 1.01021e7]
-    pKg = 0
+    pKg = 0.0
     for i, g in enumerate(gamma):
         pKg += g/T**i
 
@@ -1323,7 +1323,7 @@ def _D2O_Sublimation_Pressure(T: float) -> float:
     """
     if 210 <= T <= 276.969:
         Tita = T/276.969
-        suma = 0
+        suma = 0.0
         ai = [-0.1314226e2, 0.3212969e2]
         ti = [-1.73, -1.42]
         for a, t in zip(ai, ti):
@@ -1373,7 +1373,7 @@ def _D2O_Melting_Pressure(T: float, ice: str = "Ih") -> float:
         Tita = T/276.969
         ai = [-0.30153e5, 0.692503e6]
         ti = [5.5, 8.2]
-        suma = 1
+        suma = 1.0
         for a, t in zip(ai, ti):
             suma += a*(1-Tita**t)
         P = suma*0.00066159
