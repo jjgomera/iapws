@@ -17,7 +17,7 @@ import warnings
 
 from numpy import exp, log, ndarray
 from scipy.optimize import fsolve
-from typing import Tuple
+from typing import Tuple, Dict, Optional, Union, List
 
 from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
@@ -371,9 +371,9 @@ class MEoS(_fase):
     """
 
     CP = None
-    _Pv = None
-    _rhoL = None
-    _rhoG = None
+    _Pv: Optional[Dict[str, Union[int, List[float]]]] = None
+    _rhoL: Optional[Dict[str, Union[int, List[float]]]] = None
+    _rhoG: Optional[Dict[str, Union[int, List[float]]]] = None
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -389,6 +389,13 @@ class MEoS(_fase):
               "x0": 0.5}
     status = 0
     msg = "Undefined"
+
+    # These are used in MeOS but are NOT actually defined by the
+    # class.  They have to be defined by one of the subclasses which
+    # is a little messy.  By statically typing them here, we at least
+    # let mypy know that they're supposed to be set...
+    rhoc: float
+    _constants: Dict[str, Union[float, List[float]]]
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
