@@ -774,8 +774,8 @@ class MEoS(_fase):
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or rhov <= rho <= rhol:
 
-                    def f4(parr: Tuple[float, float, float, float]) \
-                        -> Tuple[float, float, float, float]:
+                    def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                            float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
                         deltaL = rhol/self.rhoc
@@ -880,8 +880,8 @@ class MEoS(_fase):
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or sol[2] != 1:
 
-                    def f4(parr: Tuple[float, float, float, float]) \
-                        -> Tuple[float, float, float, float]:
+                    def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                            float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
                         deltaL = rhol/self.rhoc
@@ -1137,8 +1137,8 @@ class MEoS(_fase):
                 rhov = self._Vapor_Density(T)
                 if rhov <= rho <= rhol:
 
-                    def f4(parr: Tuple[float, float, float, float]) -> \
-                        Tuple[float, float, float, float]:
+                    def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                            float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
                         deltaL = rhol/self.rhoc
@@ -1207,8 +1207,8 @@ class MEoS(_fase):
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
 
-                    def f4(parr: Tuple[float, float, float, float]) -> \
-                        Tuple[float, float, float, float]:
+                    def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                            float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
                         deltaL = rhol/self.rhoc
@@ -1279,8 +1279,8 @@ class MEoS(_fase):
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
 
-                    def f4(parr: Tuple[float, float, float, float]) -> \
-                        Tuple[float, float, float, float]:
+                    def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                            float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
                         deltaL = rhol/self.rhoc
