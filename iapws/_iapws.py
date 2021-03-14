@@ -278,53 +278,52 @@ def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     alfa = Tr/(593-T)
     beta = Tr/(T-232)
 
-    FNONE = 0.0
-    a = [FNONE, -1.661470539e5, 2.708781640e6, -1.557191544e8, FNONE,
+    a = [-1.661470539e5, 2.708781640e6, -1.557191544e8, 0.0,
          1.93763157e-2, 6.74458446e3, -2.22521604e5, 1.00231247e8,
          -1.63552118e9, 8.32299658e9, -7.5245878e-6, -1.3767418e-2,
          1.0627293e1, -2.0457795e2, 1.2037414e3]
-    b = [FNONE, -8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
+    b = [-8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
          5.78545292e-3, -1.53195665E-2, 3.11337859e-2, -4.23546241e-2,
          3.38713507e-2, -1.19946761e-2, -3.1091470e-6, 2.8964919e-5,
          -1.3112763e-4, 3.0410453e-4, -3.9034594e-4, 2.3403117e-4,
          -4.8510101e-5]
-    c = [FNONE, -2.452093414e2, 3.869269598e1, -8.983025854]
+    c = [-2.452093414e2, 3.869269598e1, -8.983025854]
     # Zero entries are not used or present in the table.
-    n = [0, 4, 5, 7, 0, 0, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
-    m = [0, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
+    n = [4, 5, 7, 0, 0, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
+    m = [2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
 
-    suma1 = sum(a[i]*alfa**n[i] for i in range(1, 4))
-    suma2 = sum(b[i]*beta**m[i] for i in range(1, 5))
-    go = R*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
+    suma1 = sum(a[i]*alfa**n[i] for i in range(0, 3))
+    suma2 = sum(b[i]*beta**m[i] for i in range(0, 4))
+    go = R*Tr*(c[0]+c[1]*tau+c[2]*tau*log(tau)+suma1+suma2)
 
-    suma1 = sum(a[i]*alfa**n[i] for i in range(6, 11))
-    suma2 = sum(b[i]*beta**m[i] for i in range(5, 11))
-    vo = R*Tr/Po/1000*(a[5]+suma1+suma2)
+    suma1 = sum(a[i]*alfa**n[i] for i in range(5, 10))
+    suma2 = sum(b[i]*beta**m[i] for i in range(4, 10))
+    vo = R*Tr/Po/1000*(a[4]+suma1+suma2)
 
-    suma1 = sum(a[i]*alfa**n[i] for i in range(11, 16))
-    suma2 = sum(b[i]*beta**m[i] for i in range(11, 18))
+    suma1 = sum(a[i]*alfa**n[i] for i in range(10, 15))
+    suma2 = sum(b[i]*beta**m[i] for i in range(10, 17))
     vpo = R*Tr/Po**2/1000*(suma1+suma2)
 
-    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4))
-    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5))
-    so = -R*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(0, 3))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(0, 4))
+    so = -R*(c[1]+c[2]*(1+log(tau))+suma1-suma2)
 
-    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4))
-    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5))
-    cpo = -R*(c[3]+tau*suma1+tau*suma2)
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(0, 3))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(0, 4))
+    cpo = -R*(c[2]+tau*suma1+tau*suma2)
 
-    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11))
-    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11))
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(5, 10))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(4, 10))
     vto = R/Po/1000*(suma1-suma2)
 
     # This properties are only neccessary for computing thermodynamic
     # properties at pressures different from 0.1 MPa
-    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11))
-    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11))
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(5, 10))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(4, 10))
     vtto = R/Tr/Po/1000*(suma1+suma2)
 
-    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16))
-    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18))
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(10, 15))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(10, 17))
     vpto = R/Po**2/1000*(suma1-suma2)
 
     if P != 0.1:
@@ -367,22 +366,22 @@ def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     propiedades["w"] = w
 
     # Viscosity correlation, Eq 7
-    a = [FNONE, 280.68, 511.45, 61.131, 0.45903]
-    b = [FNONE, -1.9, -7.7, -19.6, -40]
+    a = [280.68, 511.45, 61.131, 0.45903]
+    b = [-1.9, -7.7, -19.6, -40]
     T_ = T/300
-    mu = sum(a[i]*T_**b[i] for i in range(1, 5))/1e6
+    mu = sum(a[i]*T_**b[i] for i in range(0, 4))/1e6
     propiedades["mu"] = mu
 
     # Thermal conductivity correlation, Eq 8
-    c = [FNONE, 1.6630, -1.7781, 1.1567, -0.432115]
-    d = [FNONE, -1.15, -3.4, -6.0, -7.6]
-    k = sum(c[i]*T_**d[i] for i in range(1, 5))
+    c = [1.6630, -1.7781, 1.1567, -0.432115]
+    d = [-1.15, -3.4, -6.0, -7.6]
+    k = sum(c[i]*T_**d[i] for i in range(0, 4))
     propiedades["k"] = k
 
     # Dielectric constant correlation, Eq 9
-    e = [FNONE, -43.7527, 299.504, -399.364, 221.327]
-    f = [FNONE, -0.05, -1.47, -2.11, -2.31]
-    epsilon = sum(e[i]*T_**f[i] for i in range(1, 5))
+    e = [-43.7527, 299.504, -399.364, 221.327]
+    f = [-0.05, -1.47, -2.11, -2.31]
+    epsilon = sum(e[i]*T_**f[i] for i in range(0, 4))
     propiedades["epsilon"] = epsilon
 
     return propiedades
