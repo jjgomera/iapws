@@ -278,18 +278,20 @@ def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     alfa = Tr/(593-T)
     beta = Tr/(T-232)
 
-    a = [None, -1.661470539e5, 2.708781640e6, -1.557191544e8, None,
+    FNONE = 0.0
+    a = [FNONE, -1.661470539e5, 2.708781640e6, -1.557191544e8, FNONE,
          1.93763157e-2, 6.74458446e3, -2.22521604e5, 1.00231247e8,
          -1.63552118e9, 8.32299658e9, -7.5245878e-6, -1.3767418e-2,
          1.0627293e1, -2.0457795e2, 1.2037414e3]
-    b = [None, -8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
+    b = [FNONE, -8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
          5.78545292e-3, -1.53195665E-2, 3.11337859e-2, -4.23546241e-2,
          3.38713507e-2, -1.19946761e-2, -3.1091470e-6, 2.8964919e-5,
          -1.3112763e-4, 3.0410453e-4, -3.9034594e-4, 2.3403117e-4,
          -4.8510101e-5]
-    c = [None, -2.452093414e2, 3.869269598e1, -8.983025854]
-    n = [None, 4, 5, 7, None, None, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
-    m = [None, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
+    c = [FNONE, -2.452093414e2, 3.869269598e1, -8.983025854]
+    # Zero entries are not used or present in the table.
+    n = [0, 4, 5, 7, 0, 0, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
+    m = [0, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
 
     suma1 = sum(a[i]*alfa**n[i] for i in range(1, 4))
     suma2 = sum(b[i]*beta**m[i] for i in range(1, 5))
@@ -336,8 +338,8 @@ def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
 
     h = go+T*so
     u = h-P*vo
-    a = go-P*vo
-    cv = cpo+T*vto**2/vpo
+    a_result = go-P*vo
+    local_cv = cpo+T*vto**2/vpo
     xkappa = -vpo/vo
     alfa = vto/vo
     ks = -(T*vto**2/cpo+vpo)/vo
@@ -356,30 +358,30 @@ def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     propiedades["h"] = h
     propiedades["s"] = so
     propiedades["cp"] = cpo
-    propiedades["cv"] = cv
+    propiedades["cv"] = local_cv
     propiedades["u"] = u
-    propiedades["a"] = a
+    propiedades["a"] = a_result
     propiedades["xkappa"] = xkappa
     propiedades["alfav"] = vto/vo
     propiedades["ks"] = ks
     propiedades["w"] = w
 
     # Viscosity correlation, Eq 7
-    a = [None, 280.68, 511.45, 61.131, 0.45903]
-    b = [None, -1.9, -7.7, -19.6, -40]
+    a = [FNONE, 280.68, 511.45, 61.131, 0.45903]
+    b = [FNONE, -1.9, -7.7, -19.6, -40]
     T_ = T/300
     mu = sum(a[i]*T_**b[i] for i in range(1, 5))/1e6
     propiedades["mu"] = mu
 
     # Thermal conductivity correlation, Eq 8
-    c = [None, 1.6630, -1.7781, 1.1567, -0.432115]
-    d = [None, -1.15, -3.4, -6.0, -7.6]
+    c = [FNONE, 1.6630, -1.7781, 1.1567, -0.432115]
+    d = [FNONE, -1.15, -3.4, -6.0, -7.6]
     k = sum(c[i]*T_**d[i] for i in range(1, 5))
     propiedades["k"] = k
 
     # Dielectric constant correlation, Eq 9
-    e = [None, -43.7527, 299.504, -399.364, 221.327]
-    f = [None, -0.05, -1.47, -2.11, -2.31]
+    e = [FNONE, -43.7527, 299.504, -399.364, 221.327]
+    f = [FNONE, -0.05, -1.47, -2.11, -2.31]
     epsilon = sum(e[i]*T_**f[i] for i in range(1, 5))
     propiedades["epsilon"] = epsilon
 
