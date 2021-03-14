@@ -356,7 +356,7 @@ class Air(MEoSBlend):
         Ni = [44.3413, -240.073, 285.139, -88.3366]
         ti = [0.65, 0.85, 0.95, 1.1]
         Tita = 1-T/Tc
-        suma = 1
+        suma = 1.0
         for n, t in zip(Ni, ti):
             suma += n*Tita**t
         suma -= 0.892181*log(T/Tc)
@@ -641,20 +641,25 @@ class HumidAir(object):
             A = self.kwargs["A"]
         elif self._composition == "xa":
             xa = self.kwargs["xa"]
+            assert(isinstance(xa, float))
             A = xa/(1-(1-xa)*(1-MW/Ma))
 
         # Thermodynamic definition
         if self._mode == "TP":
+
             def rho_func(rho: float) -> float:
                 fav = self._fav(T, rho, A)
                 return rho**2*fav["fird"]/1000-P
             rho = fsolve(rho_func, 1)[0]
         elif self._mode == "Prho":
+
             def t_func(T: float) -> float:
                 fav = self._fav(T, rho, A)
                 return rho**2*fav["fird"]/1000-P
             T = fsolve(t_func, 300)[0]
 
+        assert(isinstance(rho, float))
+        assert(isinstance(A, float))
         # General calculation procedure
         fav = self._fav(T, rho, A)
 
