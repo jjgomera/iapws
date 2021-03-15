@@ -12,7 +12,7 @@ Miscelaneous internal utilities. This module include:
 """
 
 from __future__ import division
-from typing import Any
+from typing import Optional, Any
 
 
 def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) -> str:
@@ -65,60 +65,60 @@ def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) ->
 class _fase(object):
     """Class to implement a null phase"""
 
-    v = None
-    rho = None
+    v: Optional[float] = None
+    rho: Optional[float] = None
 
-    h = None
-    s = None
-    u = None
-    a = None
-    g = None
+    h: Optional[float] = None
+    s: Optional[float] = None
+    u: Optional[float] = None
+    a: Optional[float] = None
+    g: Optional[float] = None
 
-    cp = None
-    cv = None
-    cp_cv = None
-    w = None
-    Z = None
-    fi = None
-    f = None
+    cp: Optional[float] = None
+    cv: Optional[float] = None
+    cp_cv: Optional[float] = None
+    w: Optional[float] = None
+    Z: Optional[float] = None
+    fi: Optional[float] = None
+    f: Optional[float] = None
 
-    mu = None
-    k = None
-    nu = None
-    Prandt = None
-    epsilon = None
-    alfa = None
-    n = None
+    mu: Optional[float] = None
+    k: Optional[float] = None
+    nu: Optional[float] = None
+    Prandt: Optional[float] = None
+    epsilon: Optional[float] = None
+    alfa: Optional[float] = None
+    n: Optional[float] = None
 
-    alfap = None
-    betap = None
-    joule = None
-    Gruneisen = None
-    alfav = None
-    kappa = None
-    betas = None
-    gamma = None
-    Kt = None
-    kt = None
-    Ks = None
-    ks = None
-    dpdT_rho = None
-    dpdrho_T = None
-    drhodT_P = None
-    drhodP_T = None
-    dhdT_rho = None
-    dhdT_P = None
-    dhdrho_T = None
-    dhdrho_P = None
-    dhdP_T = None
-    dhdP_rho = None
+    alfap: Optional[float] = None
+    betap: Optional[float] = None
+    joule: Optional[float] = None
+    Gruneisen: Optional[float] = None
+    alfav: Optional[float] = None
+    kappa: Optional[float] = None
+    betas: Optional[float] = None
+    gamma: Optional[float] = None
+    Kt: Optional[float] = None
+    kt: Optional[float] = None
+    Ks: Optional[float] = None
+    ks: Optional[float] = None
+    dpdT_rho: Optional[float] = None
+    dpdrho_T: Optional[float] = None
+    drhodT_P: Optional[float] = None
+    drhodP_T: Optional[float] = None
+    dhdT_rho: Optional[float] = None
+    dhdT_P: Optional[float] = None
+    dhdrho_T: Optional[float] = None
+    dhdrho_P: Optional[float] = None
+    dhdP_T: Optional[float] = None
+    dhdP_rho: Optional[float] = None
 
-    Z_rho = None
-    IntP = None
-    hInput = None
+    Z_rho: Optional[float] = None
+    IntP: Optional[float] = None
+    hInput: Optional[float] = None
 
 
-def deriv_H(state: Any, z: str, x: str, y: str, fase) -> float:
+def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     helmholtz free energy equation of state
@@ -193,7 +193,7 @@ def deriv_H(state: Any, z: str, x: str, y: str, fase) -> float:
     return mul*deriv
 
 
-def deriv_G(state: Any, z: str, x: str, y: str, fase) -> float:
+def deriv_G(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     Gibbs free energy equation of state

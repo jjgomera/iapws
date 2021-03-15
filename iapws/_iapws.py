@@ -31,10 +31,11 @@ from __future__ import division
 from cmath import log as log_c
 from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
 import warnings
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 
 from scipy.optimize import minimize
 
+from ._utils import _fase
 
 # Constants
 M = 18.015268     # g/mol
@@ -700,7 +701,7 @@ def _Melting_Pressure(T: float, ice: str = "Ih") -> float:
 
 
 # Transport properties
-def _Viscosity(rho: float, T: float, fase: Optional[Any] = None,
+def _Viscosity(rho: float, T: float, fase: Optional[_fase] = None,
                drho: float = None) -> float:
     """Equation for the Viscosity
 
@@ -790,7 +791,7 @@ def _Viscosity(rho: float, T: float, fase: Optional[Any] = None,
     return mu*1e-6
 
 
-def _ThCond(rho: float, T: float, fase: Optional[Any] = None,
+def _ThCond(rho: float, T: float, fase: Optional[_fase] = None,
             drho: Optional[float] = None) -> float:
     """Equation for the thermal conductivity
 

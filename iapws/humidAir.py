@@ -16,13 +16,13 @@ include:
 from __future__ import division
 from math import exp, log, pi, atan
 import warnings
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Optional, Any
 
 from scipy.optimize import fsolve
 
 from ._iapws import M as MW
 from ._iapws import _Ice
-from ._utils import deriv_G
+from ._utils import deriv_G, _fase
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
 
 
@@ -366,7 +366,9 @@ class Air(MEoSBlend):
         return rho
 
     @staticmethod
-    def _visco(rho: float, T: float, fase=None) -> float:
+    def _visco(rho: float, T: float,
+               # fase is unused
+               fase: Optional[_fase] = None) -> float:
         """Equation for the Viscosity
 
         Parameters
@@ -419,7 +421,7 @@ class Air(MEoSBlend):
         mu = muo+mur
         return mu*1e-6
 
-    def _thermo(self, rho: float, T: float, fase=None) -> float:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the thermal conductivity
 
         Parameters
