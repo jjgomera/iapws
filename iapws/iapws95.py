@@ -14,10 +14,12 @@ from __future__ import division
 import os
 import platform
 import warnings
-
-from numpy import exp, log, ndarray
-from scipy.optimize import fsolve
+from math import exp, log
 from typing import Tuple, Dict, Optional, List
+
+# Import numpy for a few places still using numpy.log() and numpy.exp()
+import numpy
+from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import _global_M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
@@ -139,7 +141,7 @@ def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     t2 = coef.get("t2", [])
     c2 = coef.get("c2", [])
     for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+        fird += n*numpy.exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
 
     # Gaussian terms
     nr3 = coef.get("nr3", [])
@@ -760,9 +762,9 @@ class MEoS(_fase):
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+numpy.log(rhol/rhog))
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 Ps - P*1000)
 
                     for to in [To, 300, 400, 500, 600]:
@@ -930,11 +932,11 @@ class MEoS(_fase):
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+numpy.log(rhol/rhog))
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 lu*(1-x)+vu*x - u,
                                 Ps - P*1000)
 
@@ -994,7 +996,7 @@ class MEoS(_fase):
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 hoL*(1-x)+hoG*x - h)
 
                     for to in [To, 300, 400, 500, 600]:
@@ -1059,7 +1061,7 @@ class MEoS(_fase):
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 soL*(1-x)+soG*x - s)
 
                     for to in [To, 300, 400, 500, 600]:
@@ -1119,11 +1121,11 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+numpy.log(rhol/rhog))
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 lu*(1-x)+vu*x - u)
 
                     for to in [To, 300, 400, 500, 600]:
@@ -1335,12 +1337,12 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
 
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+numpy.log(rhol/rhog))
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
 
                         return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                                Jl*(1/rhog-1/rhol)-numpy.log(rhol/rhog)-K,
                                 soL*(1-x)+soG*x - s,
                                 lu*(1-x)+vu*x - u)
 
@@ -1685,10 +1687,6 @@ class MEoS(_fase):
         Scientific Use, September 2016, Table 3
         http://www.iapws.org/relguide/IAPWS-95.html
         """
-        if isinstance(rho, ndarray):
-            rho = rho[0]
-        if isinstance(T, ndarray):
-            T = T[0]
         if rho < 0:
             rho = 1e-20
         if T < 50:
@@ -1775,7 +1773,7 @@ class MEoS(_fase):
         """
         Fi0 = self.Fi0
 
-        fio = Fi0["ao_log"][0]*log(delta)+Fi0["ao_log"][1]*log(tau)
+        fio = Fi0["ao_log"][0]*numpy.log(delta)+Fi0["ao_log"][1]*numpy.log(tau)
         fiot = +Fi0["ao_log"][1]/tau
         fiott = -Fi0["ao_log"][1]/tau**2
 
@@ -1791,9 +1789,9 @@ class MEoS(_fase):
                 fiott += n*t*(t-1)*tau**(t-2)
 
         for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
-            fio += n*log(1-exp(-tau*t))
-            fiot += n*t*((1-exp(-t*tau))**-1-1)
-            fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
+            fio += n*numpy.log(1-numpy.exp(-tau*t))
+            fiot += n*t*((1-numpy.exp(-t*tau))**-1-1)
+            fiott -= n*t**2*numpy.exp(-t*tau)*(1-numpy.exp(-t*tau))**-2
 
         # Extension to especial terms of air
         if "ao_exp2" in Fi0:
@@ -1860,14 +1858,13 @@ class MEoS(_fase):
         t2 = self._constants.get("t2", [])
         c2 = self._constants.get("c2", [])
         for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            fir += n*delta**d*tau**t*exp(-g*delta**c)
-            fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            firdd += n*exp(-g*delta**c)*delta**(d-2)*tau**t * \
+            fir += n*delta**d*tau**t*numpy.exp(-g*delta**c)
+            fird += n*numpy.exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+            firdd += n*numpy.exp(-g*delta**c)*delta**(d-2)*tau**t * \
                 ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
-            firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-g*delta**c)
-            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(
-                -g*delta**c)
+            firt += n*t*delta**d*tau**(t-1)*numpy.exp(-g*delta**c)
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)*numpy.exp(-g*delta**c)
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*numpy.exp(-g*delta**c)
 
         # Gaussian terms
         nr3 = self._constants.get("nr3", [])
