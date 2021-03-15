@@ -3993,7 +3993,7 @@ def _Bound_Ps(P: float, s: float) -> Optional[int]:
     return region
 
 
-def _Bound_hs(h: float, s: float) -> float:
+def _Bound_hs(h: float, s: float) -> Optional[int]:
     """Region definition for input h and s
 
     Parameters
