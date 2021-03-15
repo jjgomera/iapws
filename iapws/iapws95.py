@@ -1519,11 +1519,19 @@ class MEoS(_fase):
 
     def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
         """Fill phase properties"""
+        assert("rho" in estado and isinstance(estado["rho"], float))
+        assert("h" in estado and isinstance(estado["h"], float))
+        assert("s" in estado and isinstance(estado["s"], float))
+        assert("fir" in estado and isinstance(estado["fir"], float))
+        assert("fird" in estado and isinstance(estado["fird"], float))
+        assert("delta" in estado and isinstance(estado["delta"], float))
+        assert("cv" in estado and isinstance(estado["cv"], float))
+        assert("alfap" in estado and isinstance(estado["alfap"], float))
+        assert("betap" in estado and isinstance(estado["betap"], float))
+
         fase.rho = estado["rho"]
         fase.v = 1/fase.rho
 
-        assert(self.P is not None)
-        assert(self.T is not None)
         assert(isinstance(self.M, float))
         assert(isinstance(self.R, float))
 
