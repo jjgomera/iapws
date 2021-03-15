@@ -22,7 +22,7 @@ from scipy.optimize import fsolve
 
 from ._iapws import M as MW
 from ._iapws import _Ice
-from ._utils import deriv_G, _fase
+from ._utils import _fase, deriv_G
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
 
 
@@ -518,7 +518,7 @@ class Air(MEoSBlend):
         return k*1e-3
 
 
-class HumidAir(object):
+class HumidAir(_fase):
     """
     Humid air class with complete functionality
 

@@ -28,7 +28,7 @@ from scipy.optimize import fsolve
 from .iapws95 import IAPWS95
 from .iapws97 import IAPWS97, _Region1, _Region2
 from ._iapws import _ThCond, Tc, Pc, rhoc, _Ice, _Tension
-from ._utils import deriv_G
+from ._utils import _fase, deriv_G
 
 
 # Constants
@@ -42,7 +42,7 @@ Po = 0.101325
 To = 273.15
 
 
-class SeaWater(object):
+class SeaWater(_fase):
     """
     Class to model seawater with standard IAPWS-08
 
