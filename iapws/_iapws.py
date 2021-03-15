@@ -38,8 +38,8 @@ from scipy.optimize import minimize
 from ._utils import _fase
 
 # Constants
-M = 18.015268     # g/mol
-R = 0.461526      # kJ/kg·K
+_global_M = 18.015268     # g/mol
+_global_R = 0.461526      # kJ/kg·K
 
 # Table 1 from Release on the Values of Temperature, Pressure and Density of
 # Ordinary and Heavy Water Substances at their Respective Critical Points
@@ -998,8 +998,8 @@ def _Dielectric(rho: float, T: float) -> float:
     g = 1+n[11]*d/(Tc/228/Tr-1)**1.2
     for i in range(11):
         g += n[i]*d**I[i]*Tr**J[i]
-    A = Na*mu**2*rho*g/M*1000/epsilon0/k/T
-    B = Na*alfa*rho/3/M*1000/epsilon0
+    A = Na*mu**2*rho*g/_global_M*1000/epsilon0/k/T
+    B = Na*alfa*rho/3/_global_M*1000/epsilon0
     e = (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
     return e
 

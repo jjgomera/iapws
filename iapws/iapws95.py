@@ -20,7 +20,7 @@ from scipy.optimize import fsolve
 from typing import Tuple, Dict, Optional, List
 
 from .iapws97 import _TSat_P, IAPWS97
-from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
+from ._iapws import _global_M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H
@@ -420,7 +420,7 @@ class MEoS(_fase):
         assert(isinstance(self._rhoG_exp, list))
         assert(isinstance(self.M, float))
 
-        self.R = self._constants["R"][0]/self._constants.get("M", self.M)
+        self.R = self.__class__._constant_R/self.M
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
@@ -534,7 +534,7 @@ class MEoS(_fase):
                     To = 300
                     rhoo = 900
 
-        self.R = self._constants["R"][0]/self._constants.get("M", self.M)
+        self.R = self._constant_R/self.M
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
 
@@ -2072,7 +2072,6 @@ class MEoS(_fase):
             prop["firdd"] = 0.0
             return prop
 
-        R = self._constants.get("R")[0]/self._constants.get("M", self.M)
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
         delta = rho/rhoc
@@ -2092,6 +2091,8 @@ class MEoS(_fase):
         fird = res["fird"]
         firdd = res["firdd"]
         firdt = res["firdt"]
+
+        R = self.R
 
         prop = {}
         prop["fir"] = R*T*(fio+fir)
@@ -2391,7 +2392,7 @@ class IAPWS95(MEoS):
     Tc = Tc
     rhoc = rhoc
     Pc = Pc
-    M = M
+    M = _global_M
     Tt = 273.16
     Tb = 373.1243
     f_acent = 0.3443
@@ -2404,9 +2405,8 @@ class IAPWS95(MEoS):
            "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796,
                      27.5075105]}
 
+    _constant_R = 8.314371357587
     _constants = {
-        "R": [8.314371357587],
-
         "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
                 0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
                 0.88089493102134e-2],
@@ -2752,9 +2752,8 @@ class D2O(MEoS):
            "titao": [308/Tc, 1695/Tc, 3949/Tc, 10317/Tc],
            "ao_hyp": [], "hyp": []}
 
+    _constant_R = 8.3144598
     _constants = {
-        "R": [8.3144598],
-
         "nr1": [0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
                 -0.922466250, -0.139604190e-1],
         "d1": [4, 1, 1, 2, 2, 3],

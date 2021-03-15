@@ -88,7 +88,7 @@ from typing import Tuple, Dict, List, Optional
 
 from scipy.optimize import fsolve, newton
 
-from ._iapws import R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent
+from ._iapws import _global_R, Tc, Pc, rhoc, Tt, Pt, Tb, Dipole, f_acent
 from ._iapws import _Viscosity, _ThCond, _Tension, _Dielectric, _Refractive
 from ._utils import getphase, deriv_G, _fase
 
@@ -785,6 +785,8 @@ def _Region1(T: float, P: float) -> Dict[str, float]:
         gtt += n*j*(j-1) * (7.1-Pr)**i * (Tr-1.222)**(j-2)
         gpt -= n*i*j * (7.1-Pr)**(i-1) * (Tr-1.222)**(j-1)
 
+    R = _global_R
+
     propiedades = {}
     propiedades["T"] = T
     propiedades["P"] = P
@@ -1035,6 +1037,8 @@ def _Region2(T: float, P: float) -> Dict[str, float]:
         grt += ni*j * Pr**i * (Tr-0.5)**(j-1)
         grtt += ni*j*(j-1) * Pr**i * (Tr-0.5)**(j-2)
         grpt += ni*i*j * Pr**(i-1) * (Tr-0.5)**(j-1)
+
+    R = _global_R
 
     propiedades = {}
     propiedades["T"] = T
@@ -1847,6 +1851,8 @@ def _Region3(rho: float, T: float) -> Dict[str, float]:
         gt += n*j * d**i * Tr**(j-1)
         gtt += n*j*(j-1) * d**i * Tr**(j-2)
         gdt += n*i*j * d**(i-1) * Tr**(j-1)
+
+    R = _global_R
 
     propiedades = {}
     propiedades["T"] = T
@@ -3742,6 +3748,8 @@ def _Region5(T: float, P: float) -> Dict[str, float]:
         grtt += ni*j*(j-1) * Pr**i * Tr**(j-2)
         grpt += ni*i*j * Pr**(i-1) * Tr**(j-1)
 
+    R = _global_R
+
     propiedades = {}
     propiedades["T"] = T
     propiedades["P"] = P
@@ -4197,6 +4205,8 @@ def prop0(T: float, P: float) -> Dict[str, float]:
         Tr = 1000/T
         Pr = P/1.
         go, gop, gopp, got, gott, gopt = Region5_cp0(Tr, Pr)
+
+    R = _global_R
 
     prop0 = {}
     prop0["v"] = Pr*gop*R*T/P/1000
@@ -4692,7 +4702,7 @@ class IAPWS97(object):
         fase.cp_cv = fase.cp/fase.cv
         fase.w = estado["w"]
 
-        fase.Z = self.P*fase.v/R*1000/self.T
+        fase.Z = self.P*fase.v/_global_R*1000/self.T
         fase.alfav = estado["alfav"]
         fase.xkappa = estado["kt"]
         fase.kappas = -1/fase.v*self.derivative("v", "P", "s", fase)
@@ -4704,7 +4714,7 @@ class IAPWS97(object):
         fase.alfap = fase.alfav/self.P/fase.xkappa
         fase.betap = -1/self.P*self.derivative("P", "v", "T", fase)
 
-        fase.fi = exp((fase.g-self.g0)/R/self.T)
+        fase.fi = exp((fase.g-self.g0)/_global_R/self.T)
         fase.f = self.P*fase.fi
 
         fase.mu = _Viscosity(fase.rho, self.T)

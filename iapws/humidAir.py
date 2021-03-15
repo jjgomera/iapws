@@ -20,7 +20,7 @@ from typing import Tuple, Dict, Optional, Any
 
 from scipy.optimize import fsolve
 
-from ._iapws import M as MW
+from ._iapws import _global_M
 from ._iapws import _Ice
 from ._utils import _fase, deriv_G
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
@@ -296,8 +296,8 @@ class Air(MEoSBlend):
            "sum2": [2./3],
            }
 
+    _constant_R = 8.31451
     _constants = {
-        "R": [8.31451],
         "Tref": [132.6312], "rhoref": [10.4477*Ma],
 
         "nr1": [0.118160747229, 0.713116392079, -0.161824192067e1,
@@ -650,7 +650,7 @@ class HumidAir(_fase):
         elif self._composition == "xa":
             xa = self.kwargs["xa"]
             assert(isinstance(xa, float))
-            A = xa/(1-(1-xa)*(1-MW/Ma))
+            A = xa/(1-(1-xa)*(1-_global_M/Ma))
         assert(isinstance(A, float))
 
         # Thermodynamic definition
@@ -701,7 +701,7 @@ class HumidAir(_fase):
 
         # Saturation related properties
         A_sat = self._eq(self.T, self.P)
-        self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
+        self.xa_sat = A_sat*_global_M/Ma/(1-A_sat*(1-_global_M/Ma))
         self.RH = (1-self.xa)/(1-self.xa_sat)
 
     def derivative(self, z: str, x: str, y: str):
@@ -830,12 +830,14 @@ class HumidAir(_fase):
         Thermodynamic Properties of Seawater, Table 12,
         http://www.iapws.org/relguide/SeaAir.html
         """
+        Mw = _global_M
+
         prop = {}
         prop["mu"] = fav["fira"]
         prop["muw"] = fav["fir"]+rho*fav["fird"]-A*fav["fira"]
-        prop["M"] = 1/((1-A)/MW+A/Ma)
+        prop["M"] = 1/((1-A)/Mw+A/Ma)
         prop["HR"] = 1/A-1
-        prop["xa"] = A*MW/Ma/(1-A*(1-MW/Ma))
+        prop["xa"] = A*Mw/Ma/(1-A*(1-Mw/Ma))
         prop["xw"] = 1-prop["xa"]
         return prop
 
