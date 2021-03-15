@@ -85,9 +85,8 @@ class NH3(MEoS):
     _rhoG_ao = [-.38435, -4.0846, -6.6634, -0.31881e2, 0.21306e3, -0.24648e3]
     _rhoG_exp = [0.218, 0.55, 1.5, 3.7, 5.5, 5.8]
 
-    def _visco(self, rho: float, T: float,
-               # fase is unused
-               fase: Optional[_fase] = None) -> Optional[float]:
+    # fase is unused
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the Viscosity
 
         Parameters
@@ -141,9 +140,8 @@ class NH3(MEoS):
         mu = muo + mub + mur
         return mu*1e-6
 
-    def _thermo(self, rho: float, T: float,
-                # fase is unused
-                fase: Optional[_fase] = None) -> Optional[float]:
+    # fase is unused
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
         """Equation for the thermal conductivity
 
         Parameters

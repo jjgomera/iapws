@@ -1509,6 +1509,14 @@ class MEoS(_fase):
         cp0.v = self.v0
         self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
 
+    # Derived classes must implement _visco to call fill()
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
+        raise NotImplementedError
+
+    # Derived classes must implement _thermo to call fill()
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+        raise NotImplementedError
+
     def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
         """Fill phase properties"""
         fase.rho = estado["rho"]
@@ -2643,14 +2651,14 @@ class IAPWS95(MEoS):
         s = phi+dpdT/rho*1000
         return s
 
-    def _visco(self, rho: float, T: float, fase: Optional[_fase]) -> float:
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
         drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _Viscosity(rho, T, fase, drho)
 
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase]) -> float:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
@@ -2776,12 +2784,12 @@ class D2O(MEoS):
                 -0.70412e2]
     _rhoG_exp = [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]
 
-    def _visco(self, rho: float, T: float,
-               fase: Optional[_fase] = None) -> float:  # fase is unused
+    # fase is unused
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         return _D2O_Viscosity(rho, T)
 
-    def _thermo(self, rho: float, T: float,
-                fase: Optional[_fase] = None) -> float:  # fase is unused
+    # fase is unused
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
         return _D2O_ThCond(rho, T)
 
     def _surface(self, T: float) -> float:

@@ -2382,14 +2382,14 @@ class Test(unittest.TestCase):
 
     def test_AirTransport(self):
         """Table V, pag 28"""
-        self.assertEqual(round(Air._visco(0, 100), 11), 7.09559e-6)
-        self.assertEqual(round(Air._visco(0, 300), 10), 18.523e-6)
-        self.assertEqual(round(Air._visco(28*28.9586, 100), 9), 107.923e-6)
-        self.assertEqual(round(Air._visco(10*28.9586, 200), 10), 21.1392e-6)
-        self.assertEqual(round(Air._visco(5*28.9586, 300), 10), 21.3241e-6)
-        self.assertEqual(round(Air._visco(10.4*28.9586, 132.64), 10), 17.7623e-6)
-
         st = Air()
+        self.assertEqual(round(st._visco(0, 100), 11), 7.09559e-6)
+        self.assertEqual(round(st._visco(0, 300), 10), 18.523e-6)
+        self.assertEqual(round(st._visco(28*28.9586, 100), 9), 107.923e-6)
+        self.assertEqual(round(st._visco(10*28.9586, 200), 10), 21.1392e-6)
+        self.assertEqual(round(st._visco(5*28.9586, 300), 10), 21.3241e-6)
+        self.assertEqual(round(st._visco(10.4*28.9586, 132.64), 10), 17.7623e-6)
+
         self.assertEqual(round(st._thermo(0, 100), 8), 9.35902e-3)
         self.assertEqual(round(st._thermo(0, 300), 7), 26.3529e-3)
         self.assertEqual(round(Air(rho=28*28.9586, T=100).k, 6), 119.222e-3)
