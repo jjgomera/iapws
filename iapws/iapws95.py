@@ -17,7 +17,7 @@ import warnings
 
 from numpy import exp, log, ndarray
 from scipy.optimize import fsolve
-from typing import Tuple, Dict, Optional, Union, List
+from typing import Tuple, Dict, Optional, List
 
 from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
@@ -371,9 +371,17 @@ class MEoS(_fase):
     """
 
     CP = None
-    _Pv: Optional[Dict[str, Union[int, List[float]]]] = None
-    _rhoL: Optional[Dict[str, Union[int, List[float]]]] = None
-    _rhoG: Optional[Dict[str, Union[int, List[float]]]] = None
+    # The lists vary from 4 to 6 terms, which is why they're not
+    # tuples of explicit length.  The equation numbers are used for
+    # switching implementations based on class.
+    _Pv_ao: List[float]
+    _Pv_exp: List[float]
+    _rhoG_eq: int
+    _rhoG_ao: List[float]
+    _rhoG_exp: List[float]
+    _rhoL_eq: int
+    _rhoL_ao: List[float]
+    _rhoL_exp: List[float]
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -401,6 +409,16 @@ class MEoS(_fase):
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
+        # These class variables must be defined by the subclass.
+        assert(isinstance(self._Pv_ao, list))
+        assert(isinstance(self._Pv_exp, list))
+        assert(isinstance(self._rhoL_eq, int))
+        assert(isinstance(self._rhoL_ao, list))
+        assert(isinstance(self._rhoL_exp, list))
+        assert(isinstance(self._rhoG_eq, int))
+        assert(isinstance(self._rhoG_ao, list))
+        assert(isinstance(self._rhoG_exp, list))
+
         self.R = self._constants["R"][0]/self._constants.get("M", self.M)
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
         self.kwargs = MEoS.kwargs.copy()
@@ -2109,7 +2127,7 @@ class MEoS(_fase):
         """
         Tita = 1-T/cls.Tc
         suma = 0.0
-        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+        for n, x in zip(cls._Pv_ao, cls._Pv_exp):
             suma += n*Tita**x
         Pr = exp(cls.Tc/T*suma)
         Pv = Pr*cls.Pc
@@ -2135,12 +2153,11 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.2
         """
-        eq = cls._rhoL["eq"]
         Tita = 1-T/cls.Tc
-        if eq == 2:
+        if cls._rhoL_eq == 2:
             Tita = Tita**(1./3)
-        suma = 0
-        for n, x in zip(cls._rhoL["ao"], cls._rhoL["exp"]):
+        suma = 0.0
+        for n, x in zip(cls._rhoL_ao, cls._rhoL_exp):
             suma += n*Tita**x
         Pr = suma+1
         rho = Pr*cls.rhoc
@@ -2166,12 +2183,11 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.3
         """
-        eq = cls._rhoG["eq"]
         Tita = 1-T/cls.Tc
-        if eq == 4:
+        if cls._rhoG_eq == 4:
             Tita = Tita**(1./3)
-        suma = 0
-        for n, x in zip(cls._rhoG["ao"], cls._rhoG["exp"]):
+        suma = 0.0
+        for n, x in zip(cls._rhoG_ao, cls._rhoG_exp):
             suma += n*Tita**x
         Pr = exp(suma)
         rho = Pr*cls.rhoc
@@ -2198,9 +2214,9 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/Supp-sat.html, derived from Eq.1
         """
         Tita = 1-T/cls.Tc
-        suma1 = 0
-        suma2 = 0
-        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+        suma1 = 0.0
+        suma2 = 0.0
+        for n, x in zip(cls._Pv_ao, cls._Pv_exp):
             suma1 -= n*x*Tita**(x-1)/cls.Tc
             suma2 += n*Tita**x
         Pr = (cls.Tc*suma1/T-cls.Tc/T**2*suma2)*exp(cls.Tc/T*suma2)
@@ -2418,20 +2434,17 @@ class IAPWS95(MEoS):
         "A": [0.32, .32],
         "beta4": [0.3, 0.3]}
 
-    _Pv = {
-        "ao": [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
-               1.80122502],
-        "exp": [1, 1.5, 3, 3.5, 4, 7.5]}
-    _rhoL = {
-        "eq": 2,
-        "ao": [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
-               -6.74694450e5],
-        "exp": [1, 2, 5, 16, 43, 110]}
-    _rhoG = {
-        "eq": 4,
-        "ao": [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
-               -63.9201063],
-        "exp": [1, 2, 4, 9, 18.5, 35.5]}
+    _Pv_ao = [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
+              1.80122502]
+    _Pv_exp = [1.0, 1.5, 3.0, 3.5, 4.0, 7.5]
+    _rhoL_eq = 2
+    _rhoL_ao = [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
+                -6.74694450e5]
+    _rhoL_exp = [1.0, 2.0, 5.0, 16.0, 43.0, 110]
+    _rhoG_eq = 4
+    _rhoG_ao = [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
+                -63.9201063]
+    _rhoG_exp = [1.0, 2.0, 4.0, 9.0, 18.5, 35.5]
 
     def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
         """Low temperature extension of the IAPWS-95"""
@@ -2747,18 +2760,15 @@ class D2O(MEoS):
         "gamma3": [1.5414, 1.3794, 1.7385, 1.3045, 2.7242, 3.5321, 2.4552,
                    0.8319, 1.3500, 2.5617, 1.0491, 1.0486]}
 
-    _Pv = {
-        "ao": [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2],
-        "exp": [1.0, 1.5, 2.75, 3.0, 3.2]}
-    _rhoL = {
-        "eq": 1,
-        "ao": [0.26406e1, 0.97090e1, -0.18058e2, 0.87202e1, -0.74487e1],
-        "exp": [0.3678, 1.9, 2.2, 2.63, 7.3]}
-    _rhoG = {
-        "eq": 3,
-        "ao": [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2,
-               -0.70412e2],
-        "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
+    _Pv_ao = [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2]
+    _Pv_exp = [1.0, 1.5, 2.75, 3.0, 3.2]
+    _rhoL_eq = 1
+    _rhoL_ao = [0.26406e1, 0.97090e1, -0.18058e2, 0.87202e1, -0.74487e1]
+    _rhoL_exp = [0.3678, 1.9, 2.2, 2.63, 7.3]
+    _rhoG_eq = 3
+    _rhoG_ao = [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2,
+                -0.70412e2]
+    _rhoG_exp = [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]
 
     def _visco(self, rho: float, T: float, fase) -> float:
         return _D2O_Viscosity(rho, T)

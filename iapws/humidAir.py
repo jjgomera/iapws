@@ -329,13 +329,15 @@ class Air(MEoSBlend):
                 "exp1": [0, 0.178963e1, 0],
                 "a2": [], "exp2": [], "a3": [], "exp3": []}
     _surf = {"sigma": [0.03046], "exp": [1.28]}
-    _rhoG = {
-        "eq": 3,
-        "ao": [-0.20466e1, -0.4752e1, -0.13259e2, -0.47652e2],
-        "exp": [0.41, 1, 2.8, 6.5]}
-    _Pv = {
-        "ao": [-0.1567266, -0.5539635e1, 0.7567212, -0.3514322e1],
-        "exp": [0.5, 1, 2.5, 4]}
+    _Pv_ao = [-0.1567266, -0.5539635e1, 0.7567212, -0.3514322e1]
+    _Pv_exp = [0.5, 1.0, 2.5, 4.0]
+    # No rhoL equation for humidAir because _Liquid_Density() is overridden instead.
+    _rhoL_eq = 0
+    _rhoL_ao = [0.0]
+    _rhoL_exp = [0.0]
+    _rhoG_eq = 3
+    _rhoG_ao = [-0.20466e1, -0.4752e1, -0.13259e2, -0.47652e2]
+    _rhoG_exp = [0.41, 1.0, 2.8, 6.5]
 
     @classmethod
     def _Liquid_Density(cls, T: float) -> float:
