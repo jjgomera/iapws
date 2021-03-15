@@ -465,7 +465,7 @@ def _Tb(P: float, S: float) -> float:
         return -ps["g"]+S*ps["gs"]-gw+gv
 
     Tb = fsolve(f, 300)[0]
-    return Tb
+    return float(Tb)
 
 
 def _Tf(P: float, S: float) -> float:
@@ -499,7 +499,7 @@ def _Tf(P: float, S: float) -> float:
         return -ps["g"]+S*ps["gs"]-gw+gih
 
     Tf = fsolve(f, 300)[0]
-    return Tf
+    return float(Tf)
 
 
 def _Triple(S: float) -> Dict[str, float]:
@@ -540,8 +540,8 @@ def _Triple(S: float) -> Dict[str, float]:
     Tt, Pt = fsolve(f, [273, 6e-4])
 
     prop = {}
-    prop["Tt"] = Tt
-    prop["Pt"] = Pt
+    prop["Tt"] = float(Tt)
+    prop["Pt"] = float(Pt)
     return prop
 
 
@@ -577,7 +577,7 @@ def _OsmoticPressure(T: float, P: float, S: float) -> float:
         return -ps["g"]+S*ps["gs"]-gw+gw2
 
     Posm = fsolve(f, 0)[0]
-    return Posm
+    return float(Posm)
 
 
 def _ThCond_SeaWater(T: float, P: float, S: float) -> float:
