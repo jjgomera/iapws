@@ -117,6 +117,20 @@ class _fase(object):
     IntP: Optional[float] = None
     hInput: Optional[float] = None
 
+    # Properties added because various methods set/access them?
+    xkappa: Optional[float] = None
+    kappas: Optional[float] = None
+    deltat: Optional[float] = None
+    rhoM: Optional[float] = None
+    M: Optional[float] = None
+    hM: Optional[float] = None
+    sM: Optional[float] = None
+    uM: Optional[float] = None
+    aM: Optional[float] = None
+    gM: Optional[float] = None
+    cvM: Optional[float] = None
+    cpM: Optional[float] = None
+
 
 def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
@@ -163,15 +177,23 @@ def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     # We use the relation between rho and v and his partial derivative
     # ∂v/∂b|c = -1/ρ² ∂ρ/∂b|c
     # ∂a/∂v|c = -ρ² ∂a/∂ρ|c
-    mul = 1
+    mul = 1.0
     if z == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -fase.rho**2
         z = "v"
     if x == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -1/fase.rho**2
         x = "v"
     if y == "rho":
         y = "v"
+
+    assert(isinstance(fase.alfap, float))
+    assert(isinstance(fase.betap, float))
+    assert(isinstance(fase.v, float))
+    assert(isinstance(fase.cv, float))
+    assert(isinstance(fase.s, float))
 
     dT = {"P": state.P*1000*fase.alfap,
           "T": 1,
@@ -235,13 +257,21 @@ def deriv_G(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
-    mul = 1
+    mul = 1.0
     if z == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -fase.rho**2
         z = "v"
     if x == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -1/fase.rho**2
         x = "v"
+
+    assert(isinstance(fase.alfav, float))
+    assert(isinstance(fase.v, float))
+    assert(isinstance(fase.cp, float))
+    assert(isinstance(fase.s, float))
+    assert(isinstance(fase.xkappa, float))
 
     dT = {"P": 0,
           "T": 1,

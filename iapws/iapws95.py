@@ -17,7 +17,7 @@ import warnings
 
 from numpy import exp, log, ndarray
 from scipy.optimize import fsolve
-from typing import Tuple, Dict, Optional, List, Any
+from typing import Tuple, Dict, Optional, List
 
 from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
@@ -418,6 +418,7 @@ class MEoS(_fase):
         assert(isinstance(self._rhoG_eq, int))
         assert(isinstance(self._rhoG_ao, list))
         assert(isinstance(self._rhoG_exp, list))
+        assert(isinstance(self.M, float))
 
         self.R = self._constants["R"][0]/self._constants.get("M", self.M)
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
@@ -1508,10 +1509,15 @@ class MEoS(_fase):
         cp0.v = self.v0
         self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
 
-    def fill(self, fase: _fase, estado: Dict[str, Any]) -> None:
+    def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
         """Fill phase properties"""
         fase.rho = estado["rho"]
         fase.v = 1/fase.rho
+
+        assert(self.P is not None)
+        assert(self.T is not None)
+        assert(isinstance(self.M, float))
+        assert(isinstance(self.R, float))
 
         fase.h = estado["h"]
         fase.s = estado["s"]
