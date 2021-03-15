@@ -266,6 +266,12 @@ class SeaWater(_fase):
         water = IAPWS95(P=P, T=T)
         assert(isinstance(water.h, float))
         assert(isinstance(water.s, float))
+        assert(isinstance(water.rho, float))
+        assert(isinstance(water.cp, float))
+        assert(isinstance(water.betas, float))
+        assert(isinstance(water.w, float))
+        assert(isinstance(water.k, float))
+
         prop = {}
         prop["g"] = water.h-T*water.s
         prop["gt"] = -water.s

@@ -751,6 +751,8 @@ def _Viscosity(rho: float, T: float, fase: Optional[_fase] = None,
 
     # Critical enhancement
     if fase and drho:
+        assert(isinstance(fase.drhodP_T, float))
+
         qc = 1/1.9
         qd = 1/1.1
 
@@ -845,6 +847,11 @@ def _ThCond(rho: float, T: float, fase: Optional[_fase] = None,
 
     # Critical enhancement
     if fase:
+        assert(isinstance(fase.drhodP_T, float))
+        assert(isinstance(fase.cp, float))
+        assert(isinstance(fase.cp_cv, float))
+        assert(isinstance(fase.mu, float))
+
         R = 0.46151805
 
         if not drho:
@@ -865,7 +872,7 @@ def _ThCond(rho: float, T: float, fase: Optional[_fase] = None,
             else:
                 ai = [1.11999926419994, 0.595748562571649, 9.88952565078920,
                       -10.3255051147040, 4.66861294457414, -0.503243546373828]
-            drho = 1/sum(a*d**i for i, a in enumerate(ai))*rhoc/Pc
+            drho = 1.0/sum(a*d**i for i, a in enumerate(ai))*rhoc/Pc
 
         DeltaX = d*(Pc/rhoc*fase.drhodP_T-Pc/rhoc*drho*1.5/Tr)
         if DeltaX < 0:
@@ -876,7 +883,7 @@ def _ThCond(rho: float, T: float, fase: Optional[_fase] = None,
 
         # Eq 19
         if y < 1.2e-7:
-            Z = 0
+            Z = 0.0
         else:
             Z = 2/pi/y*(((1-1/fase.cp_cv)*atan(y)+y/fase.cp_cv)-(
                 1-exp(-1/(1/y+y**2/3/d**2))))

@@ -461,8 +461,8 @@ class Air(MEoSBlend):
 
         # Eq 5
         N = [1.308, 1.405, -1.036]
-        t = [-1.1, -0.3]
-        lo = N[0]*muo+N[1]*tau**t[0]+N[2]*tau**t[1]
+        te5 = [-1.1, -0.3]
+        lo = N[0]*muo+N[1]*tau**te5[0]+N[2]*tau**te5[1]
 
         n_poly = [8.743, 14.76, -16.62, 3.793, -6.142, -0.3778]
         t_poly = [0.1, 0, 0.5, 2.7, 0.3, 1.3]
@@ -478,6 +478,8 @@ class Air(MEoSBlend):
         lc = 0.0
         # FIXME: Tiny desviation in the test in paper, 0.06% at critical point
         if fase:
+            assert(isinstance(fase.drhodP_T, float))
+
             qd = 0.31
             Gamma = 0.055
             Xio = 0.11
@@ -496,6 +498,10 @@ class Air(MEoSBlend):
             # Eq 10
             bracket = X-Xref*Tref/T
             if bracket > 0:
+                assert(isinstance(fase.cp, float))
+                assert(isinstance(fase.cv, float))
+                assert(isinstance(fase.mu, float))
+
                 Xi = Xio*(bracket/Gamma)**(0.63/1.2415)
 
                 Xq = Xi/qd
@@ -645,23 +651,22 @@ class HumidAir(_fase):
             xa = self.kwargs["xa"]
             assert(isinstance(xa, float))
             A = xa/(1-(1-xa)*(1-MW/Ma))
+        assert(isinstance(A, float))
 
         # Thermodynamic definition
         if self._mode == "TP":
-
-            def rho_func(rho: float) -> float:
-                fav = self._fav(T, rho, A)
-                return rho**2*fav["fird"]/1000-P
+            def rho_func(rhopar: float) -> float:
+                fav = self._fav(T, rhopar, A)
+                return rhopar**2*fav["fird"]/1000-P
             rho = fsolve(rho_func, 1)[0]
         elif self._mode == "Prho":
-
-            def t_func(T: float) -> float:
-                fav = self._fav(T, rho, A)
+            def t_func(Tpar: float) -> float:
+                fav = self._fav(Tpar, rho, A)
                 return rho**2*fav["fird"]/1000-P
             T = fsolve(t_func, 300)[0]
 
+        assert(T is not None)
         assert(isinstance(rho, float))
-        assert(isinstance(A, float))
         # General calculation procedure
         fav = self._fav(T, rho, A)
 
@@ -726,6 +731,8 @@ class HumidAir(_fase):
             gw = ice["g"]
         else:
             water = IAPWS95(T=T, P=P)
+            # water.g is actually a numpy.float64?
+            assert(water.g is not None)
             gw = water.g
 
         def f(parr: Tuple[float, float]) -> Tuple[float, float]:
