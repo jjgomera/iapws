@@ -173,9 +173,9 @@ if xAxis != "T" and yAxis != "T":
         else:
             sat = False
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, T=T+273.15)
+                point = fluid(P=pressure, T=T+273.15)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -246,9 +246,9 @@ if xAxis != "h" and yAxis != "h":
         print("    h=%skJ/kg" % h)
         H_["%s" % h] = {}
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, h=h)
+                point = fluid(P=pressure, h=h)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -273,9 +273,9 @@ if xAxis != "s" and yAxis != "s":
         print("    s=%skJ/kgK" % s)
         S_["%s" % s] = {}
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, s=s)
+                point = fluid(P=pressure, s=s)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -300,10 +300,10 @@ if xAxis != "v" and yAxis != "v":
         pts95 = [iapws.IAPWS95(T=t, v=v) for t in Tl]
         x = []
         y = []
-        for p in pts95:
-            if p.status:
-                x.append(p.__getattribute__(xAxis))
-                y.append(p.__getattribute__(yAxis))
+        for p95 in pts95:
+            if p95.status:
+                x.append(p95.__getattribute__(xAxis))
+                y.append(p95.__getattribute__(yAxis))
         plt.plot(x, y, **isov_kw)
 
 
@@ -311,19 +311,17 @@ if xAxis != "v" and yAxis != "v":
 if regionBoundary:
     # Boundary 1-3
     Po = _PSat_T(623.15)
-    # Mypy was confused about the np.linspace return type.
-    numpy_pressure_points: List[float] = np.linspace(Po, 100, points)
-    pts = [fluid(P=p, T=623.15) for p in numpy_pressure_points]
+    numpy_pressure_points = np.linspace(Po, 100, points)
+    pts = [fluid(P=float(p), T=623.15) for p in numpy_pressure_points]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
 
     # Boundary 2-3
-    # Mypy was confused about the np.linspace return type.
-    numpy_temp_points: List[float] = np.linspace(623.15, 863.15)
-    Ps = [_P23_T(t) for t in numpy_temp_points]
-    Ps[-1] = 100  # Avoid round problem with value out of range > 100 MPa
-    pts = [fluid(P=p, T=t) for p, t in zip(Ps, numpy_temp_points)]
+    numpy_temp_points = list(map(float, np.linspace(623.15, 863.15)))
+    Psf = [_P23_T(t) for t in numpy_temp_points]
+    Psf[-1] = 100.0  # Avoid round problem with value out of range > 100 MPa
+    pts = [fluid(P=p, T=t) for p, t in zip(Psf, numpy_temp_points)]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
