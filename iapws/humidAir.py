@@ -353,6 +353,9 @@ class Air(MEoSBlend):
         rho : float
             Saturated liquid density [kg/m³]
         """
+        # Convert numpy.Float64 back into Python floats.
+        T = float(T)
+
         Tc = 132.6312
         rhoc = 10.4477*cls.M
         Ni = [44.3413, -240.073, 285.139, -88.3366]

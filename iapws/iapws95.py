@@ -9,7 +9,6 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
     * :class:`D2O`: 2017 formulation for heavy water.
 """
 
-
 from __future__ import division
 import os
 import platform
@@ -17,8 +16,6 @@ import warnings
 from math import exp, log
 from typing import Tuple, Dict, Optional, List
 
-# Import numpy for a few places still using numpy.log() and numpy.exp()
-import numpy
 from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
@@ -53,6 +50,10 @@ def _phir(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     http://www.iapws.org/relguide/IAPWS-95.html
     """
     fir = 0.0
+
+    # Convert numpy.Float64 back into Python floats.
+    tau = float(tau)
+    delta = float(delta)
 
     # Polinomial terms
     nr1 = coef.get("nr1", [])
@@ -127,6 +128,10 @@ def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     """
     fird = 0.0
 
+    # Convert numpy.Float64 back into Python floats.
+    tau = float(tau)
+    delta = float(delta)
+
     # Polinomial terms
     nr1 = coef.get("nr1", [])
     d1 = coef.get("d1", [])
@@ -141,7 +146,12 @@ def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     t2 = coef.get("t2", [])
     c2 = coef.get("c2", [])
     for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        fird += n*numpy.exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+        try:
+            expt = exp(-g*delta**c)
+        except OverflowError:
+            fird = float('nan')
+            break
+        fird += n*expt*delta**(d-1)*tau**t*(d-g*c*delta**c)
 
     # Gaussian terms
     nr3 = coef.get("nr3", [])
@@ -152,8 +162,8 @@ def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     b3 = coef.get("beta3", [])
     g3 = coef.get("gamma3", [])
     for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-            d/delta-2*a*(delta-e))
+        expt = exp(-a*(delta-e)**2-b*(tau-g)**2)
+        fird += n*delta**d*tau**t*expt*(d/delta-2*a*(delta-e))
 
     # Non analitic terms
     nr4 = coef.get("nr4", [])
@@ -206,6 +216,10 @@ def _phirt(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     http://www.iapws.org/relguide/IAPWS-95.html
     """
     firt = 0.0
+
+    # Convert numpy.Float64 back into Python floats.
+    tau = float(tau)
+    delta = float(delta)
 
     # Polinomial terms
     nr1 = coef.get("nr1", [])
@@ -762,7 +776,10 @@ class MEoS(_fase):
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
                         return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K, Ps - P*1000)
 
@@ -931,7 +948,10 @@ class MEoS(_fase):
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
@@ -993,7 +1013,10 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
                                 hoL*(1-x)+hoG*x - h)
 
@@ -1058,7 +1081,10 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
                                 soL*(1-x)+soG*x - s)
 
@@ -1119,7 +1145,10 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
                         x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
@@ -1335,7 +1364,10 @@ class MEoS(_fase):
                         Jv = rhog*(1+deltaG*firdG)
                         K = firL-firG
 
-                        logrho = numpy.log(rhol/rhog)
+                        try:
+                            logrho = log(rhol/rhog)
+                        except ValueError:
+                            logrho = float('nan')
                         Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
                         vu = hoG-Ps/rhog
                         lu = hoL-Ps/rhol
@@ -1770,7 +1802,17 @@ class MEoS(_fase):
         """
         Fi0 = self.Fi0
 
-        fio = Fi0["ao_log"][0]*numpy.log(delta)+Fi0["ao_log"][1]*numpy.log(tau)
+        try:
+            dlog = log(delta)
+        except ValueError:
+            dlog = float('nan')
+
+        try:
+            tlog = log(tau)
+        except ValueError:
+            tlog = float('nan')
+
+        fio = Fi0["ao_log"][0]*dlog+Fi0["ao_log"][1]*tlog
         fiot = +Fi0["ao_log"][1]/tau
         fiott = -Fi0["ao_log"][1]/tau**2
 
@@ -1786,8 +1828,15 @@ class MEoS(_fase):
                 fiott += n*t*(t-1)*tau**(t-2)
 
         for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
-            expt = numpy.exp(-t*tau)
-            fio += n*numpy.log(1-expt)
+            try:
+                expt = exp(-t*tau)
+            except OverflowError:
+                expt = float('inf')
+            try:
+                logterm = log(1-expt)
+            except ValueError:
+                logterm = float('nan')
+            fio += n*logterm
             fiot += n*t*((1-expt)**-1-1)
             fiott -= n*t**2*expt*(1-expt)**-2
 
@@ -1837,6 +1886,10 @@ class MEoS(_fase):
         """
         fir = fird = firdd = firt = firtt = firdt = 0.0
 
+        # Convert numpy.Float64 back into Python floats.
+        tau = float(tau)
+        delta = float(delta)
+
         # Polinomial terms
         nr1 = self._constants.get("nr1", [])
         d1 = self._constants.get("d1", [])
@@ -1855,8 +1908,13 @@ class MEoS(_fase):
         g2 = self._constants.get("gamma2", [])
         t2 = self._constants.get("t2", [])
         c2 = self._constants.get("c2", [])
+        failed = False
         for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            expgdc = numpy.exp(-g*delta**c)
+            try:
+                expgdc = exp(-g*delta**c)
+            except OverflowError:
+                failed = True
+                expgdc = float('inf')
             fir += n*delta**d*tau**t*expgdc
             fird += n*expgdc*delta**(d-1)*tau**t*(d-g*c*delta**c)
             firdd += n*expgdc*delta**(d-2)*tau**t * \
@@ -1864,6 +1922,8 @@ class MEoS(_fase):
             firt += n*t*delta**d*tau**(t-1)*expgdc
             firtt += n*t*(t-1)*delta**d*tau**(t-2)*expgdc
             firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*expgdc
+        if failed:
+            fir = float('nan')
 
         # Gaussian terms
         nr3 = self._constants.get("nr3", [])
@@ -2172,6 +2232,8 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.2
         """
+        # Convert numpy.Float64 back into Python floats.
+        T = float(T)
         Tita = 1-T/cls.Tc
         if cls._rhoL_eq == 2:
             Tita = Tita**(1./3)
@@ -2202,12 +2264,17 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.3
         """
+        # Convert numpy.Float64 back into Python floats.
+        T = float(T)
         Tita = 1-T/cls.Tc
         if cls._rhoG_eq == 4:
             Tita = Tita**(1./3)
         suma = 0.0
         for n, x in zip(cls._rhoG_ao, cls._rhoG_exp):
             suma += n*Tita**x
+            if type(suma) == complex:
+                suma = float('nan')
+
         Pr = exp(suma)
         rho = Pr*cls.rhoc
         return rho
