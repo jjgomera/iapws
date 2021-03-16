@@ -65,71 +65,82 @@ def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) ->
 class _fase(object):
     """Class to implement a null phase"""
 
-    v: Optional[float] = None
-    rho: Optional[float] = None
+    # One always computed form the other
+    v: float = float('nan')
+    rho: float = float('nan')
 
-    h: Optional[float] = None
-    s: Optional[float] = None
-    u: Optional[float] = None
-    a: Optional[float] = None
-    g: Optional[float] = None
+    h: float = float('nan')
+    s: float = float('nan')
 
-    cp: Optional[float] = None
-    cv: Optional[float] = None
-    cp_cv: Optional[float] = None
-    w: Optional[float] = None
-    Z: Optional[float] = None
-    fi: Optional[float] = None
-    f: Optional[float] = None
+    cv: float = float('nan')
+    alfap: float = float('nan')
+    betap: float = float('nan')
+    cp: float = float('nan')
+    kappa: float = float('nan')
+    alfav: float = float('nan')
 
-    mu: Optional[float] = None
-    k: Optional[float] = None
-    nu: Optional[float] = None
-    Prandt: Optional[float] = None
+    g: float = float('nan')
+    fi: float = float('nan')
+
+    w: float = float('nan')
+    Z: float = float('nan')
+
+    drhodP_T: float = float('nan')
+    mu: float = float('nan')
+    cp_cv: float = float('nan')
+    k: float = float('nan')
+
     epsilon: Optional[float] = None
-    alfa: Optional[float] = None
     n: Optional[float] = None
 
-    alfap: Optional[float] = None
-    betap: Optional[float] = None
-    joule: Optional[float] = None
-    Gruneisen: Optional[float] = None
-    alfav: Optional[float] = None
-    kappa: Optional[float] = None
-    betas: Optional[float] = None
-    gamma: Optional[float] = None
-    Kt: Optional[float] = None
-    kt: Optional[float] = None
-    Ks: Optional[float] = None
-    ks: Optional[float] = None
-    dpdT_rho: Optional[float] = None
-    dpdrho_T: Optional[float] = None
-    drhodT_P: Optional[float] = None
-    drhodP_T: Optional[float] = None
-    dhdT_rho: Optional[float] = None
-    dhdT_P: Optional[float] = None
-    dhdrho_T: Optional[float] = None
-    dhdrho_P: Optional[float] = None
-    dhdP_T: Optional[float] = None
-    dhdP_rho: Optional[float] = None
+    # --------------------------------------------
+    # Calculated identically between 95 and 97
+    u: float = float('nan')
+    a: float = float('nan')
+    nu: float = float('nan')
+    Prandt: float = float('nan')
+    alfa: float = float('nan')
+    f: float = float('nan')
 
-    Z_rho: Optional[float] = None
-    IntP: Optional[float] = None
-    hInput: Optional[float] = None
+    # Calculated similarly, but not identically?
+    joule: float = float('nan')
+    gamma: float = float('nan')
+    deltat: float = float('nan')
+
+    # Calculated on 95 only from earlier variables and self.M
+    rhoM: float = float('nan')
+    M: float = float('nan')
+    hM: float = float('nan')
+    sM: float = float('nan')
+    uM: float = float('nan')
+    aM: float = float('nan')
+    gM: float = float('nan')
+    cvM: float = float('nan')
+    cpM: float = float('nan')
+    Z_rho: float = float('nan')
+
+    # Derivatives calculated only in IAPWS95
+    dpdT_rho: float = float('nan')
+    dpdrho_T: float = float('nan')
+    drhodT_P: float = float('nan')
+    dhdT_rho: float = float('nan')
+    dhdT_P: float = float('nan')
+    dhdrho_T: float = float('nan')
+    dhdrho_P: float = float('nan')
+    dhdP_T: float = float('nan')
+    dhdP_rho: float = float('nan')
+    kt: float = float('nan')
+    ks: float = float('nan')
+    Ks: float = float('nan')
+    Kt: float = float('nan')
+    betas: float = float('nan')
+    Gruneisen: float = float('nan')
+    IntP: float = float('nan')
+    hInput: float = float('nan')
 
     # Properties added because various methods set/access them?
-    xkappa: Optional[float] = None
-    kappas: Optional[float] = None
-    deltat: Optional[float] = None
-    rhoM: Optional[float] = None
-    M: Optional[float] = None
-    hM: Optional[float] = None
-    sM: Optional[float] = None
-    uM: Optional[float] = None
-    aM: Optional[float] = None
-    gM: Optional[float] = None
-    cvM: Optional[float] = None
-    cpM: Optional[float] = None
+    xkappa: float = float('nan')
+    kappas: float = float('nan')
 
 
 def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
