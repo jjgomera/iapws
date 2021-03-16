@@ -659,11 +659,17 @@ class HumidAir(_fase):
         # Thermodynamic definition
         if self._mode == "TP":
             def rho_func(rhopar: float) -> float:
+                assert(T is not None)
+                assert(P is not None)
+                assert(A is not None)
                 fav = self._fav(T, rhopar, A)
                 return rhopar**2*fav["fird"]/1000-P
             rho = float(fsolve(rho_func, 1)[0])
         elif self._mode == "Prho":
             def t_func(Tpar: float) -> float:
+                assert(P is not None)
+                assert(rho is not None)
+                assert(A is not None)
                 fav = self._fav(Tpar, rho, A)
                 return rho**2*fav["fird"]/1000-P
             T = float(fsolve(t_func, 300)[0])
