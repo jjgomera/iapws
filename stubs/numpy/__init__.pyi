@@ -4,9 +4,14 @@
 
 from typing import Tuple, List, Any
 
-class Float64(float):
-    ...
+# With this mypy type definition, we shouldn't be able to do anything
+# with the numpy.Float64 except cast them to the Python floats.
+class Float64(object):
+    def __float__(self) -> float:
+        ...
 
+# We can still iterate over the ndarrays however, because this
+# definition lies and says ndarray is derived from Tuple.
 class ndarray(Tuple[Float64, ...]):
     ...
 

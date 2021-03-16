@@ -184,7 +184,8 @@ class NH3(MEoS):
         dPT = 1e5*(2.18-0.12/exp(17.8*t))
         nbx = 1e-5*(2.6+1.6*t)
 
-        DL = 1.2*Boltzmann*T**2/6/pi/nbx/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
+        kb = float(Boltzmann)
+        DL = 1.2*kb*T**2/6/pi/nbx/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
             0.423e-8/t**1.24*(1+t**0.5/0.7)
 
         # Add correction for entire range of temperature, Eq 10

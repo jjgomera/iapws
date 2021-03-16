@@ -215,7 +215,7 @@ if xAxis != "P" and yAxis != "P":
         pts = []
         for t in Tl:
             try:
-                point = fluid(P=P, T=t+273.15)
+                point = fluid(P=P, T=float(t)+273.15)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -242,7 +242,9 @@ if xAxis != "P" and yAxis != "P":
 if xAxis != "h" and yAxis != "h":
     print("Calculating isoenthalpic lines...")
     H_: Dict[str, Dict[str, List[Any]]] = {}
-    for h in isoh:
+    for numpy_h in isoh:
+        # Convert numpy.Float64 to Python float.
+        h = float(numpy_h)
         print("    h=%skJ/kg" % h)
         H_["%s" % h] = {}
         pts = []
@@ -297,7 +299,7 @@ if xAxis != "v" and yAxis != "v":
     print("Calculating isochor lines...")
     for v in isov:
         print("    v=%s" % v)
-        pts95 = [iapws.IAPWS95(T=t, v=v) for t in Tl]
+        pts95 = [iapws.IAPWS95(T=float(t), v=v) for t in Tl]
         x = []
         y = []
         for p95 in pts95:
@@ -396,7 +398,9 @@ if xAxis != "P" and yAxis != "P":
         plt.annotate(txt, (x[i], y[i]), rotation=rot, **labelP_kw)
 
 if xAxis != "h" and yAxis != "h":
-    for h in isoh:
+    for numpy_h in isoh:
+        # Convert numpy.Float64 to Python float.
+        h = float(numpy_h)
         x = H_["%s" % h]["x"]
         y = H_["%s" % h]["y"]
 
