@@ -583,7 +583,7 @@ class MEoS(_fase):
                     Po = (1+delta*fird)*self.R*T*rho
                     return Po-P*1000
 
-                rho = fsolve(rho_func, rhoo)[0]
+                rho = float(fsolve(rho_func, rhoo)[0])
 
                 # Calculate quality
                 if T > self.Tc:
@@ -613,7 +613,7 @@ class MEoS(_fase):
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
-                    rho = fsolve(rho_func, rhoo)[0]
+                    rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     x0 = self.kwargs["x0"]
                     rhov = self._Vapor_Density(T)
@@ -641,7 +641,7 @@ class MEoS(_fase):
                             rhoo = rhov
                         else:
                             rhoo = rhol
-                        rho = fsolve(rho_func, rhoo)[0]
+                        rho = float(fsolve(rho_func, rhoo)[0])
 
             elif self._mode == "Ts":
                 tau = Tc/T
@@ -661,7 +661,7 @@ class MEoS(_fase):
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
-                    rho = fsolve(rho_func, rhoo)[0]
+                    rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
@@ -694,7 +694,7 @@ class MEoS(_fase):
                             rhoo = rhov
                         else:
                             rhoo = rhol
-                        rho = fsolve(rho_func, rhoo)[0]
+                        rho = float(fsolve(rho_func, rhoo)[0])
 
             elif self._mode == "Tu":
                 tau = Tc/T
@@ -713,7 +713,7 @@ class MEoS(_fase):
 
                 if T >= self.Tc:
                     rhoo = self.rhoc
-                    rho = fsolve(rho_func, rhoo)[0]
+                    rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
@@ -745,7 +745,7 @@ class MEoS(_fase):
                             rhoo = rhov
                         else:
                             rhoo = rhol
-                        rho = fsolve(rho_func, rhoo)[0]
+                        rho = float(fsolve(rho_func, rhoo)[0])
 
             elif self._mode == "Prho":
                 delta = rho/rhoc
@@ -757,7 +757,7 @@ class MEoS(_fase):
                     Po = (1+delta*fird)*self.R*T*rho
                     return Po-P*1000
 
-                T = fsolve(t_func, To)[0]
+                T = float(fsolve(t_func, To)[0])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
@@ -787,7 +787,7 @@ class MEoS(_fase):
                         rhoLo = self._Liquid_Density(to)
                         rhoGo = self._Vapor_Density(to)
                         sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
+                        T, rhoL, rhoG = tuple(map(float, sol[0]))
                         x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
@@ -815,7 +815,7 @@ class MEoS(_fase):
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
                     return Po-P*1000, ho-h
 
-                rho, T = fsolve(f2, [rhoo, To])
+                rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or rhov <= rho <= rhol:
@@ -853,7 +853,7 @@ class MEoS(_fase):
                         rLo = self._Liquid_Density(to)
                         rGo = self._Vapor_Density(to)
                         sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
+                        T, rhoL, rhoG, x = tuple(map(float, sol[0]))
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
@@ -888,7 +888,7 @@ class MEoS(_fase):
                         so = self.R*(tau*(fiot+firt)-fio-fir)
                         return Po-P*1000, so-s
 
-                    rho, T = fsolve(f2, [rhoo, To])
+                    rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
 
                 else:
                     def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
@@ -898,7 +898,7 @@ class MEoS(_fase):
                         liquido = self._Helmholtz(rhol, T)
                         x = (1./rho-1/rhol)/(1/rhov-1/rhol)
                         return Ps-P*1000, vapor["s"]*x+liquido["s"]*(1-x)-s
-                    rho, T = fsolve(f2, [2., 500.])
+                    rho, T = tuple(map(float, fsolve(f2, [2., 500.])))
                     rhol, rhov, Ps = self._saturation(T)
                     vapor = self._Helmholtz(rhov, T)
                     liquido = self._Helmholtz(rhol, T)
@@ -921,7 +921,7 @@ class MEoS(_fase):
                     return ho-Po/rho-u, Po-P*1000
 
                 sol = fsolve(f2, [rhoo, To], full_output=True)
-                rho, T = sol[0]
+                rho, T = tuple(map(float, sol[0]))
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rho == rhoo or sol[2] != 1:
@@ -962,7 +962,7 @@ class MEoS(_fase):
                         rLo = self._Liquid_Density(to)
                         rGo = self._Vapor_Density(to)
                         sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
+                        T, rhoL, rhoG, x = tuple(map(float, sol[0]))
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
@@ -988,7 +988,7 @@ class MEoS(_fase):
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
                     return ho-h
 
-                T = fsolve(t_func, To)[0]
+                T = float(fsolve(t_func, To)[0])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
@@ -1024,7 +1024,7 @@ class MEoS(_fase):
                         rhoLo = self._Liquid_Density(to)
                         rhoGo = self._Vapor_Density(to)
                         sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
+                        T, rhoL, rhoG = tuple(map(float, sol[0]))
                         x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
@@ -1051,7 +1051,7 @@ class MEoS(_fase):
                     so = self.R*(tau*(fiot+firt)-fio-fir)
                     return so-s
 
-                T = fsolve(t_func, To)[0]
+                T = float(fsolve(t_func, To)[0])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
@@ -1092,7 +1092,7 @@ class MEoS(_fase):
                         rhoLo = self._Liquid_Density(to)
                         rhoGo = self._Vapor_Density(to)
                         sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
+                        T, rhoL, rhoG = tuple(map(float, sol[0]))
                         x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
@@ -1120,7 +1120,7 @@ class MEoS(_fase):
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
                     return ho-Po/rho-u
 
-                T = fsolve(t_func, To)[0]
+                T = float(fsolve(t_func, To)[0])
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if T == To or rhov <= rho <= rhol:
@@ -1159,7 +1159,7 @@ class MEoS(_fase):
                         rhoLo = self._Liquid_Density(to)
                         rhoGo = self._Vapor_Density(to)
                         sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
+                        T, rhoL, rhoG = tuple(map(float, sol[0]))
                         x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
@@ -1189,7 +1189,7 @@ class MEoS(_fase):
                     so = self.R*(tau*(fiot+firt)-fio-fir)
                     return ho-h, so-s
 
-                rho, T = fsolve(f2, [rhoo, To])
+                rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if rhov <= rho <= rhol:
@@ -1230,7 +1230,7 @@ class MEoS(_fase):
                         rLo = self._Liquid_Density(to)
                         rGo = self._Vapor_Density(to)
                         sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
+                        T, rhoL, rhoG, x = tuple(map(float, sol[0]))
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
@@ -1259,7 +1259,7 @@ class MEoS(_fase):
                     return ho-Po/rho-u, ho-h
 
                 sol = fsolve(f2, [rhoo, To], full_output=True)
-                rho, T = sol[0]
+                rho, T = tuple(map(float, sol[0]))
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
@@ -1300,7 +1300,7 @@ class MEoS(_fase):
                         rLo = self._Liquid_Density(to)
                         rGo = self._Vapor_Density(to)
                         sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
+                        T, rhoL, rhoG, x = tuple(map(float, sol[0]))
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
@@ -1331,7 +1331,7 @@ class MEoS(_fase):
                     return ho-Po/rho-u, so-s
 
                 sol = fsolve(f2, [rhoo, To], full_output=True)
-                rho, T = sol[0]
+                rho, T = tuple(map(float, sol[0]))
                 rhol = self._Liquid_Density(T)
                 rhov = self._Vapor_Density(T)
                 if sol[2] != 1 or rhov <= rho <= rhol:
@@ -1379,7 +1379,7 @@ class MEoS(_fase):
                         rLo = self._Liquid_Density(to)
                         rGo = self._Vapor_Density(to)
                         sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
+                        T, rhoL, rhoG, x = tuple(map(float, sol[0]))
                         if sol[2] == 1 and 0 <= x <= 1 and \
                                 sum(abs(sol[1]["fvec"])) < 1e-5:
                             break
@@ -1457,7 +1457,7 @@ class MEoS(_fase):
                 To = _TSat_P(P)
             else:
                 To = (self.Tc+self.Tt)/2
-            T = fsolve(t_func, To)[0]
+            T = float(fsolve(t_func, To)[0])
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
             liquido = self._Helmholtz(rhol, T)
@@ -1672,7 +1672,7 @@ class MEoS(_fase):
             Kv = deltaG*phirdG+phirG+log(deltaG)
             return Kv-Kl, Jv-Jl
 
-        rhoL, rhoG = fsolve(f2, [rhoLo, rhoGo])
+        rhoL, rhoG = tuple(map(float, fsolve(f2, [rhoLo, rhoGo])))
         if rhoL == rhoG:
             Ps = self.Pc
         else:

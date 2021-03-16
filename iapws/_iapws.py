@@ -407,8 +407,9 @@ class _Supercooled_minimize(object):
 
     @property
     def x(self) -> float:
-        return minimize(self.f, x0=((self.xmin+self.xmax)/2,),
-                        bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+        m = minimize(self.f, x0=((self.xmin+self.xmax)/2,),
+                     bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+        return float(m)
 
 
 # IAPWS-15 for supercooled liquid water

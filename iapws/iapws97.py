@@ -4166,7 +4166,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
             return (_Region5(par[0], par[1])["h"]-h,
                     _Region5(par[0], par[1])["s"]-s)
-        T, P = fsolve(funcion, [1400, 1])
+        T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
         if 1073.15 < T <= 2273.15 and Pmin <= P <= 50:
             region = 5
 
@@ -4385,7 +4385,7 @@ class IAPWS97(object):
 
                     def rho_funcion(rho: float) -> float:
                         return _Region3(rho, self.kwargs["T"])["P"]-P
-                    rho = newton(rho_funcion, 1/vo)
+                    rho = float(newton(rho_funcion, 1/vo))
                 propiedades = _Region3(rho, T)
             elif region == 5:
                 propiedades = _Region5(T, P)
@@ -4397,11 +4397,11 @@ class IAPWS97(object):
             region = _Bound_Ph(P, h)
             if region == 1:
                 To = _Backward1_T_Ph(P, h)
-                T = newton(lambda T: _Region1(T, P)["h"]-h, To)
+                T = float(newton(lambda T: _Region1(T, P)["h"]-h, To))
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ph(P, h)
-                T = newton(lambda T: _Region2(T, P)["h"]-h, To)
+                T = float(newton(lambda T: _Region2(T, P)["h"]-h, To))
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ph(P, h)
@@ -4410,7 +4410,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region3(par[0], par[1])["h"]-h,
                             _Region3(par[0], par[1])["P"]-P)
-                rho, T = fsolve(funcion, [1/vo, To])
+                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _TSat_P(P)
@@ -4426,10 +4426,10 @@ class IAPWS97(object):
                     def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                         return (_Region3(par[0], par[1])["h"]-h,
                                 _Region3(par[0], par[1])["P"]-P)
-                    rho, T = fsolve(funcion, [1/vo, To])
+                    rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                     propiedades = _Region3(rho, T)
             elif region == 5:
-                T = newton(lambda T: _Region5(T, P)["h"]-h, 1500)
+                T = float(newton(lambda T: _Region5(T, P)["h"]-h, 1500))
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -4439,11 +4439,11 @@ class IAPWS97(object):
             region = _Bound_Ps(P, s)
             if region == 1:
                 To = _Backward1_T_Ps(P, s)
-                T = newton(lambda T: _Region1(T, P)["s"]-s, To)
+                T = float(newton(lambda T: _Region1(T, P)["s"]-s, To))
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ps(P, s)
-                T = newton(lambda T: _Region2(T, P)["s"]-s, To)
+                T = float(newton(lambda T: _Region2(T, P)["s"]-s, To))
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ps(P, s)
@@ -4452,7 +4452,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region3(par[0], par[1])["s"]-s,
                             _Region3(par[0], par[1])["P"]-P)
-                rho, T = fsolve(funcion, [1/vo, To])
+                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _TSat_P(P)
@@ -4468,10 +4468,10 @@ class IAPWS97(object):
                     def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                         return (_Region3(par[0], par[1])["s"]-s,
                                 _Region3(par[0], par[1])["P"]-P)
-                    rho, T = fsolve(funcion, [1/vo, To])
+                    rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                     propiedades = _Region3(rho, T)
             elif region == 5:
-                T = newton(lambda T: _Region5(T, P)["s"]-s, 1500)
+                T = float(newton(lambda T: _Region5(T, P)["s"]-s, 1500))
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -4486,7 +4486,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region1(par[0], par[1])["h"]-h,
                             _Region1(par[0], par[1])["s"]-s)
-                T, P = fsolve(funcion, [To, Po])
+                T, P = tuple(map(float, fsolve(funcion, [To, Po])))
                 propiedades = _Region1(T, P)
             elif region == 2:
                 Po = _Backward2_P_hs(h, s)
@@ -4495,7 +4495,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region2(par[0], par[1])["h"]-h,
                             _Region2(par[0], par[1])["s"]-s)
-                T, P = fsolve(funcion, [To, Po])
+                T, P = tuple(map(float, fsolve(funcion, [To, Po])))
                 propiedades = _Region2(T, P)
             elif region == 3:
                 P = _Backward3_P_hs(h, s)
@@ -4505,7 +4505,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region3(par[0], par[1])["h"]-h,
                             _Region3(par[0], par[1])["s"]-s)
-                rho, T = fsolve(funcion, [1/vo, To])
+                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
                 if round(s-sc, 6) == 0 and round(h-hc, 6) == 0:
@@ -4548,7 +4548,7 @@ class IAPWS97(object):
                         sv = vapor["s"]
                         return (hv*pp1+hl*(1-pp1)-h,
                                 sv*pp1+sl*(1-pp1)-s)
-                    T, x = fsolve(funcion2, [To, 0.5])
+                    T, x = tuple(map(float, fsolve(funcion2, [To, 0.5])))
                     P = _PSat_T(T)
 
                     if Pt <= P < Pc and 0 < x < 1:
@@ -4559,7 +4559,7 @@ class IAPWS97(object):
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
                     return (_Region5(par[0], par[1])["h"]-h,
                             _Region5(par[0], par[1])["s"]-s)
-                T, P = fsolve(funcion, [1400, 1])
+                T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -4577,7 +4577,7 @@ class IAPWS97(object):
                 def rho_funcion(rho: float) -> float:
                     return _Region3(rho, T)["P"]-P
                 rhoo = 1./_Backward3_sat_v_P(P, T, x)
-                rho = fsolve(rho_funcion, rhoo)[0]
+                rho = float(fsolve(rho_funcion, rhoo)[0])
                 propiedades = _Region3(rho, T)
             elif P == Pc and 0 <= x <= 1:
                 propiedades = _Region3(rhoc, Tc)

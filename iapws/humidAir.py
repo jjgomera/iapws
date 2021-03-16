@@ -661,12 +661,12 @@ class HumidAir(_fase):
             def rho_func(rhopar: float) -> float:
                 fav = self._fav(T, rhopar, A)
                 return rhopar**2*fav["fird"]/1000-P
-            rho = fsolve(rho_func, 1)[0]
+            rho = float(fsolve(rho_func, 1)[0])
         elif self._mode == "Prho":
             def t_func(Tpar: float) -> float:
                 fav = self._fav(Tpar, rho, A)
                 return rho**2*fav["fird"]/1000-P
-            T = fsolve(t_func, 300)[0]
+            T = float(fsolve(t_func, 300)[0])
 
         assert(T is not None)
         assert(isinstance(rho, float))
@@ -746,8 +746,7 @@ class HumidAir(_fase):
             muw = fa["fir"]+rho*fa["fird"]-a*fa["fira"]
             return gw-muw, rho**2*fa["fird"]/1000-P
 
-        rinput = fsolve(f, [1, 0.95], full_output=True)
-        Asat = rinput[0][1]
+        Asat = float(fsolve(f, [1, 0.95], full_output=True)[0][1])
         return Asat
 
     def _prop(self, T: float, rho: float, fav: Dict[str, float]) -> Dict[str, float]:
