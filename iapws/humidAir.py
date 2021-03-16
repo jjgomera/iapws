@@ -707,7 +707,7 @@ class HumidAir(_fase):
         self.xa_sat = A_sat*_global_M/Ma/(1-A_sat*(1-_global_M/Ma))
         self.RH = (1-self.xa)/(1-self.xa_sat)
 
-    def derivative(self, z: str, x: str, y: str):
+    def derivative(self, z: str, x: str, y: str) -> float:
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, rho, u, h, s, g, a

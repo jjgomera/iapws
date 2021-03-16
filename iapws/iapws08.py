@@ -253,7 +253,7 @@ class SeaWater(_fase):
             self.osm = None
             self.haline = None
 
-    def derivative(self, z: str, x: str, y: str):
+    def derivative(self, z: str, x: str, y: str) -> float:
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, u, h, s, g, a

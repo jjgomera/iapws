@@ -4735,7 +4735,7 @@ class IAPWS97(object):
         except NotImplementedError:
             fase.n = None
 
-    def derivative(self, z: str, x: str, y: str, fase):
+    def derivative(self, z: str, x: str, y: str, fase: _fase) -> float:
         """
         Wrapper derivative for custom derived properties
         where x, y, z can be: P, T, v, u, h, s, g, a
