@@ -1871,7 +1871,7 @@ def _Region3(rho: float, T: float) -> Dict[str, float]:
     return propiedades
 
 
-def _h_3ab(P):
+def _h_3ab(P: float) -> float:
     """Define the boundary between Region 3a-3b, h=f(P)
 
     Parameters
@@ -4334,7 +4334,7 @@ class IAPWS97(_fase):
         self.kwargs = IAPWS97.kwargs.copy()
         self.__call__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         """Invoke the solver."""
         self.kwargs.update(kwargs)
 

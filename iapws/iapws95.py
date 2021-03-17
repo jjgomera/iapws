@@ -444,7 +444,7 @@ class MEoS(_fase):
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         """Make instance callable to can add input parameter one to one"""
         # Alternative rho input
         if "rhom" in kwargs:

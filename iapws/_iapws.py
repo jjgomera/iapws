@@ -413,7 +413,7 @@ class _Supercooled_minimize(object):
 
 
 # IAPWS-15 for supercooled liquid water
-def _Supercooled(T: float, P: float):
+def _Supercooled(T: float, P: float) -> Dict[str, float]:
     """Guideline on thermodynamic properties of supercooled water
 
     Parameters

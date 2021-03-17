@@ -601,7 +601,7 @@ class HumidAir(_fase):
         self.kwargs = HumidAir.kwargs.copy()
         self.__call__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         """Make instance callable to can add input parameter one to one"""
         # Check alernate input parameters
         if kwargs.get("v", 0):

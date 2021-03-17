@@ -184,7 +184,7 @@ class SeaWater(_fase):
         self.kwargs = SeaWater.kwargs.copy()
         self.__call__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         """Make instance callable to can add input parameter one to one"""
         self.kwargs.update(kwargs)
 
