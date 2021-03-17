@@ -159,7 +159,7 @@ def _Ice(T: float, P: float) -> Dict[str, float]:
         gop += gok[k]*1e-3*k/Pt*(Pr-P0)**(k-1)
     for k in range(2, 5):
         gopp += gok[k]*1e-3*k*(k-1)/Pt**2*(Pr-P0)**(k-2)
-    r2 = r2p = 0.0
+    r2 = r2p = complex(0.0, 0.0)
     for k in range(3):
         r2 += r2k[k]*(Pr-P0)**k
     for k in range(1, 3):
