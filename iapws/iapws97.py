@@ -3602,7 +3602,7 @@ def _Region4(P: float, x: float) -> Dict[str, Optional[float]]:
         P1 = _Region1(T, P)
         P2 = _Region2(T, P)
 
-    propiedades = {}
+    propiedades: Dict[str, Optional[float]] = {}
     propiedades["T"] = T
     propiedades["P"] = P
     propiedades["v"] = P1["v"]+x*(P2["v"]-P1["v"])
