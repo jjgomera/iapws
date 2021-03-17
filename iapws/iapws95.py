@@ -14,7 +14,7 @@ import os
 import platform
 import warnings
 from math import exp, log
-from typing import Tuple, Dict, Optional, List
+from typing import Tuple, Dict, Optional, List, Callable, Any
 
 from scipy.optimize import fsolve
 
@@ -2313,17 +2313,18 @@ class MEoS(_fase):
         return dPdT
 
 
-def mainClassDoc():
+def mainClassDoc() -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Function decorator used to automatic adiction of base class MEoS in
     subclass __doc__
     """
-    def decorator(f):
+    def decorator(f: Callable[..., Any]) -> Callable[..., Any]:
         # __doc__ is only writable in python3.
         # The doc build must be done with python3 so this snippet do the work
         py_version = platform.python_version()
         if py_version[0] == "3":
-            doc = f.__doc__.split(os.linesep)
+            if isinstance(f.__doc__, str):
+                doc = f.__doc__.split(os.linesep)
             try:
                 ind = doc.index("")
             except ValueError:
@@ -2331,7 +2332,8 @@ def mainClassDoc():
 
             doc1 = os.linesep.join(doc[:ind])
             doc3 = os.linesep.join(doc[ind:])
-            doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
+            if isinstance(MEoS.__doc__, str):
+                doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
 
             f.__doc__ = doc1 + os.linesep + os.linesep + \
                 doc2 + os.linesep + os.linesep + doc3
