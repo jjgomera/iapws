@@ -1545,7 +1545,7 @@ class MEoS(_fase):
         raise NotImplementedError
 
     # Derived classes must implement _thermo to call fill()
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         raise NotImplementedError
 
     def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
@@ -2729,7 +2729,7 @@ class IAPWS95(MEoS):
         drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
         return _Viscosity(rho, T, fase, drho)
 
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
@@ -2859,7 +2859,7 @@ class D2O(MEoS):
         return _D2O_Viscosity(rho, T)
 
     # fase is unused
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         return _D2O_ThCond(rho, T)
 
     def _surface(self, T: float) -> float:

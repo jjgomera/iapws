@@ -140,7 +140,7 @@ class NH3(MEoS):
         return mu*1e-6
 
     # fase is unused
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the thermal conductivity
 
         Parameters
@@ -169,7 +169,7 @@ class NH3(MEoS):
 
         if rho == rhoc and T == self.Tc:
             warnings.warn("Thermal conductiviy undefined in critical point")
-            return None
+            return float('nan')
 
         # Eq 6
         no = [0.3589e-1, -0.1750e-3, 0.4551e-6, 0.1685e-9, -0.4828e-12]

@@ -422,7 +422,7 @@ class Air(MEoSBlend):
         mu = muo+mur
         return mu*1e-6
 
-    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> Optional[float]:
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the thermal conductivity
 
         Parameters
