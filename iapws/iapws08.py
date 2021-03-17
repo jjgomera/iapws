@@ -181,6 +181,14 @@ class SeaWater(_fase):
         self.gtp = float('nan')
         self.gpp = float('nan')
 
+        self.k: Optional[float] = None
+        self.sigma: Optional[float] = None
+        self.mu: Optional[float] = None
+        self.muw: Optional[float] = None
+        self.mus: Optional[float] = None
+        self.osm: Optional[float] = None
+        self.haline: Optional[float] = None
+
         self.kwargs = SeaWater.kwargs.copy()
         self.__call__(**kwargs)
 
@@ -194,16 +202,19 @@ class SeaWater(_fase):
             self.calculo()
             self.msg = ""
 
-    def calculo(self):
+    def calculo(self) -> None:
         """Calculate procedure"""
-        T = self.kwargs["T"]
-        P = self.kwargs["P"]
-        S = self.kwargs["S"]
+        assert(self.kwargs["P"] is not None)
+        assert(self.kwargs["T"] is not None)
+        assert(self.kwargs["S"] is not None)
+        T = float(self.kwargs["T"])
+        P = float(self.kwargs["P"])
+        S = float(self.kwargs["S"])
 
         self.m = S/(1-S)/Ms
-        if self.kwargs["fast"] and T <= 313.15:
+        if bool(self.kwargs["fast"]) and T <= 313.15:
             pw = self._waterSupp(T, P)
-        elif self.kwargs["IF97"]:
+        elif bool(self.kwargs["IF97"]):
             pw = self._waterIF97(T, P)
         else:
             pw = self._water(T, P)
