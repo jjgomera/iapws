@@ -424,6 +424,8 @@ class MEoS(_fase):
     rhoc: float
     Tc: float
     Pc: float
+    Tt: float
+    _constant_R: float
     _constants: Dict[str, List[float]]
 
     def __init__(self, **kwargs):
@@ -438,6 +440,10 @@ class MEoS(_fase):
         assert(isinstance(self._rhoG_ao, list))
         assert(isinstance(self._rhoG_exp, list))
         assert(isinstance(self.M, float))
+
+        self.sigma: Optional[float] = None
+        self.Hvap: Optional[float] = None
+        self.Svap: Optional[float] = None
 
         self.R = self.__class__._constant_R/self.M
         self.Zc = self.Pc/self.rhoc/self.R/self.Tc
@@ -519,23 +525,25 @@ class MEoS(_fase):
             self._mode = "Px"
         return bool(self._mode)
 
-    def calculo(self):
+    def calculo(self) -> None:
         """Calculate procedure"""
-        T = self.kwargs["T"]
-        rho = self.kwargs["rho"]
-        P = self.kwargs["P"]
-        s = self.kwargs["s"]
-        h = self.kwargs["h"]
-        u = self.kwargs["u"]
-        x = self.kwargs["x"]
+        T: float = self.kwargs["T"]  # type: ignore
+        rho: float = self.kwargs["rho"]  # type: ignore
+        P: float = self.kwargs["P"]  # type: ignore
+        s: float = self.kwargs["s"]  # type: ignore
+        h: float = self.kwargs["h"]  # type: ignore
+        u: float = self.kwargs["u"]  # type: ignore
+        x: float = self.kwargs["x"]  # type: ignore
 
         # Initial values
         T0 = self.kwargs["T0"]
         rho0 = self.kwargs["rho0"]
 
         if T0 or rho0:
-            To = T0
-            rhoo = rho0
+            if T0 is not None:
+                To = float(T0)
+            if rho0 is not None:
+                rhoo = float(rho0)
         elif self.name == "air":
             To = 300
             rhoo = 1e-3
@@ -557,7 +565,7 @@ class MEoS(_fase):
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
 
-        propiedades = None
+        propiedades: Dict[str, float] = {}
 
         if self._mode not in ("Tx", "Px"):
             # Method with iteration necessary to get x
