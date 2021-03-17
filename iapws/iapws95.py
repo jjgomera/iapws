@@ -398,6 +398,8 @@ class MEoS(_fase):
     _rhoL_eq: int
     _rhoL_ao: List[float]
     _rhoL_exp: List[float]
+    # Defined in derived classes NH3 and Air.
+    _surf: Dict[str, List[float]]
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -2179,7 +2181,7 @@ class MEoS(_fase):
             exp: exponent
         """
         tau = 1-T/self.Tc
-        sigma = 0
+        sigma = 0.0
         for n, t in zip(self._surf["sigma"], self._surf["exp"]):
             sigma += n*tau**t
         return sigma
