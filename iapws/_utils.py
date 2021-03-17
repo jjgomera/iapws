@@ -65,6 +65,10 @@ def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) ->
 class _fase(object):
     """Class to implement a null phase"""
 
+    # The name of the substance.
+    # Set in NH3, Air, IAPWS95, D2O, and IAPWS97.
+    name: str = "unknown"
+
     # One always computed form the other
     v: float = float('nan')
     rho: float = float('nan')
