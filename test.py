@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
     Run for python2 and python3 before to release distribution
     """
 
-    def test_Helmholtz(self):
+    def test_Helmholtz(self) -> None:
         """Table 6 from IAPWS95, pag 14"""
         T = 500
         rho = 838.025
@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(vir["B"]/fluid.rhoc, 11), -0.555366808e-2)
         self.assertEqual(round(vir["C"]/fluid.rhoc**2, 14), -0.669015050e-5)
 
-    def test_phase(self):
+    def test_phase(self) -> None:
         """Table 7 from IAPWS95, pag 14"""
         state = IAPWS95(rho=996.556, T=300)
         # See footnote for imprecise P value in last significant figures
@@ -142,7 +142,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state.w, 5), 2019.33608)
         self.assertEqual(round(state.s, 8), 4.17223802)
 
-    def test_saturation(self):
+    def test_saturation(self) -> None:
         """Table 8 from IAPWS95, pag 14"""
         fluid = IAPWS95()
 
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(liquid["s"], 8), 3.80194683)
         self.assertEqual(round(vapor["s"], 8), 5.18506121)
 
-    def test_LowT(self):
+    def test_LowT(self) -> None:
         """Table 3, pag 5"""
         fluid = IAPWS95()
         fex, fext, fextt = fluid._phiex(50)
@@ -196,7 +196,7 @@ class Test(unittest.TestCase):
 
         fluid = IAPWS95(T=120, P=0.1)
 
-    def test_Melting(self):
+    def test_Melting(self) -> None:
         """Table 3, pag 7"""
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 49)
         self.assertRaises(NotImplementedError, _Sublimation_Pressure, 274)
@@ -208,7 +208,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Melting_Pressure(320, "VI"), 2), 1356.76)
         self.assertEqual(round(_Melting_Pressure(550, "VII"), 2), 6308.71)
 
-    def test_Viscosity_1(self):
+    def test_Viscosity_1(self) -> None:
         """Table 4, pag 8"""
         self.assertEqual(round(_Viscosity(998, 298.15)*1e6, 6), 889.735100)
         self.assertEqual(round(_Viscosity(1200, 298.15)*1e6, 6), 1437.649467)
@@ -236,7 +236,7 @@ class Test(unittest.TestCase):
         fluid = IAPWS95(rho=422, T=647.35)
         self.assertEqual(round(fluid.mu*1e6, 6), 49.436256)
 
-    def test_ThCond(self):
+    def test_ThCond(self) -> None:
         """Table 4, pag 10"""
         self.assertEqual(round(_ThCond(0, 298.15)*1000, 7), 18.4341883)
         self.assertEqual(round(_ThCond(998, 298.15)*1000, 6), 607.712868)
@@ -277,7 +277,7 @@ class Test(unittest.TestCase):
         fluid = IAPWS97(T=647.35, P=P)
         self.assertEqual(round(fluid.k*1000, 5), 1241.82415)
 
-    def test_Tension(self):
+    def test_Tension(self) -> None:
         """Selected values from table 1"""
         self.assertRaises(NotImplementedError, _Tension, 230)
         self.assertEqual(round(_Tension(273.16)*1000, 2), 75.65)
@@ -301,7 +301,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Tension(623.15)*1000, 2), 3.67)
         self.assertEqual(round(_Tension(643.15)*1000, 2), 0.39)
 
-    def test_Dielect(self):
+    def test_Dielect(self) -> None:
         """Table 4, pag 8"""
         fluid = IAPWS95(P=0.101325, T=240)
         self.assertEqual(round(fluid.epsilon, 5), 104.34982)
@@ -324,7 +324,7 @@ class Test(unittest.TestCase):
         fluid = IAPWS95(P=500, T=870)
         self.assertEqual(round(fluid.epsilon, 5), 15.09746)
 
-    def test_Refractive(self):
+    def test_Refractive(self) -> None:
         """Selected values from table 3, pag 6"""
         fluid = IAPWS95(P=0.1, T=273.15, l=0.2265)
         self.assertEqual(round(fluid.n, 6), 1.394527)
@@ -343,7 +343,7 @@ class Test(unittest.TestCase):
         fluid = IAPWS95(P=100., T=473.15, l=1.01398)
         self.assertEqual(round(fluid.n, 6), 1.298369)
 
-    def test_kw(self):
+    def test_kw(self) -> None:
         """Table 3, pag 5"""
         self.assertRaises(NotImplementedError, _Kw, *(1000, 270))
         self.assertEqual(round(_Kw(1000, 300), 6), 13.906565)
@@ -352,7 +352,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Kw(200, 800), 6), 15.089765)
         self.assertEqual(round(_Kw(1200, 800), 6), 6.438330)
 
-    def test_liquid(self):
+    def test_liquid(self) -> None:
         """Table 8, pag 11"""
         liq = _Liquid(260)
         self.assertEqual(round(liq["g"], 7), -1.2659892)
@@ -400,7 +400,7 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, _Liquid, *(375, 0.2))
         self.assertRaises(NotImplementedError, _Liquid, *(375, 0.4))
 
-    def test_superCooled(self):
+    def test_superCooled(self) -> None:
         """Table 5, pag 9"""
         liq = _Supercooled(273.15, 0.101325)
         self.assertEqual(round(liq["x"], 8), 0.09665472)
@@ -450,7 +450,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, _Supercooled, *(200, 100))
         self.assertRaises(NotImplementedError, _Supercooled, *(180, 300))
 
-    def test_auxiliarySaturation(self):
+    def test_auxiliarySaturation(self) -> None:
         """Table 1 pag 7"""
         fluid = IAPWS95()
         self.assertEqual(round(fluid._Vapor_Pressure(273.16), 9), 0.000611657)
@@ -486,7 +486,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid._Liquid_Entropy(647.096), 3), 4.410)
         self.assertEqual(round(fluid._Vapor_Entropy(647.096), 3), 4.410)
 
-    def test_IAPWS97_1(self):
+    def test_IAPWS97_1(self) -> None:
         """Table 5, pag 9"""
         fluid = _Region1(300, 3)
         self.assertEqual(round(fluid["v"], 11), 0.00100215168)
@@ -527,7 +527,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward1_P_hs(90, 0), 8), 91.92954727)
         self.assertEqual(round(_Backward1_P_hs(1500, 3.4), 8), 58.68294423)
 
-    def test_IAPWS97_2(self):
+    def test_IAPWS97_2(self) -> None:
         """Table 15, pag 17"""
         # Auxiliary equation for the boundary 2-3
         self.assertEqual(round(_P23_T(623.15), 7), 16.5291643)
@@ -595,7 +595,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward2_P_hs(2800, 5.8), 9), 8.414574124)
         self.assertEqual(round(_Backward2_P_hs(3400, 5.8), 8), 83.76903879)
 
-    def test_IAPWS97_3(self):
+    def test_IAPWS97_3(self) -> None:
         """Table 33, pag 49"""
         fluid = _Region3(500, 650)
         self.assertEqual(round(fluid["P"], 7), 25.5837018)
@@ -624,7 +624,7 @@ class Test(unittest.TestCase):
         # _h_3ab   pag 7
         self.assertEqual(round(_h_3ab(25), 6), 2095.936454)
 
-    def test_IAPWS97_3_Sup03(self):
+    def test_IAPWS97_3_Sup03(self) -> None:
         """Test for supplementary 03 for region 3"""
         # _Backward3_T_Ph Table 5 pag 8
         self.assertEqual(round(_Backward3_T_Ph(20, 1700), 7), 629.3083892)
@@ -670,7 +670,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_PSat_s(4.2), 8), 21.64451789)
         self.assertEqual(round(_PSat_s(5.2), 8), 16.68968482)
 
-    def test_IAPWS97_3_Sup04(self):
+    def test_IAPWS97_3_Sup04(self) -> None:
         """Test for supplementary 04 for region 3"""
         # _Backward3_P_hs Table 5 pag 10
         self.assertEqual(round(_Backward3_P_hs(1700, 3.8), 8), 25.55703246)
@@ -717,7 +717,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward4_T_hs(2400, 6.0), 7), 425.1373305)
         self.assertEqual(round(_Backward4_T_hs(2500, 5.5), 7), 522.5579013)
 
-    def test_IAPWS97_3_Sup05(self):
+    def test_IAPWS97_3_Sup05(self) -> None:
         """Test for supplementary 05 for region 3 v=f(T,P)"""
         # T=f(P) limit Table 3 pag 11
         self.assertEqual(round(_tab_P(40), 7), 693.0341408)
@@ -791,7 +791,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Backward3_v_PT(22, 646.89), 12), 3.798732962e-3)
         self.assertEqual(round(_Backward3_v_PT(22.064, 647.15), 11), 3.701940010e-3)
 
-    def test_IAPWS97_4(self):
+    def test_IAPWS97_4(self) -> None:
         """Saturation line"""
         # _PSat_T Table 35 pag 34
         self.assertRaises(NotImplementedError, _PSat_T, 270)
@@ -805,7 +805,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_TSat_P(1), 6), 453.035632)
         self.assertEqual(round(_TSat_P(10), 6), 584.149488)
 
-    def test_IAPWS97_5(self):
+    def test_IAPWS97_5(self) -> None:
         """Table 42, pag 40"""
         fluid = _Region5(1500, 0.5)
         self.assertEqual(round(fluid["v"], 8), 1.38455090)
@@ -831,7 +831,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid["cp"], 8), 2.88569882)
         self.assertEqual(round(fluid["w"], 5), 1067.36948)
 
-    def test_IAPWS97_custom(self):
+    def test_IAPWS97_custom(self) -> None:
         """Cycle input parameter from selected point for IAPWS97"""
         # Region 1
         P = 50   # MPa
@@ -1117,7 +1117,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS97, **{"P": 65, "s": 9})
         self.assertRaises(NotImplementedError, IAPWS97, **{"h": 700, "s": -1})
 
-    def test_IAPWS95_custom(self):
+    def test_IAPWS95_custom(self) -> None:
         """Cycle input parameter from selected point for IAPWS95"""
         P = 50   # MPa
         T = 470  # K
@@ -1223,7 +1223,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS95, **{"T": 700, "x": 0})
         self.assertRaises(NotImplementedError, IAPWS95, **{"P": 25, "x": 1})
 
-    def test_D2O(self):
+    def test_D2O(self) -> None:
         """Tables 6-8, page 12-13."""
         # Table 6, pag 12"""
         fluid = D2O()
@@ -1359,7 +1359,7 @@ class Test(unittest.TestCase):
         P = _D2O_Melting_Pressure(300, "VI")
         self.assertEqual(round(P, 6), 959.203594)
 
-    def test_D2O_Viscosity(self):
+    def test_D2O_Viscosity(self) -> None:
         """Table A5 pag 10"""
         mur = 55.2651e-6
         Tr = 643.847
@@ -1392,7 +1392,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_D2O_Viscosity(1.2*rhor, 1.2*Tr)/mur, 10), 0.9937870139)
         self.assertEqual(round(_D2O_Viscosity(1.61*rhor, 1.2*Tr)/mur, 10), 1.2711900131)
 
-    def test_D2O_ThCond(self):
+    def test_D2O_ThCond(self) -> None:
         """Table B4 pag 17"""
         lr = 0.742128e-3
         Tr = 643.847
@@ -1429,7 +1429,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_D2O_ThCond(0.95*rhor, 1.27*Tr)/lr, 9), 299.251471210)
         self.assertEqual(round(_D2O_ThCond(1.37*rhor, 1.27*Tr)/lr, 9), 409.359675394)
 
-    def test_D2O_Tension(self):
+    def test_D2O_Tension(self) -> None:
         """Selected values from table 1"""
         self.assertRaises(NotImplementedError, _D2O_Tension, 250)
         self.assertEqual(round(_D2O_Tension(273.15+3.8)*1000, 2), 74.93)
@@ -1453,7 +1453,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_D2O_Tension(623.15)*1000, 2), 3.17)
         self.assertEqual(round(_D2O_Tension(643.15)*1000, 2), 0.05)
 
-    def test_Ice(self):
+    def test_Ice(self) -> None:
         """Table 6, pag 12"""
         ice = _Ice(273.16, 0.000611657)
         self.assertEqual(round(ice["g"], 12), 0.000611784135)
@@ -1516,7 +1516,7 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, _Ice, *(273, 3))
             self.assertWarns(Warning, _Ice, *(272, 1e-4))
 
-    def test_SeaWater(self):
+    def test_SeaWater(self) -> None:
         """Table 8, pag 17-19"""
         # Part a, pag 17
         fluid = SeaWater(T=273.15, P=0.101325, S=0.03516504)
@@ -1640,7 +1640,7 @@ class Test(unittest.TestCase):
         wat = IAPWS95(T=353, P=0.101325)
         self.assertEqual(round(fluid.derivative("T", "P", "h")*1000-wat.joule, 7), 0)
 
-    def test_SeaWater_supp(self):
+    def test_SeaWater_supp(self) -> None:
         """Table 6, pag 9"""
         fluid = SeaWater(T=273.15, P=0.101325, S=0, fast=True)
         state = fluid._waterSupp(273.15, 0.101325)
@@ -1690,7 +1690,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.cp, 8), 4.17942416)
         self.assertEqual(round(fluid.w, 5), 1528.91242)
 
-    def test_SeaWaterIF97(self):
+    def test_SeaWaterIF97(self) -> None:
         """Table A1, pag 19-21"""
         fluid = SeaWater(T=273.15, P=0.101325, S=0.03516504, IF97=True)
         state = fluid._waterIF97(273.15, 0.101325)
@@ -1921,7 +1921,7 @@ class Test(unittest.TestCase):
         # Osmotic pressure, i have no test to do
         self.assertEqual(round(_OsmoticPressure(300, 0.1, 0), 5), 0.0)
 
-    def test_SeaWater_thcond(self):
+    def test_SeaWater_thcond(self) -> None:
         """Table 2, pag 5"""
         fluid = SeaWater(T=293.15, P=0.1, S=0.035)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.035), 9), -0.004186040)
@@ -1962,7 +1962,7 @@ class Test(unittest.TestCase):
         fluid = SeaWater(T=270, P=1, S=0.12)
         self.assertRaises(NotImplementedError, _ThCond_SeaWater, *(270, 1, 0))
 
-    def test_SeaWater_tension(self):
+    def test_SeaWater_tension(self) -> None:
         """Table 2, pag 4"""
         self.assertEqual(round(_Tension_SeaWater(253.15, 0.035)*1e3, 9), 79.225179610)
         self.assertEqual(round(_Tension_SeaWater(298.15, 0.035)*1e3, 9), 73.068674787)
@@ -1972,7 +1972,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Tension_SeaWater(293.15, 0.120)*1e3, 9), 76.432940211)
         self.assertEqual(round(_Tension_SeaWater(353.15, 0.120)*1e3, 9), 66.917261258)
 
-    def test_na2so4(self):
+    def test_na2so4(self) -> None:
         """Selected point from Table 1, pag 5"""
         self.assertEqual(round(_solNa2SO4(523.15, 0, 0), 2), 3.54)
         self.assertEqual(round(_solNa2SO4(523.15, 0.25, 0.083), 2), 3.31)
@@ -1990,7 +1990,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_solNa2SO4(623.15, 0.75, 2.25), 2), 2.13)
         self.assertRaises(NotImplementedError, _solNa2SO4, *(500, 0, 0))
 
-    def test_critNaCl(self):
+    def test_critNaCl(self) -> None:
         """Table II, page 6"""
         crit = _critNaCl(0)
         self.assertEqual(round(crit["Tc"], 6), 647.096000)
@@ -2091,7 +2091,7 @@ class Test(unittest.TestCase):
 
         self.assertRaises(NotImplementedError, _critNaCl, 0.2)
 
-    def test_Henry(self):
+    def test_Henry(self) -> None:
         """Table 6, Henry constants."""
         # Table 6 for Henry constants
         self.assertRaises(NotImplementedError, _Henry, *(300, "He", "He"))
@@ -2269,7 +2269,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(log(_Kvalue(500, "CH4", "D2O")), 4), 6.9021)
         self.assertEqual(round(log(_Kvalue(600, "CH4", "D2O")), 4), 3.8126)
 
-    def xest_Conductivity(self):
+    def xest_Conductivity(self) -> None:
         """Selected values from table II"""
         self.assertEqual(round(_Conductivity(600, 673.15), 9), 1.57e-6)
         self.assertEqual(round(_Conductivity(800, 1073.15), 9), 103e-6)
@@ -2277,7 +2277,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_Conductivity(1100, 273.16), 9), 0.0333e-6)
         self.assertEqual(round(_Conductivity(1100, 473.15), 9), 22.8e-6)
 
-    def test_virial(self):
+    def test_virial(self) -> None:
         """Tables 7 & 8, page 10"""
         # Table 7, page 10
         st = _virial(200)
@@ -2319,7 +2319,7 @@ class Test(unittest.TestCase):
             self.assertWarns(Warning, _virial, 50)
         self.assertRaises(NotImplementedError, _fugacity, *(190, 1, 0.1))
 
-    def test_Air(self):
+    def test_Air(self) -> None:
         """Tables A1 & A2, page 363 & 366."""
         # Table A1, Pag 363
         self.assertEqual(round(Air._bubbleP(59.75), 6), 0.005265)
@@ -2380,7 +2380,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_prho.P-P, 6), 0)
         self.assertEqual(round(f_prho.T-T, 6), 0)
 
-    def test_AirTransport(self):
+    def test_AirTransport(self) -> None:
         """Table V, pag 28"""
         st = Air()
         self.assertEqual(round(st._visco(0, 100), 11), 7.09559e-6)
@@ -2397,7 +2397,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(Air(rho=5*28.9586, T=300).k, 7), 32.6062e-3)
         # self.assertEqual(round(Air(rho=10.4*28.9586, T=132.64).k, 7), 75.6231e-3)
 
-    def test_HumidAir(self):
+    def test_HumidAir(self) -> None:
         """Tables 13-15 from page 19"""
         # Table 13
         A = 0.892247719
@@ -2644,7 +2644,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(hum.cp, 8), 1.09387397)
         self.assertEqual(round(hum.cp-200*hum.derivative("s", "T", "P"), 8), 0)
 
-    def test_Ammonia(self):
+    def test_Ammonia(self) -> None:
         """Selected point front table of pag 42"""
         st = NH3(T=-77.65+273.15, x=0.5)
         self.assertEqual(round(st.P, 5), 0.00609)
@@ -2693,7 +2693,7 @@ class Test(unittest.TestCase):
         if major == 3:
             self.assertWarns(Warning, st._thermo, *(235, st.Tc, st))
 
-    def test_AmmoniaVisco(self):
+    def test_AmmoniaVisco(self) -> None:
         """Appendix II & III, page 1664 & 1667."""
         # Appendix II, pag 1664
         st = NH3(T=680, P=0.1)
@@ -2725,7 +2725,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(st.Liquid.rhoM, 4), 19.1642)
         self.assertEqual(round(st.Liquid.mu*1e6, 2), 39.20)
 
-    def test_nh3h2o(self):
+    def test_nh3h2o(self) -> None:
         """Test outstanding problems in H2ONH3."""
         # Range of validity
         Tt1 = Ttr(0)
