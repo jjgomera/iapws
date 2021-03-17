@@ -852,8 +852,8 @@ class Test(unittest.TestCase):
     def test_IAPWS97_custom(self) -> None:
         """Cycle input parameter from selected point for IAPWS97"""
         # Region 1
-        P = 50.0 # MPa
-        T = 470  # K
+        P = 50.0  # MPa
+        T = 470   # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -861,8 +861,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 20.0 # MPa
-        T = 370  # K
+        P = 20.0  # MPa
+        T = 370   # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -871,8 +871,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 2
-        P = 25.0 # MPa
-        T = 700  # K
+        P = 25.0  # MPa
+        T = 700   # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -880,8 +880,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 10.0 # MPa
-        T = 700  # K
+        P = 10.0  # MPa
+        T = 700   # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -917,8 +917,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 3
-        P = 50.0 # MPa
-        T = 700  # K
+        P = 50.0  # MPa
+        T = 700   # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -926,8 +926,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 20.0 # MPa
-        s = 4  # kJ/kgK
+        P = 20.0  # MPa
+        s = 4     # kJ/kgK
         f_ps = IAPWS97(P=P, s=s)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
         f_pt = IAPWS97(P=f_ph.P, T=f_ph.T)
@@ -935,35 +935,35 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.s-s, 6), 0)
 
-        P = 19.0 # MPa
+        P = 19.0  # MPa
         f_px = IAPWS97(P=P, x=0)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 3), 0)
         self.assertEqual(round(f_tx.x, 6), 0)
-        P = 19.0 # MPa
+        P = 19.0  # MPa
         f_px = IAPWS97(P=P, x=1)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 3), 0)
         self.assertEqual(round(f_tx.x, 6), 1)
 
-        P = 21.0 # MPa
+        P = 21.0  # MPa
         f_px = IAPWS97(P=P, x=1)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 2), 0)
         self.assertEqual(round(f_tx.x, 3), 1)
 
-        P = 21.5   # MPa
+        P = 21.5  # MPa
         f_px = IAPWS97(P=P, x=0)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 2), 0)
         self.assertEqual(round(f_tx.x, 3), 0)
-        P = 21.5   # MPa
+        P = 21.5  # MPa
         f_px = IAPWS97(P=P, x=1)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 2), 0)
         self.assertEqual(round(f_tx.x, 3), 1)
 
-        P = 22.02   # MPa
+        P = 22.02  # MPa
         f_px = IAPWS97(P=P, x=0)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 2), 0)
@@ -1139,8 +1139,8 @@ class Test(unittest.TestCase):
 
     def test_IAPWS95_custom1(self) -> None:
         """Cycle input parameter from selected point for IAPWS95"""
-        P = 50.0 # MPa
-        T = 470  # K
+        P = 50.0  # MPa
+        T = 470   # K
         f_pt = IAPWS95_PT(P, T)
         f_ph = IAPWS95_Ph(f_pt.P, f_pt.h)
         f_ps = IAPWS95_Ps(f_ph.P, f_ph.s)
@@ -1150,7 +1150,7 @@ class Test(unittest.TestCase):
 
     def test_IAPWS95_custom2(self) -> None:
         """Cycle input parameter from selected point for IAPWS95"""
-        P = 2.0 # MPa
+        P = 2.0  # MPa
         f_px = IAPWS95_Px(P, 0.5)
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
         f_tv = IAPWS95(T=f_px.T, v=f_px.v)
@@ -1170,8 +1170,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.x-0.5, 5), 0)
 
-        P = 50.0 # MPa
-        T = 770  # K
+        P = 50.0  # MPa
+        T = 770   # K
         f_pt = IAPWS95_PT(P, T)
         f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
         f_th = IAPWS95(T=f_tv.T, h=f_tv.h)
@@ -1190,7 +1190,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.T-T, 5), 0)
 
-        P = 0.1   # MPa
+        P = 0.1  # MPa
         T = 300  # K
         f_pt = IAPWS95_PT(P, T)
         f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
@@ -1210,7 +1210,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.T-T, 5), 0)
 
-        P = 0.1   # MPa
+        P = 0.1  # MPa
         T = 500  # K
         f_pt = IAPWS95_PT(P, T)
         f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
@@ -1228,7 +1228,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.T-T, 5), 0)
 
-        P = 2.0 # MPa
+        P = 2.0  # MPa
         f_px = IAPWS95_Px(P, 0)
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
         self.assertEqual(round(f_tx.P-P, 5), 0)
@@ -1236,7 +1236,7 @@ class Test(unittest.TestCase):
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
         self.assertEqual(round(f_tx.P-P, 5), 0)
 
-        P = 0.1   # MPa
+        P = 0.1  # MPa
         T = 300  # K
         d2o_pt = D2O(P=P, T=T)
         self.assertEqual(round(d2o_pt.P-P, 5), 0)
