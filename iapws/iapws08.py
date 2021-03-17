@@ -21,7 +21,7 @@ Other functionality:
 from __future__ import division
 from math import exp, log
 import warnings
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 from scipy.optimize import fsolve
 
