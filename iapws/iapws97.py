@@ -4384,6 +4384,7 @@ class IAPWS97(_fase):
                     vo = _Backward3_v_PT(P, T)
 
                     def rho_funcion(rho: float) -> float:
+                        assert(self.kwargs["T"] is not None)
                         return _Region3(rho, self.kwargs["T"])["P"]-P
                     rho = float(newton(rho_funcion, 1/vo))
                 propiedades = _Region3(rho, T)
@@ -4730,10 +4731,11 @@ class IAPWS97(_fase):
         except NotImplementedError:
             fase.epsilon = None
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
-        try:
-            fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
-        except NotImplementedError:
-            fase.n = None
+        if self.kwargs["l"] is not None:
+            try:
+                fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+            except NotImplementedError:
+                fase.n = None
 
     def derivative(self, z: str, x: str, y: str, fase: _fase) -> float:
         """
