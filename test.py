@@ -852,7 +852,7 @@ class Test(unittest.TestCase):
     def test_IAPWS97_custom(self) -> None:
         """Cycle input parameter from selected point for IAPWS97"""
         # Region 1
-        P = 50   # MPa
+        P = 50.0 # MPa
         T = 470  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -861,7 +861,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 20   # MPa
+        P = 20.0 # MPa
         T = 370  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -871,7 +871,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 2
-        P = 25   # MPa
+        P = 25.0 # MPa
         T = 700  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -880,7 +880,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 10   # MPa
+        P = 10.0 # MPa
         T = 700  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -898,7 +898,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 0.01   # MPa
+        P = 0.01  # MPa
         T = 1000  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -907,7 +907,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 2   # MPa
+        P = 2.0   # MPa
         T = 1000  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -917,7 +917,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 3
-        P = 50   # MPa
+        P = 50.0 # MPa
         T = 700  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -926,7 +926,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 20   # MPa
+        P = 20.0 # MPa
         s = 4  # kJ/kgK
         f_ps = IAPWS97(P=P, s=s)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -935,18 +935,18 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.s-s, 6), 0)
 
-        P = 19   # MPa
+        P = 19.0 # MPa
         f_px = IAPWS97(P=P, x=0)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 3), 0)
         self.assertEqual(round(f_tx.x, 6), 0)
-        P = 19   # MPa
+        P = 19.0 # MPa
         f_px = IAPWS97(P=P, x=1)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 3), 0)
         self.assertEqual(round(f_tx.x, 6), 1)
 
-        P = 21   # MPa
+        P = 21.0 # MPa
         f_px = IAPWS97(P=P, x=1)
         f_tx = IAPWS97(T=f_px.T, x=f_px.x)
         self.assertEqual(round(f_tx.P-P, 2), 0)
@@ -974,7 +974,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_tx.P-P, 2), 0)
         self.assertEqual(round(f_tx.x, 3), 1)
 
-        P = 24.   # MPa
+        P = 24.0  # MPa
         T = 630   # K
         f_pt = IAPWS97(P=P, T=T)
         f_hs = IAPWS97(h=f_pt.h, s=f_pt.s)
@@ -1041,7 +1041,7 @@ class Test(unittest.TestCase):
         f_hs = IAPWS97(h=f_px.h, s=f_px.s)
         self.assertEqual(round(f_hs.T-T, 0), 0)
 
-        P = 17  # MPa
+        P = 17.0  # MPa
         h = 2000  # kJkg
         f_ph = IAPWS97(P=P, h=h)
         f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
@@ -1061,7 +1061,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # Region 5
-        P = 25   # MPa
+        P = 25.0  # MPa
         T = 1100  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -1070,7 +1070,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 10   # MPa
+        P = 10.0  # MPa
         T = 1100  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -1079,7 +1079,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 6), 0)
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
-        P = 20   # MPa
+        P = 20.0  # MPa
         T = 1100  # K
         f_pt = IAPWS97(P=P, T=T)
         f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
@@ -1089,12 +1089,14 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.T-T, 6), 0)
 
         # P-T subregion 3
-        P = [17, 21, 21, 21, 21, 22, 23.2, 23.2, 23.2, 23.2, 23.2, 23.2, 23.2,
-             23, 23, 22.2, 22.065, 22.065, 22.065, 22.065, 21.8, 22]
-        T = [625, 625, 640, 643, 645, 630, 640, 650, 651, 652, 653, 656, 660,
-             640, 652, 647, 646, 647.05, 647.1, 647.2, 647, 647]
-        for p, t in zip(P, T):
-            f_pt = IAPWS97(P=p, T=t)
+        Plist = [17.0, 21.0, 21.0, 21.0, 21.0, 22.0, 23.2, 23.2, 23.2, 23.2,
+                 23.2, 23.2, 23.2, 23.0, 23.0, 22.2, 22.065, 22.065, 22.065,
+                 22.065, 21.8, 22.0]
+        Tlist = [625.0, 625.0, 640.0, 643.0, 645.0, 630.0, 640.0, 650.0, 651.0,
+                 652.0, 653.0, 656.0, 660.0, 640.0, 652.0, 647.0, 646.0, 647.05,
+                 647.1, 647.2, 647.0, 647.0]
+        for p, t in zip(Plist, Tlist):
+            f_pt = IAPWS97(P=float(p), T=t)
             f_ph = IAPWS97(h=f_pt.h, P=f_pt.P)
             f_ps = IAPWS97(P=f_ph.P, s=f_ph.s)
             f_hs = IAPWS97(h=f_ps.h, s=f_ps.s)
@@ -1102,9 +1104,9 @@ class Test(unittest.TestCase):
             self.assertEqual(round(f_hs.T-t, 6), 0)
 
         # Other h-s region
-        h = [2700, 2700, 1500, 2500, 2000, 2000, 3000, 2400, 2500, 2850, 2600]
-        s = [5.15, 5.87, 3.5, 5, 5.5, 7, 6, 5.1, 5.05, 5.25, 5.25]
-        for H, S in zip(h, s):
+        hlist = [2700, 2700, 1500, 2500, 2000, 2000, 3000, 2400, 2500, 2850, 2600]
+        slist = [5.15, 5.87, 3.5, 5, 5.5, 7, 6, 5.1, 5.05, 5.25, 5.25]
+        for H, S in zip(hlist, slist):
             f_hs = IAPWS97(h=H, s=S)
             f_pt = IAPWS97(P=f_hs.P, T=f_hs.T)
             self.assertEqual(round(f_hs.h-H, 6), 0)
@@ -1137,7 +1139,7 @@ class Test(unittest.TestCase):
 
     def test_IAPWS95_custom(self) -> None:
         """Cycle input parameter from selected point for IAPWS95"""
-        P = 50   # MPa
+        P = 50.0 # MPa
         T = 470  # K
         f_pt = IAPWS95_PT(P, T)
         f_ph = IAPWS95_Ph(f_pt.P, f_pt.h)
@@ -1146,7 +1148,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 5), 0)
         self.assertEqual(round(f_hs.T-T, 5), 0)
 
-        P = 2   # MPa
+        P = 2.0 # MPa
         f_px = IAPWS95_Px(P, 0.5)
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
         f_tv = IAPWS95(T=f_px.T, v=f_px.v)
@@ -1166,7 +1168,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.x-0.5, 5), 0)
 
-        P = 50   # MPa
+        P = 50.0 # MPa
         T = 770  # K
         f_pt = IAPWS95_PT(P, T)
         f_tv = IAPWS95(T=f_pt.T, v=f_pt.v)
@@ -1224,7 +1226,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_Prho.P-P, 5), 0)
         self.assertEqual(round(f_Prho.T-T, 5), 0)
 
-        P = 2   # MPa
+        P = 2.0 # MPa
         f_px = IAPWS95_Px(P, 0)
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
         self.assertEqual(round(f_tx.P-P, 5), 0)
@@ -2773,7 +2775,7 @@ class Test(unittest.TestCase):
 
         # Table 6
         x = 0.1
-        rhoM = 35
+        rhoM = 35.0
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 600, x)
@@ -2785,7 +2787,7 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st["w"], 6), 883.925596)
 
         x = 0.1
-        rhoM = 4
+        rhoM = 4.0
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 600, x)
@@ -2795,7 +2797,7 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st["w"], 6), 471.762394)
 
         x = 0.5
-        rhoM = 32
+        rhoM = 32.0
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 500, x)
@@ -2805,7 +2807,7 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st["w"], 6), 830.295833)
 
         x = 0.5
-        rhoM = 1
+        rhoM = 1.0
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 500, x)
@@ -2815,7 +2817,7 @@ class Test(unittest.TestCase):
         # self.assertEqual(round(st["w"], 6), 510.258362)
 
         x = 0.9
-        rhoM = 30
+        rhoM = 30.0
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 400, x)
