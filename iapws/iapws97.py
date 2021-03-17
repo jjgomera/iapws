@@ -3570,7 +3570,7 @@ def _Backward3x_v_PT(T: float, P: float, x: str) -> float:
 
 
 # Region 4
-def _Region4(P: float, x: float) -> Dict[str, Optional[float]]:
+def _Region4(P: float, x: float) -> Dict[str, float]:
     """Basic equation for region 4
 
     Parameters
@@ -3602,17 +3602,17 @@ def _Region4(P: float, x: float) -> Dict[str, Optional[float]]:
         P1 = _Region1(T, P)
         P2 = _Region2(T, P)
 
-    propiedades: Dict[str, Optional[float]] = {}
+    propiedades: Dict[str, float] = {}
     propiedades["T"] = T
     propiedades["P"] = P
     propiedades["v"] = P1["v"]+x*(P2["v"]-P1["v"])
     propiedades["h"] = P1["h"]+x*(P2["h"]-P1["h"])
     propiedades["s"] = P1["s"]+x*(P2["s"]-P1["s"])
-    propiedades["cp"] = None
-    propiedades["cv"] = None
-    propiedades["w"] = None
-    propiedades["alfav"] = None
-    propiedades["kt"] = None
+    #propiedades["cp"] = None
+    #propiedades["cv"] = None
+    #propiedades["w"] = None
+    #propiedades["alfav"] = None
+    #propiedades["kt"] = None
     propiedades["region"] = 4
     propiedades["x"] = x
     return propiedades
@@ -4331,6 +4331,18 @@ class IAPWS97(_fase):
     msg = "Unknown variables"
 
     def __init__(self, **kwargs):
+        self.v0: Optional[float] = None
+        self.h0: Optional[float] = None
+        self.u0: Optional[float] = None
+        self.s0: Optional[float] = None
+        self.a0: Optional[float] = None
+        self.g0: float = 0.0
+
+        self.cp0: Optional[float] = None
+        self.cv0: Optional[float] = None
+        self.cp0_cv: Optional[float] = None
+        self.w0: Optional[float] = None
+        self.gamma0: Optional[float] = None
         self.kwargs = IAPWS97.kwargs.copy()
         self.__call__(**kwargs)
 
@@ -4366,10 +4378,12 @@ class IAPWS97(_fase):
             self._thermo = "Px"
         return self._thermo
 
-    def calculo(self):
+    def calculo(self) -> None:
         """Calculate procedure"""
-        propiedades = None
-        args = (self.kwargs[self._thermo[0]], self.kwargs[self._thermo[1]])
+        propiedades: Dict[str, float] = {}
+        arg1: float = self.kwargs[self._thermo[0]]  # type: ignore
+        arg2: float = self.kwargs[self._thermo[1]]  # type: ignore
+        args = (arg1, arg2)
         if self._thermo == "TP":
             T, P = args
             region = _Bound_TP(T, P)
@@ -4577,7 +4591,7 @@ class IAPWS97(_fase):
             elif Ps_623 < P < Pc and x in (0, 1):
                 def rho_funcion(rho: float) -> float:
                     return _Region3(rho, T)["P"]-P
-                rhoo = 1./_Backward3_sat_v_P(P, T, x)
+                rhoo = 1./_Backward3_sat_v_P(P, T, int(x))
                 rho = float(fsolve(rho_funcion, rhoo)[0])
                 propiedades = _Region3(rho, T)
             elif P == Pc and 0 <= x <= 1:
@@ -4597,7 +4611,7 @@ class IAPWS97(_fase):
             elif 273.15 <= T <= 623.15 and x == 1:
                 propiedades = _Region2(T, P)
             elif 623.15 < T < Tc and x in (0, 1):
-                rho = 1./_Backward3_sat_v_P(P, T, x)
+                rho = 1./_Backward3_sat_v_P(P, T, int(x))
                 propiedades = _Region3(rho, T)
             elif T == Tc and 0 <= x <= 1:
                 propiedades = _Region3(rhoc, Tc)
@@ -4616,7 +4630,7 @@ class IAPWS97(_fase):
         self.dipole = Dipole
 
         self.x = propiedades["x"]
-        self.region = propiedades["region"]
+        self.region = int(propiedades["region"])
         self.name = "water"
         self.synonim = "R-718"
         self.CAS = "7732-18-5"
