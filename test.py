@@ -1577,6 +1577,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.rho, 5), 1028.10720)
         self.assertEqual(round(fluid.cp, 8), 3.98648579)
         self.assertEqual(round(fluid.w, 5), 1449.00246)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 8), -2.25047137)
 
         # Part b, pag 18
@@ -1616,6 +1617,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.rho, 5), 1029.85888)
         self.assertEqual(round(fluid.cp, 8), 3.74507355)
         self.assertEqual(round(fluid.w, 5), 3961.27835)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 7), -54.7200505)
 
         # Part c, pag 19
@@ -1655,6 +1657,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.rho, 5), 1070.92645)
         self.assertEqual(round(fluid.cp, 8), 3.77190387)
         self.assertEqual(round(fluid.w, 5), 1621.98998)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 7), 95.3214082)
 
         # Custom derivative implementation
@@ -1749,6 +1752,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.s, 12), -0.68447e-7)
         self.assertEqual(round(fluid.cp, 8), 0.398647132e1)
         self.assertEqual(round(fluid.w, 5), 0.144907123e4)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 8), -0.225045466e1)
 
         fluid = SeaWater(T=353, P=0.101325, S=0.1, IF97=True)
@@ -1786,6 +1790,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.s, 9), 0.917342513)
         self.assertEqual(round(fluid.cp, 8), 0.374382192e1)
         self.assertEqual(round(fluid.w, 5), 0.401505044e4)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 7), -0.547176899e2)
 
         # Part c, pag 19
@@ -1824,6 +1829,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.s, 10), -0.161227439e-1)
         self.assertEqual(round(fluid.cp, 8), 0.377237430e1)
         self.assertEqual(round(fluid.w, 5), 0.162218081e4)
+        assert(fluid.muw is not None)
         self.assertEqual(round(fluid.muw, 7), 0.953212423e2)
 
         # Table A2
@@ -1947,38 +1953,47 @@ class Test(unittest.TestCase):
         """Table 2, pag 5"""
         fluid = SeaWater(T=293.15, P=0.1, S=0.035)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.035), 9), -0.004186040)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.593825535)
 
         fluid = SeaWater(T=293.15, P=120, S=0.035)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=120, S=0.035), 9), -0.004317350)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.651692949)
 
         fluid = SeaWater(T=333.15, P=0.1, S=0.035)
         self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=0.1, S=0.035), 9), -0.004124057)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.646875533)
 
         fluid = SeaWater(T=333.15, P=120, S=0.035)
         self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=120, S=0.035), 9), -0.004264405)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.702484548)
 
         fluid = SeaWater(T=293.15, P=0.1, S=0.1)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.1), 9), -0.013819821)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.584191754)
 
         fluid = SeaWater(T=373.15, P=1, S=0.1)
         self.assertEqual(round(_ThCond_SeaWater(T=373.15, P=1, S=0.1), 9), -0.013094107)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.664627314)
 
         fluid = SeaWater(T=293.15, P=0.1, S=0.12)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=0.1, S=0.12), 9), -0.017005302)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.581006273)
 
         fluid = SeaWater(T=293.15, P=120, S=0.12)
         self.assertEqual(round(_ThCond_SeaWater(T=293.15, P=120, S=0.12), 9), -0.020194816)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.635815483)
 
         fluid = SeaWater(T=333.15, P=120, S=0.12)
         self.assertEqual(round(_ThCond_SeaWater(T=333.15, P=120, S=0.12), 9), -0.019722469)
+        assert(fluid.k is not None)
         self.assertEqual(round(fluid.k, 9), 0.687026483)
 
         fluid = SeaWater(T=270, P=1, S=0.12)
