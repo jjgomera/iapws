@@ -244,38 +244,38 @@ class Test(unittest.TestCase):
         self.assertEqual(round(_ThCond(0, 873.15)*1000, 7), 79.1034659)
 
         # Table 5, pag 10
-        fluid = IAPWS95(rho=1, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 7), 51.9298924)
-        fluid = IAPWS95(rho=122, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 130.922885)
-        fluid = IAPWS95(rho=222, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 367.787459)
-        fluid = IAPWS95(rho=272, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 757.959776)
-        fluid = IAPWS95(rho=322, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 5), 1443.75556)
-        fluid = IAPWS95(rho=372, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 650.319402)
-        fluid = IAPWS95(rho=422, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 448.883487)
-        fluid = IAPWS95(rho=750, T=647.35)
-        self.assertEqual(round(fluid.k*1000, 6), 600.961346)
+        fluid95 = IAPWS95(rho=1, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 7), 51.9298924)
+        fluid95 = IAPWS95(rho=122, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 130.922885)
+        fluid95 = IAPWS95(rho=222, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 367.787459)
+        fluid95 = IAPWS95(rho=272, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 757.959776)
+        fluid95 = IAPWS95(rho=322, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 5), 1443.75556)
+        fluid95 = IAPWS95(rho=372, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 650.319402)
+        fluid95 = IAPWS95(rho=422, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 448.883487)
+        fluid95 = IAPWS95(rho=750, T=647.35)
+        self.assertEqual(round(fluid95.k*1000, 6), 600.961346)
 
         # Industrial formulation, Table 7, 8, 9
-        fluid = IAPWS97(T=620, P=20)
-        self.assertEqual(round(fluid.k*1000, 6), 481.485195)
-        fluid = IAPWS97(T=620, P=50)
-        self.assertEqual(round(fluid.k*1000, 6), 545.038940)
-        fluid = IAPWS97(T=650, P=0.3)
-        self.assertEqual(round(fluid.k*1000, 7), 52.2311024)
-        fluid = IAPWS97(T=800, P=50)
-        self.assertEqual(round(fluid.k*1000, 6), 177.709914)
+        fluid97 = IAPWS97(T=620, P=20)
+        self.assertEqual(round(fluid97.k*1000, 6), 481.485195)
+        fluid97 = IAPWS97(T=620, P=50)
+        self.assertEqual(round(fluid97.k*1000, 6), 545.038940)
+        fluid97 = IAPWS97(T=650, P=0.3)
+        self.assertEqual(round(fluid97.k*1000, 7), 52.2311024)
+        fluid97 = IAPWS97(T=800, P=50)
+        self.assertEqual(round(fluid97.k*1000, 6), 177.709914)
         P = _Region3(T=647.35, rho=222)["P"]
-        fluid = IAPWS97(T=647.35, P=P)
-        self.assertEqual(round(fluid.k*1000, 6), 366.879411)
+        fluid97 = IAPWS97(T=647.35, P=P)
+        self.assertEqual(round(fluid97.k*1000, 6), 366.879411)
         P = _Region3(T=647.35, rho=322)["P"]
-        fluid = IAPWS97(T=647.35, P=P)
-        self.assertEqual(round(fluid.k*1000, 5), 1241.82415)
+        fluid97 = IAPWS97(T=647.35, P=P)
+        self.assertEqual(round(fluid97.k*1000, 5), 1241.82415)
 
     def test_Tension(self) -> None:
         """Selected values from table 1"""
@@ -1137,7 +1137,7 @@ class Test(unittest.TestCase):
         self.assertRaises(NotImplementedError, IAPWS97, **{"P": 65, "s": 9})
         self.assertRaises(NotImplementedError, IAPWS97, **{"h": 700, "s": -1})
 
-    def test_IAPWS95_custom(self) -> None:
+    def test_IAPWS95_custom1(self) -> None:
         """Cycle input parameter from selected point for IAPWS95"""
         P = 50.0 # MPa
         T = 470  # K
@@ -1148,6 +1148,8 @@ class Test(unittest.TestCase):
         self.assertEqual(round(f_hs.P-P, 5), 0)
         self.assertEqual(round(f_hs.T-T, 5), 0)
 
+    def test_IAPWS95_custom2(self) -> None:
+        """Cycle input parameter from selected point for IAPWS95"""
         P = 2.0 # MPa
         f_px = IAPWS95_Px(P, 0.5)
         f_tx = IAPWS95_Tx(f_px.T, f_px.x)
@@ -1236,9 +1238,9 @@ class Test(unittest.TestCase):
 
         P = 0.1   # MPa
         T = 300  # K
-        f_pt = D2O(P=P, T=T)
-        self.assertEqual(round(f_pt.P-P, 5), 0)
-        self.assertEqual(round(f_pt.T-T, 5), 0)
+        d2o_pt = D2O(P=P, T=T)
+        self.assertEqual(round(d2o_pt.P-P, 5), 0)
+        self.assertEqual(round(d2o_pt.T-T, 5), 0)
 
         self.assertRaises(NotImplementedError, IAPWS95, **{"T": 700, "x": 0})
         self.assertRaises(NotImplementedError, IAPWS95, **{"P": 25, "x": 1})
