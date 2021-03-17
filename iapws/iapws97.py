@@ -4687,7 +4687,7 @@ class IAPWS97(_fase):
             self.Hvap = vapor["h"]-liquido["h"]
             self.Svap = vapor["s"]-liquido["s"]
 
-    def fill(self, fase: _fase, estado: Dict[str, float]):
+    def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
         """Fill phase properties"""
         fase.v = estado["v"]
         fase.rho = 1/fase.v
