@@ -4221,7 +4221,7 @@ def prop0(T: float, P: float) -> Dict[str, float]:
     return prop0
 
 
-class IAPWS97(object):
+class IAPWS97(_fase):
     """Class to model a state of liquid water or steam with the IAPWS-IF97
 
     Parameters
