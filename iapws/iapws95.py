@@ -400,6 +400,7 @@ class MEoS(_fase):
     _rhoL_exp: List[float]
     # Defined in derived classes NH3 and Air.
     _surf: Dict[str, List[float]]
+    Fi0: Dict[str, List[float]]
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -2463,8 +2464,8 @@ class IAPWS95(MEoS):
     f_acent = 0.3443
     momentoDipolar = 1.855
 
-    Fi0 = {"ao_log": [1, 3.00632],
-           "pow": [0, 1],
+    Fi0 = {"ao_log": [1.0, 3.00632],
+           "pow": [0.0, 1.0],
            "ao_pow": [-8.3204464837497, 6.6832105275932],
            "ao_exp": [0.012436, 0.97315, 1.2795, 0.96956, 0.24873],
            "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796,
@@ -2810,11 +2811,11 @@ class D2O(MEoS):
     f_acent = 0.364
     momentoDipolar = 1.9
 
-    Fi0 = {"ao_log": [1, 3],
-           "pow": [0, 1],
+    Fi0 = {"ao_log": [1.0, 3.0],
+           "pow": [0.0, 1.0],
            "ao_pow": [-8.670994022646, 6.96033578458778],
            "ao_exp": [0.010633, 0.99787, 2.1483, 0.3549],
-           "titao": [308/Tc, 1695/Tc, 3949/Tc, 10317/Tc],
+           "titao": [308.0/Tc, 1695.0/Tc, 3949.0/Tc, 10317.0/Tc],
            "ao_hyp": [], "hyp": []}
 
     _constant_R = 8.3144598
