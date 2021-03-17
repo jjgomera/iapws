@@ -1625,19 +1625,19 @@ class MEoS(_fase):
         fase.nu = fase.mu/fase.rho
         fase.alfa = fase.k/1000/fase.rho/fase.cp
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
+        fase.epsilon = None
+        fase.n = None
         if self.name == "water":
             try:
                 fase.epsilon = _Dielectric(fase.rho, self.T)
             except NotImplementedError:
                 fase.epsilon = None
 
-            try:
-                fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
-            except NotImplementedError:
-                fase.n = None
-        else:
-            fase.epsilon = None
-            fase.n = None
+            if self.kwargs["l"] is not None:
+                try:
+                    fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+                except NotImplementedError:
+                    fase.n = None
 
     def derivative(self, z: str, x: str, y: str, fase: _fase) -> float:
         """
