@@ -173,6 +173,14 @@ class SeaWater(_fase):
 
     def __init__(self, **kwargs):
         """Constructor, initinialice kwargs"""
+        self.gs = float('nan')
+        self.gt = float('nan')
+        self.gp = float('nan')
+        self.gsp = float('nan')
+        self.gtt = float('nan')
+        self.gtp = float('nan')
+        self.gpp = float('nan')
+
         self.kwargs = SeaWater.kwargs.copy()
         self.__call__(**kwargs)
 
