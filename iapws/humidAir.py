@@ -500,7 +500,7 @@ class Air(MEoSBlend):
 
             ref = Air()
             st = ref._Helmholtz(rho, Tref)
-            drho = 1e3/self.R/Tref/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+            drho = 1e3/self.R/Tref/(1+2*delta*st.fird+delta**2*st.firdd)
 
             Xref = self.Pc*rho/rhoc**2*drho
 

@@ -269,6 +269,25 @@ def _phirt(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
     return firt
 
 
+class MEoSProperties(object):
+    """The properties required to fill a MEoS phase."""
+
+    def __init__(self, rho: float, P: float, h: float, s: float, cv:
+                 float, alfap: float, betap: float, fir: float, fird:
+                 float, firdd: float, delta: float) -> None:
+        self.rho = rho
+        self.P = P
+        self.h = h
+        self.s = s
+        self.cv = cv
+        self.alfap = alfap
+        self.betap = betap
+        self.fir = fir
+        self.fird = fird
+        self.firdd = firdd
+        self.delta = delta
+
+
 class MEoS(_fase):
     r"""
     General implementation of multiparameter equation of state. From this
@@ -571,8 +590,6 @@ class MEoS(_fase):
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
 
-        propiedades: Dict[str, float] = {}
-
         if self._mode not in ("Tx", "Px"):
             # Method with iteration necessary to get x
             if self._mode == "TP":
@@ -648,8 +665,8 @@ class MEoS(_fase):
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
                         liquido = self._Helmholtz(rhol, T)
-                        hv = vapor["h"]
-                        hl = liquido["h"]
+                        hv = vapor.h
+                        hl = liquido.h
                         x = (h-hl)/(hv-hl)
                         rho = 1/(x/rhov+(1-x)/rhol)
                         P = Ps/1000
@@ -697,8 +714,8 @@ class MEoS(_fase):
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
                         liquido = self._Helmholtz(rhol, T)
-                        sv = vapor["s"]
-                        sl = liquido["s"]
+                        sv = vapor.s
+                        sl = liquido.s
                         x = (s-sl)/(sv-sl)
                         rho = 1/(x/rhov+(1-x)/rhol)
                         P = Ps/1000
@@ -747,8 +764,8 @@ class MEoS(_fase):
                         rhol, rhov, Ps = self._saturation(T)
                         vapor = self._Helmholtz(rhov, T)
                         liquido = self._Helmholtz(rhol, T)
-                        uv = vapor["h"]-vapor["P"]/rhov
-                        ul = liquido["h"]-liquido["P"]/rhol
+                        uv = vapor.h-vapor.P/rhov
+                        ul = liquido.h-liquido.P/rhol
                         x = (u-ul)/(uv-ul)
                         rho = 1/(x/rhov-(1-x)/rhol)
                         P = Ps/1000
@@ -811,7 +828,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "Ph":
                 def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
@@ -874,7 +891,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "Ps":
                 try:
@@ -905,13 +922,13 @@ class MEoS(_fase):
                         vapor = self._Helmholtz(rhov, T)
                         liquido = self._Helmholtz(rhol, T)
                         x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return Ps-P*1000, vapor["s"]*x+liquido["s"]*(1-x)-s
+                        return Ps-P*1000, vapor.s*x+liquido.s*(1-x)-s
                     rho, T = tuple(map(float, fsolve(f2, [2., 500.])))
                     rhol, rhov, Ps = self._saturation(T)
                     vapor = self._Helmholtz(rhov, T)
                     liquido = self._Helmholtz(rhol, T)
-                    sv = vapor["s"]
-                    sl = liquido["s"]
+                    sv = vapor.s
+                    sl = liquido.s
                     x = (s-sl)/(sv-sl)
 
             elif self._mode == "Pu":
@@ -979,7 +996,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhoh":
                 delta = rho/rhoc
@@ -1040,7 +1057,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhos":
                 delta = rho/rhoc
@@ -1103,7 +1120,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhou":
                 delta = rho/rhoc
@@ -1168,7 +1185,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "hs":
                 def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
@@ -1233,7 +1250,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "hu":
                 def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
@@ -1301,7 +1318,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "su":
                 def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
@@ -1375,7 +1392,7 @@ class MEoS(_fase):
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
                     P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+                        liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "Trho":
                 if T < self.Tc:
@@ -1399,7 +1416,7 @@ class MEoS(_fase):
                 x = 0
 
             if not P:
-                P = propiedades["P"]/1000.
+                P = propiedades.P/1000.
 
         elif self._mode == "Tx":
             # Check input T in saturation range
@@ -1502,8 +1519,8 @@ class MEoS(_fase):
         self.virialC = vir["C"]/self.rhoc**2
 
         if 0 < x < 1:
-            self.Hvap = vapor["h"]-liquido["h"]
-            self.Svap = vapor["s"]-liquido["s"]
+            self.Hvap = vapor.h-liquido.h
+            self.Svap = vapor.s-liquido.s
         else:
             self.Hvap = None
             self.Svap = None
@@ -1533,35 +1550,25 @@ class MEoS(_fase):
     def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         raise NotImplementedError
 
-    def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
+    def fill(self, fase: _fase, estado: MEoSProperties) -> None:
         """Fill phase properties"""
-        assert("rho" in estado and isinstance(estado["rho"], float))
-        assert("h" in estado and isinstance(estado["h"], float))
-        assert("s" in estado and isinstance(estado["s"], float))
-        assert("fir" in estado and isinstance(estado["fir"], float))
-        assert("fird" in estado and isinstance(estado["fird"], float))
-        assert("delta" in estado and isinstance(estado["delta"], float))
-        assert("cv" in estado and isinstance(estado["cv"], float))
-        assert("alfap" in estado and isinstance(estado["alfap"], float))
-        assert("betap" in estado and isinstance(estado["betap"], float))
-
-        fase.rho = estado["rho"]
+        fase.rho = estado.rho
         fase.v = 1/fase.rho
 
         assert(isinstance(self.M, float))
         assert(isinstance(self.R, float))
 
-        fase.h = estado["h"]
-        fase.s = estado["s"]
+        fase.h = estado.h
+        fase.s = estado.s
         fase.u = fase.h-self.P*1000*fase.v
         fase.a = fase.u-self.T*fase.s
         fase.g = fase.h-self.T*fase.s
 
         fase.Z = self.P*fase.v/self.T/self.R*1e3
-        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"]
-                      - log(1+estado["delta"]*estado["fird"]))
+        fase.fi = exp(estado.fir+estado.delta*estado.fird
+                      - log(1+estado.delta*estado.fird))
         fase.f = fase.fi*self.P
-        fase.cv = estado["cv"]
+        fase.cv = estado.cv
 
         fase.rhoM = fase.rho/self.M
         fase.hM = fase.h*self.M
@@ -1570,8 +1577,8 @@ class MEoS(_fase):
         fase.aM = fase.a*self.M
         fase.gM = fase.g*self.M
 
-        fase.alfap = estado["alfap"]
-        fase.betap = estado["betap"]
+        fase.alfap = estado.alfap
+        fase.betap = estado.betap
 
         fase.cp = self.derivative("h", "T", "P", fase)
         fase.cp_cv = fase.cp/fase.cv
@@ -1669,7 +1676,7 @@ class MEoS(_fase):
             Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
-    def _Helmholtz(self, rho: float, T: float) -> Dict[str, float]:
+    def _Helmholtz(self, rho: float, T: float) -> MEoSProperties:
         """Calculated properties from helmholtz free energy and derivatives
 
         Parameters
@@ -1713,21 +1720,14 @@ class MEoS(_fase):
 
         res = self._phir(tau, delta)
 
-        propiedades = {}
-        propiedades["fir"] = res.fi
-        propiedades["fird"] = res.fid
-        propiedades["firdd"] = res.fidd
-        propiedades["delta"] = delta
-
-        propiedades["rho"] = rho
-        propiedades["P"] = (1+delta*res.fid)*self.R*T*rho
-        propiedades["h"] = self.R*T*(1+tau*(ideal.fit+res.fit)+delta*res.fid)
-        propiedades["s"] = self.R*(tau*(ideal.fit+res.fit)-ideal.fi-res.fi)
-        propiedades["cv"] = -self.R*tau**2*(ideal.fitt+res.fitt)
-        propiedades["alfap"] = (1-delta*tau*res.fidt/(1+delta*res.fid))/T
-        propiedades["betap"] = rho*(
-            1+(delta*res.fid+delta**2*res.fidd)/(1+delta*res.fid))
-        return propiedades
+        P = (1+delta*res.fid)*self.R*T*rho
+        h = self.R*T*(1+tau*(ideal.fit+res.fit)+delta*res.fid)
+        s = self.R*(tau*(ideal.fit+res.fit)-ideal.fi-res.fi)
+        cv = -self.R*tau**2*(ideal.fitt+res.fitt)
+        alfap = (1-delta*tau*res.fidt/(1+delta*res.fid))/T
+        betap = rho*(1+(delta*res.fid+delta**2*res.fidd)/(1+delta*res.fid))
+        return MEoSProperties(rho, P, h, s, cv, alfap, betap,
+                              res.fi, res.fid, res.fidd, delta)
 
     def _prop0(self, rho: float, T: float) -> _fase:
         """Ideal gas properties"""
@@ -2671,14 +2671,14 @@ class IAPWS95(MEoS):
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
-        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st.fird+delta**2*st.firdd)
         return _Viscosity(rho, T, fase, drho)
 
     def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
-        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st.fird+delta**2*st.firdd)
         return _ThCond(rho, T, fase, drho)
 
     def _surface(self, T: float) -> float:
