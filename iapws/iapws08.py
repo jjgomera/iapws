@@ -476,10 +476,10 @@ def _Tb(P: float, S: float) -> float:
     """
     def f(T: float) -> float:
         pw = _Region1(T, P)
-        gw = pw["h"]-T*pw["s"]
+        gw = pw.h-T*pw.s
 
         pv = _Region2(T, P)
-        gv = pv["h"]-T*pv["s"]
+        gv = pv.h-T*pv.s
 
         ps = SeaWater._saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gv
@@ -511,7 +511,7 @@ def _Tf(P: float, S: float) -> float:
     def f(T: float) -> float:
         T = float(T)
         pw = _Region1(T, P)
-        gw = pw["h"]-T*pw["s"]
+        gw = pw.h-T*pw.s
 
         gih = _Ice(T, P)["g"]
 
@@ -547,10 +547,10 @@ def _Triple(S: float) -> Dict[str, float]:
     def f(parr: Tuple[float, float]) -> Tuple[float, float]:
         T, P = parr
         pw = _Region1(T, P)
-        gw = pw["h"]-T*pw["s"]
+        gw = pw.h-T*pw.s
 
         pv = _Region2(T, P)
-        gv = pv["h"]-T*pv["s"]
+        gv = pv.h-T*pv.s
 
         gih = _Ice(T, P)["g"]
         ps = SeaWater._saline(T, P, S)
@@ -588,11 +588,11 @@ def _OsmoticPressure(T: float, P: float, S: float) -> float:
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 15
     """
     pw = _Region1(T, P)
-    gw = pw["h"]-T*pw["s"]
+    gw = pw.h-T*pw.s
 
     def f(Posm: float) -> float:
         pw2 = _Region1(T, P+Posm)
-        gw2 = pw2["h"]-T*pw2["s"]
+        gw2 = pw2.h-T*pw2.s
         ps = SeaWater._saline(T, P+Posm, S)
         return -ps["g"]+S*ps["gs"]-gw+gw2
 

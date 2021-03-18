@@ -401,8 +401,8 @@ def _PSat_h(h: float) -> float:
     20.18090839
     """
     # Check input parameters
-    hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
-    hmax_Ps3 = _Region2(623.15, Ps_623)["h"]
+    hmin_Ps3 = _Region1(623.15, Ps_623).h
+    hmax_Ps3 = _Region2(623.15, Ps_623).h
     if h < hmin_Ps3 or h > hmax_Ps3:
         raise NotImplementedError("Incoming out of bound")
 
@@ -455,8 +455,8 @@ def _PSat_s(s: float) -> float:
     16.68968482
     """
     # Check input parameters
-    smin_Ps3 = _Region1(623.15, Ps_623)["s"]
-    smax_Ps3 = _Region2(623.15, Ps_623)["s"]
+    smin_Ps3 = _Region1(623.15, Ps_623).s
+    smax_Ps3 = _Region2(623.15, Ps_623).s
     if s < smin_Ps3 or s > smax_Ps3:
         raise NotImplementedError("Incoming out of bound")
 
@@ -703,8 +703,28 @@ def _h2c3b_s(s: float) -> float:
     return 2800*suma**4
 
 
+class IAPWS97Properties(object):
+    """The properties required to fill the IAPWS97 phase."""
+
+    def __init__(self, T: float, P: float, v: float, h: float, s: float,
+                 cp: float, cv: float, w: float, alfav: float, kt: float,
+                 region: int, x: float) -> None:
+        self.T = T
+        self.P = P
+        self.v = v
+        self.h = h
+        self.s = s
+        self.cp = cp
+        self.cv = cv
+        self.w = w
+        self.alfav = alfav
+        self.kt = kt
+        self.region = region
+        self.x = x
+
+
 # Region 1
-def _Region1(T: float, P: float) -> Dict[str, float]:
+def _Region1(T: float, P: float) -> IAPWS97Properties:
     """Basic equation for region 1
 
     Parameters
@@ -736,23 +756,23 @@ def _Region1(T: float, P: float) -> Dict[str, float]:
 
     Examples
     --------
-    >>> _Region1(300,3)["v"]
+    >>> _Region1(300,3).v
     0.00100215168
-    >>> _Region1(300,3)["h"]
+    >>> _Region1(300,3).h
     115.331273
-    >>> _Region1(300,3)["h"]-3000*_Region1(300,3)["v"]
+    >>> _Region1(300,3).h-3000*_Region1(300,3).v
     112.324818
-    >>> _Region1(300,80)["s"]
+    >>> _Region1(300,80).s
     0.368563852
-    >>> _Region1(300,80)["cp"]
+    >>> _Region1(300,80).cp
     4.01008987
-    >>> _Region1(300,80)["cv"]
+    >>> _Region1(300,80).cv
     3.91736606
-    >>> _Region1(500,3)["w"]
+    >>> _Region1(500,3).w
     1240.71337
-    >>> _Region1(500,3)["alfav"]
+    >>> _Region1(500,3).alfav
     0.00164118128
-    >>> _Region1(500,3)["kt"]
+    >>> _Region1(500,3).kt
     0.00112892188
     """
     if P < 0:
@@ -787,20 +807,15 @@ def _Region1(T: float, P: float) -> Dict[str, float]:
 
     R = _global_R
 
-    propiedades = {}
-    propiedades["T"] = T
-    propiedades["P"] = P
-    propiedades["v"] = Pr*gp*R*T/P/1000
-    propiedades["h"] = Tr*gt*R*T
-    propiedades["s"] = R*(Tr*gt-g)
-    propiedades["cp"] = -R*Tr**2*gtt
-    propiedades["cv"] = R*(-Tr**2*gtt+(gp-Tr*gpt)**2/gpp)
-    propiedades["w"] = sqrt(R*T*1000*gp**2/((gp-Tr*gpt)**2/(Tr**2*gtt)-gpp))
-    propiedades["alfav"] = (1-Tr*gpt/gp)/T
-    propiedades["kt"] = -Pr*gpp/gp/P
-    propiedades["region"] = 1
-    propiedades["x"] = 0
-    return propiedades
+    v = Pr*gp*R*T/P/1000
+    h = Tr*gt*R*T
+    s = R*(Tr*gt-g)
+    cp = -R*Tr**2*gtt
+    cv = R*(-Tr**2*gtt+(gp-Tr*gpt)**2/gpp)
+    w = sqrt(R*T*1000*gp**2/((gp-Tr*gpt)**2/(Tr**2*gtt)-gpp))
+    alfav = (1-Tr*gpt/gp)/T
+    kt = -Pr*gpp/gp/P
+    return IAPWS97Properties(T, P, v, h, s, cp, cv, w, alfav, kt, 1, 0.0)
 
 
 def _Backward1_T_Ph(P: float, h: float) -> float:
@@ -946,7 +961,7 @@ def _Backward1_P_hs(h: float, s: float) -> float:
 
 
 # Region 2
-def _Region2(T: float, P: float) -> Dict[str, float]:
+def _Region2(T: float, P: float) -> IAPWS97Properties:
     """Basic equation for region 2
 
     Parameters
@@ -978,23 +993,23 @@ def _Region2(T: float, P: float) -> Dict[str, float]:
 
     Examples
     --------
-    >>> _Region2(700,30)["v"]
+    >>> _Region2(700,30).v
     0.00542946619
-    >>> _Region2(700,30)["h"]
+    >>> _Region2(700,30).h
     2631.49474
-    >>> _Region2(700,30)["h"]-30000*_Region2(700,30)["v"]
+    >>> _Region2(700,30).h-30000*_Region2(700,30).v
     2468.61076
-    >>> _Region2(700,0.0035)["s"]
+    >>> _Region2(700,0.0035).s
     10.1749996
-    >>> _Region2(700,0.0035)["cp"]
+    >>> _Region2(700,0.0035).cp
     2.08141274
-    >>> _Region2(700,0.0035)["cv"]
+    >>> _Region2(700,0.0035).cv
     1.61978333
-    >>> _Region2(300,0.0035)["w"]
+    >>> _Region2(300,0.0035).w
     427.920172
-    >>> _Region2(300,0.0035)["alfav"]
+    >>> _Region2(300,0.0035).alfav
     0.00337578289
-    >>> _Region2(300,0.0035)["kt"]
+    >>> _Region2(300,0.0035).kt
     286.239651
     """
     if P < 0:
@@ -1040,22 +1055,16 @@ def _Region2(T: float, P: float) -> Dict[str, float]:
 
     R = _global_R
 
-    propiedades = {}
-    propiedades["T"] = T
-    propiedades["P"] = P
-    propiedades["v"] = Pr*(gop+grp)*R*T/P/1000
-    propiedades["h"] = Tr*(got+grt)*R*T
-    propiedades["s"] = R*(Tr*(got+grt)-(go+gr))
-    propiedades["cp"] = -R*Tr**2*(gott+grtt)
-    propiedades["cv"] = R*(-Tr**2*(gott+grtt)-(1+Pr*grp-Tr*Pr*grpt)**2
-                           / (1-Pr**2*grpp))
-    propiedades["w"] = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
+    v = Pr*(gop+grp)*R*T/P/1000
+    h = Tr*(got+grt)*R*T
+    s = R*(Tr*(got+grt)-(go+gr))
+    cp = -R*Tr**2*(gott+grtt)
+    cv = R*(-Tr**2*(gott+grtt)-(1+Pr*grp-Tr*Pr*grpt)**2 / (1-Pr**2*grpp))
+    w = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
         1+Pr*grp-Tr*Pr*grpt)**2/Tr**2/(gott+grtt)))**0.5
-    propiedades["alfav"] = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
-    propiedades["kt"] = (1-Pr**2*grpp)/(1+Pr*grp)/P
-    propiedades["region"] = 2
-    propiedades["x"] = 1
-    return propiedades
+    alfav = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
+    kt = (1-Pr**2*grpp)/(1+Pr*grp)/P
+    return IAPWS97Properties(T, P, v, h, s, cp, cv, w, alfav, kt, 2, 1.0)
 
 
 def Region2_cp0(Tr: float, Pr: float) -> Tuple[float, float, float, float, float, float]:
@@ -1181,8 +1190,8 @@ def _hab_s(s: float) -> float:
     >>> _hab_s(7)
     3376.437884
     """
-    smin = _Region2(_TSat_P(4), 4)["s"]
-    smax = _Region2(1073.15, 4)["s"]
+    smin = _Region2(_TSat_P(4), 4).s
+    smax = _Region2(1073.15, 4).s
     if s < smin:
         h = 0.0
     elif s > smax:
@@ -1768,7 +1777,7 @@ def _Backward2_P_hs(h: float, s: float) -> float:
 
 
 # Region 3
-def _Region3(rho: float, T: float) -> Dict[str, float]:
+def _Region3(rho: float, T: float) -> IAPWS97Properties:
     """Basic equation for region 3
 
     Parameters
@@ -1800,24 +1809,24 @@ def _Region3(rho: float, T: float) -> Dict[str, float]:
 
     Examples
     --------
-    >>> _Region3(500,650)["P"]
+    >>> _Region3(500,650).P
     25.5837018
-    >>> _Region3(500,650)["h"]
+    >>> _Region3(500,650).h
     1863.43019
     >>> p = _Region3(500, 650)
-    >>> p["h"]-p["P"]*1000*p["v"]
+    >>> p.h-p.P*1000*p.v
     1812.26279
-    >>> _Region3(200,650)["s"]
+    >>> _Region3(200,650).s
     4.85438792
-    >>> _Region3(200,650)["cp"]
+    >>> _Region3(200,650).cp
     44.6579342
-    >>> _Region3(200,650)["cv"]
+    >>> _Region3(200,650).cv
     4.04118076
-    >>> _Region3(200,650)["w"]
+    >>> _Region3(200,650).w
     383.444594
-    >>> _Region3(500,750)["alfav"]
+    >>> _Region3(500,750).alfav
     0.00441515098
-    >>> _Region3(500,750)["kt"]
+    >>> _Region3(500,750).kt
     0.00806710817
     """
     I = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
@@ -1854,21 +1863,16 @@ def _Region3(rho: float, T: float) -> Dict[str, float]:
 
     R = _global_R
 
-    propiedades = {}
-    propiedades["T"] = T
-    propiedades["P"] = d*gd*R*T*rho/1000
-    propiedades["v"] = 1/rho
-    propiedades["h"] = R*T*(Tr*gt+d*gd)
-    propiedades["s"] = R*(Tr*gt-g)
-    propiedades["cp"] = R*(-Tr**2*gtt+(d*gd-d*Tr*gdt)**2/(2*d*gd+d**2*gdd))
-    propiedades["cv"] = -R*Tr**2*gtt
-    propiedades["w"] = sqrt(R*T*1000*(2*d*gd+d**2*gdd-(d*gd-d*Tr*gdt)**2
-                                      / Tr**2/gtt))
-    propiedades["alfav"] = (gd-Tr*gdt)/(2*gd+d*gdd)/T
-    propiedades["kt"] = 1/(2*d*gd+d**2*gdd)/rho/R/T*1000
-    propiedades["region"] = 3
-    propiedades["x"] = 1
-    return propiedades
+    P = d*gd*R*T*rho/1000
+    v = 1/rho
+    h = R*T*(Tr*gt+d*gd)
+    s = R*(Tr*gt-g)
+    cp = R*(-Tr**2*gtt+(d*gd-d*Tr*gdt)**2/(2*d*gd+d**2*gdd))
+    cv = -R*Tr**2*gtt
+    w = sqrt(R*T*1000*(2*d*gd+d**2*gdd-(d*gd-d*Tr*gdt)**2 / Tr**2/gtt))
+    alfav = (gd-Tr*gdt)/(2*gd+d*gdd)/T
+    kt = 1/(2*d*gd+d**2*gdd)/rho/R/T*1000
+    return IAPWS97Properties(T, P, v, h, s, cp, cv, w, alfav, kt, 3, 1.0)
 
 
 def _h_3ab(P: float) -> float:
@@ -3570,7 +3574,7 @@ def _Backward3x_v_PT(T: float, P: float, x: str) -> float:
 
 
 # Region 4
-def _Region4(P: float, x: float) -> Dict[str, float]:
+def _Region4(P: float, x: float) -> IAPWS97Properties:
     """Basic equation for region 4
 
     Parameters
@@ -3602,20 +3606,15 @@ def _Region4(P: float, x: float) -> Dict[str, float]:
         P1 = _Region1(T, P)
         P2 = _Region2(T, P)
 
-    propiedades: Dict[str, float] = {}
-    propiedades["T"] = T
-    propiedades["P"] = P
-    propiedades["v"] = P1["v"]+x*(P2["v"]-P1["v"])
-    propiedades["h"] = P1["h"]+x*(P2["h"]-P1["h"])
-    propiedades["s"] = P1["s"]+x*(P2["s"]-P1["s"])
-    #propiedades["cp"] = None
-    #propiedades["cv"] = None
-    #propiedades["w"] = None
-    #propiedades["alfav"] = None
-    #propiedades["kt"] = None
-    propiedades["region"] = 4
-    propiedades["x"] = x
-    return propiedades
+    v = P1.v+x*(P2.v-P1.v)
+    h = P1.h+x*(P2.h-P1.h)
+    s = P1.s+x*(P2.s-P1.s)
+    cp = float('nan')
+    cv = float('nan')
+    w = float('nan')
+    alfav = float('nan')
+    kt = float('nan')
+    return IAPWS97Properties(T, P, v, h, s, cp, cv, w, alfav, kt, 4, x)
 
 
 def _Backward4_T_hs(h: float, s: float) -> float:
@@ -3676,7 +3675,7 @@ def _Backward4_T_hs(h: float, s: float) -> float:
 
 
 # Region 5
-def _Region5(T: float, P: float) -> Dict[str, float]:
+def _Region5(T: float, P: float) -> IAPWS97Properties:
     """Basic equation for region 5
 
     Parameters
@@ -3708,23 +3707,23 @@ def _Region5(T: float, P: float) -> Dict[str, float]:
 
     Examples
     --------
-    >>> _Region5(1500,0.5)["v"]
+    >>> _Region5(1500,0.5).v
     1.38455090
-    >>> _Region5(1500,0.5)["h"]
+    >>> _Region5(1500,0.5).h
     5219.76855
-    >>> _Region5(1500,0.5)["h"]-500*_Region5(1500,0.5)["v"]
+    >>> _Region5(1500,0.5).h-500*_Region5(1500,0.5).v
     4527.49310
-    >>> _Region5(1500,30)["s"]
+    >>> _Region5(1500,30).s
     7.72970133
-    >>> _Region5(1500,30)["cp"]
+    >>> _Region5(1500,30).cp
     2.72724317
-    >>> _Region5(1500,30)["cv"]
+    >>> _Region5(1500,30).cv
     2.19274829
-    >>> _Region5(2000,30)["w"]
+    >>> _Region5(2000,30).w
     1067.36948
-    >>> _Region5(2000,30)["alfav"]
+    >>> _Region5(2000,30).alfav
     0.000508830641
-    >>> _Region5(2000,30)["kt"]
+    >>> _Region5(2000,30).kt
     0.0329193892
     """
     if P < 0:
@@ -3750,22 +3749,16 @@ def _Region5(T: float, P: float) -> Dict[str, float]:
 
     R = _global_R
 
-    propiedades = {}
-    propiedades["T"] = T
-    propiedades["P"] = P
-    propiedades["v"] = Pr*(gop+grp)*R*T/P/1000
-    propiedades["h"] = Tr*(got+grt)*R*T
-    propiedades["s"] = R*(Tr*(got+grt)-(go+gr))
-    propiedades["cp"] = -R*Tr**2*(gott+grtt)
-    propiedades["cv"] = R*(-Tr**2*(gott+grtt)+((gop+grp)-Tr*(gopt+grpt))**2
-                           / (gopp+grpp))
-    propiedades["w"] = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
+    v = Pr*(gop+grp)*R*T/P/1000
+    h = Tr*(got+grt)*R*T
+    s = R*(Tr*(got+grt)-(go+gr))
+    cp = -R*Tr**2*(gott+grtt)
+    cv = R*(-Tr**2*(gott+grtt)+((gop+grp)-Tr*(gopt+grpt))**2 / (gopp+grpp))
+    w = (R*T*1000*(1+2*Pr*grp+Pr**2*grp**2)/(1-Pr**2*grpp+(
         1+Pr*grp-Tr*Pr*grpt)**2/Tr**2/(gott+grtt)))**0.5
-    propiedades["alfav"] = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
-    propiedades["kt"] = (1-Pr**2*grpp)/(1+Pr*grp)/P
-    propiedades["region"] = 5
-    propiedades["x"] = 1
-    return propiedades
+    alfav = (1+Pr*grp-Tr*Pr*grpt)/(1+Pr*grp)/T
+    kt = (1-Pr**2*grpp)/(1+Pr*grp)/P
+    return IAPWS97Properties(T, P, v, h, s, cp, cv, w, alfav, kt, 5, 1)
 
 
 def Region5_cp0(Tr: float, Pr: float) -> Tuple[float, float, float, float, float, float]:
@@ -3876,11 +3869,11 @@ def _Bound_Ph(P: float, h: float) -> Optional[int]:
     """
     region = None
     if Pmin <= P <= Ps_623:
-        h14 = _Region1(_TSat_P(P), P)["h"]
-        h24 = _Region2(_TSat_P(P), P)["h"]
-        h25 = _Region2(1073.15, P)["h"]
-        hmin = _Region1(273.15, P)["h"]
-        hmax = _Region5(2273.15, P)["h"]
+        h14 = _Region1(_TSat_P(P), P).h
+        h24 = _Region2(_TSat_P(P), P).h
+        h25 = _Region2(1073.15, P).h
+        hmin = _Region1(273.15, P).h
+        hmax = _Region5(2273.15, P).h
         if hmin <= h <= h14:
             region = 1
         elif h14 < h < h24:
@@ -3890,11 +3883,11 @@ def _Bound_Ph(P: float, h: float) -> Optional[int]:
         elif h25 < h <= hmax:
             region = 5
     elif Ps_623 < P < Pc:
-        hmin = _Region1(273.15, P)["h"]
-        h13 = _Region1(623.15, P)["h"]
-        h32 = _Region2(_t_P(P), P)["h"]
-        h25 = _Region2(1073.15, P)["h"]
-        hmax = _Region5(2273.15, P)["h"]
+        hmin = _Region1(273.15, P).h
+        h13 = _Region1(623.15, P).h
+        h32 = _Region2(_t_P(P), P).h
+        h25 = _Region2(1073.15, P).h
+        hmax = _Region5(2273.15, P).h
         if hmin <= h <= h13:
             region = 1
         elif h13 < h < h32:
@@ -3911,11 +3904,11 @@ def _Bound_Ph(P: float, h: float) -> Optional[int]:
         elif h25 < h <= hmax:
             region = 5
     elif Pc <= P <= 100:
-        hmin = _Region1(273.15, P)["h"]
-        h13 = _Region1(623.15, P)["h"]
-        h32 = _Region2(_t_P(P), P)["h"]
-        h25 = _Region2(1073.15, P)["h"]
-        hmax = _Region5(2273.15, P)["h"]
+        hmin = _Region1(273.15, P).h
+        h13 = _Region1(623.15, P).h
+        h32 = _Region2(_t_P(P), P).h
+        h25 = _Region2(1073.15, P).h
+        hmax = _Region5(2273.15, P).h
         if hmin <= h <= h13:
             region = 1
         elif h13 < h < h32:
@@ -3950,11 +3943,11 @@ def _Bound_Ps(P: float, s: float) -> Optional[int]:
     """
     region = None
     if Pmin <= P <= Ps_623:
-        smin = _Region1(273.15, P)["s"]
-        s14 = _Region1(_TSat_P(P), P)["s"]
-        s24 = _Region2(_TSat_P(P), P)["s"]
-        s25 = _Region2(1073.15, P)["s"]
-        smax = _Region5(2273.15, P)["s"]
+        smin = _Region1(273.15, P).s
+        s14 = _Region1(_TSat_P(P), P).s
+        s24 = _Region2(_TSat_P(P), P).s
+        s25 = _Region2(1073.15, P).s
+        smax = _Region5(2273.15, P).s
         if smin <= s <= s14:
             region = 1
         elif s14 < s < s24:
@@ -3964,11 +3957,11 @@ def _Bound_Ps(P: float, s: float) -> Optional[int]:
         elif s25 < s <= smax:
             region = 5
     elif Ps_623 < P < Pc:
-        smin = _Region1(273.15, P)["s"]
-        s13 = _Region1(623.15, P)["s"]
-        s32 = _Region2(_t_P(P), P)["s"]
-        s25 = _Region2(1073.15, P)["s"]
-        smax = _Region5(2273.15, P)["s"]
+        smin = _Region1(273.15, P).s
+        s13 = _Region1(623.15, P).s
+        s32 = _Region2(_t_P(P), P).s
+        s25 = _Region2(1073.15, P).s
+        smax = _Region5(2273.15, P).s
         if smin <= s <= s13:
             region = 1
         elif s13 < s < s32:
@@ -3985,11 +3978,11 @@ def _Bound_Ps(P: float, s: float) -> Optional[int]:
         elif s25 < s <= smax:
             region = 5
     elif Pc <= P <= 100:
-        smin = _Region1(273.15, P)["s"]
-        s13 = _Region1(623.15, P)["s"]
-        s32 = _Region2(_t_P(P), P)["s"]
-        s25 = _Region2(1073.15, P)["s"]
-        smax = _Region5(2273.15, P)["s"]
+        smin = _Region1(273.15, P).s
+        s13 = _Region1(623.15, P).s
+        s32 = _Region2(_t_P(P), P).s
+        s25 = _Region2(1073.15, P).s
+        smax = _Region5(2273.15, P).s
         if smin <= s <= s13:
             region = 1
         elif s13 < s < s32:
@@ -4023,33 +4016,33 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
     2008; doi: 10.1007/978-3-540-74234-0. Fig. 2.14
     """
     region = None
-    s13 = _Region1(623.15, 100)["s"]
-    s13s = _Region1(623.15, Ps_623)["s"]
-    sTPmax = _Region2(1073.15, 100)["s"]
-    s2ab = _Region2(1073.15, 4)["s"]
+    s13 = _Region1(623.15, 100).s
+    s13s = _Region1(623.15, Ps_623).s
+    sTPmax = _Region2(1073.15, 100).s
+    s2ab = _Region2(1073.15, 4).s
 
     # Left point in h-s plot
-    smin = _Region1(273.15, 100)["s"]
-    hmin = _Region1(273.15, Pmin)["h"]
+    smin = _Region1(273.15, 100).s
+    hmin = _Region1(273.15, Pmin).h
 
     # Right point in h-s plot
     _Pmax = _Region2(1073.15, Pmin)
-    hmax = _Pmax["h"]
-    smax = _Pmax["s"]
+    hmax = _Pmax.h
+    smax = _Pmax.s
 
     # Region 4 left and right point
     _sL = _Region1(273.15, Pmin)
-    h4l = _sL["h"]
-    s4l = _sL["s"]
+    h4l = _sL.h
+    s4l = _sL.s
     _sV = _Region2(273.15, Pmin)
-    h4v = _sV["h"]
-    s4v = _sV["s"]
+    h4v = _sV.h
+    s4v = _sV.s
 
     if smin <= s <= s13:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h1_s(s)
         T = _Backward1_T_Ps(100, s)-0.0218
-        hmax = _Region1(T, 100)["h"]
+        hmax = _Region1(T, 100).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4061,7 +4054,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         h13 = _h13_s(s)
         v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
         T = _Backward3_T_Ps(100, s)-0.0248
-        hmax = _Region3(1/v, T)["h"]
+        hmax = _Region3(1/v, T).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h < h13:
@@ -4074,7 +4067,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hs = _h3a_s(s)
         v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
         T = _Backward3_T_Ps(100, s)-0.0248
-        hmax = _Region3(1/v, T)["h"]
+        hmax = _Region3(1/v, T).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4085,7 +4078,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hs = _h2c3b_s(s)
         v = _Backward3_v_Ps(100, s)*(1+9.6e-5)
         T = _Backward3_T_Ps(100, s)-0.0248
-        hmax = _Region3(1/v, T)["h"]
+        hmax = _Region3(1/v, T).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4095,10 +4088,10 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         # Specific zone with 2-3 boundary in s shape
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2c3b_s(s)
-        h23max = _Region2(863.15, 100)["h"]
-        h23min = _Region2(623.15, Ps_623)["h"]
+        h23max = _Region2(863.15, 100).h
+        h23min = _Region2(623.15, Ps_623).h
         T = _Backward2_T_Ps(100, s)-0.019
-        hmax = _Region2(T, 100)["h"]
+        hmax = _Region2(T, 100).h
 
         if hmin <= h < hs:
             region = 4
@@ -4116,7 +4109,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2c3b_s(s)
         T = _Backward2_T_Ps(100, s)-0.019
-        hmax = _Region2(T, 100)["h"]
+        hmax = _Region2(T, 100).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4126,7 +4119,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2ab_s(s)
         T = _Backward2_T_Ps(100, s)-0.019
-        hmax = _Region2(T, 100)["h"]
+        hmax = _Region2(T, 100).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4136,7 +4129,7 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2ab_s(s)
         P = _Backward2_P_hs(h, s)
-        hmax = _Region2(1073.15, P)["h"]
+        hmax = _Region2(1073.15, P).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
@@ -4146,26 +4139,26 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
         hmin = h4l+(s-s4l)/(s4v-s4l)*(h4v-h4l)
         hs = _h2ab_s(s)
         P = _Backward2_P_hs(h, s)
-        hmax = _Region2(1073.15, P)["h"]
+        hmax = _Region2(1073.15, P).h
         if hmin <= h < hs:
             region = 4
         elif hs <= h <= hmax:
             region = 2
 
     elif s4v <= s <= smax:
-        hmin = _Region2(273.15, Pmin)["h"]
+        hmin = _Region2(273.15, Pmin).h
         P = _Backward2a_P_hs(h, s)
-        hmax = _Region2(1073.15, P)["h"]
+        hmax = _Region2(1073.15, P).h
         if Pmin <= P <= 100 and hmin <= h <= hmax:
             region = 2
 
     # Check region 5
     if not region and \
-            _Region5(1073.15, 50)["s"] < s <= _Region5(2273.15, Pmin)["s"] \
-            and _Region5(1073.15, 50)["h"] < h <= _Region5(2273.15, Pmin)["h"]:
+            _Region5(1073.15, 50).s < s <= _Region5(2273.15, Pmin).s \
+            and _Region5(1073.15, 50).h < h <= _Region5(2273.15, Pmin).h:
         def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-            return (_Region5(par[0], par[1])["h"]-h,
-                    _Region5(par[0], par[1])["s"]-s)
+            return (_Region5(par[0], par[1]).h-h,
+                    _Region5(par[0], par[1]).s-s)
         T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
         if 1073.15 < T <= 2273.15 and Pmin <= P <= 50:
             region = 5
@@ -4381,7 +4374,6 @@ class IAPWS97(_fase):
 
     def calculo(self) -> None:
         """Calculate procedure"""
-        propiedades: Dict[str, float] = {}
         arg1: float = self.kwargs[self._thermo[0]]  # type: ignore
         arg2: float = self.kwargs[self._thermo[1]]  # type: ignore
         args = (arg1, arg2)
@@ -4400,7 +4392,7 @@ class IAPWS97(_fase):
 
                     def rho_funcion(rho: float) -> float:
                         assert(self.kwargs["T"] is not None)
-                        return _Region3(rho, self.kwargs["T"])["P"]-P
+                        return _Region3(rho, self.kwargs["T"]).P-P
                     rho = float(newton(rho_funcion, 1/vo))
                 propiedades = _Region3(rho, T)
             elif region == 5:
@@ -4413,26 +4405,26 @@ class IAPWS97(_fase):
             region = _Bound_Ph(P, h)
             if region == 1:
                 To = _Backward1_T_Ph(P, h)
-                T = float(newton(lambda T: _Region1(T, P)["h"]-h, To))
+                T = float(newton(lambda T: _Region1(T, P).h-h, To))
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ph(P, h)
-                T = float(newton(lambda T: _Region2(T, P)["h"]-h, To))
+                T = float(newton(lambda T: _Region2(T, P).h-h, To))
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ph(P, h)
                 To = _Backward3_T_Ph(P, h)
 
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1])["h"]-h,
-                            _Region3(par[0], par[1])["P"]-P)
+                    return (_Region3(par[0], par[1]).h-h,
+                            _Region3(par[0], par[1]).P-P)
                 rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _TSat_P(P)
                 if T <= 623.15:
-                    h1 = _Region1(T, P)["h"]
-                    h2 = _Region2(T, P)["h"]
+                    h1 = _Region1(T, P).h
+                    h2 = _Region2(T, P).h
                     x = (h-h1)/(h2-h1)
                     propiedades = _Region4(P, x)
                 else:
@@ -4440,12 +4432,12 @@ class IAPWS97(_fase):
                     To = _Backward3_T_Ph(P, h)
 
                     def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                        return (_Region3(par[0], par[1])["h"]-h,
-                                _Region3(par[0], par[1])["P"]-P)
+                        return (_Region3(par[0], par[1]).h-h,
+                                _Region3(par[0], par[1]).P-P)
                     rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                     propiedades = _Region3(rho, T)
             elif region == 5:
-                T = float(newton(lambda T: _Region5(T, P)["h"]-h, 1500))
+                T = float(newton(lambda T: _Region5(T, P).h-h, 1500))
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -4455,26 +4447,26 @@ class IAPWS97(_fase):
             region = _Bound_Ps(P, s)
             if region == 1:
                 To = _Backward1_T_Ps(P, s)
-                T = float(newton(lambda T: _Region1(T, P)["s"]-s, To))
+                T = float(newton(lambda T: _Region1(T, P).s-s, To))
                 propiedades = _Region1(T, P)
             elif region == 2:
                 To = _Backward2_T_Ps(P, s)
-                T = float(newton(lambda T: _Region2(T, P)["s"]-s, To))
+                T = float(newton(lambda T: _Region2(T, P).s-s, To))
                 propiedades = _Region2(T, P)
             elif region == 3:
                 vo = _Backward3_v_Ps(P, s)
                 To = _Backward3_T_Ps(P, s)
 
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1])["s"]-s,
-                            _Region3(par[0], par[1])["P"]-P)
+                    return (_Region3(par[0], par[1]).s-s,
+                            _Region3(par[0], par[1]).P-P)
                 rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
                 T = _TSat_P(P)
                 if T <= 623.15:
-                    s1 = _Region1(T, P)["s"]
-                    s2 = _Region2(T, P)["s"]
+                    s1 = _Region1(T, P).s
+                    s2 = _Region2(T, P).s
                     x = (s-s1)/(s2-s1)
                     propiedades = _Region4(P, x)
                 else:
@@ -4482,12 +4474,12 @@ class IAPWS97(_fase):
                     To = _Backward3_T_Ps(P, s)
 
                     def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                        return (_Region3(par[0], par[1])["s"]-s,
-                                _Region3(par[0], par[1])["P"]-P)
+                        return (_Region3(par[0], par[1]).s-s,
+                                _Region3(par[0], par[1]).P-P)
                     rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                     propiedades = _Region3(rho, T)
             elif region == 5:
-                T = float(newton(lambda T: _Region5(T, P)["s"]-s, 1500))
+                T = float(newton(lambda T: _Region5(T, P).s-s, 1500))
                 propiedades = _Region5(T, P)
             else:
                 raise NotImplementedError("Incoming out of bound")
@@ -4500,8 +4492,8 @@ class IAPWS97(_fase):
                 To = _Backward1_T_Ph(Po, h)
 
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region1(par[0], par[1])["h"]-h,
-                            _Region1(par[0], par[1])["s"]-s)
+                    return (_Region1(par[0], par[1]).h-h,
+                            _Region1(par[0], par[1]).s-s)
                 T, P = tuple(map(float, fsolve(funcion, [To, Po])))
                 propiedades = _Region1(T, P)
             elif region == 2:
@@ -4509,8 +4501,8 @@ class IAPWS97(_fase):
                 To = _Backward2_T_Ph(Po, h)
 
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region2(par[0], par[1])["h"]-h,
-                            _Region2(par[0], par[1])["s"]-s)
+                    return (_Region2(par[0], par[1]).h-h,
+                            _Region2(par[0], par[1]).s-s)
                 T, P = tuple(map(float, fsolve(funcion, [To, Po])))
                 propiedades = _Region2(T, P)
             elif region == 3:
@@ -4519,8 +4511,8 @@ class IAPWS97(_fase):
                 To = _Backward3_T_Ph(P, h)
 
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1])["h"]-h,
-                            _Region3(par[0], par[1])["s"]-s)
+                    return (_Region3(par[0], par[1]).h-h,
+                            _Region3(par[0], par[1]).s-s)
                 rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
                 propiedades = _Region3(rho, T)
             elif region == 4:
@@ -4558,10 +4550,10 @@ class IAPWS97(_fase):
                         Po = _PSat_T(pp0)
                         liquid = _Region1(pp0, Po)
                         vapor = _Region2(pp0, Po)
-                        hl = liquid["h"]
-                        sl = liquid["s"]
-                        hv = vapor["h"]
-                        sv = vapor["s"]
+                        hl = liquid.h
+                        sl = liquid.s
+                        hv = vapor.h
+                        sv = vapor.s
                         return (hv*pp1+hl*(1-pp1)-h,
                                 sv*pp1+sl*(1-pp1)-s)
                     T, x = tuple(map(float, fsolve(funcion2, [To, 0.5])))
@@ -4573,8 +4565,8 @@ class IAPWS97(_fase):
                         propiedades = _Region1(T, P)
             elif region == 5:
                 def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region5(par[0], par[1])["h"]-h,
-                            _Region5(par[0], par[1])["s"]-s)
+                    return (_Region5(par[0], par[1]).h-h,
+                            _Region5(par[0], par[1]).s-s)
                 T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
                 propiedades = _Region5(T, P)
             else:
@@ -4591,7 +4583,7 @@ class IAPWS97(_fase):
                 propiedades = _Region2(T, P)
             elif Ps_623 < P < Pc and x in (0, 1):
                 def rho_funcion(rho: float) -> float:
-                    return _Region3(rho, T)["P"]-P
+                    return _Region3(rho, T).P-P
                 rhoo = 1./_Backward3_sat_v_P(P, T, int(x))
                 rho = float(fsolve(rho_funcion, rhoo)[0])
                 propiedades = _Region3(rho, T)
@@ -4600,7 +4592,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
-            propiedades["x"] = x
+            propiedades.x = x
 
         elif self._thermo == "Tx":
             T, x = args
@@ -4619,7 +4611,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
             self.sigma = _Tension(T)
-            propiedades["x"] = x
+            propiedades.x = x
 
         self.M = 18.015257  # kg/kmol
         self.Pc = Pc
@@ -4630,15 +4622,15 @@ class IAPWS97(_fase):
         self.f_accent = f_acent
         self.dipole = Dipole
 
-        self.x = propiedades["x"]
-        self.region = int(propiedades["region"])
+        self.x = propiedades.x
+        self.region = propiedades.region
         self.name = "water"
         self.synonim = "R-718"
         self.CAS = "7732-18-5"
 
-        self.T = propiedades["T"]
-        self.P = propiedades["P"]
-        self.v = propiedades["v"]
+        self.T = propiedades.T
+        self.P = propiedades.P
+        self.v = propiedades.v
         self.rho = 1/self.v
         self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x,
                               self.region)
@@ -4692,35 +4684,35 @@ class IAPWS97(_fase):
             vapor = _Region2(self.T, self.P)
             self.fill(self.Vapor, vapor)
 
-            self.h = propiedades["h"]
+            self.h = propiedades.h
             self.u = self.h-self.P*1000*self.v
-            self.s = propiedades["s"]
+            self.s = propiedades.s
             self.a = self.u-self.T*self.s
             self.g = self.h-self.T*self.s
             self.sigma = _Tension(self.T)
 
-            self.Hvap = vapor["h"]-liquido["h"]
-            self.Svap = vapor["s"]-liquido["s"]
+            self.Hvap = vapor.h-liquido.h
+            self.Svap = vapor.s-liquido.s
 
-    def fill(self, fase: _fase, estado: Dict[str, float]) -> None:
+    def fill(self, fase: _fase, estado: IAPWS97Properties) -> None:
         """Fill phase properties"""
-        fase.v = estado["v"]
+        fase.v = estado.v
         fase.rho = 1/fase.v
 
-        fase.h = estado["h"]
-        fase.s = estado["s"]
+        fase.h = estado.h
+        fase.s = estado.s
         fase.u = fase.h-self.P*1000*fase.v
         fase.a = fase.u-self.T*fase.s
         fase.g = fase.h-self.T*fase.s
 
-        fase.cv = estado["cv"]
-        fase.cp = estado["cp"]
+        fase.cv = estado.cv
+        fase.cp = estado.cp
         fase.cp_cv = fase.cp/fase.cv
-        fase.w = estado["w"]
+        fase.w = estado.w
 
         fase.Z = self.P*fase.v/_global_R*1000/self.T
-        fase.alfav = estado["alfav"]
-        fase.xkappa = estado["kt"]
+        fase.alfav = estado.alfav
+        fase.xkappa = estado.kt
         fase.kappas = -1/fase.v*self.derivative("v", "P", "s", fase)
 
         fase.joule = self.derivative("T", "P", "h", fase)
