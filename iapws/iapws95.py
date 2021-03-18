@@ -427,9 +427,15 @@ class MEoS(_fase):
     Tt: float
     _constant_R: float
     _constants: Dict[str, List[float]]
+    M: float
+    # The name of the substance.
+    # Set in NH3, Air, IAPWS95, D2O, and IAPWS97.
+    name: str
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
+        super().__init__()
+
         # These class variables must be defined by the subclass.
         assert(isinstance(self._Pv_ao, list))
         assert(isinstance(self._Pv_exp, list))
@@ -2543,6 +2549,9 @@ class IAPWS95(MEoS):
     _rhoG_ao = [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
                 -63.9201063]
     _rhoG_exp = [1.0, 2.0, 4.0, 9.0, 18.5, 35.5]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
         """Low temperature extension of the IAPWS-95"""

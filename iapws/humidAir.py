@@ -230,6 +230,9 @@ class MEoSBlend(MEoS):
 
     _blend: Dict[str, Any]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     @classmethod
     def _dewP(cls, T: float) -> float:
         """Using ancillary equation return the pressure of dew point"""
@@ -338,6 +341,9 @@ class Air(MEoSBlend):
     _rhoG_eq = 3
     _rhoG_ao = [-0.20466e1, -0.4752e1, -0.13259e2, -0.47652e2]
     _rhoG_exp = [0.41, 1.0, 2.8, 6.5]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     @classmethod
     def _Liquid_Density(cls, T: float) -> float:
@@ -598,6 +604,7 @@ class HumidAir(_fase):
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
+        super().__init__()
         self.kwargs = HumidAir.kwargs.copy()
         self.__call__(**kwargs)
 

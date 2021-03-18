@@ -63,88 +63,91 @@ def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) ->
 
 
 class _fase(object):
-    """Class to implement a null phase"""
+    """
+    Class to implement a null phase.
 
-    # The name of the substance.
-    # Set in NH3, Air, IAPWS95, D2O, and IAPWS97.
-    name: str = "unknown"
+    IAPWS95 and IAPWS97 both implement Liquid and Gas/Vapor phasee in
+    addition to being phases themselves.  Confusingly minor
+    differences between derived classes impose different constraints
+    on this class.
+    """
 
-    # One always computed form the other
-    v: float = float('nan')
-    rho: float = float('nan')
+    def __init__(self) -> None:
+        # One always computed form the other
+        self.v = float('nan')
+        self.rho = float('nan')
 
-    h: float = float('nan')
-    s: float = float('nan')
+        self.h = float('nan')
+        self.s = float('nan')
 
-    cv: float = float('nan')
-    alfap: float = float('nan')
-    betap: float = float('nan')
-    cp: float = float('nan')
-    kappa: float = float('nan')
-    alfav: float = float('nan')
+        self.cv = float('nan')
+        self.alfap = float('nan')
+        self.betap = float('nan')
+        self.cp = float('nan')
+        self.kappa = float('nan')
+        self.alfav = float('nan')
 
-    g: float = float('nan')
-    fi: float = float('nan')
+        self.g = float('nan')
+        self.fi = float('nan')
 
-    w: float = float('nan')
-    Z: float = float('nan')
+        self.w = float('nan')
+        self.Z = float('nan')
 
-    drhodP_T: float = float('nan')
-    mu: float = float('nan')
-    cp_cv: float = float('nan')
-    k: float = float('nan')
+        self.drhodP_T = float('nan')
+        self.mu = float('nan')
+        self.cp_cv = float('nan')
+        self.k = float('nan')
 
-    epsilon: Optional[float] = None
-    n: Optional[float] = None
+        self.epsilon: Optional[float] = None
+        self.n: Optional[float] = None
 
-    # --------------------------------------------
-    # Calculated identically between 95 and 97
-    u: float = float('nan')
-    a: float = float('nan')
-    nu: float = float('nan')
-    Prandt: float = float('nan')
-    alfa: float = float('nan')
-    f: float = float('nan')
+        # --------------------------------------------
+        # Calculated identically between 95 and 97
+        self.u = float('nan')
+        self.a = float('nan')
+        self.nu = float('nan')
+        self.Prandt = float('nan')
+        self.alfa = float('nan')
+        self.f = float('nan')
 
-    # Calculated similarly, but not identically?
-    joule: float = float('nan')
-    gamma: float = float('nan')
-    deltat: float = float('nan')
+        # Calculated similarly, but not identically?
+        self.joule = float('nan')
+        self.gamma = float('nan')
+        self.deltat = float('nan')
 
-    # Calculated on 95 only from earlier variables and self.M
-    rhoM: float = float('nan')
-    M: float = float('nan')
-    hM: float = float('nan')
-    sM: float = float('nan')
-    uM: float = float('nan')
-    aM: float = float('nan')
-    gM: float = float('nan')
-    cvM: float = float('nan')
-    cpM: float = float('nan')
-    Z_rho: float = float('nan')
+        # Calculated on 95 only from earlier variables and self.M
+        self.rhoM = float('nan')
+        self.hM = float('nan')
+        self.sM = float('nan')
+        self.uM = float('nan')
+        self.aM = float('nan')
+        self.gM = float('nan')
+        self.cvM = float('nan')
+        self.cpM = float('nan')
+        self.Z_rho = float('nan')
 
-    # Derivatives calculated only in IAPWS95
-    dpdT_rho: float = float('nan')
-    dpdrho_T: float = float('nan')
-    drhodT_P: float = float('nan')
-    dhdT_rho: float = float('nan')
-    dhdT_P: float = float('nan')
-    dhdrho_T: float = float('nan')
-    dhdrho_P: float = float('nan')
-    dhdP_T: float = float('nan')
-    dhdP_rho: float = float('nan')
-    kt: float = float('nan')
-    ks: float = float('nan')
-    Ks: float = float('nan')
-    Kt: float = float('nan')
-    betas: float = float('nan')
-    Gruneisen: float = float('nan')
-    IntP: float = float('nan')
-    hInput: float = float('nan')
+        # Derivatives calculated only in IAPWS95
+        self.dpdT_rho = float('nan')
+        self.dpdrho_T = float('nan')
+        self.drhodT_P = float('nan')
+        self.dhdT_rho = float('nan')
+        self.dhdT_P = float('nan')
+        self.dhdrho_T = float('nan')
+        self.dhdrho_P = float('nan')
+        self.dhdP_T = float('nan')
+        self.dhdP_rho = float('nan')
+        self.kt = float('nan')
+        self.ks = float('nan')
+        self.Ks = float('nan')
+        self.Kt = float('nan')
+        self.betas = float('nan')
+        self.Gruneisen = float('nan')
+        self.IntP = float('nan')
+        self.hInput = float('nan')
 
-    # Properties added because various methods set/access them?
-    xkappa: float = float('nan')
-    kappas: float = float('nan')
+        # Properties added because various methods set/access them?
+        self.xkappa = float('nan')
+        self.kappas = float('nan')
 
 
 def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:

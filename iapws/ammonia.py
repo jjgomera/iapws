@@ -84,6 +84,9 @@ class NH3(MEoS):
     _rhoG_ao = [-.38435, -4.0846, -6.6634, -0.31881e2, 0.21306e3, -0.24648e3]
     _rhoG_exp = [0.218, 0.55, 1.5, 3.7, 5.5, 5.8]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     # fase is unused
     def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the Viscosity

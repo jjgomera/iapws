@@ -4331,6 +4331,7 @@ class IAPWS97(_fase):
     msg = "Unknown variables"
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.v0: Optional[float] = None
         self.h0: Optional[float] = None
         self.u0: Optional[float] = None
