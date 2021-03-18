@@ -903,29 +903,27 @@ class HumidAir(_fase):
 
         prop = {}
         # Eq T11
-        prop["fir"] = (1-A)*fv["fir"] + A*fa["fir"] + fmix["fir"]
+        prop["fir"] = (1-A)*fv.fi + A*fa.fi + fmix["fir"]
         # Eq T12
-        prop["fira"] = -fv["fir"]-rhov*fv["fird"]+fa["fir"] + \
-            rhoa*fa["fird"]+fmix["fira"]
+        prop["fira"] = -fv.fi-rhov*fv.fid+fa.fi + rhoa*fa.fid+fmix["fira"]
         # Eq T13
-        prop["firt"] = (1-A)*fv["firt"]+A*fa["firt"]+fmix["firt"]
+        prop["firt"] = (1-A)*fv.fit+A*fa.fit+fmix["firt"]
         # Eq T14
-        prop["fird"] = (1-A)**2*fv["fird"]+A**2*fa["fird"]+fmix["fird"]
+        prop["fird"] = (1-A)**2*fv.fid+A**2*fa.fid+fmix["fird"]
         # Eq T15
-        prop["firaa"] = rho*(2*fv["fird"]+rhov*fv["firdd"]
-                             + 2*fa["fird"]+rhoa*fa["firdd"])+fmix["firaa"]
+        prop["firaa"] = rho*(2*fv.fid+rhov*fv.fidd
+                             + 2*fa.fid+rhoa*fa.fidd)+fmix["firaa"]
         # Eq T16
-        prop["firat"] = -fv["firt"]-rhov*fv["firdt"]+fa["firt"] + \
-            rhoa*fa["firdt"]+fmix["firat"]
+        prop["firat"] = -fv.fit-rhov*fv.fidt+fa.fit + rhoa*fa.fidt+fmix["firat"]
         # Eq T17
-        prop["firad"] = -(1-A)*(2*fv["fird"]+rhov*fv["firdd"]) + \
-            A*(2*fa["fird"]+rhoa*fa["firdd"])+fmix["firad"]
+        prop["firad"] = -(1-A)*(2*fv.fid+rhov*fv.fidd) + \
+            A*(2*fa.fid+rhoa*fa.fidd)+fmix["firad"]
         # Eq T18
-        prop["firtt"] = (1-A)*fv["firtt"]+A*fa["firtt"]+fmix["firtt"]
+        prop["firtt"] = (1-A)*fv.fitt+A*fa.fitt+fmix["firtt"]
         # Eq T19
-        prop["firdt"] = (1-A)**2*fv["firdt"]+A**2*fa["firdt"]+fmix["firdt"]
+        prop["firdt"] = (1-A)**2*fv.fidt+A**2*fa.fidt+fmix["firdt"]
         # Eq T20
-        prop["firdd"] = (1-A)**3*fv["firdd"]+A**3*fa["firdd"]+fmix["firdd"]
+        prop["firdd"] = (1-A)**3*fv.fidd+A**3*fa.fidd+fmix["firdd"]
         return prop
 
     def _fmix(self, T: float, rho: float, A: float) -> Dict[str, float]:

@@ -449,13 +449,13 @@ class H2ONH3(object):
         prop = {}
         prop["tau"] = tau
         prop["delta"] = delta
-        prop["fir"] = (1-x)*phi1["fir"] + x*phi2["fir"] + Dphi["fir"]
-        prop["firt"] = (1-x)*phi1["firt"] + x*phi2["firt"] + Dphi["firt"]
-        prop["firtt"] = (1-x)*phi1["firtt"] + x*phi2["firtt"] + Dphi["firtt"]
-        prop["fird"] = (1-x)*phi1["fird"] + x*phi2["fird"] + Dphi["fird"]
-        prop["firdd"] = (1-x)*phi1["firdd"] + x*phi2["firdd"] + Dphi["firdd"]
-        prop["firdt"] = (1-x)*phi1["firdt"] + x*phi2["firdt"] + Dphi["firdt"]
-        prop["firx"] = -phi1["fir"] + phi2["fir"] + Dphi["firx"]
+        prop["fir"] = (1-x)*phi1.fi + x*phi2.fi + Dphi["fir"]
+        prop["firt"] = (1-x)*phi1.fit + x*phi2.fit + Dphi["firt"]
+        prop["firtt"] = (1-x)*phi1.fitt + x*phi2.fitt + Dphi["firtt"]
+        prop["fird"] = (1-x)*phi1.fid + x*phi2.fid + Dphi["fird"]
+        prop["firdd"] = (1-x)*phi1.fidd + x*phi2.fidd + Dphi["firdd"]
+        prop["firdt"] = (1-x)*phi1.fidt + x*phi2.fidt + Dphi["firdt"]
+        prop["firx"] = -phi1.fi + phi2.fi + Dphi["firx"]
         prop["F"] = prop["firx"] - delta/rhon*drhonx*prop["fird"] + \
             tau/Tn*dTnx*prop["firt"]
         return prop

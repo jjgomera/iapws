@@ -22,7 +22,7 @@ from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import _global_M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
-from ._utils import _fase, getphase, deriv_H
+from ._utils import _fase, getphase, deriv_H, HelmholtzDerivatives
 
 
 def _phir(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
@@ -619,7 +619,7 @@ class MEoS(_fase):
             elif self._mode == "Th":
                 tau = Tc/T
                 ideal = self._phi0(tau, 1)
-                fiot = ideal["fiot"]
+                fiot = ideal.fit
 
                 def rho_func(rho: float) -> float:
                     delta = rho/rhoc
@@ -669,11 +669,9 @@ class MEoS(_fase):
                     delta = rho/rhoc
 
                     ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
                     fir = _phir(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return so-s
 
                 if T >= self.Tc:
@@ -687,15 +685,13 @@ class MEoS(_fase):
 
                     idealL = self._phi0(tau, deltaL)
                     idealG = self._phi0(tau, deltaG)
-                    fioL = idealL["fio"]
-                    fioG = idealG["fio"]
-                    fiot = idealL["fiot"]
+
                     firL = _phir(tau, deltaL, self._constants)
                     firtL = _phirt(tau, deltaL, self._constants)
-                    sl = self.R*(tau*(fiot+firtL)-fioL-firL)
+                    sl = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
                     firG = _phir(tau, deltaG, self._constants)
                     firtG = _phirt(tau, deltaG, self._constants)
-                    sv = self.R*(tau*(fiot+firtG)-fioG-firG)
+                    sv = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                     if sl <= s <= sv:
                         rhol, rhov, Ps = self._saturation(T)
@@ -716,7 +712,6 @@ class MEoS(_fase):
             elif self._mode == "Tu":
                 tau = Tc/T
                 ideal = self._phi0(tau, 1)
-                fiot = ideal["fiot"]
 
                 def rho_func(rho: float) -> float:
                     delta = rho/rhoc
@@ -724,7 +719,7 @@ class MEoS(_fase):
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
 
                     return ho-Po/rho-u
 
@@ -743,8 +738,8 @@ class MEoS(_fase):
                     firtG = _phirt(tau, deltaG, self._constants)
                     PoL = (1+deltaL*firdL)*self.R*T*rhol
                     PoG = (1+deltaG*firdG)*self.R*T*rhov
-                    hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                    hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                    hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                    hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                     uv = hoG-PoG/rhov
                     ul = hoL-PoL/rhol
@@ -825,11 +820,10 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return Po-P*1000, ho-h
 
                 rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
@@ -845,16 +839,15 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -896,13 +889,11 @@ class MEoS(_fase):
                         tau = Tc/T
 
                         ideal = self._phi0(tau, delta)
-                        fio = ideal["fio"]
-                        fiot = ideal["fiot"]
                         fird = _phird(tau, delta, self._constants)
                         fir = _phir(tau, delta, self._constants)
                         firt = _phirt(tau, delta, self._constants)
                         Po = (1+delta*fird)*self.R*T*rho
-                        so = self.R*(tau*(fiot+firt)-fio-fir)
+                        so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                         return Po-P*1000, so-s
 
                     rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
@@ -930,11 +921,10 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-Po/rho-u, Po-P*1000
 
                 sol = fsolve(f2, [rhoo, To], full_output=True)
@@ -951,16 +941,15 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -999,10 +988,9 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-h
 
                 T = float(fsolve(t_func, To)[0])
@@ -1016,15 +1004,14 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1061,11 +1048,9 @@ class MEoS(_fase):
                 def t_func(T: float) -> float:
                     tau = Tc/T
                     ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
                     fir = _phir(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return so-s
 
                 T = float(fsolve(t_func, To)[0])
@@ -1080,19 +1065,16 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         idealL = self._phi0(tau, deltaL)
-                        fioL = idealL["fio"]
-                        fiot = idealL["fiot"]
                         idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+                        soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1130,11 +1112,10 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-Po/rho-u
 
                 T = float(fsolve(t_func, To)[0])
@@ -1148,15 +1129,14 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1197,13 +1177,11 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     fir = _phir(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+                    so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return ho-h, so-s
 
                 rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
@@ -1219,21 +1197,18 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         idealL = self._phi0(tau, deltaL)
-                        fiot = idealL["fiot"]
-                        fioL = idealL["fio"]
                         idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
+                        soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+                        hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
+                        soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1267,11 +1242,10 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
 
                     return ho-Po/rho-u, ho-h
 
@@ -1289,16 +1263,15 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+                        hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+                        hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1337,13 +1310,11 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
                     fird = _phird(tau, delta, self._constants)
                     fir = _phir(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
+                    ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+                    so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     Po = (1+delta*fird)*self.R*T*rho
                     return ho-Po/rho-u, so-s
 
@@ -1361,21 +1332,18 @@ class MEoS(_fase):
                         deltaG = rhog/self.rhoc
 
                         idealL = self._phi0(tau, deltaL)
-                        fiot = idealL["fiot"]
-                        fioL = idealL["fio"]
                         idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
                         firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
+                        hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
+                        soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
                         firG = _phir(tau, deltaG, self._constants)
                         firdG = _phird(tau, deltaG, self._constants)
                         firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
+                        hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
+                        soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -1742,32 +1710,23 @@ class MEoS(_fase):
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
 
         res = self._phir(tau, delta)
-        fir = res["fir"]
-        firt = res["firt"]
-        firtt = res["firtt"]
-        fird = res["fird"]
-        firdd = res["firdd"]
-        firdt = res["firdt"]
 
         propiedades = {}
-        propiedades["fir"] = fir
-        propiedades["fird"] = fird
-        propiedades["firdd"] = firdd
+        propiedades["fir"] = res.fi
+        propiedades["fird"] = res.fid
+        propiedades["firdd"] = res.fidd
         propiedades["delta"] = delta
 
         propiedades["rho"] = rho
-        propiedades["P"] = (1+delta*fird)*self.R*T*rho
-        propiedades["h"] = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-        propiedades["s"] = self.R*(tau*(fiot+firt)-fio-fir)
-        propiedades["cv"] = -self.R*tau**2*(fiott+firtt)
-        propiedades["alfap"] = (1-delta*tau*firdt/(1+delta*fird))/T
+        propiedades["P"] = (1+delta*res.fid)*self.R*T*rho
+        propiedades["h"] = self.R*T*(1+tau*(ideal.fit+res.fit)+delta*res.fid)
+        propiedades["s"] = self.R*(tau*(ideal.fit+res.fit)-ideal.fi-res.fi)
+        propiedades["cv"] = -self.R*tau**2*(ideal.fitt+res.fitt)
+        propiedades["alfap"] = (1-delta*tau*res.fidt/(1+delta*res.fid))/T
         propiedades["betap"] = rho*(
-            1+(delta*fird+delta**2*firdd)/(1+delta*fird))
+            1+(delta*res.fid+delta**2*res.fidd)/(1+delta*res.fid))
         return propiedades
 
     def _prop0(self, rho: float, T: float) -> _fase:
@@ -1777,20 +1736,17 @@ class MEoS(_fase):
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
 
         propiedades = _fase()
-        propiedades.h = self.R*T*(1+tau*fiot)
-        propiedades.s = self.R*(tau*fiot-fio)
-        propiedades.cv = -self.R*tau**2*fiott
-        propiedades.cp = self.R*(-tau**2*fiott+1)
+        propiedades.h = self.R*T*(1+tau*ideal.fit)
+        propiedades.s = self.R*(tau*ideal.fit-ideal.fi)
+        propiedades.cv = -self.R*tau**2*ideal.fitt
+        propiedades.cp = self.R*(-tau**2*ideal.fitt+1)
         propiedades.alfap = 1.0/T
         propiedades.betap = rho
         return propiedades
 
-    def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
+    def _phi0(self, tau: float, delta: float) -> HelmholtzDerivatives:
         """Ideal gas Helmholtz free energy and derivatives
 
         Parameters
@@ -1864,16 +1820,9 @@ class MEoS(_fase):
                 fiot += n*g/(C*exp(-g*tau)+1)
                 fiott += C*n*g**2*exp(-g*tau)/(C*exp(-g*tau)+1)**2
 
-        prop = {}
-        prop["fio"] = fio
-        prop["fiot"] = fiot
-        prop["fiott"] = fiott
-        prop["fiod"] = fiod
-        prop["fiodd"] = fiodd
-        prop["fiodt"] = fiodt
-        return prop
+        return HelmholtzDerivatives(fio, fiot, fiod, fiott, fiodd, fiodt)
 
-    def _phir(self, tau: float, delta: float) -> Dict[str, float]:
+    def _phir(self, tau: float, delta: float) -> HelmholtzDerivatives:
         """Residual contribution to the free Helmholtz energy
 
         Parameters
@@ -1885,8 +1834,8 @@ class MEoS(_fase):
 
         Returns
         -------
-        prop : dict
-          Dictionary with residual adimensional helmholtz energy and deriv:
+        HelmholtzDerivatives class, with residual adimensional helmholtz
+          energy and deriv:
             * fir
             * firt: ∂fir/∂τ|δ,x
             * fird: ∂fir/∂δ|τ,x
@@ -2009,14 +1958,7 @@ class MEoS(_fase):
             firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft
                         + DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
 
-        prop = {}
-        prop["fir"] = fir
-        prop["firt"] = firt
-        prop["firtt"] = firtt
-        prop["fird"] = fird
-        prop["firdd"] = firdd
-        prop["firdt"] = firdt
-        return prop
+        return HelmholtzDerivatives(fir, firt, fird, firtt, firdd, firdt)
 
     def _virial(self, T: float) -> Dict[str, float]:
         """Virial coefficient
@@ -2106,7 +2048,7 @@ class MEoS(_fase):
         prop["C"] = C
         return prop
 
-    def _derivDimensional(self, rho: float, T: float) -> Dict[str, float]:
+    def _derivDimensional(self, rho: float, T: float) -> HelmholtzDerivatives:
         """Calcule the dimensional form or Helmholtz free energy derivatives
 
         Parameters
@@ -2136,14 +2078,7 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/SeaAir.html
         """
         if not rho:
-            prop = {}
-            prop["fir"] = 0.0
-            prop["firt"] = 0.0
-            prop["fird"] = 0.0
-            prop["firtt"] = 0.0
-            prop["firdt"] = 0.0
-            prop["firdd"] = 0.0
-            return prop
+            return HelmholtzDerivatives(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         rhoc = self._constants.get("rhoref", [self.rhoc])[0]
         Tc = self._constants.get("Tref", [self.Tc])[0]
@@ -2151,30 +2086,18 @@ class MEoS(_fase):
         tau = Tc/T
 
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
-        fiod = ideal["fiod"]
-        fiodd = ideal["fiodd"]
 
         res = self._phir(tau, delta)
-        fir = res["fir"]
-        firt = res["firt"]
-        firtt = res["firtt"]
-        fird = res["fird"]
-        firdd = res["firdd"]
-        firdt = res["firdt"]
 
         R = self.R
 
-        prop = {}
-        prop["fir"] = R*T*(fio+fir)
-        prop["firt"] = R*(fio+fir-(fiot+firt)*tau)
-        prop["fird"] = R*T/rhoc*(fiod+fird)
-        prop["firtt"] = R*tau**2/T*(fiott+firtt)
-        prop["firdt"] = R/rhoc*(fiod+fird-firdt*tau)
-        prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
-        return prop
+        fir = R*T*(ideal.fi+res.fi)
+        firt = R*(ideal.fi+res.fi-(ideal.fit+res.fit)*tau)
+        fird = R*T/rhoc*(ideal.fid+res.fid)
+        firtt = R*tau**2/T*(ideal.fitt+res.fitt)
+        firdt = R/rhoc*(ideal.fid+res.fid-res.fidt*tau)
+        firdd = R*T/rhoc**2*(ideal.fidd+res.fidd)
+        return HelmholtzDerivatives(fir, firt, fird, firtt, firdd, firdt)
 
     def _surface(self, T: float) -> float:
         """Generic equation for the surface tension
@@ -2553,16 +2476,16 @@ class IAPWS95(MEoS):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _phi0(self, tau: float, delta: float) -> Dict[str, float]:
+    def _phi0(self, tau: float, delta: float) -> HelmholtzDerivatives:
         """Low temperature extension of the IAPWS-95"""
         prop = MEoS._phi0(self, tau, delta)
 
         T = self.Tc/tau
         if 50 <= T < 130:
             fex, fext, fextt = self._phiex(T)
-            prop["fio"] += fex
-            prop["fiot"] += fext
-            prop["fiott"] += fextt
+            prop.fi += fex
+            prop.fit += fext
+            prop.fitt += fextt
         return prop
 
     def _phiex(self, T: float) -> Tuple[float, float, float]:
