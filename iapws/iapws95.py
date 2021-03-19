@@ -587,8 +587,8 @@ class MEoS(_fase):
                     rhoo = 900
 
         self.R = self._constant_R/self.M
-        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
 
         if self._mode not in ("Tx", "Px"):
             # Method with iteration necessary to get x
@@ -1640,8 +1640,8 @@ class MEoS(_fase):
 
     def _saturation(self, T: float) -> Tuple[float, float, float]:
         """Saturation calculation for two phase search"""
-        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
 
         if T > Tc:
             T = Tc
@@ -1712,8 +1712,8 @@ class MEoS(_fase):
             rho = 1e-20
         if T < 50:
             T = 50
-        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
@@ -1731,8 +1731,9 @@ class MEoS(_fase):
 
     def _prop0(self, rho: float, T: float) -> _fase:
         """Ideal gas properties"""
-        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
+
         delta = rho/rhoc
         tau = Tc/T
         ideal = self._phi0(tau, delta)
@@ -1975,7 +1976,7 @@ class MEoS(_fase):
                 * B: ∂fir/∂δ|δ->0
                 * C: ∂²fir/∂δ²|δ->0
         """
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        Tc = self._constant_Tref
         tau = Tc/T
         B = C = 0.0
         delta = 1e-200
@@ -2080,8 +2081,8 @@ class MEoS(_fase):
         if not rho:
             return HelmholtzDerivatives(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-        rhoc = self._constants.get("rhoref", [self.rhoc])[0]
-        Tc = self._constants.get("Tref", [self.Tc])[0]
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
         delta = rho/rhoc
         tau = Tc/T
 
@@ -2411,6 +2412,8 @@ class IAPWS95(MEoS):
                      27.5075105]}
 
     _constant_R = 8.314371357587
+    _constant_rhoc = rhoc
+    _constant_Tref = Tc
     _constants = {
         "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
                 0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
@@ -2761,6 +2764,8 @@ class D2O(MEoS):
            "ao_hyp": [], "hyp": []}
 
     _constant_R = 8.3144598
+    _constant_rhoc = rhoc_D2O
+    _constant_Tref = Tc_D2O
     _constants = {
         "nr1": [0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
                 -0.922466250, -0.139604190e-1],

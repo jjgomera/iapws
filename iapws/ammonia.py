@@ -37,7 +37,7 @@ class NH3(MEoS):
     CASNumber = "7664-41-7"
     formula = "NH3"
     synonym = "R-717"
-    rhoc = 225.
+    rhoc = 225.0
     Tc = 405.40
     Pc = 11.333   # MPa
     M = 17.03026  # g/mol
@@ -53,6 +53,8 @@ class NH3(MEoS):
            "ao_hyp": [], "hyp": []}
 
     _constant_R = 8.314471
+    _constant_rhoc = 225.0
+    _constant_Tref = 405.40
     _constants = {
         "nr1": [-0.1858814e01, 0.4554431e-1, 0.7238548, 0.1229470e-1,
                 0.2141882e-10],
