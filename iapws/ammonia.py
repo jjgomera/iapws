@@ -172,7 +172,7 @@ class NH3(MEoS):
         # The paper use a diferent rhoc value to the EoS
         rhoc = 235
 
-        if rho == rhoc and T == self.Tc:
+        if rho == rhoc and T == self._constant_Tref:
             warnings.warn("Thermal conductiviy undefined in critical point")
             return float('nan')
 

@@ -420,6 +420,9 @@ class MEoS(_fase):
     # Defined in derived classes NH3 and Air.
     _surf: Dict[str, List[float]]
     Fi0: Dict[str, List[float]]
+    # Defined by derived classes
+    _constant_rhoc: float
+    _constant_Tref: float
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -471,7 +474,7 @@ class MEoS(_fase):
         self.Svap: Optional[float] = None
 
         self.R = self.__class__._constant_R/self.M
-        self.Zc = self.Pc/self.rhoc/self.R/self.Tc
+        self.Zc = self.Pc/self._constant_rhoc/self.R/self._constant_Tref
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
 
@@ -601,13 +604,13 @@ class MEoS(_fase):
                 except NotImplementedError:
                     if rho0:
                         rhoo = rho0
-                    elif T < self.Tc and P < self.Pc and \
+                    elif T < self._constant_Tref and P < self.Pc and \
                             self._Vapor_Pressure(T) < P:
                         rhoo = self._Liquid_Density(T)
-                    elif T < self.Tc and P < self.Pc:
+                    elif T < self._constant_Tref and P < self.Pc:
                         rhoo = self._Vapor_Density(T)
                     else:
-                        rhoo = self.rhoc*3
+                        rhoo = self._constant_rhoc*3
 
                 def rho_func(rho: float) -> float:
                     delta = rho/rhoc
@@ -620,7 +623,7 @@ class MEoS(_fase):
                 rho = float(fsolve(rho_func, rhoo)[0])
 
                 # Calculate quality
-                if T > self.Tc:
+                if T > self._constant_Tref:
                     x = 1
                 else:
                     Ps = self._Vapor_Pressure(T)
@@ -645,8 +648,8 @@ class MEoS(_fase):
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
                     return ho-h
 
-                if T >= self.Tc:
-                    rhoo = self.rhoc
+                if T >= self._constant_Tref:
+                    rhoo = self._constant_rhoc
                     rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     x0 = self.kwargs["x0"]
@@ -691,8 +694,8 @@ class MEoS(_fase):
                     so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return so-s
 
-                if T >= self.Tc:
-                    rhoo = self.rhoc
+                if T >= self._constant_Tref:
+                    rhoo = self._constant_rhoc
                     rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     rhov = self._Vapor_Density(T)
@@ -740,8 +743,8 @@ class MEoS(_fase):
 
                     return ho-Po/rho-u
 
-                if T >= self.Tc:
-                    rhoo = self.rhoc
+                if T >= self._constant_Tref:
+                    rhoo = self._constant_rhoc
                     rho = float(fsolve(rho_func, rhoo)[0])
                 else:
                     rhov = self._Vapor_Density(T)
@@ -794,8 +797,8 @@ class MEoS(_fase):
                     def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
                         T, rhol, rhog = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         firL = _phir(tau, deltaL, self._constants)
                         firdL = _phird(tau, deltaL, self._constants)
@@ -852,8 +855,8 @@ class MEoS(_fase):
                             float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
 
@@ -954,8 +957,8 @@ class MEoS(_fase):
                             float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
 
@@ -1017,8 +1020,8 @@ class MEoS(_fase):
                     def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
                         T, rhol, rhog = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
                         firL = _phir(tau, deltaL, self._constants)
@@ -1078,8 +1081,8 @@ class MEoS(_fase):
                     def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
                         T, rhol, rhog = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
@@ -1142,8 +1145,8 @@ class MEoS(_fase):
                     def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
                         T, rhol, rhog = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
                         firL = _phir(tau, deltaL, self._constants)
@@ -1210,8 +1213,8 @@ class MEoS(_fase):
                             float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
@@ -1276,8 +1279,8 @@ class MEoS(_fase):
                             float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
 
@@ -1345,8 +1348,8 @@ class MEoS(_fase):
                             float, float, float, float]:
                         T, rhol, rhog, x = parr
                         tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+                        deltaL = rhol/self._constant_rhoc
+                        deltaG = rhog/self._constant_rhoc
 
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
@@ -1395,7 +1398,7 @@ class MEoS(_fase):
                         liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
             elif self._mode == "Trho":
-                if T < self.Tc:
+                if T < self._constant_Tref:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
                     if rhol > rho > rhov:
@@ -1410,7 +1413,7 @@ class MEoS(_fase):
             T = float(T)
             propiedades = self._Helmholtz(rho, T)
 
-            if T > self.Tc:
+            if T > self._constant_Tref:
                 x = 1
             elif x is None:
                 x = 0
@@ -1420,7 +1423,7 @@ class MEoS(_fase):
 
         elif self._mode == "Tx":
             # Check input T in saturation range
-            if self.Tt > T or self.Tc < T or x > 1 or x < 0:
+            if self.Tt > T or self._constant_Tref < T or x > 1 or x < 0:
                 raise NotImplementedError("Incoming out of bound")
 
             rhol, rhov, Ps = self._saturation(T)
@@ -1442,8 +1445,8 @@ class MEoS(_fase):
                 rhol = self._Liquid_Density(T)
                 rhog = self._Vapor_Density(T)
 
-                deltaL = rhol/self.rhoc
-                deltaG = rhog/self.rhoc
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
 
                 tau = Tc/T
 
@@ -1458,7 +1461,7 @@ class MEoS(_fase):
             elif self.name == "water":
                 To = _TSat_P(P)
             else:
-                To = (self.Tc+self.Tt)/2
+                To = (self._constant_Tref+self.Tt)/2
             T = float(fsolve(t_func, To)[0])
             rhol, rhov, Ps = self._saturation(T)
             vapor = self._Helmholtz(rhov, T)
@@ -1469,7 +1472,7 @@ class MEoS(_fase):
                 propiedades = vapor
 
         self.T = T
-        self.Tr = T/self.Tc
+        self.Tr = T/self._constant_Tref
         self.P = P
         self.Pr = self.P/self.Pc
         self.x = x
@@ -1477,7 +1480,7 @@ class MEoS(_fase):
             region = 4
         else:
             region = 0
-        self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x, region)
+        self.phase = getphase(self._constant_Tref, self.Pc, self.T, self.P, self.x, region)
 
         self.Liquid = _fase()
         self.Gas = _fase()
@@ -1509,14 +1512,14 @@ class MEoS(_fase):
             self.IntP = x*self.Gas.IntP+(1-x)*self.Liquid.IntP
 
         # Calculate special properties useful only for one phase
-        if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self.Tc):
+        if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self._constant_Tref):
             self.sigma = self._surface(T)
         else:
             self.sigma = None
 
         vir = self._virial(T)
-        self.virialB = vir["B"]/self.rhoc
-        self.virialC = vir["C"]/self.rhoc**2
+        self.virialB = vir["B"]/self._constant_rhoc
+        self.virialC = vir["C"]/self._constant_rhoc**2
 
         if 0 < x < 1:
             self.Hvap = vapor.h-liquido.h
@@ -1668,8 +1671,8 @@ class MEoS(_fase):
         if rhoL == rhoG:
             Ps = self.Pc
         else:
-            deltaL = rhoL/self.rhoc
-            deltaG = rhoG/self.rhoc
+            deltaL = rhoL/self._constant_rhoc
+            deltaG = rhoG/self._constant_rhoc
             firL = _phir(tau, deltaL, self._constants)
             firG = _phir(tau, deltaG, self._constants)
 
@@ -2119,7 +2122,7 @@ class MEoS(_fase):
             sigma: coefficient
             exp: exponent
         """
-        tau = 1-T/self.Tc
+        tau = 1-T/self._constant_Tref
         sigma = 0.0
         for n, t in zip(self._surf["sigma"], self._surf["exp"]):
             sigma += n*tau**t
@@ -2483,7 +2486,7 @@ class IAPWS95(MEoS):
         """Low temperature extension of the IAPWS-95"""
         prop = MEoS._phi0(self, tau, delta)
 
-        T = self.Tc/tau
+        T = self._constant_Tref/tau
         if 50 <= T < 130:
             fex, fext, fextt = self._phiex(T)
             prop.fi += fex
@@ -2493,9 +2496,9 @@ class IAPWS95(MEoS):
 
     def _phiex(self, T: float) -> Tuple[float, float, float]:
         """Low temperature extension"""
-        tau = self.Tc/T
+        tau = self._constant_Tref/T
         E = 0.278296458178592
-        ep = self.Tc/130
+        ep = self._constant_Tref/130
         fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2
                  + tau**2/2/ep**3)
         fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)

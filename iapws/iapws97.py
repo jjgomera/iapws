@@ -4323,6 +4323,9 @@ class IAPWS97(_fase):
     status = 0
     msg = "Unknown variables"
 
+    _constant_rhoc = rhoc
+    _constant_Tref = Tc
+
     def __init__(self, **kwargs):
         super().__init__()
         self.v0: Optional[float] = None
@@ -4615,8 +4618,6 @@ class IAPWS97(_fase):
 
         self.M = 18.015257  # kg/kmol
         self.Pc = Pc
-        self.Tc = Tc
-        self.rhoc = rhoc
         self.Tt = Tt
         self.Tb = Tb
         self.f_accent = f_acent
@@ -4632,9 +4633,9 @@ class IAPWS97(_fase):
         self.P = propiedades.P
         self.v = propiedades.v
         self.rho = 1/self.v
-        self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x,
-                              self.region)
-        self.Tr = self.T/self.Tc
+        self.phase = getphase(self._constant_Tref, self.Pc, self.T,
+                              self.P, self.x, self.region)
+        self.Tr = self.T/self._constant_Tref
         self.Pr = self.P/self.Pc
 
         # Ideal properties
