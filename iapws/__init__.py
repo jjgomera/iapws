@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""International Association for the Properties of Water and Steam (IAPWS)."""
 
 import os
 
@@ -241,4 +242,4 @@ __doi__ = {
                   "Seawater",
          "ref": "2016",
          "doi": ""},
-        }
+}

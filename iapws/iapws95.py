@@ -9,247 +9,40 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
     * :class:`D2O`: 2017 formulation for heavy water.
 """
 
-
 from __future__ import division
 import os
 import platform
 import warnings
+from math import exp, log
+from typing import Tuple, Dict, Optional, List, Callable, Any
 
-from scipy import exp, log, ndarray
 from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
-from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
+from ._iapws import _global_M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H
+from .helmholtz import ResidualContribution, HelmholtzDerivatives
 
 
-def _phir(tau, delta, coef):
-    """Residual contribution to the adimensional free Helmholtz energy
+class MEoSProperties(object):
+    """The properties required to fill a MEoS phase."""
 
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
-
-    Returns
-    -------
-    fir : float
-        Adimensional free Helmholtz energy
-
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    fir = 0
-
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        fir += n*delta**d*tau**t
-
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        fir += n*delta**d*tau**t*exp(-g*delta**c)
-
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
-
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Delta = Tita**2+B*((delta-1)**2)**a
-        fir += n*Delta**b*delta*F
-
-    return fir
-
-
-def _phird(tau, delta, coef):
-    r"""Residual contribution to the adimensional free Helmholtz energy, delta
-    derivative
-
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
-
-    Returns
-    -------
-    fird : float
-        .. math::
-          \left.\frac{\partial \phi^r_{\delta}}{\partial \delta}\right|_{\tau}
-
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    fird = 0
-
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        fird += n*d*delta**(d-1)*tau**t
-
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                d/delta-2*a*(delta-e))
-
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Fd = -2*C*F*(delta-1)
-
-        Delta = Tita**2+B*((delta-1)**2)**a
-        Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1) +
-                            2*B*a*((delta-1)**2)**(a-1))
-        DeltaBd = b*Delta**(b-1)*Deltad
-
-        fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-
-    return fird
-
-
-def _phirt(tau, delta, coef):
-    r"""Residual contribution to the adimensional free Helmholtz energy, tau
-    derivative
-
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
-
-    Returns
-    -------
-    firt : float
-        .. math::
-            \left.\frac{\partial \phi^r_{\tau}}{\partial \tau}\right|_{\delta}
-
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    firt = 0
-
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        firt += n*t*delta**d*tau**(t-1)
-
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
-
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                t/tau-2*b*(tau-g))
-
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Ft = -2*D*F*(tau-1)
-        Delta = Tita**2+B*((delta-1)**2)**a
-        DeltaBt = -2*Tita*b*Delta**(b-1)
-        firt += n*delta*(DeltaBt*F+Delta**b*Ft)
-
-    return firt
+    def __init__(self, rho: float, P: float, h: float, s: float, cv:
+                 float, alfap: float, betap: float, fir: float, fird:
+                 float, firdd: float, delta: float) -> None:
+        self.rho = rho
+        self.P = P
+        self.h = h
+        self.s = s
+        self.cv = cv
+        self.alfap = alfap
+        self.betap = betap
+        self.fir = fir
+        self.fird = fird
+        self.firdd = firdd
+        self.delta = delta
 
 
 class MEoS(_fase):
@@ -368,15 +161,30 @@ class MEoS(_fase):
         * invT: Negative reciprocal temperature, [1/K]
         * hInput: Specific heat input, [kJ/kg]
     """
-    CP = None
-    _Pv = None
-    _rhoL = None
-    _rhoG = None
 
-    kwargs = {"T": 0.0,
-              "P": 0.0,
-              "rho": 0.0,
-              "v": 0.0,
+    CP = None
+    # The lists vary from 4 to 6 terms, which is why they're not
+    # tuples of explicit length.  The equation numbers are used for
+    # switching implementations based on class.
+    _Pv_ao: List[float]
+    _Pv_exp: List[float]
+    _rhoG_eq: int
+    _rhoG_ao: List[float]
+    _rhoG_exp: List[float]
+    _rhoL_eq: int
+    _rhoL_ao: List[float]
+    _rhoL_exp: List[float]
+    # Defined in derived classes NH3 and Air.
+    _surf: Dict[str, List[float]]
+    Fi0: Dict[str, List[float]]
+    # Defined by derived classes
+    _constant_rhoc: float
+    _constant_Tref: float
+
+    kwargs = {"T": None,
+              "P": None,
+              "rho": None,
+              "v": None,
               "h": None,
               "s": None,
               "u": None,
@@ -388,14 +196,47 @@ class MEoS(_fase):
     status = 0
     msg = "Undefined"
 
+    # These are used in MeOS but are NOT actually defined by the
+    # class.  They have to be defined by one of the subclasses which
+    # is a little messy.  By statically typing them here, we at least
+    # let mypy know that they're supposed to be set...
+    rhoc: float
+    Tc: float
+    Pc: float
+    Tt: float
+    _constant_R: float
+    _constants: Dict[str, List[float]]
+    residual: ResidualContribution
+    M: float
+    # The name of the substance.
+    # Set in NH3, Air, IAPWS95, D2O, and IAPWS97.
+    name: str
+
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
-        self.R = self._constants["R"]/self._constants.get("M", self.M)
-        self.Zc = self.Pc/self.rhoc/self.R/self.Tc
+        super().__init__()
+
+        # These class variables must be defined by the subclass.
+        assert(isinstance(self._Pv_ao, list))
+        assert(isinstance(self._Pv_exp, list))
+        assert(isinstance(self._rhoL_eq, int))
+        assert(isinstance(self._rhoL_ao, list))
+        assert(isinstance(self._rhoL_exp, list))
+        assert(isinstance(self._rhoG_eq, int))
+        assert(isinstance(self._rhoG_ao, list))
+        assert(isinstance(self._rhoG_exp, list))
+        assert(isinstance(self.M, float))
+
+        self.sigma: Optional[float] = None
+        self.Hvap: Optional[float] = None
+        self.Svap: Optional[float] = None
+
+        self.R = self.__class__._constant_R/self.M
+        self.Zc = self.Pc/self._constant_rhoc/self.R/self._constant_Tref
         self.kwargs = MEoS.kwargs.copy()
         self.__call__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         """Make instance callable to can add input parameter one to one"""
         # Alternative rho input
         if "rhom" in kwargs:
@@ -409,84 +250,44 @@ class MEoS(_fase):
             del kwargs["vm"]
         self.kwargs.update(kwargs)
 
-        if self.calculable:
-            try:
-                self.status = 1
-                self.calculo()
-                self.msg = ""
-            except RuntimeError as err:
-                self.status = 0
-                self.msg = err.args[0]
-                raise(err)
+        try:
+            self.calculo()
+            self.msg = ""
+            if self.status == 0:
+                return
+        except RuntimeError as err:
+            self.status = 0
+            self.msg = err.args[0]
+            raise(err)
 
-            # Add msg for extrapolation state
-            if self.name == "water" and 130 <= self.T < 273.15:
-                self.msg = "Extrapolated state"
-                self.status = 3
-                warnings.warn("Using extrapolated values")
-            elif self.name == "water" and 50 <= self.T < 130:
-                self.msg = "Extrapolated state using Low-Temperature extension"
-                self.status = 3
-                warnings.warn("Using extrapolated values and Low-Temperature"
-                              "extension")
+        # Add msg for extrapolation state
+        if self.name == "water" and 130 <= self.T < 273.15:
+            self.msg = "Extrapolated state"
+            self.status = 3
+            warnings.warn("Using extrapolated values")
+        elif self.name == "water" and 50 <= self.T < 130:
+            self.msg = "Extrapolated state using Low-Temperature extension"
+            self.status = 3
+            warnings.warn("Using extrapolated values and Low-Temperature extension")
 
     @property
-    def calculable(self):
+    def calculable(self) -> bool:
         """Check if inputs are enough to define state"""
-        self._mode = ""
-        if self.kwargs["T"] and self.kwargs["P"]:
-            self._mode = "TP"
-        elif self.kwargs["T"] and self.kwargs["rho"]:
-            self._mode = "Trho"
-        elif self.kwargs["T"] and self.kwargs["h"] is not None:
-            self._mode = "Th"
-        elif self.kwargs["T"] and self.kwargs["s"] is not None:
-            self._mode = "Ts"
-        elif self.kwargs["T"] and self.kwargs["u"] is not None:
-            self._mode = "Tu"
-        elif self.kwargs["P"] and self.kwargs["rho"]:
-            self._mode = "Prho"
-        elif self.kwargs["P"] and self.kwargs["h"] is not None:
-            self._mode = "Ph"
-        elif self.kwargs["P"] and self.kwargs["s"] is not None:
-            self._mode = "Ps"
-        elif self.kwargs["P"] and self.kwargs["u"] is not None:
-            self._mode = "Pu"
-        elif self.kwargs["rho"] and self.kwargs["h"] is not None:
-            self._mode = "rhoh"
-        elif self.kwargs["rho"] and self.kwargs["s"] is not None:
-            self._mode = "rhos"
-        elif self.kwargs["rho"] and self.kwargs["u"] is not None:
-            self._mode = "rhou"
-        elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
-            self._mode = "hs"
-        elif self.kwargs["h"] is not None and self.kwargs["u"] is not None:
-            self._mode = "hu"
-        elif self.kwargs["s"] is not None and self.kwargs["u"] is not None:
-            self._mode = "su"
-        elif self.kwargs["T"] and self.kwargs["x"] is not None:
-            self._mode = "Tx"
-        elif self.kwargs["P"] and self.kwargs["x"] is not None:
-            self._mode = "Px"
         return bool(self._mode)
 
-    def calculo(self):
-        """Calculate procedure"""
-        T = self.kwargs["T"]
-        rho = self.kwargs["rho"]
-        P = self.kwargs["P"]
-        s = self.kwargs["s"]
-        h = self.kwargs["h"]
-        u = self.kwargs["u"]
-        x = self.kwargs["x"]
-
+    def get_To_rhoo_x0(self, T0: Optional[float],
+                       rho0: Optional[float]) -> Tuple[float, float, Optional[float]]:
+        """Compute three values from kwargs."""
         # Initial values
         T0 = self.kwargs["T0"]
         rho0 = self.kwargs["rho0"]
 
+        x0: Optional[float] = None
         if T0 or rho0:
-            To = T0
-            rhoo = rho0
+            if T0 is not None:
+                To = float(T0)
+            if rho0 is not None:
+                rhoo = float(rho0)
         elif self.name == "air":
             To = 300
             rhoo = 1e-3
@@ -500,908 +301,1070 @@ class MEoS(_fase):
                 if st0.status:
                     To = st0.T
                     rhoo = st0.rho
+                    x0 = st0.x
                 else:
                     To = 300
                     rhoo = 900
+        return(To, rhoo, x0)
 
-        self.R = self._constants["R"]/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+    def calculo(self) -> None:
+        """Calculate procedure"""
+        T = self.kwargs["T"]
+        rho = self.kwargs["rho"]
+        P = self.kwargs["P"]
+        s = self.kwargs["s"]
+        h = self.kwargs["h"]
+        u = self.kwargs["u"]
+        x = self.kwargs["x"]
+        T0 = self.kwargs["T0"]
+        rho0 = self.kwargs["rho0"]
 
-        propiedades = None
+        To, rhoo, x0 = self.get_To_rhoo_x0(T0, rho0)
 
-        if self._mode not in ("Tx", "Px"):
-            # Method with iteration necessary to get x
-            if self._mode == "TP":
+        self._mode = ""
+        # Method with iteration necessary to get x
+        if T is not None and P is not None:
+            self._mode = "Trho"
+            self.solve_T_P(T, P, rho0, rhoo)
+        elif T is not None and rho is not None:
+            self._mode = "Trho"
+            self.solve_T_rho(T, rho)
+        elif T is not None and h is not None:
+            self._mode = "Th"
+            self.solve_T_h(T, h)
+        elif T is not None and s is not None:
+            self._mode = "Ts"
+            self.solve_T_s(T, s)
+        elif T is not None and u is not None:
+            self._mode = "Tu"
+            self.solve_T_u(T, u)
+        elif P is not None and rho is not None:
+            self._mode = "Prho"
+            self.solve_P_rho(P, rho, To)
+        elif P is not None and h is not None:
+            self._mode = "Ph"
+            self.solve_P_h(P, h, rhoo, To)
+        elif P is not None and s is not None:
+            self._mode = "Ps"
+            self.solve_P_s(P, s, rhoo, To, x0)
+        elif P is not None and u is not None:
+            self._mode = "Pu"
+            self.solve_P_u(P, u, rhoo, To)
+        elif rho is not None and h is not None:
+            self._mode = "rhoh"
+            self.solve_rho_h(rho, h, To)
+        elif rho is not None and s is not None:
+            self._mode = "rhos"
+            self.solve_rho_s(rho, s, To)
+        elif rho is not None and u is not None:
+            self._mode = "rhou"
+            self.solve_rho_u(rho, u, rhoo, To)
+        elif h is not None and s is not None:
+            self._mode = "hs"
+            self.solve_h_s(h, s, rhoo, To)
+        elif h is not None and u is not None:
+            self._mode = "hu"
+            self.solve_h_u(h, u, rhoo, To)
+        elif s is not None and u is not None:
+            self._mode = "su"
+            self.solve_s_u(s, u, rhoo, To)
+        elif T is not None and x is not None:
+            self._mode = "Tx"
+            self.solve_T_x(T, x)
+        elif P is not None and x is not None:
+            self._mode = "Px"
+            self.solve_P_x(P, x, T0)
+        # if self._mode is unset, calculable() will return false.
+
+    def solve_T_P(self, T: float, P: float,
+                  rho0: Optional[float], rhoo: float) -> None:
+        """Solve for properties using T & P."""
+        try:
+            if self.name != "water":
+                raise NotImplementedError
+            st0 = IAPWS97(**self.kwargs)
+            rhoo = st0.rho
+        except NotImplementedError:
+            if rho0:
+                rhoo = rho0
+            elif T < self._constant_Tref and P < self.Pc and \
+                    self._Vapor_Pressure(T) < P:
+                rhoo = self._Liquid_Density(T)
+            elif T < self._constant_Tref and P < self.Pc:
+                rhoo = self._Vapor_Density(T)
+            else:
+                rhoo = self._constant_rhoc*3
+
+        def rho_func(rho: float) -> float:
+            delta = rho/self._constant_rhoc
+            tau = self._constant_Tref/T
+
+            fird = self.residual.phird(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            return Po-P*1000
+
+        rho = float(fsolve(rho_func, rhoo)[0])
+
+        # Calculate quality
+        if T > self._constant_Tref:
+            x = 1.0
+        else:
+            Ps = self._Vapor_Pressure(T)
+            if Ps*0.95 < P < Ps*1.05:
+                rhol, rhov, Ps = self._saturation(T)
+                Ps *= 1e-3
+
+            if Ps > P:
+                x = 1.0
+            else:
+                x = 0.0
+
+        self.solve_case1(T, P, x, rho, None, None)
+
+    def solve_T_h(self, T: float, h: float) -> None:
+        """Solve for properties using T & h."""
+        tau = self._constant_Tref/T
+        ideal = self._phi0(tau, 1)
+        fiot = ideal.fit
+        x = None
+        P = 0.0
+
+        def rho_func(rho: float) -> float:
+            delta = rho/self._constant_rhoc
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+            return ho-h
+
+        liquido = None
+        vapor = None
+        if T >= self._constant_Tref:
+            rhoo = self._constant_rhoc
+            rho = float(fsolve(rho_func, rhoo)[0])
+        else:
+            x0 = self.kwargs["x0"]
+            rhov = self._Vapor_Density(T)
+            rhol = self._Liquid_Density(T)
+            deltaL = rhol/self._constant_rhoc
+            deltaG = rhov/self._constant_rhoc
+
+            firdL = self.residual.phird(tau, deltaL)
+            firtL = self.residual.phirt(tau, deltaL)
+            firdG = self.residual.phird(tau, deltaG)
+            firtG = self.residual.phirt(tau, deltaG)
+            hl = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
+            hv = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
+            if x0 not in (0, 1) and hl <= h <= hv:
+                rhol, rhov, Ps = self._saturation(T)
+                vapor = self._Helmholtz(rhov, T)
+                liquido = self._Helmholtz(rhol, T)
+                hv = vapor.h
+                hl = liquido.h
+                x = (h-hl)/(hv-hl)
+                rho = 1/(x/rhov+(1-x)/rhol)
+                P = Ps/1000
+            else:
+                if h > hv:
+                    rhoo = rhov
+                else:
+                    rhoo = rhol
+                rho = float(fsolve(rho_func, rhoo)[0])
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_T_s(self, T: float, s: float) -> None:
+        """Solve for properties using T & s."""
+        tau = self._constant_Tref/T
+        x = None
+        P = 0.0
+
+        def rho_func(rho: float) -> float:
+            if rho < 0:
+                rho = 1e-20
+            delta = rho/rhoc
+
+            ideal = self._phi0(tau, delta)
+            fir = self.residual.phir(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
+            return so-s
+
+        liquido = None
+        vapor = None
+        if T >= self._constant_Tref:
+            rhoo = self._constant_rhoc
+            rho = float(fsolve(rho_func, rhoo)[0])
+        else:
+            rhov = self._Vapor_Density(T)
+            rhol = self._Liquid_Density(T)
+            deltaL = rhol/self._constant_rhoc
+            deltaG = rhov/self._constant_rhoc
+
+            idealL = self._phi0(tau, deltaL)
+            idealG = self._phi0(tau, deltaG)
+
+            firL = self.residual.phir(tau, deltaL)
+            firtL = self.residual.phirt(tau, deltaL)
+            sl = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
+            firG = self.residual.phir(tau, deltaG)
+            firtG = self.residual.phirt(tau, deltaG)
+            sv = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
+
+            if sl <= s <= sv:
+                rhol, rhov, Ps = self._saturation(T)
+                vapor = self._Helmholtz(rhov, T)
+                liquido = self._Helmholtz(rhol, T)
+                sv = vapor.s
+                sl = liquido.s
+                x = (s-sl)/(sv-sl)
+                rho = 1/(x/rhov+(1-x)/rhol)
+                P = Ps/1000
+            else:
+                if s > sv:
+                    rhoo = rhov
+                else:
+                    rhoo = rhol
+                rho = float(fsolve(rho_func, rhoo)[0])
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_T_u(self, T: float, u: float) -> None:
+        """Solve for properties using T & u."""
+        tau = self._constant_Tref/T
+        ideal = self._phi0(tau, 1)
+        x = None
+        P = 0.0
+
+        def rho_func(rho: float) -> float:
+            delta = rho/self._constant_rhoc
+
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+
+            return ho-Po/rho-u
+
+        liquido = None
+        vapor = None
+        if T >= self._constant_Tref:
+            rhoo = self._constant_rhoc
+            rho = float(fsolve(rho_func, rhoo)[0])
+        else:
+            rhov = self._Vapor_Density(T)
+            rhol = self._Liquid_Density(T)
+            deltaL = rhol/self._constant_rhoc
+            deltaG = rhov/self._constant_rhoc
+
+            firdL = self.residual.phird(tau, deltaL)
+            firtL = self.residual.phirt(tau, deltaL)
+            firdG = self.residual.phird(tau, deltaG)
+            firtG = self.residual.phirt(tau, deltaG)
+            PoL = (1+deltaL*firdL)*self.R*T*rhol
+            PoG = (1+deltaG*firdG)*self.R*T*rhov
+            hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+            hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
+
+            uv = hoG-PoG/rhov
+            ul = hoL-PoL/rhol
+            if ul <= u <= uv:
+                rhol, rhov, Ps = self._saturation(T)
+                vapor = self._Helmholtz(rhov, T)
+                liquido = self._Helmholtz(rhol, T)
+                uv = vapor.h-vapor.P/rhov
+                ul = liquido.h-liquido.P/rhol
+                x = (u-ul)/(uv-ul)
+                rho = 1/(x/rhov-(1-x)/rhol)
+                P = Ps/1000
+            else:
+                if u > uv:
+                    rhoo = rhov
+                else:
+                    rhoo = rhol
+                rho = float(fsolve(rho_func, rhoo)[0])
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_P_rho(self, P: float, rho: float, To: float) -> None:
+        """Solve for properties using P & rho."""
+        delta = rho/self._constant_rhoc
+        x = None
+
+        def t_func(T: float) -> float:
+            tau = self._constant_Tref/T
+            fird = self.residual.phird(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            return Po-P*1000
+
+        T = float(fsolve(t_func, To)[0])
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if T == To or rhov <= rho <= rhol:
+
+            def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
+                T, rhol, rhog = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
                 try:
-                    if self.name != "water":
-                        raise NotImplementedError
-                    st0 = IAPWS97(**self.kwargs)
-                    rhoo = st0.rho
-                except NotImplementedError:
-                    if rho0:
-                        rhoo = rho0
-                    elif T < self.Tc and P < self.Pc and \
-                            self._Vapor_Pressure(T) < P:
-                        rhoo = self._Liquid_Density(T)
-                    elif T < self.Tc and P < self.Pc:
-                        rhoo = self._Vapor_Density(T)
-                    else:
-                        rhoo = self.rhoc*3
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K, Ps - P*1000)
 
-                def f(rho):
-                    delta = rho/rhoc
-                    tau = Tc/T
+            for to in [To, 300, 400, 500, 600]:
+                rhoLo = self._Liquid_Density(to)
+                rhoGo = self._Vapor_Density(to)
+                sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
+                T, rhoL, rhoG = tuple(map(float, sol[0]))
+                x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
 
-                    fird = _phird(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    return Po-P*1000
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
 
-                rho = fsolve(f, rhoo)[0]
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
-                # Calculate quality
-                if T > self.Tc:
-                    x = 1
-                else:
-                    Ps = self._Vapor_Pressure(T)
-                    if Ps*0.95 < P < Ps*1.05:
-                        rhol, rhov, Ps = self._saturation(T)
-                        Ps *= 1e-3
+        self.solve_case1(T, P, x, rho, liquido, vapor)
 
-                    if Ps > P:
-                        x = 1
-                    else:
-                        x = 0
+    def solve_P_h(self, P: float, h: float, rhoo: float, To: float) -> None:
+        """Solve for properties using P & h."""
+        x = None
 
-            elif self._mode == "Th":
-                tau = Tc/T
-                ideal = self._phi0(tau, 1)
-                fiot = ideal["fiot"]
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+            rho, T = parr
+            delta = rho/rhoc
+            tau = self._constant_Tref/T
 
-                def f(rho):
-                    delta = rho/rhoc
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    return ho-h
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            return Po-P*1000, ho-h
 
-                if T >= self.Tc:
-                    rhoo = self.rhoc
-                    rho = fsolve(f, rhoo)[0]
-                else:
-                    x0 = self.kwargs["x0"]
-                    rhov = self._Vapor_Density(T)
-                    rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
+        rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if rho == rhoo or rhov <= rho <= rhol:
 
-                    firdL = _phird(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
-                    firdG = _phird(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
-                    hl = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                    hv = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-                    if x0 not in (0, 1) and hl <= h <= hv:
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        hv = vapor["h"]
-                        hl = liquido["h"]
-                        x = (h-hl)/(hv-hl)
-                        rho = 1/(x/rhov+(1-x)/rhol)
-                        P = Ps/1000
-                    else:
-                        if h > hv:
-                            rhoo = rhov
-                        else:
-                            rhoo = rhol
-                        rho = fsolve(f, rhoo)[0]
+            def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                    float, float, float, float]:
+                T, rhol, rhog, x = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
 
-            elif self._mode == "Ts":
-                tau = Tc/T
+                ideal = self._phi0(tau, deltaL)
 
-                def f(rho):
-                    if rho < 0:
-                        rho = 1e-20
-                    delta = rho/rhoc
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
-                    ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
-                    return so-s
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
 
-                if T >= self.Tc:
-                    rhoo = self.rhoc
-                    rho = fsolve(f, rhoo)[0]
-                else:
-                    rhov = self._Vapor_Density(T)
-                    rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
+                return (Jl-Jv,
+                        Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                        hoL*(1-x)+hoG*x - h,
+                        Ps - P*1000)
 
-                    idealL = self._phi0(tau, deltaL)
-                    idealG = self._phi0(tau, deltaG)
-                    fioL = idealL["fio"]
-                    fioG = idealG["fio"]
-                    fiot = idealL["fiot"]
-                    firL = _phir(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
-                    sl = self.R*(tau*(fiot+firtL)-fioL-firL)
-                    firG = _phir(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
-                    sv = self.R*(tau*(fiot+firtG)-fioG-firG)
+            for to in [To, 300, 400, 500, 600]:
+                rLo = self._Liquid_Density(to)
+                rGo = self._Vapor_Density(to)
+                sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
+                T, rhoL, rhoG, x = tuple(map(float, sol[0]))
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
 
-                    if sl <= s <= sv:
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        sv = vapor["s"]
-                        sl = liquido["s"]
-                        x = (s-sl)/(sv-sl)
-                        rho = 1/(x/rhov+(1-x)/rhol)
-                        P = Ps/1000
-                    else:
-                        if s > sv:
-                            rhoo = rhov
-                        else:
-                            rhoo = rhol
-                        rho = fsolve(f, rhoo)[0]
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
 
-            elif self._mode == "Tu":
-                tau = Tc/T
-                ideal = self._phi0(tau, 1)
-                fiot = ideal["fiot"]
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
-                def f(rho):
-                    delta = rho/rhoc
+        self.solve_case1(T, P, x, rho, liquido, vapor)
 
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
+    def solve_P_s(self, P: float, s: float, rhoo: float,
+                  To: float, x0: Optional[float]) -> None:
+        """Solve for properties using P & s."""
+        if x0 is None or x0 == 0 or x0 == 1:
 
-                    return ho-Po/rho-u
-
-                if T >= self.Tc:
-                    rhoo = self.rhoc
-                    rho = fsolve(f, rhoo)[0]
-                else:
-                    rhov = self._Vapor_Density(T)
-                    rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
-
-                    firdL = _phird(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
-                    firdG = _phird(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
-                    PoL = (1+deltaL*firdL)*self.R*T*rhol
-                    PoG = (1+deltaG*firdG)*self.R*T*rhov
-                    hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                    hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                    uv = hoG-PoG/rhov
-                    ul = hoL-PoL/rhol
-                    if ul <= u <= uv:
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        uv = vapor["h"]-vapor["P"]/rhov
-                        ul = liquido["h"]-liquido["P"]/rhol
-                        x = (u-ul)/(uv-ul)
-                        rho = 1/(x/rhov-(1-x)/rhol)
-                        P = Ps/1000
-                    else:
-                        if u > uv:
-                            rhoo = rhov
-                        else:
-                            rhoo = rhol
-                        rho = fsolve(f, rhoo)[0]
-
-            elif self._mode == "Prho":
+            def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+                rho, T = parr
                 delta = rho/rhoc
+                tau = self._constant_Tref/T
 
-                def f(T):
-                    tau = Tc/T
+                ideal = self._phi0(tau, delta)
+                fird = self.residual.phird(tau, delta)
+                fir = self.residual.phir(tau, delta)
+                firt = self.residual.phirt(tau, delta)
+                Po = (1+delta*fird)*self.R*T*rho
+                so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
+                return Po-P*1000, so-s
 
-                    fird = _phird(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    return Po-P*1000
+            rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
+            liquido = None
+            vapor = None
+            x = None
+        else:
 
-                T = fsolve(f, To)[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if T == To or rhov <= rho <= rhol:
+            def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+                rho, T = parr
+                rhol, rhov, Ps = self._saturation(T)
+                vapor = self._Helmholtz(rhov, T)
+                liquido = self._Helmholtz(rhol, T)
+                x = (1./rho-1/rhol)/(1/rhov-1/rhol)
+                return Ps-P*1000, vapor.s*x+liquido.s*(1-x)-s
+            rho, T = tuple(map(float, fsolve(f2, [2., 500.])))
+            rhol, rhov, Ps = self._saturation(T)
+            vapor = self._Helmholtz(rhov, T)
+            liquido = self._Helmholtz(rhol, T)
+            x = (s-liquido.s)/(vapor.s-liquido.s)
 
-                    def f(parr):
-                        T, rhol, rhog = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
+        self.solve_case1(T, P, x, rho, liquido, vapor)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
+    def solve_P_u(self, P: float, u: float, rhoo: float, To: float) -> None:
+        """Solve for properties using P & u."""
+        x = None
 
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                Ps - P*1000)
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+            rho, T = parr
+            delta = rho/rhoc
+            tau = self._constant_Tref/T
 
-                    for to in [To, 300, 400, 500, 600]:
-                        rhoLo = self._Liquid_Density(to)
-                        rhoGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
-                        x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            return ho-Po/rho-u, Po-P*1000
 
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+        sol = fsolve(f2, [rhoo, To], full_output=True)
+        rho, T = tuple(map(float, sol[0]))
+        liquido = None
+        vapor = None
+        if rho == rhoo or sol[2] != 1:
 
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
+            def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                    float, float, float, float]:
+                T, rhol, rhog, x = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
 
-            elif self._mode == "Ph":
-                def funcion(parr):
-                    rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                ideal = self._phi0(tau, deltaL)
 
-                    ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    return Po-P*1000, ho-h
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
-                rho, T = fsolve(funcion, [rhoo, To])
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if rho == rhoo or rhov <= rho <= rhol:
-
-                    def f(parr):
-                        T, rhol, rhog, x = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                hoL*(1-x)+hoG*x - h,
-                                Ps - P*1000)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rLo = self._Liquid_Density(to)
-                        rGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "Ps":
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
                 try:
-                    x0 = st0.x
-                except NameError:
-                    x0 = None
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
+                vu = hoG-Ps/rhog
+                lu = hoL-Ps/rhol
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
+                        lu*(1-x)+vu*x - u, Ps - P*1000)
 
-                if x0 is None or x0 == 0 or x0 == 1:
-                    def f(parr):
-                        rho, T = parr
-                        delta = rho/rhoc
-                        tau = Tc/T
+            for to in [To, 300, 400, 500, 600]:
+                rLo = self._Liquid_Density(to)
+                rGo = self._Vapor_Density(to)
+                sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
+                T, rhoL, rhoG, x = tuple(map(float, sol[0]))
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
 
-                        ideal = self._phi0(tau, delta)
-                        fio = ideal["fio"]
-                        fiot = ideal["fiot"]
-                        fird = _phird(tau, delta, self._constants)
-                        fir = _phir(tau, delta, self._constants)
-                        firt = _phirt(tau, delta, self._constants)
-                        Po = (1+delta*fird)*self.R*T*rho
-                        so = self.R*(tau*(fiot+firt)-fio-fir)
-                        return Po-P*1000, so-s
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
 
-                    rho, T = fsolve(f, [rhoo, To])
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
 
-                else:
-                    def funcion(parr):
-                        rho, T = parr
-                        rhol, rhov, Ps = self._saturation(T)
-                        vapor = self._Helmholtz(rhov, T)
-                        liquido = self._Helmholtz(rhol, T)
-                        x = (1./rho-1/rhol)/(1/rhov-1/rhol)
-                        return Ps-P*1000, vapor["s"]*x+liquido["s"]*(1-x)-s
-                    rho, T = fsolve(funcion, [2., 500.])
-                    rhol, rhov, Ps = self._saturation(T)
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_rho_h(self, rho: float, h: float, To: float) -> None:
+        """Solve for properties using rho & h."""
+        delta = rho/rhoc
+        P = 0.0
+        x = None
+
+        def t_func(T: float) -> float:
+            tau = self._constant_Tref/T
+
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            return ho-h
+
+        T = float(fsolve(t_func, To)[0])
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if T == To or rhov <= rho <= rhol:
+            def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
+                T, rhol, rhog = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                ideal = self._phi0(tau, deltaL)
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+                x = (1./rho-1/rhol)/(1/rhog-1/rhol)
+                try:
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
+                        hoL*(1-x)+hoG*x - h)
+
+            for to in [To, 300, 400, 500, 600]:
+                rhoLo = self._Liquid_Density(to)
+                rhoGo = self._Vapor_Density(to)
+                sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
+                T, rhoL, rhoG = tuple(map(float, sol[0]))
+                x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_rho_s(self, rho: float, s: float, To: float) -> None:
+        """Solve for properties using rho & s."""
+        delta = rho/rhoc
+        P = 0.0
+        x = None
+
+        def t_func(T: float) -> float:
+            tau = self._constant_Tref/T
+            ideal = self._phi0(tau, delta)
+            fir = self.residual.phir(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
+            return so-s
+
+        T = float(fsolve(t_func, To)[0])
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if T == To or rhov <= rho <= rhol:
+
+            def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
+                T, rhol, rhog = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                idealL = self._phi0(tau, deltaL)
+                idealG = self._phi0(tau, deltaG)
+
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+                x = (1./rho-1/rhol)/(1/rhog-1/rhol)
+                try:
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
+                        soL*(1-x)+soG*x - s)
+
+            for to in [To, 300, 400, 500, 600]:
+                rhoLo = self._Liquid_Density(to)
+                rhoGo = self._Vapor_Density(to)
+                sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
+                T, rhoL, rhoG = tuple(map(float, sol[0]))
+                x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_rho_u(self, rho: float, u: float, rhoo: float, To: float) -> None:
+        """Solve for properties using rho & u."""
+        delta = rho/rhoc
+        P = 0.0
+        x = None
+
+        def t_func(T: float) -> float:
+            tau = self._constant_Tref/T
+
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            return ho-Po/rho-u
+
+        T = float(fsolve(t_func, To)[0])
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if T == To or rhov <= rho <= rhol:
+            def f3(parr: Tuple[float, float, float]) -> Tuple[float, float, float]:
+                T, rhol, rhog = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                ideal = self._phi0(tau, deltaL)
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+                x = (1./rho-1/rhol)/(1/rhog-1/rhol)
+                try:
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
+                vu = hoG-Ps/rhog
+                lu = hoL-Ps/rhol
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
+                        lu*(1-x)+vu*x - u)
+
+            for to in [To, 300, 400, 500, 600]:
+                rhoLo = self._Liquid_Density(to)
+                rhoGo = self._Vapor_Density(to)
+                sol = fsolve(f3, [to, rhoLo, rhoGo], full_output=True)
+                T, rhoL, rhoG = tuple(map(float, sol[0]))
+                x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_h_s(self, h: float, s: float, rhoo: float, To: float) -> None:
+        """Solve for properties using h & s."""
+        P = 0.0
+        x = None
+
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+            rho, T = parr
+            delta = rho/rhoc
+            tau = self._constant_Tref/T
+
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            fir = self.residual.phir(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
+            return ho-h, so-s
+
+        rho, T = tuple(map(float, fsolve(f2, [rhoo, To])))
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if rhov <= rho <= rhol:
+
+            def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                    float, float, float, float]:
+                T, rhol, rhog, x = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                idealL = self._phi0(tau, deltaL)
+                idealG = self._phi0(tau, deltaG)
+
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
+                soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
+                soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+                return (Jl-Jv,
+                        Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                        hoL*(1-x)+hoG*x - h,
+                        soL*(1-x)+soG*x - s)
+
+            for to in [To, 300, 400, 500, 600]:
+                rLo = self._Liquid_Density(to)
+                rGo = self._Vapor_Density(to)
+                sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
+                T, rhoL, rhoG, x = tuple(map(float, sol[0]))
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_h_u(self, h: float, u: float, rhoo: float, To: float) -> None:
+        """Solve for properties using h & u."""
+        P = 0.0
+        x = None
+
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+            rho, T = parr
+            delta = rho/rhoc
+            tau = self._constant_Tref/T
+
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            Po = (1+delta*fird)*self.R*T*rho
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+
+            return ho-Po/rho-u, ho-h
+
+        sol = fsolve(f2, [rhoo, To], full_output=True)
+        rho, T = tuple(map(float, sol[0]))
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if sol[2] != 1 or rhov <= rho <= rhol:
+
+            def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                    float, float, float, float]:
+                T, rhol, rhog, x = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                ideal = self._phi0(tau, deltaL)
+
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
+                vu = hoG-Ps/rhog
+                lu = hoL-Ps/rhol
+
+                return (Jl-Jv,
+                        Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
+                        hoL*(1-x)+hoG*x - h,
+                        lu*(1-x)+vu*x - u)
+
+            for to in [To, 300, 400, 500, 600]:
+                rLo = self._Liquid_Density(to)
+                rGo = self._Vapor_Density(to)
+                sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
+                T, rhoL, rhoG, x = tuple(map(float, sol[0]))
+                if sol[2] == 1 and 0 <= x <= 1 and \
+                        sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_s_u(self, s: float, u: float, rhoo: float, To: float) -> None:
+        """Solve for properties using s & u."""
+        P = 0.0
+        x = None
+
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
+            rho, T = parr
+            delta = rho/rhoc
+            tau = self._constant_Tref/T
+
+            ideal = self._phi0(tau, delta)
+            fird = self.residual.phird(tau, delta)
+            fir = self.residual.phir(tau, delta)
+            firt = self.residual.phirt(tau, delta)
+            ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
+            so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
+            Po = (1+delta*fird)*self.R*T*rho
+            return ho-Po/rho-u, so-s
+
+        sol = fsolve(f2, [rhoo, To], full_output=True)
+        rho, T = tuple(map(float, sol[0]))
+        rhol = self._Liquid_Density(T)
+        rhov = self._Vapor_Density(T)
+        liquido = None
+        vapor = None
+        if sol[2] != 1 or rhov <= rho <= rhol:
+
+            def f4(parr: Tuple[float, float, float, float]) -> Tuple[
+                    float, float, float, float]:
+                T, rhol, rhog, x = parr
+                tau = self._constant_Tref/T
+                deltaL = rhol/self._constant_rhoc
+                deltaG = rhog/self._constant_rhoc
+
+                idealL = self._phi0(tau, deltaL)
+                idealG = self._phi0(tau, deltaG)
+
+                firL = self.residual.phir(tau, deltaL)
+                firdL = self.residual.phird(tau, deltaL)
+                firtL = self.residual.phirt(tau, deltaL)
+                hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
+                soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
+                firG = self.residual.phir(tau, deltaG)
+                firdG = self.residual.phird(tau, deltaG)
+                firtG = self.residual.phirt(tau, deltaG)
+                hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
+                soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
+
+                Jl = rhol*(1+deltaL*firdL)
+                Jv = rhog*(1+deltaG*firdG)
+                K = firL-firG
+
+                try:
+                    logrho = log(rhol/rhog)
+                except ValueError:
+                    logrho = float('nan')
+                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+logrho)
+                vu = hoG-Ps/rhog
+                lu = hoL-Ps/rhol
+
+                return (Jl-Jv, Jl*(1/rhog-1/rhol)-logrho-K,
+                        soL*(1-x)+soG*x - s, lu*(1-x)+vu*x - u)
+
+            for to in [To, 300, 400, 500, 600]:
+                rLo = self._Liquid_Density(to)
+                rGo = self._Vapor_Density(to)
+                sol = fsolve(f4, [to, rLo, rGo, 0.5], full_output=True)
+                T, rhoL, rhoG, x = tuple(map(float, sol[0]))
+                if sol[2] == 1 and 0 <= x <= 1 and sum(abs(sol[1]["fvec"])) < 1e-5:
+                    break
+
+            if sum(abs(sol[1]["fvec"])) > 1e-5:
+                raise(RuntimeError(sol[3]))
+
+            liquido = self._Helmholtz(rhoL, T)
+            vapor = self._Helmholtz(rhoG, T)
+            P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
+                liquido.fir-vapor.fir+log(rhoL/rhoG))/1000
+
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_T_rho(self, T: float, rho: float) -> None:
+        """Solve for properties using T & rho."""
+        P = 0.0
+        x = None
+        liquido = None
+        vapor = None
+        if T < self._constant_Tref:
+            rhov = self._Vapor_Density(T)
+            rhol = self._Liquid_Density(T)
+            if rhol > rho > rhov:
+                rhol, rhov, Ps = self._saturation(T)
+                if rhol > rho > rhov:
                     vapor = self._Helmholtz(rhov, T)
                     liquido = self._Helmholtz(rhol, T)
-                    sv = vapor["s"]
-                    sl = liquido["s"]
-                    x = (s-sl)/(sv-sl)
-
-            elif self._mode == "Pu":
-                def f(parr):
-                    rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    return ho-Po/rho-u, Po-P*1000
-
-                sol = fsolve(f, [rhoo, To], full_output=True)
-                rho, T = sol[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if rho == rhoo or sol[2] != 1:
-
-                    def f(parr):
-                        T, rhol, rhog, x = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-                        vu = hoG-Ps/rhog
-                        lu = hoL-Ps/rhol
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                lu*(1-x)+vu*x - u,
-                                Ps - P*1000)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rLo = self._Liquid_Density(to)
-                        rGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "rhoh":
-                delta = rho/rhoc
-
-                def f(T):
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    return ho-h
-
-                T = fsolve(f, To)[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if T == To or rhov <= rho <= rhol:
-                    def f(parr):
-                        T, rhol, rhog = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                hoL*(1-x)+hoG*x - h)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rhoLo = self._Liquid_Density(to)
-                        rhoGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
-                        x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "rhos":
-                delta = rho/rhoc
-
-                def f(T):
-                    tau = Tc/T
-                    ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
-                    return so-s
-
-                T = fsolve(f, To)[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if T == To or rhov <= rho <= rhol:
-
-                    def f(parr):
-                        T, rhol, rhog = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        idealL = self._phi0(tau, deltaL)
-                        fioL = idealL["fio"]
-                        fiot = idealL["fiot"]
-                        idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                soL*(1-x)+soG*x - s)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rhoLo = self._Liquid_Density(to)
-                        rhoGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
-                        x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "rhou":
-                delta = rho/rhoc
-
-                def f(T):
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    return ho-Po/rho-u
-
-                T = fsolve(f, To)[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if T == To or rhov <= rho <= rhol:
-                    def f(parr):
-                        T, rhol, rhog = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        x = (1./rho-1/rhol)/(1/rhog-1/rhol)
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-                        vu = hoG-Ps/rhog
-                        lu = hoL-Ps/rhol
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                lu*(1-x)+vu*x - u)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rhoLo = self._Liquid_Density(to)
-                        rhoGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rhoLo, rhoGo], full_output=True)
-                        T, rhoL, rhoG = sol[0]
-                        x = (1./rho-1/rhoL)/(1/rhoG-1/rhoL)
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "hs":
-                def f(parr):
-                    rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
-                    return ho-h, so-s
-
-                rho, T = fsolve(f, [rhoo, To])
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if rhov <= rho <= rhol:
-
-                    def f(parr):
-                        T, rhol, rhog, x = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        idealL = self._phi0(tau, deltaL)
-                        fiot = idealL["fiot"]
-                        fioL = idealL["fio"]
-                        idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                hoL*(1-x)+hoG*x - h,
-                                soL*(1-x)+soG*x - s)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rLo = self._Liquid_Density(to)
-                        rGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "hu":
-                def f(parr):
-                    rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-
-                    return ho-Po/rho-u, ho-h
-
-                sol = fsolve(f, [rhoo, To], full_output=True)
-                rho, T = sol[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if sol[2] != 1 or rhov <= rho <= rhol:
-
-                    def f(parr):
-                        T, rhol, rhog, x = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        ideal = self._phi0(tau, deltaL)
-                        fiot = ideal["fiot"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-                        vu = hoG-Ps/rhog
-                        lu = hoL-Ps/rhol
-
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                hoL*(1-x)+hoG*x - h,
-                                lu*(1-x)+vu*x - u)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rLo = self._Liquid_Density(to)
-                        rGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "su":
-                def f(parr):
-                    rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
-
-                    ideal = self._phi0(tau, delta)
-                    fio = ideal["fio"]
-                    fiot = ideal["fiot"]
-                    fird = _phird(tau, delta, self._constants)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
-                    ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-                    so = self.R*(tau*(fiot+firt)-fio-fir)
-                    Po = (1+delta*fird)*self.R*T*rho
-                    return ho-Po/rho-u, so-s
-
-                sol = fsolve(f, [rhoo, To], full_output=True)
-                rho, T = sol[0]
-                rhol = self._Liquid_Density(T)
-                rhov = self._Vapor_Density(T)
-                if sol[2] != 1 or rhov <= rho <= rhol:
-
-                    def f(parr):
-                        T, rhol, rhog, x = parr
-                        tau = Tc/T
-                        deltaL = rhol/self.rhoc
-                        deltaG = rhog/self.rhoc
-
-                        idealL = self._phi0(tau, deltaL)
-                        fiot = idealL["fiot"]
-                        fioL = idealL["fio"]
-                        idealG = self._phi0(tau, deltaG)
-                        fioG = idealG["fio"]
-
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
-                        hoL = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
-                        soL = self.R*(tau*(fiot+firtL)-fioL-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
-                        hoG = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
-                        soG = self.R*(tau*(fiot+firtG)-fioG-firG)
-
-                        Jl = rhol*(1+deltaL*firdL)
-                        Jv = rhog*(1+deltaG*firdG)
-                        K = firL-firG
-
-                        Ps = self.R*T*rhol*rhog/(rhol-rhog)*(K+log(rhol/rhog))
-                        vu = hoG-Ps/rhog
-                        lu = hoL-Ps/rhol
-
-                        return (Jl-Jv,
-                                Jl*(1/rhog-1/rhol)-log(rhol/rhog)-K,
-                                soL*(1-x)+soG*x - s,
-                                lu*(1-x)+vu*x - u)
-
-                    for to in [To, 300, 400, 500, 600]:
-                        rLo = self._Liquid_Density(to)
-                        rGo = self._Vapor_Density(to)
-                        sol = fsolve(f, [to, rLo, rGo, 0.5], full_output=True)
-                        T, rhoL, rhoG, x = sol[0]
-                        if sol[2] == 1 and 0 <= x <= 1 and \
-                                sum(abs(sol[1]["fvec"])) < 1e-5:
-                            break
-
-                    if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
-
-                    liquido = self._Helmholtz(rhoL, T)
-                    vapor = self._Helmholtz(rhoG, T)
-                    P = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(
-                        liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
-
-            elif self._mode == "Trho":
-                if T < self.Tc:
-                    rhov = self._Vapor_Density(T)
-                    rhol = self._Liquid_Density(T)
-                    if rhol > rho > rhov:
-                        rhol, rhov, Ps = self._saturation(T)
-                        if rhol > rho > rhov:
-                            vapor = self._Helmholtz(rhov, T)
-                            liquido = self._Helmholtz(rhol, T)
-                            x = (1/rho-1/rhol)/(1/rhov-1/rhol)
-                            P = Ps/1000
-
-            rho = float(rho)
-            T = float(T)
-            propiedades = self._Helmholtz(rho, T)
-
-            if T > self.Tc:
-                x = 1
-            elif x is None:
-                x = 0
-
-            if not P:
-                P = propiedades["P"]/1000.
-
-        elif self._mode == "Tx":
-            # Check input T in saturation range
-            if self.Tt > T or self.Tc < T or x > 1 or x < 0:
-                raise NotImplementedError("Incoming out of bound")
-
-            rhol, rhov, Ps = self._saturation(T)
-            vapor = self._Helmholtz(rhov, T)
-            liquido = self._Helmholtz(rhol, T)
-            if x == 0:
-                propiedades = liquido
-            elif x == 1:
-                propiedades = vapor
-            P = Ps/1000.
-
-        elif self._mode == "Px":
-            # Check input P in saturation range
-            if self.Pc < P or x > 1 or x < 0:
-                raise NotImplementedError("Incoming out of bound")
-
-            # Iterate over saturation routine to get T
-            def f(T):
-                rhol = self._Liquid_Density(T)
-                rhog = self._Vapor_Density(T)
-
-                deltaL = rhol/self.rhoc
-                deltaG = rhog/self.rhoc
-
-                tau = Tc/T
-
-                firL = _phir(tau, deltaL, self._constants)
-                firG = _phir(tau, deltaG, self._constants)
-                Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
-                    firL-firG+log(deltaL/deltaG))
-                return Ps/1000-P
-
-            if T0:
-                To = T0
-            elif self.name == "water":
-                To = _TSat_P(P)
-            else:
-                To = (self.Tc+self.Tt)/2
-            T = fsolve(f, To)[0]
-            rhol, rhov, Ps = self._saturation(T)
-            vapor = self._Helmholtz(rhov, T)
-            liquido = self._Helmholtz(rhol, T)
-            if x == 0:
-                propiedades = liquido
-            elif x == 1:
-                propiedades = vapor
-
+                    x = (1/rho-1/rhol)/(1/rhov-1/rhol)
+                    P = Ps/1000
+        self.solve_case1(T, P, x, rho, liquido, vapor)
+
+    def solve_case1(self, T: float, P: float, x: Optional[float], rho: float,
+                    liquido: Optional[MEoSProperties],
+                    vapor: Optional[MEoSProperties]) -> None:
+        """Post processing for most solve cases except Tx and Px."""
+        # T, P, rho and x are really sometimes float and sometimes int.
+        T = float(T)
+        P = float(P)
+        rho = float(rho)
+        if x is not None:
+            x = float(x)
+        propiedades = self._Helmholtz(rho, T)
+
+        if T > self._constant_Tref:
+            x = 1.0
+        elif x is None:
+            x = 0.0
+
+        if not P:
+            P = propiedades.P/1000.
+        self.dofill(T, P, x, propiedades, liquido, vapor)
+
+    def solve_T_x(self, T: float, x: float) -> None:
+        """Solve for properties using T & x."""
+        # Check input T in saturation range
+        if self.Tt > T or self._constant_Tref < T or x > 1 or x < 0:
+            raise NotImplementedError("Incoming out of bound")
+
+        rhol, rhov, Ps = self._saturation(T)
+        vapor = self._Helmholtz(rhov, T)
+        liquido = self._Helmholtz(rhol, T)
+        propiedades: Optional[MEoSProperties] = None
+        if x == 0.0:
+            propiedades = liquido
+        elif x == 1.0:
+            propiedades = vapor
+        P = Ps/1000.0
+        self.dofill(T, P, x, propiedades, liquido, vapor)
+
+    def solve_P_x(self, P: float, x: float, T0: Optional[float]) -> None:
+        """Solve for properties using P & x."""
+        # Check input P in saturation range
+        if self.Pc < P or x > 1 or x < 0:
+            raise NotImplementedError("Incoming out of bound")
+
+        # Iterate over saturation routine to get T
+        def t_func(T: float) -> float:
+            rhol = self._Liquid_Density(T)
+            rhog = self._Vapor_Density(T)
+
+            deltaL = rhol/self._constant_rhoc
+            deltaG = rhog/self._constant_rhoc
+
+            tau = self._constant_Tref/T
+
+            firL = self.residual.phir(tau, deltaL)
+            firG = self.residual.phir(tau, deltaG)
+            Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
+                firL-firG+log(deltaL/deltaG))
+            return Ps/1000-P
+
+        if T0:
+            To = T0
+        elif self.name == "water":
+            To = _TSat_P(P)
+        else:
+            To = (self._constant_Tref+self.Tt)/2
+        T = float(fsolve(t_func, To)[0])
+        rhol, rhov, Ps = self._saturation(T)
+        vapor = self._Helmholtz(rhov, T)
+        liquido = self._Helmholtz(rhol, T)
+        propiedades: Optional[MEoSProperties] = None
+        if x == 0.0:
+            propiedades = liquido
+        elif x == 1.0:
+            propiedades = vapor
+        self.dofill(T, P, x, propiedades, liquido, vapor)
+
+    def dofill(self, T, P, x, propiedades, liquido, vapor):
+        """Finish filling the class."""
+        self.status = 1
         self.T = T
-        self.Tr = T/self.Tc
+        self.Tr = T/self._constant_Tref
         self.P = P
         self.Pr = self.P/self.Pc
         self.x = x
@@ -1409,15 +1372,15 @@ class MEoS(_fase):
             region = 4
         else:
             region = 0
-        self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x, region)
+        self.phase = getphase(self._constant_Tref, self.Pc, self.T, self.P, self.x, region)
 
         self.Liquid = _fase()
         self.Gas = _fase()
-        if x == 0:
+        if x == 0.0:
             # liquid phase
             self.fill(self.Liquid, propiedades)
             self.fill(self, propiedades)
-        elif x == 1:
+        elif x == 1.0:
             # vapor phase
             self.fill(self.Gas, propiedades)
             self.fill(self, propiedades)
@@ -1441,18 +1404,18 @@ class MEoS(_fase):
             self.IntP = x*self.Gas.IntP+(1-x)*self.Liquid.IntP
 
         # Calculate special properties useful only for one phase
-        if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self.Tc):
+        if self._mode in ("Px", "Tx") or (x < 1 and self.Tt <= T <= self._constant_Tref):
             self.sigma = self._surface(T)
         else:
             self.sigma = None
 
-        vir = self._virial(T)
-        self.virialB = vir["B"]/self.rhoc
-        self.virialC = vir["C"]/self.rhoc**2
+        vir = self.residual._virial(T, self._constant_Tref)
+        self.virialB = vir["B"]/self._constant_rhoc
+        self.virialC = vir["C"]/self._constant_rhoc**2
 
         if 0 < x < 1:
-            self.Hvap = vapor["h"]-liquido["h"]
-            self.Svap = vapor["s"]-liquido["s"]
+            self.Hvap = vapor.h-liquido.h
+            self.Svap = vapor.s-liquido.s
         else:
             self.Hvap = None
             self.Svap = None
@@ -1474,22 +1437,33 @@ class MEoS(_fase):
         cp0.v = self.v0
         self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
 
-    def fill(self, fase, estado):
+    # Derived classes must implement _visco to call fill()
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
+        raise NotImplementedError
+
+    # Derived classes must implement _thermo to call fill()
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
+        raise NotImplementedError
+
+    def fill(self, fase: _fase, estado: MEoSProperties) -> None:
         """Fill phase properties"""
-        fase.rho = estado["rho"]
+        fase.rho = estado.rho
         fase.v = 1/fase.rho
 
-        fase.h = estado["h"]
-        fase.s = estado["s"]
+        assert(isinstance(self.M, float))
+        assert(isinstance(self.R, float))
+
+        fase.h = estado.h
+        fase.s = estado.s
         fase.u = fase.h-self.P*1000*fase.v
         fase.a = fase.u-self.T*fase.s
         fase.g = fase.h-self.T*fase.s
 
         fase.Z = self.P*fase.v/self.T/self.R*1e3
-        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"] -
-                      log(1+estado["delta"]*estado["fird"]))
+        fase.fi = exp(estado.fir+estado.delta*estado.fird
+                      - log(1+estado.delta*estado.fird))
         fase.f = fase.fi*self.P
-        fase.cv = estado["cv"]
+        fase.cv = estado.cv
 
         fase.rhoM = fase.rho/self.M
         fase.hM = fase.h*self.M
@@ -1498,8 +1472,8 @@ class MEoS(_fase):
         fase.aM = fase.a*self.M
         fase.gM = fase.g*self.M
 
-        fase.alfap = estado["alfap"]
-        fase.betap = estado["betap"]
+        fase.alfap = estado.alfap
+        fase.betap = estado.betap
 
         fase.cp = self.derivative("h", "T", "P", fase)
         fase.cp_cv = fase.cp/fase.cv
@@ -1538,64 +1512,65 @@ class MEoS(_fase):
         fase.nu = fase.mu/fase.rho
         fase.alfa = fase.k/1000/fase.rho/fase.cp
         fase.Prandt = fase.mu*fase.cp*1000/fase.k
+        fase.epsilon = None
+        fase.n = None
         if self.name == "water":
             try:
                 fase.epsilon = _Dielectric(fase.rho, self.T)
             except NotImplementedError:
                 fase.epsilon = None
 
-            try:
-                fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
-            except NotImplementedError:
-                fase.n = None
-        else:
-            fase.epsilon = None
-            fase.n = None
+            if self.kwargs["l"] is not None:
+                try:
+                    fase.n = _Refractive(fase.rho, self.T, self.kwargs["l"])
+                except NotImplementedError:
+                    fase.n = None
 
-    def derivative(self, z, x, y, fase):
-        """Wrapper derivative for custom derived properties
-        where x, y, z can be: P, T, v, rho, u, h, s, g, a"""
+    def derivative(self, z: str, x: str, y: str, fase: _fase) -> float:
+        """
+        Wrapper derivative for custom derived properties
+        where x, y, z can be: P, T, v, rho, u, h, s, g, a
+        """
         return deriv_H(self, z, x, y, fase)
 
-    def _saturation(self, T):
+    def _saturation(self, T: float) -> Tuple[float, float, float]:
         """Saturation calculation for two phase search"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rhoc = self._constant_rhoc
 
-        if T > Tc:
-            T = Tc
-        tau = Tc/T
+        if T > self._constant_Tref:
+            T = self._constant_Tref
+        tau = self._constant_Tref/T
 
         rhoLo = self._Liquid_Density(T)
         rhoGo = self._Vapor_Density(T)
 
-        def f(parr):
+        def f2(parr: Tuple[float, float]) -> Tuple[float, float]:
             rhol, rhog = parr
             deltaL = rhol/rhoc
             deltaG = rhog/rhoc
-            phirL = _phir(tau, deltaL, self._constants)
-            phirG = _phir(tau, deltaG, self._constants)
-            phirdL = _phird(tau, deltaL, self._constants)
-            phirdG = _phird(tau, deltaG, self._constants)
+            phirL = self.residual.phir(tau, deltaL)
+            phirG = self.residual.phir(tau, deltaG)
+            phirdL = self.residual.phird(tau, deltaL)
+            phirdG = self.residual.phird(tau, deltaG)
             Jl = deltaL*(1+deltaL*phirdL)
             Jv = deltaG*(1+deltaG*phirdG)
             Kl = deltaL*phirdL+phirL+log(deltaL)
             Kv = deltaG*phirdG+phirG+log(deltaG)
             return Kv-Kl, Jv-Jl
 
-        rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
+        rhoL, rhoG = tuple(map(float, fsolve(f2, [rhoLo, rhoGo])))
         if rhoL == rhoG:
             Ps = self.Pc
         else:
-            deltaL = rhoL/self.rhoc
-            deltaG = rhoG/self.rhoc
-            firL = _phir(tau, deltaL, self._constants)
-            firG = _phir(tau, deltaG, self._constants)
+            deltaL = rhoL/self._constant_rhoc
+            deltaG = rhoG/self._constant_rhoc
+            firL = self.residual.phir(tau, deltaL)
+            firG = self.residual.phir(tau, deltaG)
 
             Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
 
-    def _Helmholtz(self, rho, T):
+    def _Helmholtz(self, rho: float, T: float) -> MEoSProperties:
         """Calculated properties from helmholtz free energy and derivatives
 
         Parameters
@@ -1627,68 +1602,41 @@ class MEoS(_fase):
         Scientific Use, September 2016, Table 3
         http://www.iapws.org/relguide/IAPWS-95.html
         """
-        if isinstance(rho, ndarray):
-            rho = rho[0]
-        if isinstance(T, ndarray):
-            T = T[0]
         if rho < 0:
             rho = 1e-20
         if T < 50:
             T = 50
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
-        delta = rho/rhoc
-        tau = Tc/T
+        delta = rho/self._constant_rhoc
+        tau = self._constant_Tref/T
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
 
-        res = self._phir(tau, delta)
-        fir = res["fir"]
-        firt = res["firt"]
-        firtt = res["firtt"]
-        fird = res["fird"]
-        firdd = res["firdd"]
-        firdt = res["firdt"]
+        res = self.residual.helmholtz(tau, delta)
 
-        propiedades = {}
-        propiedades["fir"] = fir
-        propiedades["fird"] = fird
-        propiedades["firdd"] = firdd
-        propiedades["delta"] = delta
+        P = (1+delta*res.fid)*self.R*T*rho
+        h = self.R*T*(1+tau*(ideal.fit+res.fit)+delta*res.fid)
+        s = self.R*(tau*(ideal.fit+res.fit)-ideal.fi-res.fi)
+        cv = -self.R*tau**2*(ideal.fitt+res.fitt)
+        alfap = (1-delta*tau*res.fidt/(1+delta*res.fid))/T
+        betap = rho*(1+(delta*res.fid+delta**2*res.fidd)/(1+delta*res.fid))
+        return MEoSProperties(rho, P, h, s, cv, alfap, betap,
+                              res.fi, res.fid, res.fidd, delta)
 
-        propiedades["rho"] = rho
-        propiedades["P"] = (1+delta*fird)*self.R*T*rho
-        propiedades["h"] = self.R*T*(1+tau*(fiot+firt)+delta*fird)
-        propiedades["s"] = self.R*(tau*(fiot+firt)-fio-fir)
-        propiedades["cv"] = -self.R*tau**2*(fiott+firtt)
-        propiedades["alfap"] = (1-delta*tau*firdt/(1+delta*fird))/T
-        propiedades["betap"] = rho*(
-            1+(delta*fird+delta**2*firdd)/(1+delta*fird))
-        return propiedades
-
-    def _prop0(self, rho, T):
+    def _prop0(self, rho: float, T: float) -> _fase:
         """Ideal gas properties"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
-        delta = rho/rhoc
-        tau = Tc/T
+        delta = rho/self._constant_rhoc
+        tau = self._constant_Tref/T
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
 
         propiedades = _fase()
-        propiedades.h = self.R*T*(1+tau*fiot)
-        propiedades.s = self.R*(tau*fiot-fio)
-        propiedades.cv = -self.R*tau**2*fiott
-        propiedades.cp = self.R*(-tau**2*fiott+1)
-        propiedades.alfap = 1/T
+        propiedades.h = self.R*T*(1+tau*ideal.fit)
+        propiedades.s = self.R*(tau*ideal.fit-ideal.fi)
+        propiedades.cv = -self.R*tau**2*ideal.fitt
+        propiedades.cp = self.R*(-tau**2*ideal.fitt+1)
+        propiedades.alfap = 1.0/T
         propiedades.betap = rho
         return propiedades
 
-    def _phi0(self, tau, delta):
+    def _phi0(self, tau: float, delta: float) -> HelmholtzDerivatives:
         """Ideal gas Helmholtz free energy and derivatives
 
         Parameters
@@ -1717,7 +1665,17 @@ class MEoS(_fase):
         """
         Fi0 = self.Fi0
 
-        fio = Fi0["ao_log"][0]*log(delta)+Fi0["ao_log"][1]*log(tau)
+        try:
+            dlog = log(delta)
+        except ValueError:
+            dlog = float('nan')
+
+        try:
+            tlog = log(tau)
+        except ValueError:
+            tlog = float('nan')
+
+        fio = Fi0["ao_log"][0]*dlog+Fi0["ao_log"][1]*tlog
         fiot = +Fi0["ao_log"][1]/tau
         fiott = -Fi0["ao_log"][1]/tau**2
 
@@ -1733,9 +1691,17 @@ class MEoS(_fase):
                 fiott += n*t*(t-1)*tau**(t-2)
 
         for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
-            fio += n*log(1-exp(-tau*t))
-            fiot += n*t*((1-exp(-t*tau))**-1-1)
-            fiott -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
+            try:
+                expt = exp(-t*tau)
+            except OverflowError:
+                expt = float('inf')
+            try:
+                logterm = log(1-expt)
+            except ValueError:
+                logterm = float('nan')
+            fio += n*logterm
+            fiot += n*t*((1-expt)**-1-1)
+            fiott -= n*t**2*expt*(1-expt)**-2
 
         # Extension to especial terms of air
         if "ao_exp2" in Fi0:
@@ -1744,238 +1710,9 @@ class MEoS(_fase):
                 fiot += n*g/(C*exp(-g*tau)+1)
                 fiott += C*n*g**2*exp(-g*tau)/(C*exp(-g*tau)+1)**2
 
-        prop = {}
-        prop["fio"] = fio
-        prop["fiot"] = fiot
-        prop["fiott"] = fiott
-        prop["fiod"] = fiod
-        prop["fiodd"] = fiodd
-        prop["fiodt"] = fiodt
-        return prop
+        return HelmholtzDerivatives(fio, fiot, fiod, fiott, fiodd, fiodt)
 
-    def _phir(self, tau, delta):
-        """Residual contribution to the free Helmholtz energy
-
-        Parameters
-        ----------
-        tau : float
-            Inverse reduced temperature Tc/T, [-]
-        delta : float
-            Reduced density rho/rhoc, [-]
-
-        Returns
-        -------
-        prop : dict
-          Dictionary with residual adimensional helmholtz energy and deriv:
-            * fir
-            * firt: ∂fir/∂τ|δ,x
-            * fird: ∂fir/∂δ|τ,x
-            * firtt: ∂²fir/∂τ²|δ,x
-            * firdt: ∂²fir/∂τ∂δ|x
-            * firdd: ∂²fir/∂δ²|τ,x
-
-        References
-        ----------
-        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-        Thermodynamic Properties of Ordinary Water Substance for General and
-        Scientific Use, September 2016, Table 5
-        http://www.iapws.org/relguide/IAPWS-95.html
-        """
-        fir = fird = firdd = firt = firtt = firdt = 0
-
-        # Polinomial terms
-        nr1 = self._constants.get("nr1", [])
-        d1 = self._constants.get("d1", [])
-        t1 = self._constants.get("t1", [])
-        for n, d, t in zip(nr1, d1, t1):
-            fir += n*delta**d*tau**t
-            fird += n*d*delta**(d-1)*tau**t
-            firdd += n*d*(d-1)*delta**(d-2)*tau**t
-            firt += n*t*delta**d*tau**(t-1)
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)
-            firdt += n*t*d*delta**(d-1)*tau**(t-1)
-
-        # Exponential terms
-        nr2 = self._constants.get("nr2", [])
-        d2 = self._constants.get("d2", [])
-        g2 = self._constants.get("gamma2", [])
-        t2 = self._constants.get("t2", [])
-        c2 = self._constants.get("c2", [])
-        for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            fir += n*delta**d*tau**t*exp(-g*delta**c)
-            fird += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            firdd += n*exp(-g*delta**c)*delta**(d-2)*tau**t * \
-                ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
-            firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)*exp(-g*delta**c)
-            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*exp(
-                -g*delta**c)
-
-        # Gaussian terms
-        nr3 = self._constants.get("nr3", [])
-        d3 = self._constants.get("d3", [])
-        t3 = self._constants.get("t3", [])
-        a3 = self._constants.get("alfa3", [])
-        e3 = self._constants.get("epsilon3", [])
-        b3 = self._constants.get("beta3", [])
-        g3 = self._constants.get("gamma3", [])
-        for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-            fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
-            fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    d/delta-2*a*(delta-e))
-            firdd += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2 -
-                    4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
-            firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    t/tau-2*b*(tau-g))
-            firtt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    (t/tau-2*b*(tau-g))**2-t/tau**2-2*b)
-            firdt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    t/tau-2*b*(tau-g))*(d/delta-2*a*(delta-e))
-
-        # Non analitic terms
-        nr4 = self._constants.get("nr4", [])
-        a4 = self._constants.get("a4", [])
-        b4 = self._constants.get("b4", [])
-        Ai = self._constants.get("A", [])
-        Bi = self._constants.get("B", [])
-        Ci = self._constants.get("C", [])
-        Di = self._constants.get("D", [])
-        bt4 = self._constants.get("beta4", [])
-        for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-            Fd = -2*C*F*(delta-1)
-            Fdd = 2*C*F*(2*C*(delta-1)**2-1)
-            Ft = -2*D*F*(tau-1)
-            Ftt = 2*D*F*(2*D*(tau-1)**2-1)
-            Fdt = 4*C*D*F*(delta-1)*(tau-1)
-
-            Delta = Tita**2+B*((delta-1)**2)**a
-            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1) +
-                                2*B*a*((delta-1)**2)**(a-1))
-            if delta == 1:
-                Deltadd = 0
-            else:
-                Deltadd = Deltad/(delta-1)+(delta-1)**2*(
-                    4*B*a*(a-1)*((delta-1)**2)**(a-2) +
-                    2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2 +
-                    A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
-
-            DeltaBd = b*Delta**(b-1)*Deltad
-            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            DeltaBt = -2*Tita*b*Delta**(b-1)
-            DeltaBtt = 2*b*Delta**(b-1)+4*Tita**2*b*(b-1)*Delta**(b-2)
-            DeltaBdt = -A*b*2/bt*Delta**(b-1)*(delta-1)*((delta-1)**2)**(
-                0.5/bt-1)-2*Tita*b*(b-1)*Delta**(b-2)*Deltad
-
-            fir += n*Delta**b*delta*F
-            fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            firdd += n*(Delta**b*(2*Fd+delta*Fdd) + 2*DeltaBd*(F+delta*Fd) +
-                        DeltaBdd*delta*F)
-            firt += n*delta*(DeltaBt*F+Delta**b*Ft)
-            firtt += n*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b*Ftt)
-            firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft +
-                        DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
-
-        prop = {}
-        prop["fir"] = fir
-        prop["firt"] = firt
-        prop["firtt"] = firtt
-        prop["fird"] = fird
-        prop["firdd"] = firdd
-        prop["firdt"] = firdt
-        return prop
-
-    def _virial(self, T):
-        """Virial coefficient
-
-        Parameters
-        ----------
-        T : float
-            Temperature [K]
-
-        Returns
-        -------
-        prop : dict
-            Dictionary with residual adimensional helmholtz energy:
-                * B: ∂fir/∂δ|δ->0
-                * C: ∂²fir/∂δ²|δ->0
-        """
-        Tc = self._constants.get("Tref", self.Tc)
-        tau = Tc/T
-        B = C = 0
-        delta = 1e-200
-
-        # Polinomial terms
-        nr1 = self._constants.get("nr1", [])
-        d1 = self._constants.get("d1", [])
-        t1 = self._constants.get("t1", [])
-        for n, d, t in zip(nr1, d1, t1):
-            B += n*d*delta**(d-1)*tau**t
-            C += n*d*(d-1)*delta**(d-2)*tau**t
-
-        # Exponential terms
-        nr2 = self._constants.get("nr2", [])
-        d2 = self._constants.get("d2", [])
-        g2 = self._constants.get("gamma2", [])
-        t2 = self._constants.get("t2", [])
-        c2 = self._constants.get("c2", [])
-        for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            B += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            C += n*exp(-g*delta**c)*(delta**(d-2)*tau**t*(
-                (d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c))
-
-        # Gaussian terms
-        nr3 = self._constants.get("nr3", [])
-        d3 = self._constants.get("d3", [])
-        t3 = self._constants.get("t3", [])
-        a3 = self._constants.get("alfa3", [])
-        e3 = self._constants.get("epsilon3", [])
-        b3 = self._constants.get("beta3", [])
-        g3 = self._constants.get("gamma3", [])
-        for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-            B += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    d/delta-2*a*(delta-e))
-            C += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                    -2*a*delta**d+4*a**2*delta**d*(
-                        delta-e)**2-4*d*a*delta**2*(
-                            delta-e)+d*2*delta)
-
-        # Non analitic terms
-        nr4 = self._constants.get("nr4", [])
-        a4 = self._constants.get("a4", [])
-        b4 = self._constants.get("b4", [])
-        Ai = self._constants.get("A", [])
-        Bi = self._constants.get("B", [])
-        Ci = self._constants.get("C", [])
-        Di = self._constants.get("D", [])
-        bt4 = self._constants.get("beta4", [])
-        for n, a, b, A, B_, C_, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-            Delta = Tita**2+B_*((delta-1)**2)**a
-            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(
-                0.5/bt-1)+2*B_*a*((delta-1)**2)**(a-1))
-            Deltadd = Deltad/(delta-1) + (delta-1)**2*(
-                4*B_*a*(a-1)*((delta-1)**2)**(a-2) +
-                2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2 +
-                A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
-            DeltaBd = b*Delta**(b-1)*Deltad
-            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            F = exp(-C_*(delta-1)**2-D*(tau-1)**2)
-            Fd = -2*C_*F*(delta-1)
-            Fdd = 2*C_*F*(2*C_*(delta-1)**2-1)
-
-            B += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd) +
-                    DeltaBdd*delta*F)
-
-        prop = {}
-        prop["B"] = B
-        prop["C"] = C
-        return prop
-
-    def _derivDimensional(self, rho, T):
+    def _derivDimensional(self, rho: float, T: float) -> HelmholtzDerivatives:
         """Calcule the dimensional form or Helmholtz free energy derivatives
 
         Parameters
@@ -2005,46 +1742,28 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/SeaAir.html
         """
         if not rho:
-            prop = {}
-            prop["fir"] = 0
-            prop["firt"] = 0
-            prop["fird"] = 0
-            prop["firtt"] = 0
-            prop["firdt"] = 0
-            prop["firdd"] = 0
-            return prop
+            return HelmholtzDerivatives(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-        R = self._constants.get("R")/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rhoc = self._constant_rhoc
+        Tc = self._constant_Tref
         delta = rho/rhoc
         tau = Tc/T
 
         ideal = self._phi0(tau, delta)
-        fio = ideal["fio"]
-        fiot = ideal["fiot"]
-        fiott = ideal["fiott"]
-        fiod = ideal["fiod"]
-        fiodd = ideal["fiodd"]
 
-        res = self._phir(tau, delta)
-        fir = res["fir"]
-        firt = res["firt"]
-        firtt = res["firtt"]
-        fird = res["fird"]
-        firdd = res["firdd"]
-        firdt = res["firdt"]
+        res = self.residual.helmholtz(tau, delta)
 
-        prop = {}
-        prop["fir"] = R*T*(fio+fir)
-        prop["firt"] = R*(fio+fir-(fiot+firt)*tau)
-        prop["fird"] = R*T/rhoc*(fiod+fird)
-        prop["firtt"] = R*tau**2/T*(fiott+firtt)
-        prop["firdt"] = R/rhoc*(fiod+fird-firdt*tau)
-        prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
-        return prop
+        R = self.R
 
-    def _surface(self, T):
+        fir = R*T*(ideal.fi+res.fi)
+        firt = R*(ideal.fi+res.fi-(ideal.fit+res.fit)*tau)
+        fird = R*T/rhoc*(ideal.fid+res.fid)
+        firtt = R*tau**2/T*(ideal.fitt+res.fitt)
+        firdt = R/rhoc*(ideal.fid+res.fid-res.fidt*tau)
+        firdd = R*T/rhoc**2*(ideal.fidd+res.fidd)
+        return HelmholtzDerivatives(fir, firt, fird, firtt, firdd, firdt)
+
+    def _surface(self, T: float) -> float:
         """Generic equation for the surface tension
 
         Parameters
@@ -2063,14 +1782,14 @@ class MEoS(_fase):
             sigma: coefficient
             exp: exponent
         """
-        tau = 1-T/self.Tc
-        sigma = 0
+        tau = 1-T/self._constant_Tref
+        sigma = 0.0
         for n, t in zip(self._surf["sigma"], self._surf["exp"]):
             sigma += n*tau**t
         return sigma
 
     @classmethod
-    def _Vapor_Pressure(cls, T):
+    def _Vapor_Pressure(cls, T: float) -> float:
         """Auxiliary equation for the vapour pressure
 
         Parameters
@@ -2090,15 +1809,15 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/Supp-sat.html, Eq.1
         """
         Tita = 1-T/cls.Tc
-        suma = 0
-        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+        suma = 0.0
+        for n, x in zip(cls._Pv_ao, cls._Pv_exp):
             suma += n*Tita**x
         Pr = exp(cls.Tc/T*suma)
         Pv = Pr*cls.Pc
         return Pv
 
     @classmethod
-    def _Liquid_Density(cls, T):
+    def _Liquid_Density(cls, T: float) -> float:
         """Auxiliary equation for the density of saturated liquid
 
         Parameters
@@ -2117,19 +1836,20 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.2
         """
-        eq = cls._rhoL["eq"]
+        # Convert numpy.Float64 back into Python floats.
+        T = float(T)
         Tita = 1-T/cls.Tc
-        if eq == 2:
+        if cls._rhoL_eq == 2:
             Tita = Tita**(1./3)
-        suma = 0
-        for n, x in zip(cls._rhoL["ao"], cls._rhoL["exp"]):
+        suma = 0.0
+        for n, x in zip(cls._rhoL_ao, cls._rhoL_exp):
             suma += n*Tita**x
         Pr = suma+1
         rho = Pr*cls.rhoc
         return rho
 
     @classmethod
-    def _Vapor_Density(cls, T):
+    def _Vapor_Density(cls, T: float) -> float:
         """Auxiliary equation for the density of saturated vapor
 
         Parameters
@@ -2148,19 +1868,23 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.3
         """
-        eq = cls._rhoG["eq"]
+        # Convert numpy.Float64 back into Python floats.
+        T = float(T)
         Tita = 1-T/cls.Tc
-        if eq == 4:
+        if cls._rhoG_eq == 4:
             Tita = Tita**(1./3)
-        suma = 0
-        for n, x in zip(cls._rhoG["ao"], cls._rhoG["exp"]):
+        suma = 0.0
+        for n, x in zip(cls._rhoG_ao, cls._rhoG_exp):
             suma += n*Tita**x
+            if type(suma) == complex:
+                suma = float('nan')
+
         Pr = exp(suma)
         rho = Pr*cls.rhoc
         return rho
 
     @classmethod
-    def _dPdT_sat(cls, T):
+    def _dPdT_sat(cls, T: float) -> float:
         """Auxiliary equation for the dP/dT along saturation line
 
         Parameters
@@ -2180,9 +1904,9 @@ class MEoS(_fase):
         http://www.iapws.org/relguide/Supp-sat.html, derived from Eq.1
         """
         Tita = 1-T/cls.Tc
-        suma1 = 0
-        suma2 = 0
-        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+        suma1 = 0.0
+        suma2 = 0.0
+        for n, x in zip(cls._Pv_ao, cls._Pv_exp):
             suma1 -= n*x*Tita**(x-1)/cls.Tc
             suma2 += n*Tita**x
         Pr = (cls.Tc*suma1/T-cls.Tc/T**2*suma2)*exp(cls.Tc/T*suma2)
@@ -2190,15 +1914,18 @@ class MEoS(_fase):
         return dPdT
 
 
-def mainClassDoc():
-    """Function decorator used to automatic adiction of base class MEoS in
-    subclass __doc__"""
-    def decorator(f):
+def mainClassDoc() -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """
+    Function decorator used to automatic adiction of base class MEoS in
+    subclass __doc__
+    """
+    def decorator(f: Callable[..., Any]) -> Callable[..., Any]:
         # __doc__ is only writable in python3.
-        # The doc build must be done with python3 so this snnippet do the work
+        # The doc build must be done with python3 so this snippet do the work
         py_version = platform.python_version()
         if py_version[0] == "3":
-            doc = f.__doc__.split(os.linesep)
+            if isinstance(f.__doc__, str):
+                doc = f.__doc__.split(os.linesep)
             try:
                 ind = doc.index("")
             except ValueError:
@@ -2206,7 +1933,8 @@ def mainClassDoc():
 
             doc1 = os.linesep.join(doc[:ind])
             doc3 = os.linesep.join(doc[ind:])
-            doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
+            if isinstance(MEoS.__doc__, str):
+                doc2 = os.linesep.join(MEoS.__doc__.split(os.linesep)[3:])
 
             f.__doc__ = doc1 + os.linesep + os.linesep + \
                 doc2 + os.linesep + os.linesep + doc3
@@ -2325,6 +2053,7 @@ class IAPWS95(MEoS):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
+
     name = "water"
     CASNumber = "7732-18-5"
     formula = "H2O"
@@ -2332,111 +2061,112 @@ class IAPWS95(MEoS):
     Tc = Tc
     rhoc = rhoc
     Pc = Pc
-    M = M
+    M = _global_M
     Tt = 273.16
     Tb = 373.1243
     f_acent = 0.3443
     momentoDipolar = 1.855
 
-    Fi0 = {"ao_log": [1, 3.00632],
-           "pow": [0, 1],
+    Fi0 = {"ao_log": [1.0, 3.00632],
+           "pow": [0.0, 1.0],
            "ao_pow": [-8.3204464837497, 6.6832105275932],
            "ao_exp": [0.012436, 0.97315, 1.2795, 0.96956, 0.24873],
            "titao": [1.28728967, 3.53734222, 7.74073708, 9.24437796,
                      27.5075105]}
 
-    _constants = {
-        "R": 8.314371357587,
+    _constant_R = 8.314371357587
+    _constant_rhoc = rhoc
+    _constant_Tref = Tc
+    residual = ResidualContribution(
+        nr1=[0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
+             0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
+             0.88089493102134e-2],
+        d1=[1, 1, 1, 2, 2, 3, 4],
+        t1=[-0.5, 0.875, 1, 0.5, 0.75, 0.375, 1],
 
-        "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
-                0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
-                0.88089493102134e-2],
-        "d1": [1, 1, 1, 2, 2, 3, 4],
-        "t1": [-0.5, 0.875, 1, 0.5, 0.75, 0.375, 1],
+        nr2=[-0.66856572307965, 0.20433810950965, -0.66212605039687e-4,
+             -0.19232721156002, -0.25709043003438, 0.16074868486251,
+             -0.4009282892587e-1, 0.39343422603254e-6, -0.75941377088144e-5,
+             0.56250979351888e-3, -0.15608652257135e-4, 0.11537996422951e-8,
+             .36582165144204e-6, -.13251180074668e-11, -.62639586912454e-9,
+             -0.10793600908932, 0.17611491008752e-1, 0.22132295167546,
+             -0.40247669763528, 0.58083399985759, 0.49969146990806e-2,
+             -0.31358700712549e-1, -0.74315929710341, 0.47807329915480,
+             0.20527940895948e-1, -0.13636435110343, 0.14180634400617e-1,
+             0.83326504880713e-2, -0.29052336009585e-1, 0.38615085574206e-1,
+             -0.20393486513704e-1, -0.16554050063734e-2, .19955571979541e-2,
+             0.15870308324157e-3, -0.16388568342530e-4, 0.43613615723811e-1,
+             0.34994005463765e-1, -0.76788197844621e-1, 0.22446277332006e-1,
+             -0.62689710414685e-4, -0.55711118565645e-9, -0.19905718354408,
+             0.31777497330738, -0.11841182425981],
+        c2=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 6, 6,
+            6, 6],
+        d2=[1, 1, 1, 2, 2, 3, 4, 4, 5, 7, 9, 10, 11, 13, 15, 1, 2, 2, 2, 3,
+            4, 4, 4, 5, 6, 6, 7, 9, 9, 9, 9, 9, 10, 10, 12, 3, 4, 4, 5, 14,
+            3, 6, 6, 6],
+        t2=[4, 6, 12, 1, 5, 4, 2, 13, 9, 3, 4, 11, 4, 13, 1, 7, 1, 9, 10,
+            10, 3, 7, 10, 10, 6, 10, 10, 1, 2, 3, 4, 8, 6, 9, 8, 16, 22, 23,
+            23, 10, 50, 44, 46, 50],
 
-        "nr2": [-0.66856572307965, 0.20433810950965, -0.66212605039687e-4,
-                -0.19232721156002, -0.25709043003438, 0.16074868486251,
-                -0.4009282892587e-1, 0.39343422603254e-6, -0.75941377088144e-5,
-                0.56250979351888e-3, -0.15608652257135e-4, 0.11537996422951e-8,
-                .36582165144204e-6, -.13251180074668e-11, -.62639586912454e-9,
-                -0.10793600908932, 0.17611491008752e-1, 0.22132295167546,
-                -0.40247669763528, 0.58083399985759, 0.49969146990806e-2,
-                -0.31358700712549e-1, -0.74315929710341, 0.47807329915480,
-                0.20527940895948e-1, -0.13636435110343, 0.14180634400617e-1,
-                0.83326504880713e-2, -0.29052336009585e-1, 0.38615085574206e-1,
-                -0.20393486513704e-1, -0.16554050063734e-2, .19955571979541e-2,
-                0.15870308324157e-3, -0.16388568342530e-4, 0.43613615723811e-1,
-                0.34994005463765e-1, -0.76788197844621e-1, 0.22446277332006e-1,
-                -0.62689710414685e-4, -0.55711118565645e-9, -0.19905718354408,
-                0.31777497330738, -0.11841182425981],
-        "c2": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
-               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 6, 6,
-               6, 6],
-        "d2": [1, 1, 1, 2, 2, 3, 4, 4, 5, 7, 9, 10, 11, 13, 15, 1, 2, 2, 2, 3,
-               4, 4, 4, 5, 6, 6, 7, 9, 9, 9, 9, 9, 10, 10, 12, 3, 4, 4, 5, 14,
-               3, 6, 6, 6],
-        "t2": [4, 6, 12, 1, 5, 4, 2, 13, 9, 3, 4, 11, 4, 13, 1, 7, 1, 9, 10,
-               10, 3, 7, 10, 10, 6, 10, 10, 1, 2, 3, 4, 8, 6, 9, 8, 16, 22, 23,
-               23, 10, 50, 44, 46, 50],
-        "gamma2": [1]*44,
+        nr3=[-0.31306260323435e2, 0.31546140237781e2, -0.25213154341695e4],
+        d3=[3]*3,
+        t3=[0, 1, 4],
+        alfa3=[20]*3,
+        beta3=[150, 150, 250],
+        gamma3=[1.21, 1.21, 1.25],
+        epsilon3=[1.]*3,
 
-        "nr3": [-0.31306260323435e2, 0.31546140237781e2, -0.25213154341695e4],
-        "d3": [3]*3,
-        "t3": [0, 1, 4],
-        "alfa3": [20]*3,
-        "beta3": [150, 150, 250],
-        "gamma3": [1.21, 1.21, 1.25],
-        "epsilon3": [1.]*3,
+        nr4=[-0.14874640856724, 0.31806110878444],
+        a4=[3.5, 3.5],
+        b4=[0.85, 0.95],
+        B=[0.2, 0.2],
+        C=[28, 32],
+        D=[700, 800],
+        A=[0.32, .32],
+        beta4=[0.3, 0.3],
+    )
 
-        "nr4": [-0.14874640856724, 0.31806110878444],
-        "a4": [3.5, 3.5],
-        "b4": [0.85, 0.95],
-        "B": [0.2, 0.2],
-        "C": [28, 32],
-        "D": [700, 800],
-        "A": [0.32, .32],
-        "beta4": [0.3, 0.3]}
+    _Pv_ao = [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
+              1.80122502]
+    _Pv_exp = [1.0, 1.5, 3.0, 3.5, 4.0, 7.5]
+    _rhoL_eq = 2
+    _rhoL_ao = [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
+                -6.74694450e5]
+    _rhoL_exp = [1.0, 2.0, 5.0, 16.0, 43.0, 110]
+    _rhoG_eq = 4
+    _rhoG_ao = [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
+                -63.9201063]
+    _rhoG_exp = [1.0, 2.0, 4.0, 9.0, 18.5, 35.5]
 
-    _Pv = {
-        "ao": [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
-               1.80122502],
-        "exp": [1, 1.5, 3, 3.5, 4, 7.5]}
-    _rhoL = {
-        "eq": 2,
-        "ao": [1.99274064, 1.09965342, -0.510839303, -1.75493479, -45.5170352,
-               -6.74694450e5],
-        "exp": [1, 2, 5, 16, 43, 110]}
-    _rhoG = {
-        "eq": 4,
-        "ao": [-2.0315024, -2.6830294, -5.38626492, -17.2991605, -44.7586581,
-               -63.9201063],
-        "exp": [1, 2, 4, 9, 18.5, 35.5]}
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    def _phi0(self, tau, delta):
+    def _phi0(self, tau: float, delta: float) -> HelmholtzDerivatives:
         """Low temperature extension of the IAPWS-95"""
         prop = MEoS._phi0(self, tau, delta)
 
-        T = self.Tc/tau
+        T = self._constant_Tref/tau
         if 50 <= T < 130:
             fex, fext, fextt = self._phiex(T)
-            prop["fio"] += fex
-            prop["fiot"] += fext
-            prop["fiott"] += fextt
+            prop.fi += fex
+            prop.fit += fext
+            prop.fitt += fextt
         return prop
 
-    def _phiex(self, T):
+    def _phiex(self, T: float) -> Tuple[float, float, float]:
         """Low temperature extension"""
-        tau = self.Tc/T
+        tau = self._constant_Tref/T
         E = 0.278296458178592
-        ep = self.Tc/130
-        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2 +
-                 tau**2/2/ep**3)
+        ep = self._constant_Tref/130
+        fex = E*(-1/2/tau-3/ep**2*(tau+ep)*log(tau/ep)-9/2/ep+9*tau/2/ep**2
+                 + tau**2/2/ep**3)
         fext = E*(1/2/tau**2-3/tau/ep-3/ep**2*log(tau/ep)+3/2/ep**2+tau/ep**3)
         fextt = E*(-1/tau+1/ep)**3
         return fex, fext, fextt
 
     @classmethod
-    def _alfa_sat(cls, T):
+    def _alfa_sat(cls, T: float) -> float:
         """Auxiliary equation for the alfa coefficient for calculate the
         enthalpy along the saturation line
 
@@ -2460,13 +2190,13 @@ class IAPWS95(MEoS):
               -135.003439, 0.981825814]
         expi = [0, -19, 1, 4.5, 5, 54.5]
         Tita = T/cls.Tc
-        alfa = 0
+        alfa = 0.0
         for d, x in zip(di, expi):
             alfa += d*Tita**x
         return alfa
 
     @classmethod
-    def _phi_sat(cls, T):
+    def _phi_sat(cls, T: float) -> float:
         """Auxiliary equation for the phi coefficient for calculate the
         entropy along the saturation line
 
@@ -2490,7 +2220,7 @@ class IAPWS95(MEoS):
               -135.003439*5/4, 0.981825814*109/107]
         expi = [0, -20, None, 3.5, 4, 53.5]
         Tita = T/cls.Tc
-        suma = 0
+        suma = 0.0
         for d, x in zip(di, expi):
             if x is None:
                 suma += d*log(Tita)
@@ -2500,7 +2230,7 @@ class IAPWS95(MEoS):
         return phi
 
     @classmethod
-    def _Liquid_Enthalpy(cls, T):
+    def _Liquid_Enthalpy(cls, T: float) -> float:
         """Auxiliary equation for the specific enthalpy for saturated liquid
 
         Parameters
@@ -2526,7 +2256,7 @@ class IAPWS95(MEoS):
         return h
 
     @classmethod
-    def _Vapor_Enthalpy(cls, T):
+    def _Vapor_Enthalpy(cls, T: float) -> float:
         """Auxiliary equation for the specific enthalpy for saturated vapor
 
         Parameters
@@ -2552,7 +2282,7 @@ class IAPWS95(MEoS):
         return h
 
     @classmethod
-    def _Liquid_Entropy(cls, T):
+    def _Liquid_Entropy(cls, T: float) -> float:
         """Auxiliary equation for the specific entropy for saturated liquid
 
         Parameters
@@ -2578,7 +2308,7 @@ class IAPWS95(MEoS):
         return s
 
     @classmethod
-    def _Vapor_Entropy(cls, T):
+    def _Vapor_Entropy(cls, T: float) -> float:
         """Auxiliary equation for the specific entropy for saturated vapor
 
         Parameters
@@ -2603,52 +2333,57 @@ class IAPWS95(MEoS):
         s = phi+dpdT/rho*1000
         return s
 
-    def _visco(self, rho, T, fase):
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
-        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st.fird+delta**2*st.firdd)
         return _Viscosity(rho, T, fase, drho)
 
-    def _thermo(self, rho, T, fase):
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         ref = IAPWS95()
         st = ref._Helmholtz(rho, 1.5*Tc)
         delta = rho/rhoc
-        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        drho = 1e3/self.R/1.5/Tc/(1+2*delta*st.fird+delta**2*st.firdd)
         return _ThCond(rho, T, fase, drho)
 
-    def _surface(self, T):
+    def _surface(self, T: float) -> float:
         s = _Tension(T)
         return s
 
 
 class IAPWS95_PT(IAPWS95):
     """Derivated class for direct P and T input"""
-    def __init__(self, P, T):
+
+    def __init__(self, P: float, T: float):
         IAPWS95.__init__(self, T=T, P=P)
 
 
 class IAPWS95_Ph(IAPWS95):
     """Derivated class for direct P and h input"""
-    def __init__(self, P, h):
+
+    def __init__(self, P: float, h: float):
         IAPWS95.__init__(self, P=P, h=h)
 
 
 class IAPWS95_Ps(IAPWS95):
     """Derivated class for direct P and s input"""
-    def __init__(self, P, s):
+
+    def __init__(self, P: float, s: float):
         IAPWS95.__init__(self, P=P, s=s)
 
 
 class IAPWS95_Px(IAPWS95):
     """Derivated class for direct P and v input"""
-    def __init__(self, P, x):
+
+    def __init__(self, P: float, x):
         IAPWS95.__init__(self, P=P, x=x)
 
 
 class IAPWS95_Tx(IAPWS95):
     """Derivated class for direct T and x input"""
-    def __init__(self, T, x):
+
+    def __init__(self, T: float, x):
         IAPWS95.__init__(self, T=T, x=x)
 
 
@@ -2670,6 +2405,7 @@ class D2O(MEoS):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
+
     name = "heavy water"
     CASNumber = "7789-20-0"
     formula = "D2O"
@@ -2683,62 +2419,62 @@ class D2O(MEoS):
     f_acent = 0.364
     momentoDipolar = 1.9
 
-    Fi0 = {"ao_log": [1, 3],
-           "pow": [0, 1],
+    Fi0 = {"ao_log": [1.0, 3.0],
+           "pow": [0.0, 1.0],
            "ao_pow": [-8.670994022646, 6.96033578458778],
            "ao_exp": [0.010633, 0.99787, 2.1483, 0.3549],
-           "titao": [308/Tc, 1695/Tc, 3949/Tc, 10317/Tc],
+           "titao": [308.0/Tc, 1695.0/Tc, 3949.0/Tc, 10317.0/Tc],
            "ao_hyp": [], "hyp": []}
 
-    _constants = {
-        "R": 8.3144598,
+    _constant_R = 8.3144598
+    _constant_rhoc = rhoc_D2O
+    _constant_Tref = Tc_D2O
+    residual = ResidualContribution(
+        nr1=[0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
+             -0.922466250, -0.139604190e-1],
+        d1=[4, 1, 1, 2, 2, 3],
+        t1=[1.0000, 0.6555, 0.9369, 0.5610, 0.7017, 1.0672],
+        nr2=[-0.125203570, -0.555391500e1, -0.493009740e1, -0.359470240e-1,
+             -0.936172870e1, -0.691835150],
+        c2=[1, 2, 2, 1, 2, 2],
+        d2=[1, 1, 3, 2, 2, 1],
+        t2=[3.9515, 4.6000, 5.1590, 0.2000, 5.4644, 2.3660],
 
-        "nr1": [0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
-                -0.922466250, -0.139604190e-1],
-        "d1": [4, 1, 1, 2, 2, 3],
-        "t1": [1.0000, 0.6555, 0.9369, 0.5610, 0.7017, 1.0672],
+        nr3=[-0.456110600e-1, -0.224513300e1, 0.860006070e1, -0.248410420e1,
+             0.164476900e2, 0.270393360e1, 0.375637470e2, -0.177607760e1,
+             0.220924640e1, 0.519652000e1, 0.421097400, -0.391921100],
+        t3=[3.4553, 1.4150, 1.5745, 3.4540, 3.8106, 4.8950, 1.4300, 1.5870,
+            3.7900, 2.6200, 1.9000, 4.3200],
+        d3=[1, 3, 1, 3, 1, 1, 2, 2, 2, 1, 1, 1],
+        alfa3=[0.6014, 1.4723, 1.5305, 2.4297, 1.3086, 1.3528, 3.4456,
+               1.2645, 2.5547, 1.2148, 18.738, 18.677],
+        beta3=[0.4200, 2.4318, 1.2888, 8.2710, 0.3673, 0.9504, 7.8318,
+               3.3281, 7.1753, 0.9465, 1177.0, 1167.0],
+        epsilon3=[1.8663, 0.2895, 0.5803, 0.2236, 0.6815, 0.9495, 1.1158,
+                  0.1607, 0.4144, 0.9683, 0.9488, 0.9487],
+        gamma3=[1.5414, 1.3794, 1.7385, 1.3045, 2.7242, 3.5321, 2.4552,
+                0.8319, 1.3500, 2.5617, 1.0491, 1.0486],
+        nr4=[], a4=[], b4=[], A=[], B=[], C=[], D=[], beta4=[],
+    )
 
-        "nr2": [-0.125203570, -0.555391500e1, -0.493009740e1, -0.359470240e-1,
-                -0.936172870e1, -0.691835150],
-        "c2": [1, 2, 2, 1, 2, 2],
-        "d2": [1, 1, 3, 2, 2, 1],
-        "t2": [3.9515, 4.6000, 5.1590, 0.2000, 5.4644, 2.3660],
-        "gamma2": [1]*6,
+    _Pv_ao = [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2]
+    _Pv_exp = [1.0, 1.5, 2.75, 3.0, 3.2]
+    _rhoL_eq = 1
+    _rhoL_ao = [0.26406e1, 0.97090e1, -0.18058e2, 0.87202e1, -0.74487e1]
+    _rhoL_exp = [0.3678, 1.9, 2.2, 2.63, 7.3]
+    _rhoG_eq = 3
+    _rhoG_ao = [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2,
+                -0.70412e2]
+    _rhoG_exp = [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]
 
-        "nr3": [-0.456110600e-1, -0.224513300e1, 0.860006070e1, -0.248410420e1,
-                0.164476900e2, 0.270393360e1, 0.375637470e2, -0.177607760e1,
-                0.220924640e1, 0.519652000e1, 0.421097400, -0.391921100],
-        "t3": [3.4553, 1.4150, 1.5745, 3.4540, 3.8106, 4.8950, 1.4300, 1.5870,
-               3.7900, 2.6200, 1.9000, 4.3200],
-        "d3": [1, 3, 1, 3, 1, 1, 2, 2, 2, 1, 1, 1],
-        "alfa3": [0.6014, 1.4723, 1.5305, 2.4297, 1.3086, 1.3528, 3.4456,
-                  1.2645, 2.5547, 1.2148, 18.738, 18.677],
-        "beta3": [0.4200, 2.4318, 1.2888, 8.2710, 0.3673, 0.9504, 7.8318,
-                  3.3281, 7.1753, 0.9465, 1177.0, 1167.0],
-        "epsilon3": [1.8663, 0.2895, 0.5803, 0.2236, 0.6815, 0.9495, 1.1158,
-                     0.1607, 0.4144, 0.9683, 0.9488, 0.9487],
-        "gamma3": [1.5414, 1.3794, 1.7385, 1.3045, 2.7242, 3.5321, 2.4552,
-                   0.8319, 1.3500, 2.5617, 1.0491, 1.0486]}
-
-    _Pv = {
-        "ao": [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2],
-        "exp": [1.0, 1.5, 2.75, 3.0, 3.2]}
-    _rhoL = {
-        "eq": 1,
-        "ao": [0.26406e1, 0.97090e1, -0.18058e2, 0.87202e1, -0.74487e1],
-        "exp": [0.3678, 1.9, 2.2, 2.63, 7.3]}
-    _rhoG = {
-        "eq": 3,
-        "ao": [-0.37651e1, -0.38673e2, 0.73024e2, -0.13251e3, 0.75235e2,
-               -0.70412e2],
-        "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
-
-    def _visco(self, rho, T, fase):
+    # fase is unused
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         return _D2O_Viscosity(rho, T)
 
-    def _thermo(self, rho, T, fase):
+    # fase is unused
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         return _D2O_ThCond(rho, T)
 
-    def _surface(self, T):
+    def _surface(self, T: float) -> float:
         s = _D2O_Tension(T)
         return s

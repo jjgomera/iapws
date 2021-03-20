@@ -1,0 +1,47 @@
+[flake8]
+max-line-length = 90
+accept-encodings = utf-8
+mypy_config = mypy.ini
+
+ignore =
+    # 1669 instances
+    A501, # A501 prefer built-in rounding of assertAlmostEqual() for 'round' expressions
+
+    E226, # E226 missing whitespace around arithmetic operator (5939 instances)
+
+    E265, # E265 block comment should start with '# ' (47 instances)
+
+    E501, # E501 line too long (X > L characters) (127 instances)
+
+    E741, # E741 ambiguous variable name 'l', 'I' (45 instances, mostly 'I/l')
+
+    # Since this commit Python recommends breaking before operators.
+    # https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b
+    W503, # W503 line break before binary operator
+    
+    # Disable warnings about missing docstrings.
+    D107, # D107 Missing docstring in __init__ (11 instances)
+
+    # (26 instances), Many summary lines are fairly complicated.
+    D205, # D205 1 blank line required between summary line and description
+    
+    D400, # D400 First line should end with a period (230 instances)
+
+    D401, # D401 First line should be in imperative mood (20 instances)
+
+    # One spurious instance, see: https://github.com/PyCQA/pydocstyle/issues/412
+    D412, # D412 No blank lines allowed between a section header and its content
+
+    R504, # R504 value assigned to variable is only used as a return value (42 instances)
+
+    N081, # N801 class name 'fase' should use CapWords convention (12 instances)
+
+    N802, # N802 function name '...' should be lowercase (143 instances)
+    
+    N803, # N803 argument name 'X' should be lowercase (138 instances)
+
+    N806, # N806 variable 'X' in function should be lowercase (1014 instances)
+
+    N815, # N815 variable 'xX' in class scope should not be mixedCase (24 instances)
+    
+    N816  # N816 variable 'isoP_kw' in global scope should not be mixedCase (11 instances)

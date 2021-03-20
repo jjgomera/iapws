@@ -13,9 +13,12 @@ include:
 from __future__ import division
 from math import exp, log, pi
 import warnings
+from typing import Dict, Optional
 
-from scipy.constants import Boltzmann as kb
+from scipy.constants import Boltzmann
 from .iapws95 import MEoS, IAPWS95, mainClassDoc
+from ._utils import _fase
+from .helmholtz import ResidualContribution
 
 
 @mainClassDoc()
@@ -30,11 +33,12 @@ class NH3(MEoS):
     R134a, R152a, and R123. Springer-Verlag, Berlin, 1994.
     http://doi.org/10.1007/978-3-642-79400-1
     """
+
     name = "ammonia"
     CASNumber = "7664-41-7"
     formula = "NH3"
     synonym = "R-717"
-    rhoc = 225.
+    rhoc = 225.0
     Tc = 405.40
     Pc = 11.333   # MPa
     M = 17.03026  # g/mol
@@ -43,28 +47,32 @@ class NH3(MEoS):
     f_acent = 0.25601
     momentoDipolar = 1.470
 
-    Fi0 = {"ao_log": [1, -1],
-           "pow": [0, 1, 1./3, -1.5, -1.75],
+    Fi0 = {"ao_log": [1.0, -1.0],
+           "pow": [0.0, 1.0, 1.0/3.0, -1.5, -1.75],
            "ao_pow": [-15.81502, 4.255726, 11.47434, -1.296211, 0.5706757],
            "ao_exp": [], "titao": [],
            "ao_hyp": [], "hyp": []}
 
-    _constants = {
-        "R": 8.314471,
+    _constant_R = 8.314471
+    _constant_rhoc = 225.0
+    _constant_Tref = 405.40
+    residual = ResidualContribution(
+        nr1=[-0.1858814e01, 0.4554431e-1, 0.7238548, 0.1229470e-1,
+             0.2141882e-10],
+        d1=[1, 2, 1, 4, 15],
+        t1=[1.5, -0.5, 0.5, 1., 3.],
 
-        "nr1": [-0.1858814e01, 0.4554431e-1, 0.7238548, 0.1229470e-1,
-                0.2141882e-10],
-        "d1": [1, 2, 1, 4, 15],
-        "t1": [1.5, -0.5, 0.5, 1., 3.],
+        nr2=[-0.1430020e-1, 0.3441324, -0.2873571, 0.2352589e-4,
+             -0.3497111e-1, 0.1831117e-2, 0.2397852e-1, -0.4085375e-1,
+             0.2379275, -0.3548972e-1, -0.1823729, 0.2281556e-1,
+             -0.6663444e-2, -0.8847486e-2, 0.2272635e-2, -0.5588655e-3],
+        d2=[3, 3, 1, 8, 2, 8, 1, 1, 2, 3, 2, 4, 3, 1, 2, 4],
+        t2=[0, 3, 4, 4, 5, 5, 3, 6, 8, 8, 10, 10, 5, 7.5, 15, 30],
+        c2=[1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
 
-        "nr2": [-0.1430020e-1, 0.3441324, -0.2873571, 0.2352589e-4,
-                -0.3497111e-1, 0.1831117e-2, 0.2397852e-1, -0.4085375e-1,
-                0.2379275, -0.3548972e-1, -0.1823729, 0.2281556e-1,
-                -0.6663444e-2, -0.8847486e-2, 0.2272635e-2, -0.5588655e-3],
-        "d2": [3, 3, 1, 8, 2, 8, 1, 1, 2, 3, 2, 4, 3, 1, 2, 4],
-        "t2": [0, 3, 4, 4, 5, 5, 3, 6, 8, 8, 10, 10, 5, 7.5, 15, 30],
-        "c2": [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
-        "gamma2": [1]*16}
+        nr3=[], d3=[], t3=[], alfa3=[], beta3=[], gamma3=[], epsilon3=[],
+        nr4=[], a4=[], b4=[], A=[], B=[], C=[], D=[], beta4=[],
+    )
 
     _melting = {"eq": 1, "Tref": Tt, "Pref": 1000,
                 "Tmin": Tt, "Tmax": 700.0,
@@ -72,20 +80,21 @@ class NH3(MEoS):
                 "a3": [0.2533125e4], "exp3": [1]}
 
     _surf = {"sigma": [0.1028, -0.09453], "exp": [1.211, 5.585]}
-    _Pv = {
-        "eq": 5,
-        "ao": [-0.70993e1, -0.24330e1, 0.87591e1, -0.64091e1, -0.21185e1],
-        "exp": [1., 1.5, 1.7, 1.95, 4.2]}
-    _rhoL = {
-        "eq": 1,
-        "ao": [0.34488e2, -0.12849e3, 0.17382e3, -0.10699e3, 0.30339e2],
-        "exp": [0.58, 0.75, 0.9, 1.1, 1.3]}
-    _rhoG = {
-        "eq": 3,
-        "ao": [-.38435, -4.0846, -6.6634, -0.31881e2, 0.21306e3, -0.24648e3],
-        "exp": [0.218, 0.55, 1.5, 3.7, 5.5, 5.8]}
+    # _Pv_eq = 5 # unused
+    _Pv_ao = [-0.70993e1, -0.24330e1, 0.87591e1, -0.64091e1, -0.21185e1]
+    _Pv_exp = [1.0, 1.5, 1.7, 1.95, 4.2]
+    _rhoL_eq = 1
+    _rhoL_ao = [0.34488e2, -0.12849e3, 0.17382e3, -0.10699e3, 0.30339e2]
+    _rhoL_exp = [0.58, 0.75, 0.9, 1.1, 1.3]
+    _rhoG_eq = 3
+    _rhoG_ao = [-.38435, -4.0846, -6.6634, -0.31881e2, 0.21306e3, -0.24648e3]
+    _rhoG_exp = [0.218, 0.55, 1.5, 3.7, 5.5, 5.8]
 
-    def _visco(self, rho, T, fase=None):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    # fase is unused
+    def _visco(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the Viscosity
 
         Parameters
@@ -114,7 +123,7 @@ class NH3(MEoS):
 
         # Eq 4
         a = [4.99318220, -0.61122364, 0.0, 0.18535124, -0.11160946]
-        omega = exp(sum([ai*log(T_)**i for i, ai in enumerate(a)]))
+        omega = exp(sum(ai*log(T_)**i for i, ai in enumerate(a)))
 
         # Eq 2, Zero-Density Limit
         muo = 2.1357*(T*self.M)**0.5/sigma**2/omega
@@ -124,7 +133,7 @@ class NH3(MEoS):
               -0.13019164e5, 0.33414230e5, -0.58711743e5, 0.71426686e5,
               -0.59834012e5, 0.33652741e5, -0.1202735e5, 0.24348205e4,
               -0.20807957e3]
-        Bn = 0.6022137*sigma**3*sum([c*T_**(-i/2) for i, c in enumerate(cv)])
+        Bn = 0.6022137*sigma**3*sum(c*T_**(-i/2) for i, c in enumerate(cv))
         # Eq 7
         mub = Bn*muo*rho
 
@@ -133,13 +142,14 @@ class NH3(MEoS):
                1.67668649e-4, -1.49710093e-4, 0.77012274e-4]
         ji = [2, 4, 0, 1, 2, 3, 4]
         ii = [2, 2, 3, 3, 4, 4, 4]
-        mur = sum([d/T_**j*rho**i for d, j, i in zip(dij, ji, ii)])
+        mur = sum(d/T_**j*rho**i for d, j, i in zip(dij, ji, ii))
 
         # Eq 1
         mu = muo + mub + mur
         return mu*1e-6
 
-    def _thermo(self, rho, T, fase):
+    # fase is unused
+    def _thermo(self, rho: float, T: float, fase: Optional[_fase] = None) -> float:
         """Equation for the thermal conductivity
 
         Parameters
@@ -166,24 +176,25 @@ class NH3(MEoS):
         # The paper use a diferent rhoc value to the EoS
         rhoc = 235
 
-        if rho == rhoc and T == self.Tc:
+        if rho == rhoc and T == self._constant_Tref:
             warnings.warn("Thermal conductiviy undefined in critical point")
-            return None
+            return float('nan')
 
         # Eq 6
         no = [0.3589e-1, -0.1750e-3, 0.4551e-6, 0.1685e-9, -0.4828e-12]
-        Lo = sum([n*T**i for i, n in enumerate(no)])
+        Lo = sum(n*T**i for i, n in enumerate(no))
 
         # Eq 7
         nb = [0.16207e-3, 0.12038e-5, -0.23139e-8, 0.32749e-11]
-        L_ = sum([n*rho**(i+1) for i, n in enumerate(nb)])
+        L_ = sum(n*rho**(i+1) for i, n in enumerate(nb))
 
         # Critical enchancement
         t = abs(T-405.4)/405.4
         dPT = 1e5*(2.18-0.12/exp(17.8*t))
-        nb = 1e-5*(2.6+1.6*t)
+        nbx = 1e-5*(2.6+1.6*t)
 
-        DL = 1.2*kb*T**2/6/pi/nb/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
+        kb = float(Boltzmann)
+        DL = 1.2*kb*T**2/6/pi/nbx/(1.34e-10/t**0.63*(1+t**0.5))*dPT**2 * \
             0.423e-8/t**1.24*(1+t**0.5/0.7)
 
         # Add correction for entire range of temperature, Eq 10
@@ -204,10 +215,11 @@ class NH3(MEoS):
 
 
 class H2ONH3(object):
+    """Ammonia-water mixtures."""
 
     # TODO: Add equilibrium routine
 
-    def _prop(self, rho, T, x):
+    def _prop(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Thermodynamic properties of ammonia-water mixtures
 
         Parameters
@@ -277,15 +289,15 @@ class H2ONH3(object):
         prop["a"] = prop["u"]-T*prop["s"]
         cvR = -tau0**2*fiott - tau**2*firtt
         prop["cv"] = R*cvR
-        prop["cp"] = R*(cvR+(1+delta*fird-delta*tau*firdt)**2 /
-                        (1+2*delta*fird+delta**2*firdd))
-        prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd +
-                               (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
+        prop["cp"] = R*(cvR+(1+delta*fird-delta*tau*firdt)**2
+                        / (1+2*delta*fird+delta**2*firdd))
+        prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd
+                               + (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
         prop["fugH2O"] = Z*exp(fir+delta*fird-x*F)
         prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
         return prop
 
-    def _phi0(self, rho, T, x):
+    def _phi0(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Ideal gas Helmholtz energy of binary mixtures and derivatives
 
         Parameters
@@ -323,45 +335,44 @@ class H2ONH3(object):
         tau = 500/T
         delta = rho/15/M
 
-        # Table 2
-        Fi0 = {
-            "log_water": 3.006320,
-            "ao_water": [-7.720435, 8.649358],
-            "pow_water": [0, 1],
-            "ao_exp": [0.012436, 0.97315, 1.279500, 0.969560, 0.248730],
-            "titao": [1.666, 4.578, 10.018, 11.964, 35.600],
-            "log_nh3": -1.0,
-            "ao_nh3": [-16.444285, 4.036946, 10.69955, -1.775436, 0.82374034],
-            "pow_nh3": [0, 1, 1/3, -3/2, -7/4]}
+        # Table 2, previously an Fi0 dict
+        log_water = 3.006320
+        ao_water = [-7.720435, 8.649358]
+        pow_water = [0, 1]
+        ao_exp = [0.012436, 0.97315, 1.279500, 0.969560, 0.248730]
+        titao = [1.666, 4.578, 10.018, 11.964, 35.600]
+        log_nh3 = -1.0
+        ao_nh3 = [-16.444285, 4.036946, 10.69955, -1.775436, 0.82374034]
+        pow_nh3 = [0.0, 1.0, 1/3, -3/2, -7/4]
 
         fiod = 1/delta
         fiodd = -1/delta**2
-        fiodt = 0
-        fiow = fiotw = fiottw = 0
-        fioa = fiota = fiotta = 0
+        fiodt = 0.0
+        fiow = fiotw = fiottw = 0.0
+        fioa = fiota = fiotta = 0.0
 
         # Water section
         if x < 1:
-            fiow = Fi0["log_water"]*log(tau) + log(1-x)
-            fiotw = Fi0["log_water"]/tau
-            fiottw = -Fi0["log_water"]/tau**2
-            for n, t in zip(Fi0["ao_water"], Fi0["pow_water"]):
-                fiow += n*tau**t
-                if t != 0:
-                    fiotw += t*n*tau**(t-1)
-                if t not in [0, 1]:
-                    fiottw += n*t*(t-1)*tau**(t-2)
-            for n, t in zip(Fi0["ao_exp"], Fi0["titao"]):
+            fiow = log_water*log(tau) + log(1-x)
+            fiotw = log_water/tau
+            fiottw = -log_water/tau**2
+            for n, ti in zip(ao_water, pow_water):
+                fiow += n*tau**ti
+                if ti != 0:
+                    fiotw += ti*n*tau**(ti-1)
+                if ti not in [0, 1]:
+                    fiottw += n*ti*(ti-1)*tau**(ti-2)
+            for n, t in zip(ao_exp, titao):
                 fiow += n*log(1-exp(-tau*t))
                 fiotw += n*t*((1-exp(-t*tau))**-1-1)
                 fiottw -= n*t**2*exp(-t*tau)*(1-exp(-t*tau))**-2
 
         # ammonia section
         if x > 0:
-            fioa = Fi0["log_nh3"]*log(tau) + log(x)
-            fiota = Fi0["log_nh3"]/tau
-            fiotta = -Fi0["log_nh3"]/tau**2
-            for n, t in zip(Fi0["ao_nh3"], Fi0["pow_nh3"]):
+            fioa = log_nh3*log(tau) + log(x)
+            fiota = log_nh3/tau
+            fiotta = -log_nh3/tau**2
+            for n, t in zip(ao_nh3, pow_nh3):
                 fioa += n*tau**t
                 if t != 0:
                     fiota += t*n*tau**(t-1)
@@ -379,7 +390,7 @@ class H2ONH3(object):
         prop["fiodt"] = fiodt
         return prop
 
-    def _phir(self, rho, T, x):
+    def _phir(self, rho: float, T: float, x: float) -> Dict[str, float]:
         """Residual contribution to the free Helmholtz energy
 
         Parameters
@@ -414,7 +425,6 @@ class H2ONH3(object):
         Properties of Ammonia-Water Mixtures,
         http://www.iapws.org/relguide/nh3h2o.pdf, Eq 3
         """
-
         # Temperature reducing value, Eq 4
         Tc12 = 0.9648407/2*(IAPWS95.Tc+NH3.Tc)
         Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-x**1.125455)*Tc12
@@ -424,39 +434,39 @@ class H2ONH3(object):
         # Density reducing value, Eq 5
         b = 0.8978069
         rhoc12 = 1/(1.2395117/2*(1/IAPWS95.rhoc+1/NH3.rhoc))
-        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc +
-                  2*x*(1-x**b)/rhoc12)
-        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12 +
-                   2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
-                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc +
-                       (1-x)**2/IAPWS95.rhoc)**2
+        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc
+                  + 2*x*(1-x**b)/rhoc12)
+        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12
+                   + 2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
+                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc
+                       + (1-x)**2/IAPWS95.rhoc)**2
 
         tau = Tn/T
         delta = rho/rhon
 
         water = IAPWS95()
-        phi1 = water._phir(tau, delta)
+        phi1 = water.residual.helmholtz(tau, delta)
 
         ammonia = NH3()
-        phi2 = ammonia._phir(tau, delta)
+        phi2 = ammonia.residual.helmholtz(tau, delta)
 
         Dphi = self._Dphir(tau, delta, x)
 
         prop = {}
         prop["tau"] = tau
         prop["delta"] = delta
-        prop["fir"] = (1-x)*phi1["fir"] + x*phi2["fir"] + Dphi["fir"]
-        prop["firt"] = (1-x)*phi1["firt"] + x*phi2["firt"] + Dphi["firt"]
-        prop["firtt"] = (1-x)*phi1["firtt"] + x*phi2["firtt"] + Dphi["firtt"]
-        prop["fird"] = (1-x)*phi1["fird"] + x*phi2["fird"] + Dphi["fird"]
-        prop["firdd"] = (1-x)*phi1["firdd"] + x*phi2["firdd"] + Dphi["firdd"]
-        prop["firdt"] = (1-x)*phi1["firdt"] + x*phi2["firdt"] + Dphi["firdt"]
-        prop["firx"] = -phi1["fir"] + phi2["fir"] + Dphi["firx"]
+        prop["fir"] = (1-x)*phi1.fi + x*phi2.fi + Dphi["fir"]
+        prop["firt"] = (1-x)*phi1.fit + x*phi2.fit + Dphi["firt"]
+        prop["firtt"] = (1-x)*phi1.fitt + x*phi2.fitt + Dphi["firtt"]
+        prop["fird"] = (1-x)*phi1.fid + x*phi2.fid + Dphi["fird"]
+        prop["firdd"] = (1-x)*phi1.fidd + x*phi2.fidd + Dphi["firdd"]
+        prop["firdt"] = (1-x)*phi1.fidt + x*phi2.fidt + Dphi["firdt"]
+        prop["firx"] = -phi1.fi + phi2.fi + Dphi["firx"]
         prop["F"] = prop["firx"] - delta/rhon*drhonx*prop["fird"] + \
             tau/Tn*dTnx*prop["firt"]
         return prop
 
-    def _Dphir(self, tau, delta, x):
+    def _Dphir(self, tau: float, delta: float, x: float) -> Dict[str, float]:
         """Departure function to the residual contribution to the free
         Helmholtz energy
 
@@ -563,7 +573,7 @@ class H2ONH3(object):
         return prop
 
 
-def Ttr(x):
+def Ttr(x: float) -> float:
     """Equation for the triple point of ammonia-water mixture
 
     Parameters

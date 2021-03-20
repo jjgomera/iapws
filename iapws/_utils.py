@@ -12,9 +12,10 @@ Miscelaneous internal utilities. This module include:
 """
 
 from __future__ import division
+from typing import Optional, Any
 
 
-def getphase(Tc, Pc, T, P, x, region):
+def getphase(Tc: float, Pc: float, T: float, P: float, x: float, region: int) -> str:
     """Return fluid phase string name
 
     Parameters
@@ -62,61 +63,94 @@ def getphase(Tc, Pc, T, P, x, region):
 
 
 class _fase(object):
-    """Class to implement a null phase"""
-    v = None
-    rho = None
+    """
+    Class to implement a null phase.
 
-    h = None
-    s = None
-    u = None
-    a = None
-    g = None
+    IAPWS95 and IAPWS97 both implement Liquid and Gas/Vapor phasee in
+    addition to being phases themselves.  Confusingly minor
+    differences between derived classes impose different constraints
+    on this class.
+    """
 
-    cp = None
-    cv = None
-    cp_cv = None
-    w = None
-    Z = None
-    fi = None
-    f = None
+    def __init__(self) -> None:
+        # One always computed form the other
+        self.v = float('nan')
+        self.rho = float('nan')
 
-    mu = None
-    k = None
-    nu = None
-    Prandt = None
-    epsilon = None
-    alfa = None
-    n = None
+        self.h = float('nan')
+        self.s = float('nan')
 
-    alfap = None
-    betap = None
-    joule = None
-    Gruneisen = None
-    alfav = None
-    kappa = None
-    betas = None
-    gamma = None
-    Kt = None
-    kt = None
-    Ks = None
-    ks = None
-    dpdT_rho = None
-    dpdrho_T = None
-    drhodT_P = None
-    drhodP_T = None
-    dhdT_rho = None
-    dhdT_P = None
-    dhdrho_T = None
-    dhdrho_P = None
-    dhdP_T = None
-    dhdP_rho = None
+        self.cv = float('nan')
+        self.alfap = float('nan')
+        self.betap = float('nan')
+        self.cp = float('nan')
+        self.kappa = float('nan')
+        self.alfav = float('nan')
 
-    Z_rho = None
-    IntP = None
-    hInput = None
+        self.g = float('nan')
+        self.fi = float('nan')
+
+        self.w = float('nan')
+        self.Z = float('nan')
+
+        self.drhodP_T = float('nan')
+        self.mu = float('nan')
+        self.cp_cv = float('nan')
+        self.k = float('nan')
+
+        self.epsilon: Optional[float] = None
+        self.n: Optional[float] = None
+
+        # --------------------------------------------
+        # Calculated identically between 95 and 97
+        self.u = float('nan')
+        self.a = float('nan')
+        self.nu = float('nan')
+        self.Prandt = float('nan')
+        self.alfa = float('nan')
+        self.f = float('nan')
+
+        # Calculated similarly, but not identically?
+        self.joule = float('nan')
+        self.gamma = float('nan')
+        self.deltat = float('nan')
+
+        # Calculated on 95 only from earlier variables and self.M
+        self.rhoM = float('nan')
+        self.hM = float('nan')
+        self.sM = float('nan')
+        self.uM = float('nan')
+        self.aM = float('nan')
+        self.gM = float('nan')
+        self.cvM = float('nan')
+        self.cpM = float('nan')
+        self.Z_rho = float('nan')
+
+        # Derivatives calculated only in IAPWS95
+        self.dpdT_rho = float('nan')
+        self.dpdrho_T = float('nan')
+        self.drhodT_P = float('nan')
+        self.dhdT_rho = float('nan')
+        self.dhdT_P = float('nan')
+        self.dhdrho_T = float('nan')
+        self.dhdrho_P = float('nan')
+        self.dhdP_T = float('nan')
+        self.dhdP_rho = float('nan')
+        self.kt = float('nan')
+        self.ks = float('nan')
+        self.Ks = float('nan')
+        self.Kt = float('nan')
+        self.betas = float('nan')
+        self.Gruneisen = float('nan')
+        self.IntP = float('nan')
+        self.hInput = float('nan')
+
+        # Properties added because various methods set/access them?
+        self.xkappa = float('nan')
+        self.kappas = float('nan')
 
 
-def deriv_H(state, z, x, y, fase):
+def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     helmholtz free energy equation of state
@@ -161,15 +195,23 @@ def deriv_H(state, z, x, y, fase):
     # We use the relation between rho and v and his partial derivative
     # ∂v/∂b|c = -1/ρ² ∂ρ/∂b|c
     # ∂a/∂v|c = -ρ² ∂a/∂ρ|c
-    mul = 1
+    mul = 1.0
     if z == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -fase.rho**2
         z = "v"
     if x == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -1/fase.rho**2
         x = "v"
     if y == "rho":
         y = "v"
+
+    assert(isinstance(fase.alfap, float))
+    assert(isinstance(fase.betap, float))
+    assert(isinstance(fase.v, float))
+    assert(isinstance(fase.cv, float))
+    assert(isinstance(fase.s, float))
 
     dT = {"P": state.P*1000*fase.alfap,
           "T": 1,
@@ -191,7 +233,7 @@ def deriv_H(state, z, x, y, fase):
     return mul*deriv
 
 
-def deriv_G(state, z, x, y, fase):
+def deriv_G(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental
     Gibbs free energy equation of state
@@ -233,13 +275,21 @@ def deriv_G(state, z, x, y, fase):
     IAPWS, Revised Advisory Note No. 3: Thermodynamic Derivatives from IAPWS
     Formulations, http://www.iapws.org/relguide/Advise3.pdf
     """
-    mul = 1
+    mul = 1.0
     if z == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -fase.rho**2
         z = "v"
     if x == "rho":
+        assert(isinstance(fase.rho, float))
         mul = -1/fase.rho**2
         x = "v"
+
+    assert(isinstance(fase.alfav, float))
+    assert(isinstance(fase.v, float))
+    assert(isinstance(fase.cp, float))
+    assert(isinstance(fase.s, float))
+    assert(isinstance(fase.xkappa, float))
 
     dT = {"P": 0,
           "T": 1,

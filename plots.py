@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+"""Generate various plots using IAPWS."""
 
 from math import pi, atan, log
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Dict, List, Any
 
 import iapws
 from iapws._iapws import Pt, Pc, Tc
@@ -144,7 +145,7 @@ plt.plot(xvap, yvap, **isosat_kw)
 
 # Calculate isoquality lines
 print("Calculating isoquality lines...")
-Q = {}
+Q: Dict[str, Dict[str, List[Any]]] = {}
 for q in isoq:
     Q["%s" % q] = {}
     txt = "x=%s" % q
@@ -160,7 +161,7 @@ for q in isoq:
 # Calculate isotherm lines
 if xAxis != "T" and yAxis != "T":
     print("Calculating isotherm lines...")
-    T_ = {}
+    T_: Dict[str, Dict[str, List[Any]]] = {}
     for T in isoT:
         T_["%s" % T] = {}
         print("    T=%sºC" % T)
@@ -172,9 +173,9 @@ if xAxis != "T" and yAxis != "T":
         else:
             sat = False
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, T=T+273.15)
+                point = fluid(P=pressure, T=T+273.15)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -200,7 +201,7 @@ if xAxis != "T" and yAxis != "T":
 # Calculate isobar lines
 if xAxis != "P" and yAxis != "P":
     print("Calculating isobar lines...")
-    P_ = {}
+    P_: Dict[str, Dict[str, List[Any]]] = {}
     for P in isoP:
         print("    P=%sMPa" % P)
         P_["%s" % P] = {}
@@ -214,7 +215,7 @@ if xAxis != "P" and yAxis != "P":
         pts = []
         for t in Tl:
             try:
-                point = fluid(P=P, T=t+273.15)
+                point = fluid(P=P, T=float(t)+273.15)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -240,14 +241,16 @@ if xAxis != "P" and yAxis != "P":
 # Calculate isoenthalpic lines
 if xAxis != "h" and yAxis != "h":
     print("Calculating isoenthalpic lines...")
-    H_ = {}
-    for h in isoh:
+    H_: Dict[str, Dict[str, List[Any]]] = {}
+    for numpy_h in isoh:
+        # Convert numpy.Float64 to Python float.
+        h = float(numpy_h)
         print("    h=%skJ/kg" % h)
         H_["%s" % h] = {}
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, h=h)
+                point = fluid(P=pressure, h=h)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -267,14 +270,14 @@ if xAxis != "h" and yAxis != "h":
 # Calculate isoentropic lines
 if xAxis != "s" and yAxis != "s":
     print("Calculating isoentropic lines...")
-    S_ = {}
+    S_: Dict[str, Dict[str, List[Any]]] = {}
     for s in isos:
         print("    s=%skJ/kgK" % s)
         S_["%s" % s] = {}
         pts = []
-        for p in Pl:
+        for pressure in Pl:
             try:
-                point = fluid(P=p, s=s)
+                point = fluid(P=pressure, s=s)
                 if fluid == iapws.IAPWS97 and not region5 and \
                         point.region == 5:
                     continue
@@ -296,13 +299,13 @@ if xAxis != "v" and yAxis != "v":
     print("Calculating isochor lines...")
     for v in isov:
         print("    v=%s" % v)
-        pts = [iapws.IAPWS95(T=t, v=v) for t in Tl]
+        pts95 = [iapws.IAPWS95(T=float(t), v=v) for t in Tl]
         x = []
         y = []
-        for p in pts:
-            if p.status:
-                x.append(p.__getattribute__(xAxis))
-                y.append(p.__getattribute__(yAxis))
+        for p95 in pts95:
+            if p95.status:
+                x.append(p95.__getattribute__(xAxis))
+                y.append(p95.__getattribute__(yAxis))
         plt.plot(x, y, **isov_kw)
 
 
@@ -310,17 +313,17 @@ if xAxis != "v" and yAxis != "v":
 if regionBoundary:
     # Boundary 1-3
     Po = _PSat_T(623.15)
-    P = np.linspace(Po, 100, points)
-    pts = [fluid(P=p, T=623.15) for p in P]
+    numpy_pressure_points = np.linspace(Po, 100, points)
+    pts = [fluid(P=float(p), T=623.15) for p in numpy_pressure_points]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
 
     # Boundary 2-3
-    T = np.linspace(623.15, 863.15)
-    P = [_P23_T(t) for t in T]
-    P[-1] = 100  # Avoid round problem with value out of range > 100 MPa
-    pts = [fluid(P=p, T=t) for p, t in zip(P, T)]
+    numpy_temp_points = list(map(float, np.linspace(623.15, 863.15)))
+    Psf = [_P23_T(t) for t in numpy_temp_points]
+    Psf[-1] = 100.0  # Avoid round problem with value out of range > 100 MPa
+    pts = [fluid(P=p, T=t) for p, t in zip(Psf, numpy_temp_points)]
     x = [p.__getattribute__(xAxis) for p in pts]
     y = [p.__getattribute__(yAxis) for p in pts]
     plt.plot(x, y, **isosat_kw)
@@ -395,7 +398,9 @@ if xAxis != "P" and yAxis != "P":
         plt.annotate(txt, (x[i], y[i]), rotation=rot, **labelP_kw)
 
 if xAxis != "h" and yAxis != "h":
-    for h in isoh:
+    for numpy_h in isoh:
+        # Convert numpy.Float64 to Python float.
+        h = float(numpy_h)
         x = H_["%s" % h]["x"]
         y = H_["%s" % h]["y"]
 

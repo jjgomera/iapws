@@ -31,13 +31,15 @@ from __future__ import division
 from cmath import log as log_c
 from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
 import warnings
+from typing import Dict, Optional
 
 from scipy.optimize import minimize
 
+from ._utils import _fase
 
 # Constants
-M = 18.015268     # g/mol
-R = 0.461526      # kJ/kg·K
+_global_M = 18.015268     # g/mol
+_global_R = 0.461526      # kJ/kg·K
 
 # Table 1 from Release on the Values of Temperature, Pressure and Density of
 # Ordinary and Heavy Water Substances at their Respective Critical Points
@@ -59,7 +61,7 @@ Dipole = 1.85498  # Debye
 
 
 # IAPWS-06 for Ice
-def _Ice(T, P):
+def _Ice(T: float, P: float) -> Dict[str, float]:
     """Basic state equation for Ice Ih
 
     Parameters
@@ -150,14 +152,14 @@ def _Ice(T, P):
     t2 = complex(0.337315741065416, 0.335449415919309)
     r1 = complex(0.447050716285388e2, 0.656876847463481e2)*1e-3
 
-    go = gop = gopp = 0
+    go = gop = gopp = 0.0
     for k in range(5):
         go += gok[k]*1e-3*(Pr-P0)**k
     for k in range(1, 5):
         gop += gok[k]*1e-3*k/Pt*(Pr-P0)**(k-1)
     for k in range(2, 5):
         gopp += gok[k]*1e-3*k*(k-1)/Pt**2*(Pr-P0)**(k-2)
-    r2 = r2p = 0
+    r2 = r2p = complex(0.0, 0.0)
     for k in range(3):
         r2 += r2k[k]*(Pr-P0)**k
     for k in range(1, 3):
@@ -207,7 +209,7 @@ def _Ice(T, P):
 
 
 # IAPWS-08 for Liquid water at 0.1 MPa
-def _Liquid(T, P=0.1):
+def _Liquid(T: float, P: float = 0.1) -> Dict[str, float]:
     """Supplementary release on properties of liquid water at 0.1 MPa
 
     Parameters
@@ -277,51 +279,52 @@ def _Liquid(T, P=0.1):
     alfa = Tr/(593-T)
     beta = Tr/(T-232)
 
-    a = [None, -1.661470539e5, 2.708781640e6, -1.557191544e8, None,
+    a = [-1.661470539e5, 2.708781640e6, -1.557191544e8, 0.0,
          1.93763157e-2, 6.74458446e3, -2.22521604e5, 1.00231247e8,
          -1.63552118e9, 8.32299658e9, -7.5245878e-6, -1.3767418e-2,
          1.0627293e1, -2.0457795e2, 1.2037414e3]
-    b = [None, -8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
+    b = [-8.237426256e-1, 1.908956353, -2.017597384, 8.546361348e-1,
          5.78545292e-3, -1.53195665E-2, 3.11337859e-2, -4.23546241e-2,
          3.38713507e-2, -1.19946761e-2, -3.1091470e-6, 2.8964919e-5,
          -1.3112763e-4, 3.0410453e-4, -3.9034594e-4, 2.3403117e-4,
          -4.8510101e-5]
-    c = [None, -2.452093414e2, 3.869269598e1, -8.983025854]
-    n = [None, 4, 5, 7, None, None, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
-    m = [None, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
+    c = [-2.452093414e2, 3.869269598e1, -8.983025854]
+    # Zero entries are not used or present in the table.
+    n = [4, 5, 7, 0, 0, 4, 5, 7, 8, 9, 1, 3, 5, 6, 7]
+    m = [2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1, 3, 4, 5, 6, 7, 9]
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(1, 4)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(1, 5)])
-    go = R*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
+    suma1 = sum(a[i]*alfa**n[i] for i in range(0, 3))
+    suma2 = sum(b[i]*beta**m[i] for i in range(0, 4))
+    go = R*Tr*(c[0]+c[1]*tau+c[2]*tau*log(tau)+suma1+suma2)
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(6, 11)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(5, 11)])
-    vo = R*Tr/Po/1000*(a[5]+suma1+suma2)
+    suma1 = sum(a[i]*alfa**n[i] for i in range(5, 10))
+    suma2 = sum(b[i]*beta**m[i] for i in range(4, 10))
+    vo = R*Tr/Po/1000*(a[4]+suma1+suma2)
 
-    suma1 = sum([a[i]*alfa**n[i] for i in range(11, 16)])
-    suma2 = sum([b[i]*beta**m[i] for i in range(11, 18)])
+    suma1 = sum(a[i]*alfa**n[i] for i in range(10, 15))
+    suma2 = sum(b[i]*beta**m[i] for i in range(10, 17))
     vpo = R*Tr/Po**2/1000*(suma1+suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5)])
-    so = -R*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(0, 3))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(0, 4))
+    so = -R*(c[1]+c[2]*(1+log(tau))+suma1-suma2)
 
-    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4)])
-    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5)])
-    cpo = -R*(c[3]+tau*suma1+tau*suma2)
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(0, 3))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(0, 4))
+    cpo = -R*(c[2]+tau*suma1+tau*suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11)])
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(5, 10))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(4, 10))
     vto = R/Po/1000*(suma1-suma2)
 
     # This properties are only neccessary for computing thermodynamic
     # properties at pressures different from 0.1 MPa
-    suma1 = sum([n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11)])
-    suma2 = sum([m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11)])
+    suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(5, 10))
+    suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(4, 10))
     vtto = R/Tr/Po/1000*(suma1+suma2)
 
-    suma1 = sum([n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16)])
-    suma2 = sum([m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18)])
+    suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(10, 15))
+    suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(10, 17))
     vpto = R/Po**2/1000*(suma1-suma2)
 
     if P != 0.1:
@@ -335,8 +338,8 @@ def _Liquid(T, P=0.1):
 
     h = go+T*so
     u = h-P*vo
-    a = go-P*vo
-    cv = cpo+T*vto**2/vpo
+    a_result = go-P*vo
+    local_cv = cpo+T*vto**2/vpo
     xkappa = -vpo/vo
     alfa = vto/vo
     ks = -(T*vto**2/cpo+vpo)/vo
@@ -355,31 +358,31 @@ def _Liquid(T, P=0.1):
     propiedades["h"] = h
     propiedades["s"] = so
     propiedades["cp"] = cpo
-    propiedades["cv"] = cv
+    propiedades["cv"] = local_cv
     propiedades["u"] = u
-    propiedades["a"] = a
+    propiedades["a"] = a_result
     propiedades["xkappa"] = xkappa
     propiedades["alfav"] = vto/vo
     propiedades["ks"] = ks
     propiedades["w"] = w
 
     # Viscosity correlation, Eq 7
-    a = [None, 280.68, 511.45, 61.131, 0.45903]
-    b = [None, -1.9, -7.7, -19.6, -40]
+    a = [280.68, 511.45, 61.131, 0.45903]
+    b = [-1.9, -7.7, -19.6, -40]
     T_ = T/300
-    mu = sum([a[i]*T_**b[i] for i in range(1, 5)])/1e6
+    mu = sum(a[i]*T_**b[i] for i in range(0, 4))/1e6
     propiedades["mu"] = mu
 
     # Thermal conductivity correlation, Eq 8
-    c = [None, 1.6630, -1.7781, 1.1567, -0.432115]
-    d = [None, -1.15, -3.4, -6.0, -7.6]
-    k = sum([c[i]*T_**d[i] for i in range(1, 5)])
+    c = [1.6630, -1.7781, 1.1567, -0.432115]
+    d = [-1.15, -3.4, -6.0, -7.6]
+    k = sum(c[i]*T_**d[i] for i in range(0, 4))
     propiedades["k"] = k
 
     # Dielectric constant correlation, Eq 9
-    e = [None, -43.7527, 299.504, -399.364, 221.327]
-    f = [None, -0.05, -1.47, -2.11, -2.31]
-    epsilon = sum([e[i]*T_**f[i] for i in range(1, 5)])
+    e = [-43.7527, 299.504, -399.364, 221.327]
+    f = [-0.05, -1.47, -2.11, -2.31]
+    epsilon = sum(e[i]*T_**f[i] for i in range(0, 4))
     propiedades["epsilon"] = epsilon
 
     return propiedades
@@ -387,29 +390,30 @@ def _Liquid(T, P=0.1):
 
 class _Supercooled_minimize(object):
 
-    def __init__(self, L, omega, xmin, xmax):
+    def __init__(self, L: float, omega: float, xmin: float, xmax: float):
         self.L = L
         self.omega = omega
         self.xmin = xmin
         self.xmax = xmax
         self.f_inner_value_sign = 0.0
 
-    def f(self, x):
+    def f(self, x: float) -> float:
         f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x)
         self.f_inner_value_sign = copysign(1.0, f_inner_value)
         return abs(f_inner_value)
 
-    def jac(self, x):
+    def jac(self, x: float) -> float:
         return self.f_inner_value_sign*(1/(x*(1 - x)) - 2*self.omega)
 
     @property
-    def x(self):
-        return minimize(self.f, x0=((self.xmin+self.xmax)/2,),
-                        bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+    def x(self) -> float:
+        m = minimize(self.f, x0=((self.xmin+self.xmax)/2,),
+                     bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
+        return float(m)
 
 
 # IAPWS-15 for supercooled liquid water
-def _Supercooled(T, P):
+def _Supercooled(T: float, P: float) -> Dict[str, float]:
     """Guideline on thermodynamic properties of supercooled water
 
     Parameters
@@ -459,7 +463,6 @@ def _Supercooled(T, P):
     IAPWS, Guideline on Thermodynamic Properties of Supercooled Water,
     http://iapws.org/relguide/Supercooled.html
     """
-
     # Check input in range of validity
     if P < 198.9:
         Tita = T/235.15
@@ -494,16 +497,16 @@ def _Supercooled(T, P):
           4.3773754, -2.9967770e-3, -9.6558018e-1, 3.7595286, 1.2632441,
           2.8542697e-1, -8.5994947e-1, -3.2916153e-1, 9.0019616e-2,
           8.1149726e-2, -3.2788213]
-    ai = [0, 0, 1, -0.2555, 1.5762, 1.6400, 3.6385, -0.3828, 1.6219, 4.3287,
+    ai = [0.0, 0.0, 1.0, -0.2555, 1.5762, 1.6400, 3.6385, -0.3828, 1.6219, 4.3287,
           3.4763, 5.1556, -0.3593, 5.0361, 2.9786, 6.2373, 4.0460, 5.3558,
           9.0157, 1.2194]
-    bi = [0, 1, 0, 2.1051, 1.1422, 0.9510, 0, 3.6402, 2.0760, -0.0016, 2.2769,
+    bi = [0.0, 1.0, 0.0, 2.1051, 1.1422, 0.9510, 0.0, 3.6402, 2.0760, -0.0016, 2.2769,
           0.0008, 0.3706, -0.3975, 2.9730, -0.3180, 2.9805, 2.9265, 0.4456,
           0.1298]
-    di = [0, 0, 0, -0.0016, 0.6894, 0.0130, 0.0002, 0.0435, 0.0500, 0.0004,
+    di = [0.0, 0.0, 0.0, -0.0016, 0.6894, 0.0130, 0.0002, 0.0435, 0.0500, 0.0004,
           0.0528, 0.0147, 0.8584, 0.9924, 1.0041, 1.0961, 1.0228, 1.0303,
           1.6180, 0.5213]
-    phir = phirt = phirp = phirtt = phirtp = phirpp = 0
+    phir = phirt = phirp = phirtt = phirtp = phirpp = 0.0
     for c, a, b, d in zip(ci, ai, bi, di):
         phir += c*tau_**a*p_**b*exp(-d*p_)
         phirt += c*a*tau_**(a-1)*p_**b*exp(-d*p_)
@@ -557,8 +560,8 @@ def _Supercooled(T, P):
     prop["g"] = phir+(tau+1)*(x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))
 
     # Eq 14
-    prop["s"] = -R*((tau+1)/2*Lt*(fi+1) +
-                    (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
+    prop["s"] = -R*((tau+1)/2*Lt*(fi+1)
+                    + (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
 
     # Basic derived state properties
     prop["h"] = prop["g"]+T*prop["s"]
@@ -569,8 +572,8 @@ def _Supercooled(T, P):
     prop["xkappa"] = prop["rho"]/rho0**2/R*1000/Tll*(
         (tau+1)/2*(Xi*(Lp-omega0*fi)**2-(fi+1)*Lpp)-phirpp)
     prop["alfap"] = prop["rho"]/rho0/Tll*(
-        Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2 -
-        (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
+        Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2
+        - (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
     prop["cp"] = -R*(tau+1)*(Lt*(fi+1)+(tau+1)/2*(Ltt*(fi+1)-Lt**2*Xi)+phirtt)
 
     # Eq 16
@@ -581,7 +584,7 @@ def _Supercooled(T, P):
     return prop
 
 
-def _Sublimation_Pressure(T):
+def _Sublimation_Pressure(T: float) -> float:
     """Sublimation Pressure correlation
 
     Parameters
@@ -612,7 +615,7 @@ def _Sublimation_Pressure(T):
     """
     if 50 <= T <= 273.16:
         Tita = T/Tt
-        suma = 0
+        suma = 0.0
         a = [-0.212144006e2, 0.273203819e2, -0.61059813e1]
         expo = [0.333333333e-2, 1.20666667, 1.70333333]
         for ai, expi in zip(a, expo):
@@ -622,7 +625,7 @@ def _Sublimation_Pressure(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _Melting_Pressure(T, ice="Ih"):
+def _Melting_Pressure(T: float, ice: str = "Ih") -> float:
     """Melting Pressure correlation
 
     Parameters
@@ -664,7 +667,7 @@ def _Melting_Pressure(T, ice="Ih"):
         Tita = T/Tref
         a = [0.119539337e7, 0.808183159e5, 0.33382686e4]
         expo = [3., 0.2575e2, 0.10375e3]
-        suma = 1
+        suma = 1.0
         for ai, expi in zip(a, expo):
             suma += ai*(1-Tita**expi)
         P = suma*Pref
@@ -691,15 +694,16 @@ def _Melting_Pressure(T, ice="Ih"):
         Tref = 355
         Pref = 2216.000
         Tita = T/Tref
-        P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5) +
-                     0.806106e-7*(1-Tita**22))
+        P = Pref*exp(1.73683*(1-1./Tita)-0.544606e-1*(1-Tita**5)
+                     + 0.806106e-7*(1-Tita**22))
     else:
         raise NotImplementedError("Incoming out of bound")
     return P
 
 
 # Transport properties
-def _Viscosity(rho, T, fase=None, drho=None):
+def _Viscosity(rho: float, T: float, fase: Optional[_fase] = None,
+               drho: float = None) -> float:
     """Equation for the Viscosity
 
     Parameters
@@ -735,7 +739,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
 
     # Eq 11
     H = [1.67752, 2.20462, 0.6366564, -0.241605]
-    mu0 = 100*Tr**0.5/sum([Hi/Tr**i for i, Hi in enumerate(H)])
+    mu0 = 100*Tr**0.5/sum(Hi/Tr**i for i, Hi in enumerate(H))
 
     # Eq 12
     I = [0, 1, 2, 3, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 0, 1, 0, 3, 4, 3, 5]
@@ -744,10 +748,12 @@ def _Viscosity(rho, T, fase=None, drho=None):
            0.188797e1, 0.126613e1, 0.120573, -0.281378, -0.906851, -0.772479,
            -0.489837, -0.257040, 0.161913, 0.257399, -0.325372e-1, 0.698452e-1,
            0.872102e-2, -0.435673e-2, -0.593264e-3]
-    mu1 = exp(Dr*sum([(1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(I, J, Hij)]))
+    mu1 = exp(Dr*sum((1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(I, J, Hij)))
 
     # Critical enhancement
     if fase and drho:
+        assert(isinstance(fase.drhodP_T, float))
+
         qc = 1/1.9
         qd = 1/1.1
 
@@ -788,7 +794,8 @@ def _Viscosity(rho, T, fase=None, drho=None):
     return mu*1e-6
 
 
-def _ThCond(rho, T, fase=None, drho=None):
+def _ThCond(rho: float, T: float, fase: Optional[_fase] = None,
+            drho: Optional[float] = None) -> float:
     """Equation for the thermal conductivity
 
     Parameters
@@ -824,7 +831,7 @@ def _ThCond(rho, T, fase=None, drho=None):
 
     # Eq 16
     no = [2.443221e-3, 1.323095e-2, 6.770357e-3, -3.454586e-3, 4.096266e-4]
-    k0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+    k0 = Tr**0.5/sum(n/Tr**i for i, n in enumerate(no))
 
     # Eq 17
     I = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4,
@@ -837,10 +844,15 @@ def _ThCond(rho, T, fase=None, drho=None):
            -1.40944978, 0.275418278, -0.0205938816, -1.21051378, 1.60812989,
            -0.621178141, 0.0716373224, -2.7203370, 4.57586331, -3.18369245,
            1.1168348, -0.19268305, 0.012913842]
-    k1 = exp(d*sum([(1/Tr-1)**i*n*(d-1)**j for i, j, n in zip(I, J, nij)]))
+    k1 = exp(d*sum((1/Tr-1)**i*n*(d-1)**j for i, j, n in zip(I, J, nij)))
 
     # Critical enhancement
     if fase:
+        assert(isinstance(fase.drhodP_T, float))
+        assert(isinstance(fase.cp, float))
+        assert(isinstance(fase.cp_cv, float))
+        assert(isinstance(fase.mu, float))
+
         R = 0.46151805
 
         if not drho:
@@ -861,7 +873,7 @@ def _ThCond(rho, T, fase=None, drho=None):
             else:
                 ai = [1.11999926419994, 0.595748562571649, 9.88952565078920,
                       -10.3255051147040, 4.66861294457414, -0.503243546373828]
-            drho = 1/sum([a*d**i for i, a in enumerate(ai)])*rhoc/Pc
+            drho = 1.0/sum(a*d**i for i, a in enumerate(ai))*rhoc/Pc
 
         DeltaX = d*(Pc/rhoc*fase.drhodP_T-Pc/rhoc*drho*1.5/Tr)
         if DeltaX < 0:
@@ -872,7 +884,7 @@ def _ThCond(rho, T, fase=None, drho=None):
 
         # Eq 19
         if y < 1.2e-7:
-            Z = 0
+            Z = 0.0
         else:
             Z = 2/pi/y*(((1-1/fase.cp_cv)*atan(y)+y/fase.cp_cv)-(
                 1-exp(-1/(1/y+y**2/3/d**2))))
@@ -889,7 +901,7 @@ def _ThCond(rho, T, fase=None, drho=None):
     return 1e-3*k
 
 
-def _Tension(T):
+def _Tension(T: float) -> float:
     """Equation for the surface tension
 
     Parameters
@@ -931,7 +943,7 @@ def _Tension(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _Dielectric(rho, T):
+def _Dielectric(rho: float, T: float) -> float:
     """Equation for the Dielectric constant
 
     Parameters
@@ -977,8 +989,8 @@ def _Dielectric(rho, T):
 
     d = rho/rhoc
     Tr = Tc/T
-    I = [1, 1, 1, 2, 3, 3, 4, 5, 6, 7, 10, None]
-    J = [0.25, 1, 2.5, 1.5, 1.5, 2.5, 2, 2, 5, 0.5, 10, None]
+    I = [1, 1, 1, 2, 3, 3, 4, 5, 6, 7, 10]
+    J = [0.25, 1.0, 2.5, 1.5, 1.5, 2.5, 2.0, 2.0, 5.0, 0.5, 10.0]
     n = [0.978224486826, -0.957771379375, 0.237511794148, 0.714692244396,
          -0.298217036956, -0.108863472196, .949327488264e-1, -.980469816509e-2,
          .165167634970e-4, .937359795772e-4, -.12317921872e-9,
@@ -987,13 +999,13 @@ def _Dielectric(rho, T):
     g = 1+n[11]*d/(Tc/228/Tr-1)**1.2
     for i in range(11):
         g += n[i]*d**I[i]*Tr**J[i]
-    A = Na*mu**2*rho*g/M*1000/epsilon0/k/T
-    B = Na*alfa*rho/3/M*1000/epsilon0
+    A = Na*mu**2*rho*g/_global_M*1000/epsilon0/k/T
+    B = Na*alfa*rho/3/_global_M*1000/epsilon0
     e = (1+A+5*B+(9+2*A+18*B+A**2+10*A*B+9*B**2)**0.5)/4/(1-B)
     return e
 
 
-def _Refractive(rho, T, l=0.5893):
+def _Refractive(rho: float, T: float, l: float = 0.5893) -> float:
     """Equation for the refractive index
 
     Parameters
@@ -1047,7 +1059,7 @@ def _Refractive(rho, T, l=0.5893):
     return ((2*A+1)/(1-A))**0.5
 
 
-def _Kw(rho, T):
+def _Kw(rho: float, T: float) -> float:
     """Equation for the ionization constant of ordinary water
 
     Parameters
@@ -1090,7 +1102,7 @@ def _Kw(rho, T):
     Mw = 18.015268
 
     gamma = [6.1415e-1, 4.825133e4, -6.770793e4, 1.01021e7]
-    pKg = 0
+    pKg = 0.0
     for i, g in enumerate(gamma):
         pKg += g/T**i
 
@@ -1100,7 +1112,7 @@ def _Kw(rho, T):
     return pKw
 
 
-def _Conductivity(rho, T):
+def _Conductivity(rho: float, T: float) -> float:
     """Equation for the electrolytic conductivity of liquid and dense
     supercrítical water
 
@@ -1142,8 +1154,8 @@ def _Conductivity(rho, T):
     B = [16., 11.6, 3.26e-4, -2.3e-6, 1.1e-8]
     t = T-273.15
 
-    Loo = A[0]-1/(1/A[1]+sum([A[i+2]*t**(i+1) for i in range(4)]))      # Eq 5
-    rho_h = B[0]-1/(1/B[1]+sum([B[i+2]*t**(i+1) for i in range(3)]))    # Eq 6
+    Loo = A[0]-1/(1/A[1]+sum(A[i+2]*t**(i+1) for i in range(4)))      # Eq 5
+    rho_h = B[0]-1/(1/B[1]+sum(B[i+2]*t**(i+1) for i in range(3)))    # Eq 6
 
     # Eq 4
     L_o = (rho_h-rho_)*Loo/rho_h
@@ -1154,7 +1166,7 @@ def _Conductivity(rho, T):
 
 
 # Heavy water transport properties
-def _D2O_Viscosity(rho, T):
+def _D2O_Viscosity(rho: float, T: float) -> float:
     """Equation for the Viscosity of heavy water
 
     Parameters
@@ -1185,7 +1197,7 @@ def _D2O_Viscosity(rho, T):
     rhor = rho/358.0
 
     no = [1.0, 0.940695, 0.578377, -0.202044]
-    fi0 = Tr**0.5/sum([n/Tr**i for i, n in enumerate(no)])
+    fi0 = Tr**0.5/sum(n/Tr**i for i, n in enumerate(no))
 
     Li = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 5, 0, 1, 2, 3, 0, 1, 3,
           5, 0, 1, 5, 3]
@@ -1203,7 +1215,7 @@ def _D2O_Viscosity(rho, T):
     return 55.2651e-6*fi0*fi1
 
 
-def _D2O_ThCond(rho, T):
+def _D2O_ThCond(rho: float, T: float) -> float:
     """Equation for the thermal conductivity of heavy water
 
     Parameters
@@ -1235,11 +1247,11 @@ def _D2O_ThCond(rho, T):
     tau = Tr/(abs(Tr-1.1)+1.1)
 
     no = [1.0, 37.3223, 22.5485, 13.0465, 0.0, -2.60735]
-    Lo = sum([Li*Tr**i for i, Li in enumerate(no)])
+    Lo = sum(Li*Tr**i for i, Li in enumerate(no))
 
     nr = [483.656, -191.039, 73.0358, -7.57467]
     Lr = -167.31*(1-exp(-2.506*rhor))+sum(
-        [Li*rhor**(i+1) for i, Li in enumerate(nr)])
+        Li*rhor**(i+1) for i, Li in enumerate(nr))
 
     f1 = exp(0.144847*Tr-5.64493*Tr**2)
     f2 = exp(-2.8*(rhor-1)**2)-0.080738543*exp(-17.943*(rhor-0.125698)**2)
@@ -1252,7 +1264,7 @@ def _D2O_ThCond(rho, T):
     return 0.742128e-3*(Lo+Lr+Lc+Ll)
 
 
-def _D2O_Tension(T):
+def _D2O_Tension(T: float) -> float:
     """Equation for the surface tension of heavy water
 
     Parameters
@@ -1290,7 +1302,7 @@ def _D2O_Tension(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _D2O_Sublimation_Pressure(T):
+def _D2O_Sublimation_Pressure(T: float) -> float:
     """Sublimation Pressure correlation for heavy water
 
     Parameters
@@ -1321,7 +1333,7 @@ def _D2O_Sublimation_Pressure(T):
     """
     if 210 <= T <= 276.969:
         Tita = T/276.969
-        suma = 0
+        suma = 0.0
         ai = [-0.1314226e2, 0.3212969e2]
         ti = [-1.73, -1.42]
         for a, t in zip(ai, ti):
@@ -1331,7 +1343,7 @@ def _D2O_Sublimation_Pressure(T):
         raise NotImplementedError("Incoming out of bound")
 
 
-def _D2O_Melting_Pressure(T, ice="Ih"):
+def _D2O_Melting_Pressure(T: float, ice: str = "Ih") -> float:
     """Melting Pressure correlation for heavy water
 
     Parameters
@@ -1371,7 +1383,7 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
         Tita = T/276.969
         ai = [-0.30153e5, 0.692503e6]
         ti = [5.5, 8.2]
-        suma = 1
+        suma = 1.0
         for a, t in zip(ai, ti):
             suma += a*(1-Tita**t)
         P = suma*0.00066159
@@ -1392,7 +1404,7 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
     return P
 
 
-def _Henry(T, gas, liquid="H2O"):
+def _Henry(T: float, gas: str, liquid: str = "H2O") -> float:
     """Equation for the calculation of Henry's constant
 
     Parameters
@@ -1484,7 +1496,7 @@ def _Henry(T, gas, liquid="H2O"):
     else:
         ai = [-7.896657, 24.73308, -27.81128, 9.355913, -9.220083]
         bi = [1, 1.89, 2, 3, 3.6]
-    ps = Pc*exp(1/Tr*sum([a*tau**b for a, b in zip(ai, bi)]))
+    ps = Pc*exp(1/Tr*sum(a*tau**b for a, b in zip(ai, bi)))
 
     # Select values from Table 2
     par = {
@@ -1516,7 +1528,7 @@ def _Henry(T, gas, liquid="H2O"):
     return kh
 
 
-def _Kvalue(T, gas, liquid="H2O"):
+def _Kvalue(T: float, gas: str, liquid: str = "H2O") -> float:
     """Equation for the vapor-liquid distribution constant
 
     Parameters
@@ -1609,7 +1621,7 @@ def _Kvalue(T, gas, liquid="H2O"):
         ci = [2.7072, 0.58662, -1.3069, -45.663]
         di = [0.374, 1.45, 2.6, 12.3]
         q = -0.024552
-    f = sum([c*tau**d for c, d in zip(ci, di)])
+    f = sum(c*tau**d for c, d in zip(ci, di))
 
     # Select values from Table 2
     par = {"He": (2267.4082, -2.9616, -3.2604, 7.8819),
