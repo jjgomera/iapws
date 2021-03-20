@@ -23,12 +23,11 @@ class ResidualContribution(object):
     """Residual contribution to the adimensional free Helmholtz energy"""
 
     def __init__(self, nr1: List[float], d1: List[float], t1: List[float],
-                 nr2: List[float], d2: List[float], gamma2: List[int],
-                 t2: List[float], c2: List[int], nr3: List[float],
-                 d3: List[int], t3: List[float], alfa3: List[float],
-                 epsilon3: List[float], beta3: List[float], gamma3: List[float],
-                 nr4: List[float], a4: List[float], b4: List[float],
-                 A: List[float], B: List[float], C: List[int],
+                 nr2: List[float], d2: List[float], t2: List[float],
+                 c2: List[int], nr3: List[float], d3: List[int], t3: List[float],
+                 alfa3: List[float], epsilon3: List[float], beta3: List[float],
+                 gamma3: List[float], nr4: List[float], a4: List[float],
+                 b4: List[float], A: List[float], B: List[float], C: List[int],
                  D: List[int], beta4: List[float]) -> None:
         # Polinomial terms
         self.nr1 = nr1
@@ -37,7 +36,6 @@ class ResidualContribution(object):
         # Exponential terms
         self.nr2 = nr2
         self.d2 = d2
-        self.gamma2 = gamma2  # Gamma2 is always ones?
         self.t2 = t2
         self.c2 = c2
         # Gaussian terms (optional, may be empty lists)
@@ -92,8 +90,8 @@ class ResidualContribution(object):
             fir += n*delta**d*tau**t
 
         # Exponential terms
-        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
-            fir += n*delta**d*tau**t*exp(-g*delta**c)
+        for n, d, t, c in zip(self.nr2, self.d2, self.t2, self.c2):
+            fir += n*delta**d*tau**t*exp(-delta**c)
 
         # Gaussian terms
         for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
@@ -146,13 +144,13 @@ class ResidualContribution(object):
             fird += n*d*delta**(d-1)*tau**t
 
         # Exponential terms
-        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+        for n, d, t, c in zip(self.nr2, self.d2, self.t2, self.c2):
             try:
-                expt = exp(-g*delta**c)
+                expt = exp(-delta**c)
             except OverflowError:
                 fird = float('nan')
                 break
-            fird += n*expt*delta**(d-1)*tau**t*(d-g*c*delta**c)
+            fird += n*expt*delta**(d-1)*tau**t*(d-c*delta**c)
 
         # Gaussian terms
         for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
@@ -212,8 +210,8 @@ class ResidualContribution(object):
             firt += n*t*delta**d*tau**(t-1)
 
         # Exponential terms
-        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
-            firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
+        for n, d, t, c in zip(self.nr2, self.d2, self.t2, self.c2):
+            firt += n*t*delta**d*tau**(t-1)*exp(-delta**c)
 
         # Gaussian terms
         for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
@@ -277,19 +275,19 @@ class ResidualContribution(object):
 
         # Exponential terms
         failed = False
-        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+        for n, d, t, c in zip(self.nr2, self.d2, self.t2, self.c2):
             try:
-                expgdc = exp(-g*delta**c)
+                expdc = exp(-delta**c)
             except OverflowError:
                 failed = True
-                expgdc = float('inf')
-            fir += n*delta**d*tau**t*expgdc
-            fird += n*expgdc*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            firdd += n*expgdc*delta**(d-2)*tau**t * \
-                ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
-            firt += n*t*delta**d*tau**(t-1)*expgdc
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)*expgdc
-            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*expgdc
+                expdc = float('inf')
+            fir += n*delta**d*tau**t*expdc
+            fird += n*expdc*delta**(d-1)*tau**t*(d-c*delta**c)
+            firdd += n*expdc*delta**(d-2)*tau**t * \
+                ((d-c*delta**c)*(d-1-c*delta**c)-c**2*delta**c)
+            firt += n*t*delta**d*tau**(t-1)*expdc
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)*expdc
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*expdc
         if failed:
             fir = float('nan')
 
@@ -374,10 +372,10 @@ class ResidualContribution(object):
             C += n*d*(d-1)*delta**(d-2)*tau**t
 
         # Exponential terms
-        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
-            B += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            C += n*exp(-g*delta**c)*(delta**(d-2)*tau**t*(
-                (d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c))
+        for n, d, t, c in zip(self.nr2, self.d2, self.t2, self.c2):
+            B += n*exp(-delta**c)*delta**(d-1)*tau**t*(d-c*delta**c)
+            C += n*exp(-delta**c)*(delta**(d-2)*tau**t*(
+                (d-c*delta**c)*(d-1-c*delta**c)-c**2*delta**c))
 
         # Gaussian terms
         for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
