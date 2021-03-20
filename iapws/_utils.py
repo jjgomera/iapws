@@ -233,19 +233,6 @@ def deriv_H(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     return mul*deriv
 
 
-class HelmholtzDerivatives(object):
-    """Helmholtz free energy and derivatives."""
-
-    def __init__(self, fi: float, fit: float, fid: float,
-                 fitt: float, fidd: float, fidt: float) -> None:
-        self.fi = fi
-        self.fit = fit
-        self.fid = fid
-        self.fitt = fitt
-        self.fidd = fidd
-        self.fidt = fidt
-
-
 def deriv_G(state: Any, z: str, x: str, y: str, fase: _fase) -> float:
     r"""Calculate generic partial derivative
     :math:`\left.\frac{\partial z}{\partial x}\right|_{y}` from a fundamental

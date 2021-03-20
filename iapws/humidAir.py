@@ -23,7 +23,8 @@ from scipy.optimize import fsolve
 from ._iapws import _global_M
 from ._iapws import _Ice
 from ._utils import _fase, deriv_G
-from .iapws95 import MEoS, IAPWS95, mainClassDoc, ResidualContribution
+from .iapws95 import MEoS, IAPWS95, mainClassDoc
+from .helmholtz import ResidualContribution
 
 
 Ma = 28.96546  # g/mol

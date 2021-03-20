@@ -16,8 +16,9 @@ import warnings
 from typing import Dict, Optional
 
 from scipy.constants import Boltzmann
-from .iapws95 import MEoS, IAPWS95, mainClassDoc, ResidualContribution
+from .iapws95 import MEoS, IAPWS95, mainClassDoc
 from ._utils import _fase
+from .helmholtz import ResidualContribution
 
 
 @mainClassDoc()
