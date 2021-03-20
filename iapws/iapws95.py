@@ -788,8 +788,6 @@ class MEoS(_fase):
 
         sol = fsolve(f2, [rhoo, To], full_output=True)
         rho, T = tuple(map(float, sol[0]))
-        rhol = self._Liquid_Density(T)
-        rhov = self._Vapor_Density(T)
         liquido = None
         vapor = None
         if rho == rhoo or sol[2] != 1:
