@@ -3804,6 +3804,30 @@ def Region5_cp0(Tr: float, Pr: float) -> Tuple[float, float, float, float, float
     return go, gop, gopp, got, gott, gopt
 
 
+def _solve_T_P(T: float, P: float) -> IAPWS97Properties:
+    """Solve for properties using T & P."""
+    region = _Bound_TP(T, P)
+    if region == 1:
+        propiedades = _Region1(T, P)
+    elif region == 2:
+        propiedades = _Region2(T, P)
+    elif region == 3:
+        if T == Tc and P == Pc:
+            rho = rhoc
+        else:
+            vo = _Backward3_v_PT(P, T)
+
+            def rho_funcion(rho: float) -> float:
+                return _Region3(rho, T).P-P
+            rho = float(newton(rho_funcion, 1/vo))
+        propiedades = _Region3(rho, T)
+    elif region == 5:
+        propiedades = _Region5(T, P)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return propiedades
+
+
 # Region definitions
 def _Bound_TP(T: float, P: float) -> Optional[int]:
     """Region definition for input T and P
@@ -3844,6 +3868,50 @@ def _Bound_TP(T: float, P: float) -> Optional[int]:
         elif T_b23 <= T <= 1073.15:
             region = 2
     return region
+
+
+def _solve_P_h(P: float, h: float) -> IAPWS97Properties:
+    """Solve for properties using P & h."""
+    region = _Bound_Ph(P, h)
+    if region == 1:
+        To = _Backward1_T_Ph(P, h)
+        T = float(newton(lambda T: _Region1(T, P).h-h, To))
+        propiedades = _Region1(T, P)
+    elif region == 2:
+        To = _Backward2_T_Ph(P, h)
+        T = float(newton(lambda T: _Region2(T, P).h-h, To))
+        propiedades = _Region2(T, P)
+    elif region == 3:
+        vo = _Backward3_v_Ph(P, h)
+        To = _Backward3_T_Ph(P, h)
+
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region3(par[0], par[1]).h-h,
+                    _Region3(par[0], par[1]).P-P)
+        rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
+        propiedades = _Region3(rho, T)
+    elif region == 4:
+        T = _TSat_P(P)
+        if T <= 623.15:
+            h1 = _Region1(T, P).h
+            h2 = _Region2(T, P).h
+            x = (h-h1)/(h2-h1)
+            propiedades = _Region4(P, x)
+        else:
+            vo = _Backward3_v_Ph(P, h)
+            To = _Backward3_T_Ph(P, h)
+
+            def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+                return (_Region3(par[0], par[1]).h-h,
+                        _Region3(par[0], par[1]).P-P)
+            rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
+            propiedades = _Region3(rho, T)
+    elif region == 5:
+        T = float(newton(lambda T: _Region5(T, P).h-h, 1500))
+        propiedades = _Region5(T, P)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return propiedades
 
 
 def _Bound_Ph(P: float, h: float) -> Optional[int]:
@@ -3920,6 +3988,50 @@ def _Bound_Ph(P: float, h: float) -> Optional[int]:
     return region
 
 
+def _solve_P_s(P: float, s: float) -> IAPWS97Properties:
+    """Solve for properties using P & s."""
+    region = _Bound_Ps(P, s)
+    if region == 1:
+        To = _Backward1_T_Ps(P, s)
+        T = float(newton(lambda T: _Region1(T, P).s-s, To))
+        propiedades = _Region1(T, P)
+    elif region == 2:
+        To = _Backward2_T_Ps(P, s)
+        T = float(newton(lambda T: _Region2(T, P).s-s, To))
+        propiedades = _Region2(T, P)
+    elif region == 3:
+        vo = _Backward3_v_Ps(P, s)
+        To = _Backward3_T_Ps(P, s)
+
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region3(par[0], par[1]).s-s,
+                    _Region3(par[0], par[1]).P-P)
+        rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
+        propiedades = _Region3(rho, T)
+    elif region == 4:
+        T = _TSat_P(P)
+        if T <= 623.15:
+            s1 = _Region1(T, P).s
+            s2 = _Region2(T, P).s
+            x = (s-s1)/(s2-s1)
+            propiedades = _Region4(P, x)
+        else:
+            vo = _Backward3_v_Ps(P, s)
+            To = _Backward3_T_Ps(P, s)
+
+            def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+                return (_Region3(par[0], par[1]).s-s,
+                        _Region3(par[0], par[1]).P-P)
+            rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
+            propiedades = _Region3(rho, T)
+    elif region == 5:
+        T = float(newton(lambda T: _Region5(T, P).s-s, 1500))
+        propiedades = _Region5(T, P)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return propiedades
+
+
 def _Bound_Ps(P: float, s: float) -> Optional[int]:
     """Region definition for input P and s
 
@@ -3992,6 +4104,96 @@ def _Bound_Ps(P: float, s: float) -> Optional[int]:
         elif P <= 50 and s25 <= s <= smax:
             region = 5
     return region
+
+
+def _solve_h_s(h: float, s: float) -> IAPWS97Properties:
+    """Solve for properties using h & s."""
+    region = _Bound_hs(h, s)
+    if region == 1:
+        Po = _Backward1_P_hs(h, s)
+        To = _Backward1_T_Ph(Po, h)
+
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region1(par[0], par[1]).h-h,
+                    _Region1(par[0], par[1]).s-s)
+        T, P = tuple(map(float, fsolve(funcion, [To, Po])))
+        propiedades = _Region1(T, P)
+    elif region == 2:
+        Po = _Backward2_P_hs(h, s)
+        To = _Backward2_T_Ph(Po, h)
+
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region2(par[0], par[1]).h-h,
+                    _Region2(par[0], par[1]).s-s)
+        T, P = tuple(map(float, fsolve(funcion, [To, Po])))
+        propiedades = _Region2(T, P)
+    elif region == 3:
+        P = _Backward3_P_hs(h, s)
+        vo = _Backward3_v_Ph(P, h)
+        To = _Backward3_T_Ph(P, h)
+
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region3(par[0], par[1]).h-h,
+                    _Region3(par[0], par[1]).s-s)
+        rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
+        propiedades = _Region3(rho, T)
+    elif region == 4:
+        if round(s-sc, 6) == 0 and round(h-hc, 6) == 0:
+            propiedades = _Region3(rhoc, Tc)
+
+        else:
+            To = _Backward4_T_hs(h, s)
+            if To < 273.15 or To > Tc:
+                To = 300
+
+            def funcion2(par: List[float]) -> Tuple[float, float]:
+                # This passes tests, but these assignments modify the CALLERS
+                # par tuple, instead of our copy.  Was that intended?
+                if True:
+                    if par[1] < 0:
+                        par[1] = 0
+                    elif par[1] > 1:
+                        par[1] = 1
+                    pp1 = par[1]
+                # And this does not.
+                else:
+                    pp1 = par[1]
+                    if pp1 < 0:
+                        pp1 = 0
+                    elif pp1 > 1:
+                        pp1 = 1
+
+                pp0 = par[0]
+                if pp0 < 273.15:
+                    pp0 = 273.15
+                elif pp0 > Tc:
+                    pp0 = Tc
+
+                Po = _PSat_T(pp0)
+                liquid = _Region1(pp0, Po)
+                vapor = _Region2(pp0, Po)
+                hl = liquid.h
+                sl = liquid.s
+                hv = vapor.h
+                sv = vapor.s
+                return (hv*pp1+hl*(1-pp1)-h,
+                        sv*pp1+sl*(1-pp1)-s)
+            T, x = tuple(map(float, fsolve(funcion2, [To, 0.5])))
+            P = _PSat_T(T)
+
+            if Pt <= P < Pc and 0 < x < 1:
+                propiedades = _Region4(P, x)
+            elif Pt <= P <= Ps_623 and x == 0:
+                propiedades = _Region1(T, P)
+    elif region == 5:
+        def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
+            return (_Region5(par[0], par[1]).h-h,
+                    _Region5(par[0], par[1]).s-s)
+        T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
+        propiedades = _Region5(T, P)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    return propiedades
 
 
 def _Bound_hs(h: float, s: float) -> Optional[int]:
@@ -4166,6 +4368,49 @@ def _Bound_hs(h: float, s: float) -> Optional[int]:
     return region
 
 
+def _solve_P_x(P: float, x: float) -> IAPWS97Properties:
+    """Solve for properties using P & x."""
+    T = _TSat_P(P)
+    if Pt <= P < Pc and 0 < x < 1:
+        propiedades = _Region4(P, x)
+    elif Pt <= P <= Ps_623 and x == 0:
+        propiedades = _Region1(T, P)
+    elif Pt <= P <= Ps_623 and x == 1:
+        propiedades = _Region2(T, P)
+    elif Ps_623 < P < Pc and x in (0, 1):
+        def rho_funcion(rho: float) -> float:
+            return _Region3(rho, T).P-P
+        rhoo = 1./_Backward3_sat_v_P(P, T, int(x))
+        rho = float(fsolve(rho_funcion, rhoo)[0])
+        propiedades = _Region3(rho, T)
+    elif P == Pc and 0 <= x <= 1:
+        propiedades = _Region3(rhoc, Tc)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    propiedades.x = x
+    return propiedades
+
+
+def _solve_T_x(T: float, x: float) -> IAPWS97Properties:
+    """Solve for properties using T & x."""
+    P = _PSat_T(T)
+    if 273.15 <= T < Tc and 0 < x < 1:
+        propiedades = _Region4(P, x)
+    elif 273.15 <= T <= 623.15 and x == 0:
+        propiedades = _Region1(T, P)
+    elif 273.15 <= T <= 623.15 and x == 1:
+        propiedades = _Region2(T, P)
+    elif 623.15 < T < Tc and x in (0, 1):
+        rho = 1./_Backward3_sat_v_P(P, T, int(x))
+        propiedades = _Region3(rho, T)
+    elif T == Tc and 0 <= x <= 1:
+        propiedades = _Region3(rhoc, Tc)
+    else:
+        raise NotImplementedError("Incoming out of bound")
+    propiedades.x = x
+    return propiedades
+
+
 def prop0(T: float, P: float) -> Dict[str, float]:
     """Ideal gas properties
 
@@ -4313,12 +4558,12 @@ class IAPWS97(_fase):
     1.8714 1.4098 2594.66 9.471 444.93
     """
 
-    kwargs = {"T": 0.0,
-              "P": 0.0,
+    kwargs = {"T": None,
+              "P": None,
               "x": None,
               "h": None,
               "s": None,
-              "v": 0.0,
+              "v": None,
               "l": 0.5893}
     status = 0
     msg = "Unknown variables"
@@ -4347,275 +4592,52 @@ class IAPWS97(_fase):
         """Invoke the solver."""
         self.kwargs.update(kwargs)
 
-        if self.calculable:
-            self.status = 1
-            self.calculo()
-            self.msg = "Solved"
+        self.calculo()
+        self.msg = "Solved"
 
     @property
-    def calculable(self) -> str:
+    def calculable(self) -> bool:
         """Check if class is calculable by its kwargs"""
-        self._mode = ""
-        if self.kwargs["T"] and self.kwargs["P"]:
-            self._mode = "TP"
-        elif self.kwargs["P"] and self.kwargs["h"] is not None:
-            self._mode = "Ph"
-        elif self.kwargs["P"] and self.kwargs["s"] is not None:
-            self._mode = "Ps"
-        # TODO: Add other pairs definitions options
-        # elif self.kwargs["P"] and self.kwargs["v"]:
-            # self._mode = "Pv"
-        # elif self.kwargs["T"] and self.kwargs["s"] is not None:
-            # self._mode = "Ts"
-        elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
-            self._mode = "hs"
-        elif self.kwargs["T"] and self.kwargs["x"] is not None:
-            self._mode = "Tx"
-        elif self.kwargs["P"] and self.kwargs["x"] is not None:
-            self._mode = "Px"
-        return self._mode
+        return bool(self._calculable)
 
     def calculo(self) -> None:
         """Calculate procedure"""
-        arg1: float = self.kwargs[self._mode[0]]  # type: ignore
-        arg2: float = self.kwargs[self._mode[1]]  # type: ignore
-        args = (arg1, arg2)
-        if self._mode == "TP":
-            T, P = args
-            region = _Bound_TP(T, P)
-            if region == 1:
-                propiedades = _Region1(T, P)
-            elif region == 2:
-                propiedades = _Region2(T, P)
-            elif region == 3:
-                if T == Tc and P == Pc:
-                    rho = rhoc
-                else:
-                    vo = _Backward3_v_PT(P, T)
+        T = self.kwargs["T"]
+        P = self.kwargs["P"]
+        h = self.kwargs["h"]
+        s = self.kwargs["s"]
+        x = self.kwargs["x"]
 
-                    def rho_funcion(rho: float) -> float:
-                        assert(self.kwargs["T"] is not None)
-                        return _Region3(rho, self.kwargs["T"]).P-P
-                    rho = float(newton(rho_funcion, 1/vo))
-                propiedades = _Region3(rho, T)
-            elif region == 5:
-                propiedades = _Region5(T, P)
-            else:
-                raise NotImplementedError("Incoming out of bound")
+        self.status = 0
+        self._calculable = False
+        if T is not None and P is not None:
+            propiedades = _solve_T_P(T, P)
+        elif P is not None and h is not None:
+            propiedades = _solve_P_h(P, h)
+        elif P is not None and s is not None:
+            propiedades = _solve_P_s(P, s)
+        # TODO: Add other pairs definitions options
+        # elif P is not None and v is not None:
+        #     propiedades = self.solve_P_v(P, v)
+        # elif T is not None and s is not None:
+        #     propiedades = self.solve_T_s(T, s)
+        elif h is not None and s is not None:
+            propiedades = _solve_h_s(h, s)
+        elif P is not None and x is not None:
+            propiedades = _solve_P_x(P, x)
+            self.sigma = _Tension(propiedades.T)
+        elif T is not None and x is not None:
+            propiedades = _solve_T_x(T, x)
+            self.sigma = _Tension(propiedades.T)
+        else:
+            return
 
-        elif self._mode == "Ph":
-            P, h = args
-            region = _Bound_Ph(P, h)
-            if region == 1:
-                To = _Backward1_T_Ph(P, h)
-                T = float(newton(lambda T: _Region1(T, P).h-h, To))
-                propiedades = _Region1(T, P)
-            elif region == 2:
-                To = _Backward2_T_Ph(P, h)
-                T = float(newton(lambda T: _Region2(T, P).h-h, To))
-                propiedades = _Region2(T, P)
-            elif region == 3:
-                vo = _Backward3_v_Ph(P, h)
-                To = _Backward3_T_Ph(P, h)
+        self.dofill(propiedades)
 
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1]).h-h,
-                            _Region3(par[0], par[1]).P-P)
-                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
-                propiedades = _Region3(rho, T)
-            elif region == 4:
-                T = _TSat_P(P)
-                if T <= 623.15:
-                    h1 = _Region1(T, P).h
-                    h2 = _Region2(T, P).h
-                    x = (h-h1)/(h2-h1)
-                    propiedades = _Region4(P, x)
-                else:
-                    vo = _Backward3_v_Ph(P, h)
-                    To = _Backward3_T_Ph(P, h)
-
-                    def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                        return (_Region3(par[0], par[1]).h-h,
-                                _Region3(par[0], par[1]).P-P)
-                    rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
-                    propiedades = _Region3(rho, T)
-            elif region == 5:
-                T = float(newton(lambda T: _Region5(T, P).h-h, 1500))
-                propiedades = _Region5(T, P)
-            else:
-                raise NotImplementedError("Incoming out of bound")
-
-        elif self._mode == "Ps":
-            P, s = args
-            region = _Bound_Ps(P, s)
-            if region == 1:
-                To = _Backward1_T_Ps(P, s)
-                T = float(newton(lambda T: _Region1(T, P).s-s, To))
-                propiedades = _Region1(T, P)
-            elif region == 2:
-                To = _Backward2_T_Ps(P, s)
-                T = float(newton(lambda T: _Region2(T, P).s-s, To))
-                propiedades = _Region2(T, P)
-            elif region == 3:
-                vo = _Backward3_v_Ps(P, s)
-                To = _Backward3_T_Ps(P, s)
-
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1]).s-s,
-                            _Region3(par[0], par[1]).P-P)
-                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
-                propiedades = _Region3(rho, T)
-            elif region == 4:
-                T = _TSat_P(P)
-                if T <= 623.15:
-                    s1 = _Region1(T, P).s
-                    s2 = _Region2(T, P).s
-                    x = (s-s1)/(s2-s1)
-                    propiedades = _Region4(P, x)
-                else:
-                    vo = _Backward3_v_Ps(P, s)
-                    To = _Backward3_T_Ps(P, s)
-
-                    def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                        return (_Region3(par[0], par[1]).s-s,
-                                _Region3(par[0], par[1]).P-P)
-                    rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
-                    propiedades = _Region3(rho, T)
-            elif region == 5:
-                T = float(newton(lambda T: _Region5(T, P).s-s, 1500))
-                propiedades = _Region5(T, P)
-            else:
-                raise NotImplementedError("Incoming out of bound")
-
-        elif self._mode == "hs":
-            h, s = args
-            region = _Bound_hs(h, s)
-            if region == 1:
-                Po = _Backward1_P_hs(h, s)
-                To = _Backward1_T_Ph(Po, h)
-
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region1(par[0], par[1]).h-h,
-                            _Region1(par[0], par[1]).s-s)
-                T, P = tuple(map(float, fsolve(funcion, [To, Po])))
-                propiedades = _Region1(T, P)
-            elif region == 2:
-                Po = _Backward2_P_hs(h, s)
-                To = _Backward2_T_Ph(Po, h)
-
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region2(par[0], par[1]).h-h,
-                            _Region2(par[0], par[1]).s-s)
-                T, P = tuple(map(float, fsolve(funcion, [To, Po])))
-                propiedades = _Region2(T, P)
-            elif region == 3:
-                P = _Backward3_P_hs(h, s)
-                vo = _Backward3_v_Ph(P, h)
-                To = _Backward3_T_Ph(P, h)
-
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region3(par[0], par[1]).h-h,
-                            _Region3(par[0], par[1]).s-s)
-                rho, T = tuple(map(float, fsolve(funcion, [1/vo, To])))
-                propiedades = _Region3(rho, T)
-            elif region == 4:
-                if round(s-sc, 6) == 0 and round(h-hc, 6) == 0:
-                    propiedades = _Region3(rhoc, Tc)
-
-                else:
-                    To = _Backward4_T_hs(h, s)
-                    if To < 273.15 or To > Tc:
-                        To = 300
-
-                    def funcion2(par: List[float]) -> Tuple[float, float]:
-                        # This passes tests, but these assignments modify the CALLERS
-                        # par tuple, instead of our copy.  Was that intended?
-                        if True:
-                            if par[1] < 0:
-                                par[1] = 0
-                            elif par[1] > 1:
-                                par[1] = 1
-                            pp1 = par[1]
-                        # And this does not.
-                        else:
-                            pp1 = par[1]
-                            if pp1 < 0:
-                                pp1 = 0
-                            elif pp1 > 1:
-                                pp1 = 1
-
-                        pp0 = par[0]
-                        if pp0 < 273.15:
-                            pp0 = 273.15
-                        elif pp0 > Tc:
-                            pp0 = Tc
-
-                        Po = _PSat_T(pp0)
-                        liquid = _Region1(pp0, Po)
-                        vapor = _Region2(pp0, Po)
-                        hl = liquid.h
-                        sl = liquid.s
-                        hv = vapor.h
-                        sv = vapor.s
-                        return (hv*pp1+hl*(1-pp1)-h,
-                                sv*pp1+sl*(1-pp1)-s)
-                    T, x = tuple(map(float, fsolve(funcion2, [To, 0.5])))
-                    P = _PSat_T(T)
-
-                    if Pt <= P < Pc and 0 < x < 1:
-                        propiedades = _Region4(P, x)
-                    elif Pt <= P <= Ps_623 and x == 0:
-                        propiedades = _Region1(T, P)
-            elif region == 5:
-                def funcion(par: Tuple[float, float]) -> Tuple[float, float]:
-                    return (_Region5(par[0], par[1]).h-h,
-                            _Region5(par[0], par[1]).s-s)
-                T, P = tuple(map(float, fsolve(funcion, [1400, 1])))
-                propiedades = _Region5(T, P)
-            else:
-                raise NotImplementedError("Incoming out of bound")
-
-        elif self._mode == "Px":
-            P, x = args
-            T = _TSat_P(P)
-            if Pt <= P < Pc and 0 < x < 1:
-                propiedades = _Region4(P, x)
-            elif Pt <= P <= Ps_623 and x == 0:
-                propiedades = _Region1(T, P)
-            elif Pt <= P <= Ps_623 and x == 1:
-                propiedades = _Region2(T, P)
-            elif Ps_623 < P < Pc and x in (0, 1):
-                def rho_funcion(rho: float) -> float:
-                    return _Region3(rho, T).P-P
-                rhoo = 1./_Backward3_sat_v_P(P, T, int(x))
-                rho = float(fsolve(rho_funcion, rhoo)[0])
-                propiedades = _Region3(rho, T)
-            elif P == Pc and 0 <= x <= 1:
-                propiedades = _Region3(rhoc, Tc)
-            else:
-                raise NotImplementedError("Incoming out of bound")
-            self.sigma = _Tension(T)
-            propiedades.x = x
-
-        elif self._mode == "Tx":
-            T, x = args
-            P = _PSat_T(T)
-            if 273.15 <= T < Tc and 0 < x < 1:
-                propiedades = _Region4(P, x)
-            elif 273.15 <= T <= 623.15 and x == 0:
-                propiedades = _Region1(T, P)
-            elif 273.15 <= T <= 623.15 and x == 1:
-                propiedades = _Region2(T, P)
-            elif 623.15 < T < Tc and x in (0, 1):
-                rho = 1./_Backward3_sat_v_P(P, T, int(x))
-                propiedades = _Region3(rho, T)
-            elif T == Tc and 0 <= x <= 1:
-                propiedades = _Region3(rhoc, Tc)
-            else:
-                raise NotImplementedError("Incoming out of bound")
-            self.sigma = _Tension(T)
-            propiedades.x = x
-
+    def dofill(self, propiedades: IAPWS97Properties) -> None:
+        """Finish filling the class."""
+        self.status = 1
+        self._calculable = True
         self.M = 18.015257  # kg/kmol
         self.Pc = Pc
         self.Tt = Tt
