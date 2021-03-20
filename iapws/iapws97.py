@@ -4355,32 +4355,32 @@ class IAPWS97(_fase):
     @property
     def calculable(self) -> str:
         """Check if class is calculable by its kwargs"""
-        self._thermo = ""
+        self._mode = ""
         if self.kwargs["T"] and self.kwargs["P"]:
-            self._thermo = "TP"
+            self._mode = "TP"
         elif self.kwargs["P"] and self.kwargs["h"] is not None:
-            self._thermo = "Ph"
+            self._mode = "Ph"
         elif self.kwargs["P"] and self.kwargs["s"] is not None:
-            self._thermo = "Ps"
+            self._mode = "Ps"
         # TODO: Add other pairs definitions options
         # elif self.kwargs["P"] and self.kwargs["v"]:
-            # self._thermo = "Pv"
+            # self._mode = "Pv"
         # elif self.kwargs["T"] and self.kwargs["s"] is not None:
-            # self._thermo = "Ts"
+            # self._mode = "Ts"
         elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
-            self._thermo = "hs"
+            self._mode = "hs"
         elif self.kwargs["T"] and self.kwargs["x"] is not None:
-            self._thermo = "Tx"
+            self._mode = "Tx"
         elif self.kwargs["P"] and self.kwargs["x"] is not None:
-            self._thermo = "Px"
-        return self._thermo
+            self._mode = "Px"
+        return self._mode
 
     def calculo(self) -> None:
         """Calculate procedure"""
-        arg1: float = self.kwargs[self._thermo[0]]  # type: ignore
-        arg2: float = self.kwargs[self._thermo[1]]  # type: ignore
+        arg1: float = self.kwargs[self._mode[0]]  # type: ignore
+        arg2: float = self.kwargs[self._mode[1]]  # type: ignore
         args = (arg1, arg2)
-        if self._thermo == "TP":
+        if self._mode == "TP":
             T, P = args
             region = _Bound_TP(T, P)
             if region == 1:
@@ -4403,7 +4403,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
 
-        elif self._thermo == "Ph":
+        elif self._mode == "Ph":
             P, h = args
             region = _Bound_Ph(P, h)
             if region == 1:
@@ -4445,7 +4445,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
 
-        elif self._thermo == "Ps":
+        elif self._mode == "Ps":
             P, s = args
             region = _Bound_Ps(P, s)
             if region == 1:
@@ -4487,7 +4487,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
 
-        elif self._thermo == "hs":
+        elif self._mode == "hs":
             h, s = args
             region = _Bound_hs(h, s)
             if region == 1:
@@ -4575,7 +4575,7 @@ class IAPWS97(_fase):
             else:
                 raise NotImplementedError("Incoming out of bound")
 
-        elif self._thermo == "Px":
+        elif self._mode == "Px":
             P, x = args
             T = _TSat_P(P)
             if Pt <= P < Pc and 0 < x < 1:
@@ -4597,7 +4597,7 @@ class IAPWS97(_fase):
             self.sigma = _Tension(T)
             propiedades.x = x
 
-        elif self._thermo == "Tx":
+        elif self._mode == "Tx":
             T, x = args
             P = _PSat_T(T)
             if 273.15 <= T < Tc and 0 < x < 1:
