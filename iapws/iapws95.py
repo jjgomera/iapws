@@ -250,65 +250,29 @@ class MEoS(_fase):
             del kwargs["vm"]
         self.kwargs.update(kwargs)
 
-        if self.calculable:
-            try:
-                self.status = 1
-                self.calculo()
-                self.msg = ""
-            except RuntimeError as err:
-                self.status = 0
-                self.msg = err.args[0]
-                raise(err)
+        try:
+            self.calculo()
+            self.msg = ""
+            if self.status == 0:
+                return
+        except RuntimeError as err:
+            self.status = 0
+            self.msg = err.args[0]
+            raise(err)
 
-            # Add msg for extrapolation state
-            if self.name == "water" and 130 <= self.T < 273.15:
-                self.msg = "Extrapolated state"
-                self.status = 3
-                warnings.warn("Using extrapolated values")
-            elif self.name == "water" and 50 <= self.T < 130:
-                self.msg = "Extrapolated state using Low-Temperature extension"
-                self.status = 3
-                warnings.warn("Using extrapolated values and Low-Temperature"
-                              "extension")
+        # Add msg for extrapolation state
+        if self.name == "water" and 130 <= self.T < 273.15:
+            self.msg = "Extrapolated state"
+            self.status = 3
+            warnings.warn("Using extrapolated values")
+        elif self.name == "water" and 50 <= self.T < 130:
+            self.msg = "Extrapolated state using Low-Temperature extension"
+            self.status = 3
+            warnings.warn("Using extrapolated values and Low-Temperature extension")
 
     @property
     def calculable(self) -> bool:
         """Check if inputs are enough to define state"""
-        self._mode = ""
-        if self.kwargs["T"] and self.kwargs["P"]:
-            self._mode = "TP"
-        elif self.kwargs["T"] and self.kwargs["rho"]:
-            self._mode = "Trho"
-        elif self.kwargs["T"] and self.kwargs["h"] is not None:
-            self._mode = "Th"
-        elif self.kwargs["T"] and self.kwargs["s"] is not None:
-            self._mode = "Ts"
-        elif self.kwargs["T"] and self.kwargs["u"] is not None:
-            self._mode = "Tu"
-        elif self.kwargs["P"] and self.kwargs["rho"]:
-            self._mode = "Prho"
-        elif self.kwargs["P"] and self.kwargs["h"] is not None:
-            self._mode = "Ph"
-        elif self.kwargs["P"] and self.kwargs["s"] is not None:
-            self._mode = "Ps"
-        elif self.kwargs["P"] and self.kwargs["u"] is not None:
-            self._mode = "Pu"
-        elif self.kwargs["rho"] and self.kwargs["h"] is not None:
-            self._mode = "rhoh"
-        elif self.kwargs["rho"] and self.kwargs["s"] is not None:
-            self._mode = "rhos"
-        elif self.kwargs["rho"] and self.kwargs["u"] is not None:
-            self._mode = "rhou"
-        elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
-            self._mode = "hs"
-        elif self.kwargs["h"] is not None and self.kwargs["u"] is not None:
-            self._mode = "hu"
-        elif self.kwargs["s"] is not None and self.kwargs["u"] is not None:
-            self._mode = "su"
-        elif self.kwargs["T"] and self.kwargs["x"] is not None:
-            self._mode = "Tx"
-        elif self.kwargs["P"] and self.kwargs["x"] is not None:
-            self._mode = "Px"
         return bool(self._mode)
 
     def get_To_rhoo_x0(self, T0: Optional[float],
@@ -357,41 +321,60 @@ class MEoS(_fase):
         rho0 = self.kwargs["rho0"]
         To, rhoo, x0 = self.get_To_rhoo_x0(T0, rho0)
 
+        self._mode = ""
         # Method with iteration necessary to get x
-        if self._mode == "TP":
+        if self.kwargs["T"] and self.kwargs["P"]:
+            self._mode = "Trho"
             self.solve_T_P(T, P, rho0, rhoo)
-        elif self._mode == "Th":
-            self.solve_T_h(T, h)
-        elif self._mode == "Ts":
-            self.solve_T_s(T, s)
-        elif self._mode == "Tu":
-            self.solve_T_u(T, u)
-        elif self._mode == "Prho":
-            self.solve_P_rho(P, rho, To)
-        elif self._mode == "Ph":
-            self.solve_P_h(P, h, rhoo, To)
-        elif self._mode == "Ps":
-            self.solve_P_s(P, s, rhoo, To, x0)
-        elif self._mode == "Pu":
-            self.solve_P_u(P, u, rhoo, To)
-        elif self._mode == "rhoh":
-            self.solve_rho_h(rho, h, To)
-        elif self._mode == "rhos":
-            self.solve_rho_s(rho, s, To)
-        elif self._mode == "rhou":
-            self.solve_rho_u(rho, u, rhoo, To)
-        elif self._mode == "hs":
-            self.solve_h_s(h, s, rhoo, To)
-        elif self._mode == "hu":
-            self.solve_h_u(h, u, rhoo, To)
-        elif self._mode == "su":
-            self.solve_s_u(s, u, rhoo, To)
-        elif self._mode == "Trho":
+        elif self.kwargs["T"] and self.kwargs["rho"]:
+            self._mode = "Trho"
             self.solve_T_rho(T, rho)
-        elif self._mode == "Tx":
+        elif self.kwargs["T"] and self.kwargs["h"] is not None:
+            self._mode = "Th"
+            self.solve_T_h(T, h)
+        elif self.kwargs["T"] and self.kwargs["s"] is not None:
+            self._mode = "Ts"
+            self.solve_T_s(T, s)
+        elif self.kwargs["T"] and self.kwargs["u"] is not None:
+            self._mode = "Tu"
+            self.solve_T_u(T, u)
+        elif self.kwargs["P"] and self.kwargs["rho"]:
+            self._mode = "Prho"
+            self.solve_P_rho(P, rho, To)
+        elif self.kwargs["P"] and self.kwargs["h"] is not None:
+            self._mode = "Ph"
+            self.solve_P_h(P, h, rhoo, To)
+        elif self.kwargs["P"] and self.kwargs["s"] is not None:
+            self._mode = "Ps"
+            self.solve_P_s(P, s, rhoo, To, x0)
+        elif self.kwargs["P"] and self.kwargs["u"] is not None:
+            self._mode = "Pu"
+            self.solve_P_u(P, u, rhoo, To)
+        elif self.kwargs["rho"] and self.kwargs["h"] is not None:
+            self._mode = "rhoh"
+            self.solve_rho_h(rho, h, To)
+        elif self.kwargs["rho"] and self.kwargs["s"] is not None:
+            self._mode = "rhos"
+            self.solve_rho_s(rho, s, To)
+        elif self.kwargs["rho"] and self.kwargs["u"] is not None:
+            self._mode = "rhou"
+            self.solve_rho_u(rho, u, rhoo, To)
+        elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
+            self._mode = "hs"
+            self.solve_h_s(h, s, rhoo, To)
+        elif self.kwargs["h"] is not None and self.kwargs["u"] is not None:
+            self._mode = "hu"
+            self.solve_h_u(h, u, rhoo, To)
+        elif self.kwargs["s"] is not None and self.kwargs["u"] is not None:
+            self._mode = "su"
+            self.solve_s_u(s, u, rhoo, To)
+        elif self.kwargs["T"] and self.kwargs["x"] is not None:
+            self._mode = "Tx"
             self.solve_T_x(T, x)
-        elif self._mode == "Px":
+        elif self.kwargs["P"] and self.kwargs["x"] is not None:
+            self._mode = "Px"
             self.solve_P_x(P, x, T0)
+        # if self._mode is unset, calculable() will return false.
 
     def solve_T_P(self, T: float, P: float,
                   rho0: Optional[float], rhoo: float) -> None:
@@ -1379,6 +1362,7 @@ class MEoS(_fase):
 
     def dofill(self, T, P, x, propiedades, liquido, vapor):
         """Finish filling the class."""
+        self.status = 1
         self.T = T
         self.Tr = T/self._constant_Tref
         self.P = P
