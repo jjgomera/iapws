@@ -181,10 +181,10 @@ class MEoS(_fase):
     _constant_rhoc: float
     _constant_Tref: float
 
-    kwargs = {"T": 0.0,
-              "P": 0.0,
-              "rho": 0.0,
-              "v": 0.0,
+    kwargs = {"T": None,
+              "P": None,
+              "rho": None,
+              "v": None,
               "h": None,
               "s": None,
               "u": None,
@@ -309,69 +309,69 @@ class MEoS(_fase):
 
     def calculo(self) -> None:
         """Calculate procedure"""
-        T: float = self.kwargs["T"]  # type: ignore
-        rho: float = self.kwargs["rho"]  # type: ignore
-        P: float = self.kwargs["P"]  # type: ignore
-        s: float = self.kwargs["s"]  # type: ignore
-        h: float = self.kwargs["h"]  # type: ignore
-        u: float = self.kwargs["u"]  # type: ignore
-        x: float = self.kwargs["x"]  # type: ignore
-
+        T = self.kwargs["T"]
+        rho = self.kwargs["rho"]
+        P = self.kwargs["P"]
+        s = self.kwargs["s"]
+        h = self.kwargs["h"]
+        u = self.kwargs["u"]
+        x = self.kwargs["x"]
         T0 = self.kwargs["T0"]
         rho0 = self.kwargs["rho0"]
+
         To, rhoo, x0 = self.get_To_rhoo_x0(T0, rho0)
 
         self._mode = ""
         # Method with iteration necessary to get x
-        if self.kwargs["T"] and self.kwargs["P"]:
+        if T is not None and P is not None:
             self._mode = "Trho"
             self.solve_T_P(T, P, rho0, rhoo)
-        elif self.kwargs["T"] and self.kwargs["rho"]:
+        elif T is not None and rho is not None:
             self._mode = "Trho"
             self.solve_T_rho(T, rho)
-        elif self.kwargs["T"] and self.kwargs["h"] is not None:
+        elif T is not None and h is not None:
             self._mode = "Th"
             self.solve_T_h(T, h)
-        elif self.kwargs["T"] and self.kwargs["s"] is not None:
+        elif T is not None and s is not None:
             self._mode = "Ts"
             self.solve_T_s(T, s)
-        elif self.kwargs["T"] and self.kwargs["u"] is not None:
+        elif T is not None and u is not None:
             self._mode = "Tu"
             self.solve_T_u(T, u)
-        elif self.kwargs["P"] and self.kwargs["rho"]:
+        elif P is not None and rho is not None:
             self._mode = "Prho"
             self.solve_P_rho(P, rho, To)
-        elif self.kwargs["P"] and self.kwargs["h"] is not None:
+        elif P is not None and h is not None:
             self._mode = "Ph"
             self.solve_P_h(P, h, rhoo, To)
-        elif self.kwargs["P"] and self.kwargs["s"] is not None:
+        elif P is not None and s is not None:
             self._mode = "Ps"
             self.solve_P_s(P, s, rhoo, To, x0)
-        elif self.kwargs["P"] and self.kwargs["u"] is not None:
+        elif P is not None and u is not None:
             self._mode = "Pu"
             self.solve_P_u(P, u, rhoo, To)
-        elif self.kwargs["rho"] and self.kwargs["h"] is not None:
+        elif rho is not None and h is not None:
             self._mode = "rhoh"
             self.solve_rho_h(rho, h, To)
-        elif self.kwargs["rho"] and self.kwargs["s"] is not None:
+        elif rho is not None and s is not None:
             self._mode = "rhos"
             self.solve_rho_s(rho, s, To)
-        elif self.kwargs["rho"] and self.kwargs["u"] is not None:
+        elif rho is not None and u is not None:
             self._mode = "rhou"
             self.solve_rho_u(rho, u, rhoo, To)
-        elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
+        elif h is not None and s is not None:
             self._mode = "hs"
             self.solve_h_s(h, s, rhoo, To)
-        elif self.kwargs["h"] is not None and self.kwargs["u"] is not None:
+        elif h is not None and u is not None:
             self._mode = "hu"
             self.solve_h_u(h, u, rhoo, To)
-        elif self.kwargs["s"] is not None and self.kwargs["u"] is not None:
+        elif s is not None and u is not None:
             self._mode = "su"
             self.solve_s_u(s, u, rhoo, To)
-        elif self.kwargs["T"] and self.kwargs["x"] is not None:
+        elif T is not None and x is not None:
             self._mode = "Tx"
             self.solve_T_x(T, x)
-        elif self.kwargs["P"] and self.kwargs["x"] is not None:
+        elif P is not None and x is not None:
             self._mode = "Px"
             self.solve_P_x(P, x, T0)
         # if self._mode is unset, calculable() will return false.
