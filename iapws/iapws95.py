@@ -25,248 +25,401 @@ from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
 from ._utils import _fase, getphase, deriv_H, HelmholtzDerivatives
 
 
-def _phir(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
-    """Residual contribution to the adimensional free Helmholtz energy
+class ResidualContribution(object):
+    """Residual contribution to the adimensional free Helmholtz energy"""
 
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
+    def __init__(self, nr1: List[float], d1: List[float], t1: List[float],
+                 nr2: List[float], d2: List[float], gamma2: List[int],
+                 t2: List[float], c2: List[int], nr3: List[float],
+                 d3: List[int], t3: List[float], alfa3: List[float],
+                 epsilon3: List[float], beta3: List[float], gamma3: List[float],
+                 nr4: List[float], a4: List[float], b4: List[float],
+                 A: List[float], B: List[float], C: List[int],
+                 D: List[int], beta4: List[float]) -> None:
+        # Polinomial terms
+        self.nr1 = nr1
+        self.d1 = d1
+        self.t1 = t1
+        # Exponential terms
+        self.nr2 = nr2
+        self.d2 = d2
+        self.gamma2 = gamma2  # Gamma2 is always ones?
+        self.t2 = t2
+        self.c2 = c2
+        # Gaussian terms (optional, may be empty lists)
+        self.nr3 = nr3
+        self.d3 = d3
+        self.t3 = t3
+        self.alfa3 = alfa3
+        self.epsilon3 = epsilon3
+        self.beta3 = beta3
+        self.gamma3 = gamma3
+        # Non analitic terms (optional, may be empty lists)
+        self.nr4 = nr4
+        self.a4 = a4
+        self.b4 = b4
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+        self.beta4 = beta4
 
-    Returns
-    -------
-    fir : float
-        Adimensional free Helmholtz energy
+    def phir(self, tau: float, delta: float) -> float:
+        """Residual contribution to the adimensional free Helmholtz energy
 
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    fir = 0.0
+        Parameters
+        ----------
+        tau : float
+            Inverse reduced temperature Tc/T, [-]
+        delta : float
+            Reduced density rho/rhoc, [-]
+        coef : dict
+            Dictionary with equation of state parameters
 
-    # Convert numpy.Float64 back into Python floats.
-    tau = float(tau)
-    delta = float(delta)
+        Returns
+        -------
+        fir : float
+            Adimensional free Helmholtz energy
 
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        fir += n*delta**d*tau**t
+        References
+        ----------
+        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+        Thermodynamic Properties of Ordinary Water Substance for General and
+        Scientific Use, September 2016, Table 5
+        http://www.iapws.org/relguide/IAPWS-95.html
+        """
+        # Ensure parameters are really floats.
+        tau = float(tau)
+        delta = float(delta)
 
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        fir += n*delta**d*tau**t*exp(-g*delta**c)
+        fir = 0.0
+        # Polinomial terms
+        for n, d, t in zip(self.nr1, self.d1, self.t1):
+            fir += n*delta**d*tau**t
 
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
+        # Exponential terms
+        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+            fir += n*delta**d*tau**t*exp(-g*delta**c)
 
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Delta = Tita**2+B*((delta-1)**2)**a
-        fir += n*Delta**b*delta*F
+        # Gaussian terms
+        for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
+                                       self.epsilon3, self.beta3, self.gamma3):
+            fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
 
-    return fir
+        # Non analitic terms
+        for n, a, b, A, B, C, D, bt in zip(self.nr4, self.a4, self.b4, self.A,
+                                           self.B, self.C, self.D, self.beta4):
+            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+            Delta = Tita**2+B*((delta-1)**2)**a
+            fir += n*Delta**b*delta*F
 
+        return fir
 
-def _phird(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
-    r"""Residual contribution to the adimensional free Helmholtz energy, delta
-    derivative
+    def phird(self, tau: float, delta: float) -> float:
+        r"""Residual contribution to the adimensional free Helmholtz energy, delta
+        derivative
 
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
+        Parameters
+        ----------
+        tau : float
+            Inverse reduced temperature Tc/T, [-]
+        delta : float
+            Reduced density rho/rhoc, [-]
+        coef : dict
+            Dictionary with equation of state parameters
 
-    Returns
-    -------
-    fird : float
-        .. math::
-          \left.\frac{\partial \phi^r_{\delta}}{\partial \delta}\right|_{\tau}
+        Returns
+        -------
+        fird : float
+            .. math::
+              \left.\frac{\partial \phi^r_{\delta}}{\partial \delta}\right|_{\tau}
 
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    fird = 0.0
+        References
+        ----------
+        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+        Thermodynamic Properties of Ordinary Water Substance for General and
+        Scientific Use, September 2016, Table 5
+        http://www.iapws.org/relguide/IAPWS-95.html
+        """
+        # Ensure parameters are really floats.
+        tau = float(tau)
+        delta = float(delta)
 
-    # Convert numpy.Float64 back into Python floats.
-    tau = float(tau)
-    delta = float(delta)
+        fird = 0.0
+        # Polinomial terms
+        for n, d, t in zip(self.nr1, self.d1, self.t1):
+            fird += n*d*delta**(d-1)*tau**t
 
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        fird += n*d*delta**(d-1)*tau**t
+        # Exponential terms
+        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+            try:
+                expt = exp(-g*delta**c)
+            except OverflowError:
+                fird = float('nan')
+                break
+            fird += n*expt*delta**(d-1)*tau**t*(d-g*c*delta**c)
 
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        try:
-            expt = exp(-g*delta**c)
-        except OverflowError:
-            fird = float('nan')
-            break
-        fird += n*expt*delta**(d-1)*tau**t*(d-g*c*delta**c)
+        # Gaussian terms
+        for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
+                                       self.epsilon3, self.beta3, self.gamma3):
+            expt = exp(-a*(delta-e)**2-b*(tau-g)**2)
+            fird += n*delta**d*tau**t*expt*(d/delta-2*a*(delta-e))
 
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        expt = exp(-a*(delta-e)**2-b*(tau-g)**2)
-        fird += n*delta**d*tau**t*expt*(d/delta-2*a*(delta-e))
+        # Non analitic terms
+        for n, a, b, A, B, C, D, bt in zip(self.nr4, self.a4, self.b4, self.A,
+                                           self.B, self.C, self.D, self.beta4):
+            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+            Fd = -2*C*F*(delta-1)
 
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Fd = -2*C*F*(delta-1)
+            Delta = Tita**2+B*((delta-1)**2)**a
+            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
+                                + 2*B*a*((delta-1)**2)**(a-1))
+            DeltaBd = b*Delta**(b-1)*Deltad
 
-        Delta = Tita**2+B*((delta-1)**2)**a
-        Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
-                            + 2*B*a*((delta-1)**2)**(a-1))
-        DeltaBd = b*Delta**(b-1)*Deltad
+            fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
 
-        fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
+        return fird
 
-    return fird
+    def phirt(self, tau: float, delta: float) -> float:
+        r"""Residual contribution to the adimensional free Helmholtz energy, tau
+        derivative
 
+        Parameters
+        ----------
+        tau : float
+            Inverse reduced temperature Tc/T, [-]
+        delta : float
+            Reduced density rho/rhoc, [-]
+        coef : dict
+            Dictionary with equation of state parameters
 
-def _phirt(tau: float, delta: float, coef: Dict[str, List[float]]) -> float:
-    r"""Residual contribution to the adimensional free Helmholtz energy, tau
-    derivative
+        Returns
+        -------
+        firt : float
+            .. math::
+                \left.\frac{\partial \phi^r_{\tau}}{\partial \tau}\right|_{\delta}
 
-    Parameters
-    ----------
-    tau : float
-        Inverse reduced temperature Tc/T, [-]
-    delta : float
-        Reduced density rho/rhoc, [-]
-    coef : dict
-        Dictionary with equation of state parameters
+        References
+        ----------
+        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+        Thermodynamic Properties of Ordinary Water Substance for General and
+        Scientific Use, September 2016, Table 5
+        http://www.iapws.org/relguide/IAPWS-95.html
+        """
+        # Ensure parameters are really floats.
+        tau = float(tau)
+        delta = float(delta)
 
-    Returns
-    -------
-    firt : float
-        .. math::
-            \left.\frac{\partial \phi^r_{\tau}}{\partial \tau}\right|_{\delta}
+        firt = 0.0
+        # Polinomial terms
+        for n, d, t in zip(self.nr1, self.d1, self.t1):
+            firt += n*t*delta**d*tau**(t-1)
 
-    References
-    ----------
-    IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-    Thermodynamic Properties of Ordinary Water Substance for General and
-    Scientific Use, September 2016, Table 5
-    http://www.iapws.org/relguide/IAPWS-95.html
-    """
-    firt = 0.0
+        # Exponential terms
+        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+            firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
 
-    # Convert numpy.Float64 back into Python floats.
-    tau = float(tau)
-    delta = float(delta)
+        # Gaussian terms
+        for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
+                                       self.epsilon3, self.beta3, self.gamma3):
+            firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                t/tau-2*b*(tau-g))
 
-    # Polinomial terms
-    nr1 = coef.get("nr1", [])
-    d1 = coef.get("d1", [])
-    t1 = coef.get("t1", [])
-    for n, d, t in zip(nr1, d1, t1):
-        firt += n*t*delta**d*tau**(t-1)
+        # Non analitic terms
+        for n, a, b, A, B, C, D, bt in zip(self.nr4, self.a4, self.b4, self.A,
+                                           self.B, self.C, self.D, self.beta4):
+            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+            Ft = -2*D*F*(tau-1)
+            Delta = Tita**2+B*((delta-1)**2)**a
+            DeltaBt = -2*Tita*b*Delta**(b-1)
+            firt += n*delta*(DeltaBt*F+Delta**b*Ft)
 
-    # Exponential terms
-    nr2 = coef.get("nr2", [])
-    d2 = coef.get("d2", [])
-    g2 = coef.get("gamma2", [])
-    t2 = coef.get("t2", [])
-    c2 = coef.get("c2", [])
-    for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-        firt += n*t*delta**d*tau**(t-1)*exp(-g*delta**c)
+        return firt
 
-    # Gaussian terms
-    nr3 = coef.get("nr3", [])
-    d3 = coef.get("d3", [])
-    t3 = coef.get("t3", [])
-    a3 = coef.get("alfa3", [])
-    e3 = coef.get("epsilon3", [])
-    b3 = coef.get("beta3", [])
-    g3 = coef.get("gamma3", [])
-    for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-        firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-            t/tau-2*b*(tau-g))
+    def helmholtz(self, tau: float, delta: float) -> HelmholtzDerivatives:
+        """Residual contribution to the free Helmholtz energy
 
-    # Non analitic terms
-    nr4 = coef.get("nr4", [])
-    a4 = coef.get("a4", [])
-    b4 = coef.get("b4", [])
-    Ai = coef.get("A", [])
-    Bi = coef.get("B", [])
-    Ci = coef.get("C", [])
-    Di = coef.get("D", [])
-    bt4 = coef.get("beta4", [])
-    for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-        Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-        F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-        Ft = -2*D*F*(tau-1)
-        Delta = Tita**2+B*((delta-1)**2)**a
-        DeltaBt = -2*Tita*b*Delta**(b-1)
-        firt += n*delta*(DeltaBt*F+Delta**b*Ft)
+        Parameters
+        ----------
+        tau : float
+            Inverse reduced temperature Tc/T, [-]
+        delta : float
+            Reduced density rho/rhoc, [-]
 
-    return firt
+        Returns
+        -------
+        HelmholtzDerivatives class, with residual adimensional helmholtz
+          energy and deriv:
+            * fir
+            * firt: ∂fir/∂τ|δ,x
+            * fird: ∂fir/∂δ|τ,x
+            * firtt: ∂²fir/∂τ²|δ,x
+            * firdt: ∂²fir/∂τ∂δ|x
+            * firdd: ∂²fir/∂δ²|τ,x
+
+        References
+        ----------
+        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
+        Thermodynamic Properties of Ordinary Water Substance for General and
+        Scientific Use, September 2016, Table 5
+        http://www.iapws.org/relguide/IAPWS-95.html
+        """
+        # Ensure parameters are really floats.
+        tau = float(tau)
+        delta = float(delta)
+
+        fir = fird = firdd = firt = firtt = firdt = 0.0
+        # Polinomial terms
+        for n, d, t in zip(self.nr1, self.d1, self.t1):
+            fir += n*delta**d*tau**t
+            fird += n*d*delta**(d-1)*tau**t
+            firdd += n*d*(d-1)*delta**(d-2)*tau**t
+            firt += n*t*delta**d*tau**(t-1)
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)
+            firdt += n*t*d*delta**(d-1)*tau**(t-1)
+
+        # Exponential terms
+        failed = False
+        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+            try:
+                expgdc = exp(-g*delta**c)
+            except OverflowError:
+                failed = True
+                expgdc = float('inf')
+            fir += n*delta**d*tau**t*expgdc
+            fird += n*expgdc*delta**(d-1)*tau**t*(d-g*c*delta**c)
+            firdd += n*expgdc*delta**(d-2)*tau**t * \
+                ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
+            firt += n*t*delta**d*tau**(t-1)*expgdc
+            firtt += n*t*(t-1)*delta**d*tau**(t-2)*expgdc
+            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*expgdc
+        if failed:
+            fir = float('nan')
+
+        # Gaussian terms
+        for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
+                                       self.epsilon3, self.beta3, self.gamma3):
+            fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
+            fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                d/delta-2*a*(delta-e))
+            firdd += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2
+                - 4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
+            firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                t/tau-2*b*(tau-g))
+            firtt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                (t/tau-2*b*(tau-g))**2-t/tau**2-2*b)
+            firdt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                t/tau-2*b*(tau-g))*(d/delta-2*a*(delta-e))
+
+        # Non analitic terms
+        for n, a, b, A, B, C, D, bt in zip(self.nr4, self.a4, self.b4, self.A,
+                                           self.B, self.C, self.D, self.beta4):
+            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
+            Fd = -2*C*F*(delta-1)
+            Fdd = 2*C*F*(2*C*(delta-1)**2-1)
+            Ft = -2*D*F*(tau-1)
+            Ftt = 2*D*F*(2*D*(tau-1)**2-1)
+            Fdt = 4*C*D*F*(delta-1)*(tau-1)
+
+            Delta = Tita**2+B*((delta-1)**2)**a
+            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
+                                + 2*B*a*((delta-1)**2)**(a-1))
+            if delta == 1:
+                Deltadd = 0
+            else:
+                Deltadd = Deltad/(delta-1)+(delta-1)**2*(
+                    4*B*a*(a-1)*((delta-1)**2)**(a-2)
+                    + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
+                    + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
+
+            DeltaBd = b*Delta**(b-1)*Deltad
+            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
+            DeltaBt = -2*Tita*b*Delta**(b-1)
+            DeltaBtt = 2*b*Delta**(b-1)+4*Tita**2*b*(b-1)*Delta**(b-2)
+            DeltaBdt = -A*b*2/bt*Delta**(b-1)*(delta-1)*((delta-1)**2)**(
+                0.5/bt-1)-2*Tita*b*(b-1)*Delta**(b-2)*Deltad
+
+            fir += n*Delta**b*delta*F
+            fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
+            firdd += n*(Delta**b*(2*Fd+delta*Fdd) + 2*DeltaBd*(F+delta*Fd)
+                        + DeltaBdd*delta*F)
+            firt += n*delta*(DeltaBt*F+Delta**b*Ft)
+            firtt += n*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b*Ftt)
+            firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft
+                        + DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
+
+        return HelmholtzDerivatives(fir, firt, fird, firtt, firdd, firdt)
+
+    def _virial(self, T: float, Tc: float) -> Dict[str, float]:
+        """Virial coefficient
+
+        Parameters
+        ----------
+        T : float
+            Temperature [K]
+
+        Returns
+        -------
+        prop : dict
+            Dictionary with residual adimensional helmholtz energy:
+                * B: ∂fir/∂δ|δ->0
+                * C: ∂²fir/∂δ²|δ->0
+        """
+        tau = Tc/T
+        B = C = 0.0
+        delta = 1e-200
+
+        # Polinomial terms
+        for n, d, t in zip(self.nr1, self.d1, self.t1):
+            B += n*d*delta**(d-1)*tau**t
+            C += n*d*(d-1)*delta**(d-2)*tau**t
+
+        # Exponential terms
+        for n, d, g, t, c in zip(self.nr2, self.d2, self.gamma2, self.t2, self.c2):
+            B += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
+            C += n*exp(-g*delta**c)*(delta**(d-2)*tau**t*(
+                (d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c))
+
+        # Gaussian terms
+        for n, d, t, a, e, b, g in zip(self.nr3, self.d3, self.t3, self.alfa3,
+                                       self.epsilon3, self.beta3, self.gamma3):
+            B += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                d/delta-2*a*(delta-e))
+            C += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
+                -2*a*delta**d+4*a**2*delta**d*(
+                    delta-e)**2-4*d*a*delta**2*(
+                        delta-e)+d*2*delta)
+
+        # Non analitic terms
+        for n, a, b, A, B_, C_, D, bt in zip(self.nr4, self.a4, self.b4, self.A,
+                                             self.B, self.C, self.D, self.beta4):
+            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
+            Delta = Tita**2+B_*((delta-1)**2)**a
+            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(
+                0.5/bt-1)+2*B_*a*((delta-1)**2)**(a-1))
+            Deltadd = Deltad/(delta-1) + (delta-1)**2*(
+                4*B_*a*(a-1)*((delta-1)**2)**(a-2)
+                + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
+                + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
+            DeltaBd = b*Delta**(b-1)*Deltad
+            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
+            F = exp(-C_*(delta-1)**2-D*(tau-1)**2)
+            Fd = -2*C_*F*(delta-1)
+            Fdd = 2*C_*F*(2*C_*(delta-1)**2-1)
+
+            B += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
+            C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd)
+                    + DeltaBdd*delta*F)
+
+        prop = {}
+        prop["B"] = B
+        prop["C"] = C
+        return prop
 
 
 class MEoSProperties(object):
@@ -449,6 +602,7 @@ class MEoS(_fase):
     Tt: float
     _constant_R: float
     _constants: Dict[str, List[float]]
+    residual: ResidualContribution
     M: float
     # The name of the substance.
     # Set in NH3, Air, IAPWS95, D2O, and IAPWS97.
@@ -616,7 +770,7 @@ class MEoS(_fase):
                     delta = rho/rhoc
                     tau = Tc/T
 
-                    fird = _phird(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     return Po-P*1000
 
@@ -643,8 +797,8 @@ class MEoS(_fase):
 
                 def rho_func(rho: float) -> float:
                     delta = rho/rhoc
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
                     return ho-h
 
@@ -658,10 +812,10 @@ class MEoS(_fase):
                     deltaL = rhol/rhoc
                     deltaG = rhov/rhoc
 
-                    firdL = _phird(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
-                    firdG = _phird(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
+                    firdL = self.residual.phird(tau, deltaL)
+                    firtL = self.residual.phirt(tau, deltaL)
+                    firdG = self.residual.phird(tau, deltaG)
+                    firtG = self.residual.phirt(tau, deltaG)
                     hl = self.R*T*(1+tau*(fiot+firtL)+deltaL*firdL)
                     hv = self.R*T*(1+tau*(fiot+firtG)+deltaG*firdG)
                     if x0 not in (0, 1) and hl <= h <= hv:
@@ -689,8 +843,8 @@ class MEoS(_fase):
                     delta = rho/rhoc
 
                     ideal = self._phi0(tau, delta)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fir = self.residual.phir(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return so-s
 
@@ -706,11 +860,11 @@ class MEoS(_fase):
                     idealL = self._phi0(tau, deltaL)
                     idealG = self._phi0(tau, deltaG)
 
-                    firL = _phir(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
+                    firL = self.residual.phir(tau, deltaL)
+                    firtL = self.residual.phirt(tau, deltaL)
                     sl = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
-                    firG = _phir(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
+                    firG = self.residual.phir(tau, deltaG)
+                    firtG = self.residual.phirt(tau, deltaG)
                     sv = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                     if sl <= s <= sv:
@@ -736,8 +890,8 @@ class MEoS(_fase):
                 def rho_func(rho: float) -> float:
                     delta = rho/rhoc
 
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
 
@@ -752,10 +906,10 @@ class MEoS(_fase):
                     deltaL = rhol/rhoc
                     deltaG = rhov/rhoc
 
-                    firdL = _phird(tau, deltaL, self._constants)
-                    firtL = _phirt(tau, deltaL, self._constants)
-                    firdG = _phird(tau, deltaG, self._constants)
-                    firtG = _phirt(tau, deltaG, self._constants)
+                    firdL = self.residual.phird(tau, deltaL)
+                    firtL = self.residual.phirt(tau, deltaL)
+                    firdG = self.residual.phird(tau, deltaG)
+                    firtG = self.residual.phirt(tau, deltaG)
                     PoL = (1+deltaL*firdL)*self.R*T*rhol
                     PoG = (1+deltaG*firdG)*self.R*T*rhov
                     hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
@@ -785,7 +939,7 @@ class MEoS(_fase):
                 def t_func(T: float) -> float:
                     tau = Tc/T
 
-                    fird = _phird(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     return Po-P*1000
 
@@ -800,10 +954,10 @@ class MEoS(_fase):
                         deltaL = rhol/self._constant_rhoc
                         deltaG = rhog/self._constant_rhoc
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
 
                         Jl = rhol*(1+deltaL*firdL)
                         Jv = rhog*(1+deltaG*firdG)
@@ -840,8 +994,8 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return Po-P*1000, ho-h
@@ -860,13 +1014,13 @@ class MEoS(_fase):
 
                         ideal = self._phi0(tau, deltaL)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -909,9 +1063,9 @@ class MEoS(_fase):
                         tau = Tc/T
 
                         ideal = self._phi0(tau, delta)
-                        fird = _phird(tau, delta, self._constants)
-                        fir = _phir(tau, delta, self._constants)
-                        firt = _phirt(tau, delta, self._constants)
+                        fird = self.residual.phird(tau, delta)
+                        fir = self.residual.phir(tau, delta)
+                        firt = self.residual.phirt(tau, delta)
                         Po = (1+delta*fird)*self.R*T*rho
                         so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                         return Po-P*1000, so-s
@@ -941,8 +1095,8 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-Po/rho-u, Po-P*1000
@@ -962,13 +1116,13 @@ class MEoS(_fase):
 
                         ideal = self._phi0(tau, deltaL)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -1008,8 +1162,8 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-h
 
@@ -1024,13 +1178,13 @@ class MEoS(_fase):
                         deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -1068,8 +1222,8 @@ class MEoS(_fase):
                 def t_func(T: float) -> float:
                     tau = Tc/T
                     ideal = self._phi0(tau, delta)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fir = self.residual.phir(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return so-s
 
@@ -1087,13 +1241,13 @@ class MEoS(_fase):
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -1132,8 +1286,8 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     return ho-Po/rho-u
@@ -1149,13 +1303,13 @@ class MEoS(_fase):
                         deltaG = rhog/self._constant_rhoc
 
                         ideal = self._phi0(tau, deltaL)
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -1197,9 +1351,9 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    fir = self.residual.phir(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     return ho-h, so-s
@@ -1219,14 +1373,14 @@ class MEoS(_fase):
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
                         soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
                         soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
@@ -1262,8 +1416,8 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     Po = (1+delta*fird)*self.R*T*rho
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
 
@@ -1284,13 +1438,13 @@ class MEoS(_fase):
 
                         ideal = self._phi0(tau, deltaL)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(ideal.fit+firtL)+deltaL*firdL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(ideal.fit+firtG)+deltaG*firdG)
 
                         Jl = rhol*(1+deltaL*firdL)
@@ -1330,9 +1484,9 @@ class MEoS(_fase):
                     tau = Tc/T
 
                     ideal = self._phi0(tau, delta)
-                    fird = _phird(tau, delta, self._constants)
-                    fir = _phir(tau, delta, self._constants)
-                    firt = _phirt(tau, delta, self._constants)
+                    fird = self.residual.phird(tau, delta)
+                    fir = self.residual.phir(tau, delta)
+                    firt = self.residual.phirt(tau, delta)
                     ho = self.R*T*(1+tau*(ideal.fit+firt)+delta*fird)
                     so = self.R*(tau*(ideal.fit+firt)-ideal.fi-fir)
                     Po = (1+delta*fird)*self.R*T*rho
@@ -1354,14 +1508,14 @@ class MEoS(_fase):
                         idealL = self._phi0(tau, deltaL)
                         idealG = self._phi0(tau, deltaG)
 
-                        firL = _phir(tau, deltaL, self._constants)
-                        firdL = _phird(tau, deltaL, self._constants)
-                        firtL = _phirt(tau, deltaL, self._constants)
+                        firL = self.residual.phir(tau, deltaL)
+                        firdL = self.residual.phird(tau, deltaL)
+                        firtL = self.residual.phirt(tau, deltaL)
                         hoL = self.R*T*(1+tau*(idealL.fit+firtL)+deltaL*firdL)
                         soL = self.R*(tau*(idealL.fit+firtL)-idealL.fi-firL)
-                        firG = _phir(tau, deltaG, self._constants)
-                        firdG = _phird(tau, deltaG, self._constants)
-                        firtG = _phirt(tau, deltaG, self._constants)
+                        firG = self.residual.phir(tau, deltaG)
+                        firdG = self.residual.phird(tau, deltaG)
+                        firtG = self.residual.phirt(tau, deltaG)
                         hoG = self.R*T*(1+tau*(idealL.fit+firtG)+deltaG*firdG)
                         soG = self.R*(tau*(idealL.fit+firtG)-idealG.fi-firG)
 
@@ -1450,8 +1604,8 @@ class MEoS(_fase):
 
                 tau = Tc/T
 
-                firL = _phir(tau, deltaL, self._constants)
-                firG = _phir(tau, deltaG, self._constants)
+                firL = self.residual.phir(tau, deltaL)
+                firG = self.residual.phir(tau, deltaG)
                 Ps = self.R*T*rhol*rhog/(rhol-rhog)*(
                     firL-firG+log(deltaL/deltaG))
                 return Ps/1000-P
@@ -1517,7 +1671,7 @@ class MEoS(_fase):
         else:
             self.sigma = None
 
-        vir = self._virial(T)
+        vir = self.residual._virial(T, self._constant_Tref)
         self.virialB = vir["B"]/self._constant_rhoc
         self.virialC = vir["C"]/self._constant_rhoc**2
 
@@ -1657,10 +1811,10 @@ class MEoS(_fase):
             rhol, rhog = parr
             deltaL = rhol/rhoc
             deltaG = rhog/rhoc
-            phirL = _phir(tau, deltaL, self._constants)
-            phirG = _phir(tau, deltaG, self._constants)
-            phirdL = _phird(tau, deltaL, self._constants)
-            phirdG = _phird(tau, deltaG, self._constants)
+            phirL = self.residual.phir(tau, deltaL)
+            phirG = self.residual.phir(tau, deltaG)
+            phirdL = self.residual.phird(tau, deltaL)
+            phirdG = self.residual.phird(tau, deltaG)
             Jl = deltaL*(1+deltaL*phirdL)
             Jv = deltaG*(1+deltaG*phirdG)
             Kl = deltaL*phirdL+phirL+log(deltaL)
@@ -1673,8 +1827,8 @@ class MEoS(_fase):
         else:
             deltaL = rhoL/self._constant_rhoc
             deltaG = rhoG/self._constant_rhoc
-            firL = _phir(tau, deltaL, self._constants)
-            firG = _phir(tau, deltaG, self._constants)
+            firL = self.residual.phir(tau, deltaL)
+            firG = self.residual.phir(tau, deltaG)
 
             Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
         return rhoL, rhoG, Ps
@@ -1721,7 +1875,7 @@ class MEoS(_fase):
         tau = Tc/T
         ideal = self._phi0(tau, delta)
 
-        res = self._phir(tau, delta)
+        res = self.residual.helmholtz(tau, delta)
 
         P = (1+delta*res.fid)*self.R*T*rho
         h = self.R*T*(1+tau*(ideal.fit+res.fit)+delta*res.fid)
@@ -1826,232 +1980,6 @@ class MEoS(_fase):
 
         return HelmholtzDerivatives(fio, fiot, fiod, fiott, fiodd, fiodt)
 
-    def _phir(self, tau: float, delta: float) -> HelmholtzDerivatives:
-        """Residual contribution to the free Helmholtz energy
-
-        Parameters
-        ----------
-        tau : float
-            Inverse reduced temperature Tc/T, [-]
-        delta : float
-            Reduced density rho/rhoc, [-]
-
-        Returns
-        -------
-        HelmholtzDerivatives class, with residual adimensional helmholtz
-          energy and deriv:
-            * fir
-            * firt: ∂fir/∂τ|δ,x
-            * fird: ∂fir/∂δ|τ,x
-            * firtt: ∂²fir/∂τ²|δ,x
-            * firdt: ∂²fir/∂τ∂δ|x
-            * firdd: ∂²fir/∂δ²|τ,x
-
-        References
-        ----------
-        IAPWS, Revised Release on the IAPWS Formulation 1995 for the
-        Thermodynamic Properties of Ordinary Water Substance for General and
-        Scientific Use, September 2016, Table 5
-        http://www.iapws.org/relguide/IAPWS-95.html
-        """
-        fir = fird = firdd = firt = firtt = firdt = 0.0
-
-        # Convert numpy.Float64 back into Python floats.
-        tau = float(tau)
-        delta = float(delta)
-
-        # Polinomial terms
-        nr1 = self._constants.get("nr1", [])
-        d1 = self._constants.get("d1", [])
-        t1 = self._constants.get("t1", [])
-        for n, d, t in zip(nr1, d1, t1):
-            fir += n*delta**d*tau**t
-            fird += n*d*delta**(d-1)*tau**t
-            firdd += n*d*(d-1)*delta**(d-2)*tau**t
-            firt += n*t*delta**d*tau**(t-1)
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)
-            firdt += n*t*d*delta**(d-1)*tau**(t-1)
-
-        # Exponential terms
-        nr2 = self._constants.get("nr2", [])
-        d2 = self._constants.get("d2", [])
-        g2 = self._constants.get("gamma2", [])
-        t2 = self._constants.get("t2", [])
-        c2 = self._constants.get("c2", [])
-        failed = False
-        for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            try:
-                expgdc = exp(-g*delta**c)
-            except OverflowError:
-                failed = True
-                expgdc = float('inf')
-            fir += n*delta**d*tau**t*expgdc
-            fird += n*expgdc*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            firdd += n*expgdc*delta**(d-2)*tau**t * \
-                ((d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c)
-            firt += n*t*delta**d*tau**(t-1)*expgdc
-            firtt += n*t*(t-1)*delta**d*tau**(t-2)*expgdc
-            firdt += n*t*delta**(d-1)*tau**(t-1)*(d-g*c*delta**c)*expgdc
-        if failed:
-            fir = float('nan')
-
-        # Gaussian terms
-        nr3 = self._constants.get("nr3", [])
-        d3 = self._constants.get("d3", [])
-        t3 = self._constants.get("t3", [])
-        a3 = self._constants.get("alfa3", [])
-        e3 = self._constants.get("epsilon3", [])
-        b3 = self._constants.get("beta3", [])
-        g3 = self._constants.get("gamma3", [])
-        for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-            fir += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)
-            fird += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                d/delta-2*a*(delta-e))
-            firdd += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                -2*a*delta**d + 4*a**2*delta**d*(delta-e)**2
-                - 4*d*a*delta**(d-1)*(delta-e) + d*(d-1)*delta**(d-2))
-            firt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                t/tau-2*b*(tau-g))
-            firtt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                (t/tau-2*b*(tau-g))**2-t/tau**2-2*b)
-            firdt += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                t/tau-2*b*(tau-g))*(d/delta-2*a*(delta-e))
-
-        # Non analitic terms
-        nr4 = self._constants.get("nr4", [])
-        a4 = self._constants.get("a4", [])
-        b4 = self._constants.get("b4", [])
-        Ai = self._constants.get("A", [])
-        Bi = self._constants.get("B", [])
-        Ci = self._constants.get("C", [])
-        Di = self._constants.get("D", [])
-        bt4 = self._constants.get("beta4", [])
-        for n, a, b, A, B, C, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-            F = exp(-C*(delta-1)**2-D*(tau-1)**2)
-            Fd = -2*C*F*(delta-1)
-            Fdd = 2*C*F*(2*C*(delta-1)**2-1)
-            Ft = -2*D*F*(tau-1)
-            Ftt = 2*D*F*(2*D*(tau-1)**2-1)
-            Fdt = 4*C*D*F*(delta-1)*(tau-1)
-
-            Delta = Tita**2+B*((delta-1)**2)**a
-            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
-                                + 2*B*a*((delta-1)**2)**(a-1))
-            if delta == 1:
-                Deltadd = 0
-            else:
-                Deltadd = Deltad/(delta-1)+(delta-1)**2*(
-                    4*B*a*(a-1)*((delta-1)**2)**(a-2)
-                    + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
-                    + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
-
-            DeltaBd = b*Delta**(b-1)*Deltad
-            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            DeltaBt = -2*Tita*b*Delta**(b-1)
-            DeltaBtt = 2*b*Delta**(b-1)+4*Tita**2*b*(b-1)*Delta**(b-2)
-            DeltaBdt = -A*b*2/bt*Delta**(b-1)*(delta-1)*((delta-1)**2)**(
-                0.5/bt-1)-2*Tita*b*(b-1)*Delta**(b-2)*Deltad
-
-            fir += n*Delta**b*delta*F
-            fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            firdd += n*(Delta**b*(2*Fd+delta*Fdd) + 2*DeltaBd*(F+delta*Fd)
-                        + DeltaBdd*delta*F)
-            firt += n*delta*(DeltaBt*F+Delta**b*Ft)
-            firtt += n*delta*(DeltaBtt*F+2*DeltaBt*Ft+Delta**b*Ftt)
-            firdt += n*(Delta**b*(Ft+delta*Fdt)+delta*DeltaBd*Ft
-                        + DeltaBt*(F+delta*Fd)+DeltaBdt*delta*F)
-
-        return HelmholtzDerivatives(fir, firt, fird, firtt, firdd, firdt)
-
-    def _virial(self, T: float) -> Dict[str, float]:
-        """Virial coefficient
-
-        Parameters
-        ----------
-        T : float
-            Temperature [K]
-
-        Returns
-        -------
-        prop : dict
-            Dictionary with residual adimensional helmholtz energy:
-                * B: ∂fir/∂δ|δ->0
-                * C: ∂²fir/∂δ²|δ->0
-        """
-        Tc = self._constant_Tref
-        tau = Tc/T
-        B = C = 0.0
-        delta = 1e-200
-
-        # Polinomial terms
-        nr1 = self._constants.get("nr1", [])
-        d1 = self._constants.get("d1", [])
-        t1 = self._constants.get("t1", [])
-        for n, d, t in zip(nr1, d1, t1):
-            B += n*d*delta**(d-1)*tau**t
-            C += n*d*(d-1)*delta**(d-2)*tau**t
-
-        # Exponential terms
-        nr2 = self._constants.get("nr2", [])
-        d2 = self._constants.get("d2", [])
-        g2 = self._constants.get("gamma2", [])
-        t2 = self._constants.get("t2", [])
-        c2 = self._constants.get("c2", [])
-        for n, d, g, t, c in zip(nr2, d2, g2, t2, c2):
-            B += n*exp(-g*delta**c)*delta**(d-1)*tau**t*(d-g*c*delta**c)
-            C += n*exp(-g*delta**c)*(delta**(d-2)*tau**t*(
-                (d-g*c*delta**c)*(d-1-g*c*delta**c)-g**2*c**2*delta**c))
-
-        # Gaussian terms
-        nr3 = self._constants.get("nr3", [])
-        d3 = self._constants.get("d3", [])
-        t3 = self._constants.get("t3", [])
-        a3 = self._constants.get("alfa3", [])
-        e3 = self._constants.get("epsilon3", [])
-        b3 = self._constants.get("beta3", [])
-        g3 = self._constants.get("gamma3", [])
-        for n, d, t, a, e, b, g in zip(nr3, d3, t3, a3, e3, b3, g3):
-            B += n*delta**d*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                d/delta-2*a*(delta-e))
-            C += n*tau**t*exp(-a*(delta-e)**2-b*(tau-g)**2)*(
-                -2*a*delta**d+4*a**2*delta**d*(
-                    delta-e)**2-4*d*a*delta**2*(
-                        delta-e)+d*2*delta)
-
-        # Non analitic terms
-        nr4 = self._constants.get("nr4", [])
-        a4 = self._constants.get("a4", [])
-        b4 = self._constants.get("b4", [])
-        Ai = self._constants.get("A", [])
-        Bi = self._constants.get("B", [])
-        Ci = self._constants.get("C", [])
-        Di = self._constants.get("D", [])
-        bt4 = self._constants.get("beta4", [])
-        for n, a, b, A, B_, C_, D, bt in zip(nr4, a4, b4, Ai, Bi, Ci, Di, bt4):
-            Tita = (1-tau)+A*((delta-1)**2)**(0.5/bt)
-            Delta = Tita**2+B_*((delta-1)**2)**a
-            Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(
-                0.5/bt-1)+2*B_*a*((delta-1)**2)**(a-1))
-            Deltadd = Deltad/(delta-1) + (delta-1)**2*(
-                4*B_*a*(a-1)*((delta-1)**2)**(a-2)
-                + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
-                + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
-            DeltaBd = b*Delta**(b-1)*Deltad
-            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            F = exp(-C_*(delta-1)**2-D*(tau-1)**2)
-            Fd = -2*C_*F*(delta-1)
-            Fdd = 2*C_*F*(2*C_*(delta-1)**2-1)
-
-            B += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
-            C += n*(Delta**b*(2*Fd+delta*Fdd)+2*DeltaBd*(F+delta*Fd)
-                    + DeltaBdd*delta*F)
-
-        prop = {}
-        prop["B"] = B
-        prop["C"] = C
-        return prop
-
     def _derivDimensional(self, rho: float, T: float) -> HelmholtzDerivatives:
         """Calcule the dimensional form or Helmholtz free energy derivatives
 
@@ -2091,7 +2019,7 @@ class MEoS(_fase):
 
         ideal = self._phi0(tau, delta)
 
-        res = self._phir(tau, delta)
+        res = self.residual.helmholtz(tau, delta)
 
         R = self.R
 
@@ -2417,55 +2345,56 @@ class IAPWS95(MEoS):
     _constant_R = 8.314371357587
     _constant_rhoc = rhoc
     _constant_Tref = Tc
-    _constants = {
-        "nr1": [0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
-                0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
-                0.88089493102134e-2],
-        "d1": [1, 1, 1, 2, 2, 3, 4],
-        "t1": [-0.5, 0.875, 1, 0.5, 0.75, 0.375, 1],
+    residual = ResidualContribution(
+        nr1=[0.12533547935523e-1, 0.78957634722828e1, -0.87803203303561e1,
+             0.31802509345418, -0.26145533859358, -0.78199751687981e-2,
+             0.88089493102134e-2],
+        d1=[1, 1, 1, 2, 2, 3, 4],
+        t1=[-0.5, 0.875, 1, 0.5, 0.75, 0.375, 1],
 
-        "nr2": [-0.66856572307965, 0.20433810950965, -0.66212605039687e-4,
-                -0.19232721156002, -0.25709043003438, 0.16074868486251,
-                -0.4009282892587e-1, 0.39343422603254e-6, -0.75941377088144e-5,
-                0.56250979351888e-3, -0.15608652257135e-4, 0.11537996422951e-8,
-                .36582165144204e-6, -.13251180074668e-11, -.62639586912454e-9,
-                -0.10793600908932, 0.17611491008752e-1, 0.22132295167546,
-                -0.40247669763528, 0.58083399985759, 0.49969146990806e-2,
-                -0.31358700712549e-1, -0.74315929710341, 0.47807329915480,
-                0.20527940895948e-1, -0.13636435110343, 0.14180634400617e-1,
-                0.83326504880713e-2, -0.29052336009585e-1, 0.38615085574206e-1,
-                -0.20393486513704e-1, -0.16554050063734e-2, .19955571979541e-2,
-                0.15870308324157e-3, -0.16388568342530e-4, 0.43613615723811e-1,
-                0.34994005463765e-1, -0.76788197844621e-1, 0.22446277332006e-1,
-                -0.62689710414685e-4, -0.55711118565645e-9, -0.19905718354408,
-                0.31777497330738, -0.11841182425981],
-        "c2": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
-               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 6, 6,
-               6, 6],
-        "d2": [1, 1, 1, 2, 2, 3, 4, 4, 5, 7, 9, 10, 11, 13, 15, 1, 2, 2, 2, 3,
-               4, 4, 4, 5, 6, 6, 7, 9, 9, 9, 9, 9, 10, 10, 12, 3, 4, 4, 5, 14,
-               3, 6, 6, 6],
-        "t2": [4, 6, 12, 1, 5, 4, 2, 13, 9, 3, 4, 11, 4, 13, 1, 7, 1, 9, 10,
-               10, 3, 7, 10, 10, 6, 10, 10, 1, 2, 3, 4, 8, 6, 9, 8, 16, 22, 23,
-               23, 10, 50, 44, 46, 50],
-        "gamma2": [1]*44,
+        nr2=[-0.66856572307965, 0.20433810950965, -0.66212605039687e-4,
+             -0.19232721156002, -0.25709043003438, 0.16074868486251,
+             -0.4009282892587e-1, 0.39343422603254e-6, -0.75941377088144e-5,
+             0.56250979351888e-3, -0.15608652257135e-4, 0.11537996422951e-8,
+             .36582165144204e-6, -.13251180074668e-11, -.62639586912454e-9,
+             -0.10793600908932, 0.17611491008752e-1, 0.22132295167546,
+             -0.40247669763528, 0.58083399985759, 0.49969146990806e-2,
+             -0.31358700712549e-1, -0.74315929710341, 0.47807329915480,
+             0.20527940895948e-1, -0.13636435110343, 0.14180634400617e-1,
+             0.83326504880713e-2, -0.29052336009585e-1, 0.38615085574206e-1,
+             -0.20393486513704e-1, -0.16554050063734e-2, .19955571979541e-2,
+             0.15870308324157e-3, -0.16388568342530e-4, 0.43613615723811e-1,
+             0.34994005463765e-1, -0.76788197844621e-1, 0.22446277332006e-1,
+             -0.62689710414685e-4, -0.55711118565645e-9, -0.19905718354408,
+             0.31777497330738, -0.11841182425981],
+        c2=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 6, 6,
+            6, 6],
+        d2=[1, 1, 1, 2, 2, 3, 4, 4, 5, 7, 9, 10, 11, 13, 15, 1, 2, 2, 2, 3,
+            4, 4, 4, 5, 6, 6, 7, 9, 9, 9, 9, 9, 10, 10, 12, 3, 4, 4, 5, 14,
+            3, 6, 6, 6],
+        t2=[4, 6, 12, 1, 5, 4, 2, 13, 9, 3, 4, 11, 4, 13, 1, 7, 1, 9, 10,
+            10, 3, 7, 10, 10, 6, 10, 10, 1, 2, 3, 4, 8, 6, 9, 8, 16, 22, 23,
+            23, 10, 50, 44, 46, 50],
+        gamma2=[1]*44,
 
-        "nr3": [-0.31306260323435e2, 0.31546140237781e2, -0.25213154341695e4],
-        "d3": [3]*3,
-        "t3": [0, 1, 4],
-        "alfa3": [20]*3,
-        "beta3": [150, 150, 250],
-        "gamma3": [1.21, 1.21, 1.25],
-        "epsilon3": [1.]*3,
+        nr3=[-0.31306260323435e2, 0.31546140237781e2, -0.25213154341695e4],
+        d3=[3]*3,
+        t3=[0, 1, 4],
+        alfa3=[20]*3,
+        beta3=[150, 150, 250],
+        gamma3=[1.21, 1.21, 1.25],
+        epsilon3=[1.]*3,
 
-        "nr4": [-0.14874640856724, 0.31806110878444],
-        "a4": [3.5, 3.5],
-        "b4": [0.85, 0.95],
-        "B": [0.2, 0.2],
-        "C": [28, 32],
-        "D": [700, 800],
-        "A": [0.32, .32],
-        "beta4": [0.3, 0.3]}
+        nr4=[-0.14874640856724, 0.31806110878444],
+        a4=[3.5, 3.5],
+        b4=[0.85, 0.95],
+        B=[0.2, 0.2],
+        C=[28, 32],
+        D=[700, 800],
+        A=[0.32, .32],
+        beta4=[0.3, 0.3],
+    )
 
     _Pv_ao = [-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
               1.80122502]
@@ -2769,33 +2698,34 @@ class D2O(MEoS):
     _constant_R = 8.3144598
     _constant_rhoc = rhoc_D2O
     _constant_Tref = Tc_D2O
-    _constants = {
-        "nr1": [0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
-                -0.922466250, -0.139604190e-1],
-        "d1": [4, 1, 1, 2, 2, 3],
-        "t1": [1.0000, 0.6555, 0.9369, 0.5610, 0.7017, 1.0672],
+    residual = ResidualContribution(
+        nr1=[0.122082060e-1, 0.296956870e1, -0.379004540e1, 0.941089600,
+             -0.922466250, -0.139604190e-1],
+        d1=[4, 1, 1, 2, 2, 3],
+        t1=[1.0000, 0.6555, 0.9369, 0.5610, 0.7017, 1.0672],
+        nr2=[-0.125203570, -0.555391500e1, -0.493009740e1, -0.359470240e-1,
+             -0.936172870e1, -0.691835150],
+        c2=[1, 2, 2, 1, 2, 2],
+        d2=[1, 1, 3, 2, 2, 1],
+        t2=[3.9515, 4.6000, 5.1590, 0.2000, 5.4644, 2.3660],
+        gamma2=[1]*6,
 
-        "nr2": [-0.125203570, -0.555391500e1, -0.493009740e1, -0.359470240e-1,
-                -0.936172870e1, -0.691835150],
-        "c2": [1, 2, 2, 1, 2, 2],
-        "d2": [1, 1, 3, 2, 2, 1],
-        "t2": [3.9515, 4.6000, 5.1590, 0.2000, 5.4644, 2.3660],
-        "gamma2": [1]*6,
-
-        "nr3": [-0.456110600e-1, -0.224513300e1, 0.860006070e1, -0.248410420e1,
-                0.164476900e2, 0.270393360e1, 0.375637470e2, -0.177607760e1,
-                0.220924640e1, 0.519652000e1, 0.421097400, -0.391921100],
-        "t3": [3.4553, 1.4150, 1.5745, 3.4540, 3.8106, 4.8950, 1.4300, 1.5870,
-               3.7900, 2.6200, 1.9000, 4.3200],
-        "d3": [1, 3, 1, 3, 1, 1, 2, 2, 2, 1, 1, 1],
-        "alfa3": [0.6014, 1.4723, 1.5305, 2.4297, 1.3086, 1.3528, 3.4456,
-                  1.2645, 2.5547, 1.2148, 18.738, 18.677],
-        "beta3": [0.4200, 2.4318, 1.2888, 8.2710, 0.3673, 0.9504, 7.8318,
-                  3.3281, 7.1753, 0.9465, 1177.0, 1167.0],
-        "epsilon3": [1.8663, 0.2895, 0.5803, 0.2236, 0.6815, 0.9495, 1.1158,
-                     0.1607, 0.4144, 0.9683, 0.9488, 0.9487],
-        "gamma3": [1.5414, 1.3794, 1.7385, 1.3045, 2.7242, 3.5321, 2.4552,
-                   0.8319, 1.3500, 2.5617, 1.0491, 1.0486]}
+        nr3=[-0.456110600e-1, -0.224513300e1, 0.860006070e1, -0.248410420e1,
+             0.164476900e2, 0.270393360e1, 0.375637470e2, -0.177607760e1,
+             0.220924640e1, 0.519652000e1, 0.421097400, -0.391921100],
+        t3=[3.4553, 1.4150, 1.5745, 3.4540, 3.8106, 4.8950, 1.4300, 1.5870,
+            3.7900, 2.6200, 1.9000, 4.3200],
+        d3=[1, 3, 1, 3, 1, 1, 2, 2, 2, 1, 1, 1],
+        alfa3=[0.6014, 1.4723, 1.5305, 2.4297, 1.3086, 1.3528, 3.4456,
+               1.2645, 2.5547, 1.2148, 18.738, 18.677],
+        beta3=[0.4200, 2.4318, 1.2888, 8.2710, 0.3673, 0.9504, 7.8318,
+               3.3281, 7.1753, 0.9465, 1177.0, 1167.0],
+        epsilon3=[1.8663, 0.2895, 0.5803, 0.2236, 0.6815, 0.9495, 1.1158,
+                  0.1607, 0.4144, 0.9683, 0.9488, 0.9487],
+        gamma3=[1.5414, 1.3794, 1.7385, 1.3045, 2.7242, 3.5321, 2.4552,
+                0.8319, 1.3500, 2.5617, 1.0491, 1.0486],
+        nr4=[], a4=[], b4=[], A=[], B=[], C=[], D=[], beta4=[],
+    )
 
     _Pv_ao = [-0.80236e1, 0.23957e1, -0.42639e2, 0.99569e2, -0.62135e2]
     _Pv_exp = [1.0, 1.5, 2.75, 3.0, 3.2]

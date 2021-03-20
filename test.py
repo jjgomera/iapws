@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ideal.fitt, 8), -1.93249185)
         self.assertEqual(round(ideal.fidt, 8), 0.0)
 
-        res = fluid._phir(tau, delta)
+        res = fluid.residual.helmholtz(tau, delta)
         self.assertEqual(round(res.fi, 8), -3.42693206)
         self.assertEqual(round(res.fid, 9), -0.364366650)
         self.assertEqual(round(res.fidd, 9), 0.856063701)
@@ -69,7 +69,7 @@ class Test(unittest.TestCase):
 
         # Revised release of 2018
         # Virial coefficient in Table 3
-        vir = fluid._virial(600)
+        vir = fluid.residual._virial(600, fluid.Tc)
         self.assertEqual(round(vir["B"]/fluid.rhoc, 11), -0.555366808e-2)
         self.assertEqual(round(vir["C"]/fluid.rhoc**2, 14), -0.669015050e-5)
 
@@ -1259,7 +1259,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(ideal.fit, 8), 9.39259413)
         self.assertEqual(round(ideal.fitt, 8), -2.09517144)
         self.assertEqual(round(ideal.fidt, 8), 0)
-        res = fluid._phir(tau, delta)
+        res = fluid.residual.helmholtz(tau, delta)
         self.assertEqual(round(res.fi, 8), -3.42291092)
         self.assertEqual(round(res.fid, 9), -0.367562780)
         self.assertEqual(round(res.fidd, 9), 0.835183806)

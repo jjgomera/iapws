@@ -23,7 +23,7 @@ from scipy.optimize import fsolve
 from ._iapws import _global_M
 from ._iapws import _Ice
 from ._utils import _fase, deriv_G
-from .iapws95 import MEoS, IAPWS95, mainClassDoc
+from .iapws95 import MEoS, IAPWS95, mainClassDoc, ResidualContribution
 
 
 Ma = 28.96546  # g/mol
@@ -106,7 +106,7 @@ def _virial(T: float) -> Dict[str, float]:
     # The paper use the specific formulation of virial, here using the general
     # formulation from helmholtz mEoS
     wt = IAPWS95()
-    vir = wt._virial(T)
+    vir = wt.residual._virial(T, wt._constant_Tref)
     Bww = vir["B"]/wt.rhoc*wt.M
     Cwww = vir["C"]/wt.rhoc**2*wt.M**2
 
@@ -141,7 +141,7 @@ def _virial(T: float) -> Dict[str, float]:
 
     # Virial coefficient for air, using too the general virial procedure
     air = Air()
-    vir = air._virial(T)
+    vir = air.residual._virial(T, air._constant_Tref)
     Baa = vir["B"]/air.rhoc*air.M
     Caaa = vir["C"]/air.rhoc**2*air.M**2
 
@@ -302,21 +302,25 @@ class Air(MEoSBlend):
     _constant_R = 8.31451
     _constant_rhoc = 10.4477*Ma
     _constant_Tref = 132.6312
-    _constants = {
-        "nr1": [0.118160747229, 0.713116392079, -0.161824192067e1,
-                0.714140178971e-1, -0.865421396646e-1, 0.134211176704,
-                0.112626704218e-1, -0.420533228842e-1, 0.349008431982e-1,
-                0.164957183186e-3],
-        "d1": [1, 1, 1, 2, 3, 3, 4, 4, 4, 6],
-        "t1": [0, 0.33, 1.01, 0, 0, 0.15, 0, 0.2, 0.35, 1.35],
+    residual = ResidualContribution(
+        nr1=[0.118160747229, 0.713116392079, -0.161824192067e1,
+             0.714140178971e-1, -0.865421396646e-1, 0.134211176704,
+             0.112626704218e-1, -0.420533228842e-1, 0.349008431982e-1,
+             0.164957183186e-3],
+        d1=[1, 1, 1, 2, 3, 3, 4, 4, 4, 6],
+        t1=[0, 0.33, 1.01, 0, 0, 0.15, 0, 0.2, 0.35, 1.35],
 
-        "nr2": [-0.101365037912, -0.173813690970, -0.472103183731e-1,
-                -0.122523554253e-1, -0.146629609713, -0.316055879821e-1,
-                0.233594806142e-3, 0.148287891978e-1, -0.938782884667e-2],
-        "d2": [1, 3, 5, 6, 1, 3, 11, 1, 3],
-        "t2": [1.6, 0.8, 0.95, 1.25, 3.6, 6, 3.25, 3.5, 15],
-        "c2": [1, 1, 1, 1, 2, 2, 2, 3, 3],
-        "gamma2": [1]*9}
+        nr2=[-0.101365037912, -0.173813690970, -0.472103183731e-1,
+             -0.122523554253e-1, -0.146629609713, -0.316055879821e-1,
+             0.233594806142e-3, 0.148287891978e-1, -0.938782884667e-2],
+        d2=[1, 3, 5, 6, 1, 3, 11, 1, 3],
+        t2=[1.6, 0.8, 0.95, 1.25, 3.6, 6, 3.25, 3.5, 15],
+        c2=[1, 1, 1, 1, 2, 2, 2, 3, 3],
+        gamma2=[1]*9,
+
+        nr3=[], d3=[], t3=[], alfa3=[], beta3=[], gamma3=[], epsilon3=[],
+        nr4=[], a4=[], b4=[], A=[], B=[], C=[], D=[], beta4=[],
+    )
 
     _blend = {
         "Tj": 132.6312, "Pj": 3.78502,

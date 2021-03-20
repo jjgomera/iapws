@@ -16,7 +16,7 @@ import warnings
 from typing import Dict, Optional
 
 from scipy.constants import Boltzmann
-from .iapws95 import MEoS, IAPWS95, mainClassDoc
+from .iapws95 import MEoS, IAPWS95, mainClassDoc, ResidualContribution
 from ._utils import _fase
 
 
@@ -55,20 +55,24 @@ class NH3(MEoS):
     _constant_R = 8.314471
     _constant_rhoc = 225.0
     _constant_Tref = 405.40
-    _constants = {
-        "nr1": [-0.1858814e01, 0.4554431e-1, 0.7238548, 0.1229470e-1,
-                0.2141882e-10],
-        "d1": [1, 2, 1, 4, 15],
-        "t1": [1.5, -0.5, 0.5, 1., 3.],
+    residual = ResidualContribution(
+        nr1=[-0.1858814e01, 0.4554431e-1, 0.7238548, 0.1229470e-1,
+             0.2141882e-10],
+        d1=[1, 2, 1, 4, 15],
+        t1=[1.5, -0.5, 0.5, 1., 3.],
 
-        "nr2": [-0.1430020e-1, 0.3441324, -0.2873571, 0.2352589e-4,
-                -0.3497111e-1, 0.1831117e-2, 0.2397852e-1, -0.4085375e-1,
-                0.2379275, -0.3548972e-1, -0.1823729, 0.2281556e-1,
-                -0.6663444e-2, -0.8847486e-2, 0.2272635e-2, -0.5588655e-3],
-        "d2": [3, 3, 1, 8, 2, 8, 1, 1, 2, 3, 2, 4, 3, 1, 2, 4],
-        "t2": [0, 3, 4, 4, 5, 5, 3, 6, 8, 8, 10, 10, 5, 7.5, 15, 30],
-        "c2": [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
-        "gamma2": [1]*16}
+        nr2=[-0.1430020e-1, 0.3441324, -0.2873571, 0.2352589e-4,
+             -0.3497111e-1, 0.1831117e-2, 0.2397852e-1, -0.4085375e-1,
+             0.2379275, -0.3548972e-1, -0.1823729, 0.2281556e-1,
+             -0.6663444e-2, -0.8847486e-2, 0.2272635e-2, -0.5588655e-3],
+        d2=[3, 3, 1, 8, 2, 8, 1, 1, 2, 3, 2, 4, 3, 1, 2, 4],
+        t2=[0, 3, 4, 4, 5, 5, 3, 6, 8, 8, 10, 10, 5, 7.5, 15, 30],
+        c2=[1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
+        gamma2=[1]*16,
+
+        nr3=[], d3=[], t3=[], alfa3=[], beta3=[], gamma3=[], epsilon3=[],
+        nr4=[], a4=[], b4=[], A=[], B=[], C=[], D=[], beta4=[],
+    )
 
     _melting = {"eq": 1, "Tref": Tt, "Pref": 1000,
                 "Tmin": Tt, "Tmax": 700.0,
@@ -441,10 +445,10 @@ class H2ONH3(object):
         delta = rho/rhon
 
         water = IAPWS95()
-        phi1 = water._phir(tau, delta)
+        phi1 = water.residual.helmholtz(tau, delta)
 
         ammonia = NH3()
-        phi2 = ammonia._phir(tau, delta)
+        phi2 = ammonia.residual.helmholtz(tau, delta)
 
         Dphi = self._Dphir(tau, delta, x)
 
