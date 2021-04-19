@@ -711,12 +711,17 @@ class HumidAir(object):
         Asat : float
             Saturation mass fraction of dry air in humid air [kg/kg]
         """
+        # ao initial value of air mass fraction for iteration
         if T <= 273.16:
             ice = _Ice(T, P)
             gw = ice["g"]
-        else:
+            ao = 0.99999
+        elif T <= 373.16:
             water = IAPWS95(T=T, P=P)
             gw = water.g
+            ao = 0.99
+        else:
+            raise NotImplementedError("Incoming out of bound")
 
         def f(parr):
             rho, a = parr
@@ -726,9 +731,14 @@ class HumidAir(object):
             muw = fa["fir"]+rho*fa["fird"]-a*fa["fira"]
             return gw-muw, rho**2*fa["fird"]/1000-P
 
-        rinput = fsolve(f, [1, 0.95], full_output=True)
+        air = Air(T=T, P=P)
+        rinput = fsolve(f, [air.rho, ao], full_output=True)
         Asat = rinput[0][1]
-        return Asat
+        if rinput[2] == 1 and 0 <= Asat <= 1:
+            return Asat
+        else:
+            warnings.warn("Convergence failed")
+            print(rinput)
 
     def _prop(self, T, rho, fav):
         """Thermodynamic properties of humid air
