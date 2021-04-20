@@ -686,8 +686,14 @@ class HumidAir(object):
 
         # Saturation related properties
         A_sat = self._eq(self.T, self.P)
-        self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
-        self.RH = (1-self.xa)/(1-self.xa_sat)
+        if A_sat:
+            self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
+            self.RH = (1-self.xa)/(1-self.xa_sat)
+        else:
+            self.xa_sat = None
+            self.RH = None
+            self.msg = "Saturation state don't converge"
+            self.status = 3
 
     def derivative(self, z, x, y):
         """
