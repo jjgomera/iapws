@@ -1360,37 +1360,28 @@ class Test(unittest.TestCase):
         self.assertEqual(round(P, 6), 959.203594)
 
     def test_D2O_Viscosity(self):
-        """Table A5 pag 10"""
-        mur = 55.2651e-6
-        Tr = 643.847
-        rhor = 358
-        self.assertEqual(round(_D2O_Viscosity(3.09*rhor, 0.431*Tr)/mur, 10), 36.9123166244)
-        self.assertEqual(round(_D2O_Viscosity(3.23*rhor, 0.431*Tr)/mur, 10), 34.1531546602)
-        self.assertEqual(round(_D2O_Viscosity(0.0002*rhor, 0.5*Tr)/mur, 10), 0.1972984225)
-        self.assertEqual(round(_D2O_Viscosity(3.07*rhor, 0.5*Tr)/mur, 10), 12.0604912273)
-        self.assertEqual(round(_D2O_Viscosity(3.18*rhor, 0.5*Tr)/mur, 10), 12.4679405772)
-        self.assertEqual(round(_D2O_Viscosity(0.0027*rhor, 0.6*Tr)/mur, 10), 0.2365829037)
-        self.assertEqual(round(_D2O_Viscosity(2.95*rhor, 0.6*Tr)/mur, 10), 5.2437249935)
-        self.assertEqual(round(_D2O_Viscosity(3.07*rhor, 0.6*Tr)/mur, 10), 5.7578399754)
-        self.assertEqual(round(_D2O_Viscosity(0.0295*rhor, 0.75*Tr)/mur, 10), 0.2951479769)
-        self.assertEqual(round(_D2O_Viscosity(2.65*rhor, 0.75*Tr)/mur, 10), 2.6275043948)
-        self.assertEqual(round(_D2O_Viscosity(2.83*rhor, 0.75*Tr)/mur, 10), 3.0417583586)
-        self.assertEqual(round(_D2O_Viscosity(0.08*rhor, 0.9*Tr)/mur, 10), 0.3685472578)
-        self.assertEqual(round(_D2O_Viscosity(0.163*rhor, 0.9*Tr)/mur, 10), 0.3619649145)
-        self.assertEqual(round(_D2O_Viscosity(2.16*rhor, 0.9*Tr)/mur, 10), 1.6561616211)
-        self.assertEqual(round(_D2O_Viscosity(2.52*rhor, 0.9*Tr)/mur, 10), 2.1041364724)
-        self.assertEqual(round(_D2O_Viscosity(0.3*rhor, Tr)/mur, 10), 0.4424816849)
-        self.assertEqual(round(_D2O_Viscosity(0.7*rhor, Tr)/mur, 10), 0.5528693914)
-        self.assertEqual(round(_D2O_Viscosity(1.55*rhor, Tr)/mur, 10), 1.1038442411)
-        self.assertEqual(round(_D2O_Viscosity(2.26*rhor, Tr)/mur, 10), 1.7569585722)
-        self.assertEqual(round(_D2O_Viscosity(0.49*rhor, 1.1*Tr)/mur, 10), 0.5633038063)
-        self.assertEqual(round(_D2O_Viscosity(0.98*rhor, 1.1*Tr)/mur, 10), 0.7816387903)
-        self.assertEqual(round(_D2O_Viscosity(1.47*rhor, 1.1*Tr)/mur, 10), 1.1169456968)
-        self.assertEqual(round(_D2O_Viscosity(1.96*rhor, 1.1*Tr)/mur, 10), 1.5001420619)
-        self.assertEqual(round(_D2O_Viscosity(0.4*rhor, 1.2*Tr)/mur, 10), 0.6094539064)
-        self.assertEqual(round(_D2O_Viscosity(0.8*rhor, 1.2*Tr)/mur, 10), 0.7651099154)
-        self.assertEqual(round(_D2O_Viscosity(1.2*rhor, 1.2*Tr)/mur, 10), 0.9937870139)
-        self.assertEqual(round(_D2O_Viscosity(1.61*rhor, 1.2*Tr)/mur, 10), 1.2711900131)
+        """Table 3, pag 8"""
+        self.assertEqual(round(_D2O_Viscosity(0, 298.15)*1e6, 6), 10.035938)
+        self.assertEqual(round(_D2O_Viscosity(1105, 298.15)*1e6, 4), 1092.6424)
+        self.assertEqual(round(_D2O_Viscosity(1130, 298.15)*1e6, 4), 1088.3626)
+        self.assertEqual(round(_D2O_Viscosity(1064, 373.15)*1e6, 5), 326.63791)
+        self.assertEqual(round(_D2O_Viscosity(1, 775)*1e6, 6), 29.639474)
+        self.assertEqual(round(_D2O_Viscosity(100, 775)*1e6, 6), 31.930085)
+        self.assertEqual(round(_D2O_Viscosity(400, 775)*1e6, 6), 53.324172)
+
+        # Table 4, pag 8
+        fluid = D2O(rho=145, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 26.640959)
+        fluid = D2O(rho=245, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 32.119967)
+        fluid = D2O(rho=295, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 36.828275)
+        fluid = D2O(rho=345, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 43.225016)
+        fluid = D2O(rho=395, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 47.193530)
+        fluid = D2O(rho=445, T=644.101)
+        self.assertEqual(round(fluid.mu*1e6, 6), 50.241640)
 
     def test_D2O_ThCond(self):
         """Table B4 pag 17"""

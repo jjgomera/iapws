@@ -2746,7 +2746,11 @@ class D2O(MEoS):
         "exp": [0.409, 1.766, 2.24, 3.04, 3.42, 6.9]}
 
     def _visco(self, rho, T, fase):
-        return _D2O_Viscosity(rho, T)
+        ref = D2O()
+        st = ref._Helmholtz(rho, 1.5*Tc_D2O)
+        delta = rho/rhoc_D2O
+        drho = 1e3/self.R/1.5/Tc_D2O/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        return _D2O_Viscosity(rho, T, fase, drho)
 
     def _thermo(self, rho, T, fase):
         return _D2O_ThCond(rho, T)

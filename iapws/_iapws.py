@@ -45,7 +45,7 @@ Tc = 647.096      # K
 Pc = 22.064       # MPa
 rhoc = 322.       # kg/m³
 Tc_D2O = 643.847  # K
-Pc_D2O = 21.671   # MPa
+Pc_D2O = 21.6618   # MPa
 rhoc_D2O = 355.9999698294    # kg/m³
 
 Tt = 273.16       # K
@@ -1153,7 +1153,7 @@ def _Conductivity(rho, T):
 
 
 # Heavy water transport properties
-def _D2O_Viscosity(rho, T):
+def _D2O_Viscosity(rho, T, fase=None, drho=None):
     """Equation for the Viscosity of heavy water
 
     Parameters
@@ -1162,6 +1162,10 @@ def _D2O_Viscosity(rho, T):
         Density, [kg/m³]
     T : float
         Temperature, [K]
+    fase: dict, optional for calculate critical enhancement
+        phase properties
+    drho: float, optional for calculate critical enhancement
+        [∂ρ/∂P]T at reference state,
 
     Returns
     -------
@@ -1178,28 +1182,68 @@ def _D2O_Viscosity(rho, T):
     References
     ----------
     IAPWS, Revised Release on Viscosity and Thermal Conductivity of Heavy
-    Water Substance, http://www.iapws.org/relguide/TransD2O-2007.pdf
+    Water Substance, http://iapws.org/relguide/D2Ovisc.pdf
     """
-    Tr = T/643.847
-    rhor = rho/358.0
+    Tr = T/Tc_D2O
+    rhor = rho/356
 
-    no = [1.0, 0.940695, 0.578377, -0.202044]
-    fi0 = Tr**0.5/sum(n/Tr**i for i, n in enumerate(no))
+    # Eq 11, viscosity in the dilute-gas limit
+    no = 0.889754+61.22217*Tr-44.8866*Tr**2+111.5812*Tr**3+3.547412*Tr**4
+    do = 0.79637+2.38127*Tr-0.33463*Tr**2+2.669*Tr**3+0.000211366*Tr**4
+    mu0 = Tr**0.5 * no/do
 
-    Li = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 5, 0, 1, 2, 3, 0, 1, 3,
-          5, 0, 1, 5, 3]
-    Lj = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,
-          4, 5, 5, 5, 6]
-    Lij = [0.4864192, -0.2448372, -0.8702035, 0.8716056, -1.051126,
-           0.3458395, 0.3509007, 1.315436, 1.297752, 1.353448, -0.2847572,
-           -1.037026, -1.287846, -0.02148229, 0.07013759, 0.4660127,
-           0.2292075, -0.4857462, 0.01641220, -0.02884911, 0.1607171,
-           -.009603846, -.01163815, -.008239587, 0.004559914, -0.003886659]
+    # Eq 12
+    hi = [0, 2, 3, 4, 5, 6, 0, 1, 3, 4, 6, 0, 1, 5, 0, 1, 2, 5, 6, 0, 2, 3, 5,
+          2, 2]
+    hj = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4,
+          5, 6]
+    Hij = [0.510953, -0.558947, -2.718820, 0.480990, 2.404510, -1.824320,
+           0.275847, 0.762957, 1.760340, 0.0819086, 1.417750, -0.228148,
+           -0.321497, -2.302500, 0.0661035, 0.0449393, 1.466670, 0.938984,
+           -0.108354, -0.00481265, -1.545710, -0.0570938, -0.0753783, 0.553080,
+           -0.0650201]
 
-    arr = [lij*(1./Tr-1)**i*(rhor-1)**j for i, j, lij in zip(Li, Lj, Lij)]
-    fi1 = exp(rhor*sum(arr))
+    arr = [(1/Tr-1)**i*(rhor-1)**j*hij for i, j, hij in zip(hi, hj, Hij)]
+    mu1 = exp(rhor*sum(arr))
 
-    return 55.2651e-6*fi0*fi1
+    # Critical enhancement
+    if fase and drho:
+        qc = 1/1.9
+        qd = 1/0.4
+
+        # Eq 21
+        DeltaX = Pc_D2O*rhor**2*(fase.drhodP_T/rho-drho/rho*1.5/Tr)
+        if DeltaX < 0:
+            DeltaX = 0
+
+        # Eq 20
+        X = 0.13*(DeltaX/0.06)**(0.63/1.239)
+
+        if X <= 0.03021806692:
+            # Eq 15
+            Y = qc/5*X*(qd*X)**5*(1-qc*X+(qc*X)**2-765/504*(qd*X)**2)
+
+        else:
+            Fid = acos((1+qd**2*X**2)**-0.5)                            # Eq 17
+            w = abs((qc*X-1)/(qc*X+1))**0.5*tan(Fid/2)                  # Eq 19
+
+            # Eq 18
+            if qc*X > 1:
+                Lw = log((1+w)/(1-w))
+            else:
+                Lw = 2*atan(abs(w))
+
+            # Eq 16
+            Y = sin(3*Fid)/12-sin(2*Fid)/4/qc/X+(1-5/4*(qc*X)**2)/(
+                qc*X)**2*sin(Fid)-((1-3/2*(qc*X)**2)*Fid-abs((
+                    qc*X)**2-1)**1.5*Lw)/(qc*X)**3
+
+        # Eq 14
+        mu2 = exp(0.068*Y)
+    else:
+        mu2 = 1
+
+    return mu0*mu1*mu2*1e-6
 
 
 def _D2O_ThCond(rho, T):

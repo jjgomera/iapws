@@ -43,7 +43,7 @@ Releases:
 
 * R1-76(2014): Revised Release on the Surface Tension of Ordynary Water Substance, :func:`iapws._iapws._Tension`
 * R2-83(1992): Release on the Values of Temperature, Pressure and Density of Ordynary and Heavy Water Substances at their Respectives Critical Points, :func:`iapws._iapws`
-* R4-84(2007): Revised Release on Viscosity and Thermal Conductivity of Heavy Water Substance, :func:`iapws._iapws._D2O_Viscosity`, :func:`iapws._iapws._D2O_ThCond`
+* R4-84(2007): Revised Release on Viscosity and Thermal Conductivity of Heavy Water Substance, :func:`iapws._iapws._D2O_ThCond`
 * R5-85(1994): Release on Surface Tension of Heavy Water Substance, :func:`iapws._iapws._D2O_Tension`
 * R6-95(2018): Revised Release on the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use, :func:`iapws.iapws95.IAPWS95`
 * R7-97(2012): Revised Release on the IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam, :func:`iapws.iapws97`
@@ -56,6 +56,8 @@ Releases:
 * R14-08(2011): Revised Release on the Pressure along the Melting and Sublimation Curves of Ordinary Water Substance, :func:`iapws._iapws._Melting_Pressure`, :func:`iapws._iapws._Sublimation_Pressure`
 * R15-11: Release on the IAPWS Formulation 2011 for the Thermal Conductivity of Ordinary Water Substance, :func:`iapws._iapws._ThCond`
 * R16-17(2018): Release on the IAPWS Formulation 2017 for the Thermodynamic Properties of Heavy Water, :func:`iapws.iapws95.D2O`
+* R17-20(2020): Release on the IAPWS Formulation 2020 for the Viscosity of Heavy Water, :func:`iapws._iapws._D2O_Viscosity`
+
 
 Supplementary Releases:
 
