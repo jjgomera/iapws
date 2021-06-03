@@ -2733,13 +2733,13 @@ class Test(unittest.TestCase):
         # Pure fluid reference state
         water = IAPWS95(T=IAPWS95.Tt, x=0)
         st = cl._prop(water.rho, IAPWS95.Tt, 0)
-        # self.assertEqual(round(st["u"], 5), 0)
-        # self.assertEqual(round(st["s"], 5), 0)
+        self.assertEqual(round(st["u"], 3), 0)
+        self.assertEqual(round(st["s"], 4), 0)
 
         nh3 = NH3(T=NH3.Tt, x=0)
         st = cl._prop(nh3.rho, NH3.Tt, 1)
         # self.assertEqual(round(st["u"], 5), 0)
-        # self.assertEqual(round(st["s"], 5), 0)
+        self.assertEqual(round(st["s"], 5), 0)
 
         # Table 6
         x = 0.1
@@ -2747,62 +2747,60 @@ class Test(unittest.TestCase):
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 600, x)
-        # FIXME: The values are good, bad difer by 1%, a error I can find
-        # In Pressure happen and only use fird
-        # self.assertEqual(round(st["a"]*M, 7), -13734.1763)
-        # self.assertEqual(round(st["P"], 7), 32.1221333)
-        # self.assertEqual(round(st["cv"]*M, 7), 53.3159544)
-        # self.assertEqual(round(st["w"], 6), 883.925596)
+        self.assertEqual(round(st["a"]*M, 4), -13734.1763)
+        self.assertEqual(round(st["P"], 7), 32.1221333)
+        self.assertEqual(round(st["cv"]*M, 7), 53.3159544)
+        self.assertEqual(round(st["w"], 6), 883.925596)
 
         x = 0.1
         rhoM = 4
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 600, x)
-        # self.assertEqual(round(st["a"]*M, 7), -16991.6697)
-        # self.assertEqual(round(st["P"], 7), 12.7721090)
-        # self.assertEqual(round(st["cv"]*M, 7), 52.7644553)
-        # self.assertEqual(round(st["w"], 6), 471.762394)
+        self.assertEqual(round(st["a"]*M, 4), -16991.6697)
+        self.assertEqual(round(st["P"], 7), 12.7721090)
+        self.assertEqual(round(st["cv"]*M, 7), 52.7644553)
+        self.assertEqual(round(st["w"], 6), 471.762394)
 
         x = 0.5
         rhoM = 32
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 500, x)
-        # self.assertEqual(round(st["a"]*M, 7), -12109.5369)
-        # self.assertEqual(round(st["P"], 7), 21.3208159)
-        # self.assertEqual(round(st["cv"]*M, 7), 58.0077346)
-        # self.assertEqual(round(st["w"], 6), 830.295833)
+        self.assertEqual(round(st["a"]*M, 4), -12109.5369)
+        self.assertEqual(round(st["P"], 7), 21.3208159)
+        self.assertEqual(round(st["cv"]*M, 7), 58.0077346)
+        self.assertEqual(round(st["w"], 6), 830.295833)
 
         x = 0.5
         rhoM = 1
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 500, x)
-        # self.assertEqual(round(st["a"]*M, 7), -18281.3020)
-        # self.assertEqual(round(st["P"], 7), 3.6423080)
-        # self.assertEqual(round(st["cv"]*M, 7), 36.8228098)
-        # self.assertEqual(round(st["w"], 6), 510.258362)
+        self.assertEqual(round(st["a"]*M, 4), -18281.3020)
+        self.assertEqual(round(st["P"], 7), 3.6423080)
+        self.assertEqual(round(st["cv"]*M, 7), 36.8228098)
+        self.assertEqual(round(st["w"], 6), 510.258362)
 
         x = 0.9
         rhoM = 30
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 400, x)
-        # self.assertEqual(round(st["a"]*M, 7), -6986.4869)
-        # self.assertEqual(round(st["P"], 7), 22.2830797)
-        # self.assertEqual(round(st["cv"]*M, 7), 51.8072415)
-        # self.assertEqual(round(st["w"], 6), 895.748711)
+        self.assertEqual(round(st["a"]*M, 4), -6986.4869)
+        self.assertEqual(round(st["P"], 7), 22.2830797)
+        self.assertEqual(round(st["cv"]*M, 7), 51.8072415)
+        self.assertEqual(round(st["w"], 6), 895.748711)
 
         x = 0.9
         rhoM = 0.5
         M = (1-x)*IAPWS95.M+x*NH3.M
         rho = rhoM*M
         st = cl._prop(rho, 400, x)
-        # self.assertEqual(round(st["a"]*M, 7), -13790.6278)
-        # self.assertEqual(round(st["P"], 7), 1.5499708)
-        # self.assertEqual(round(st["cv"]*M, 7), 32.9703870)
-        # self.assertEqual(round(st["w"], 6), 478.608147)
+        self.assertEqual(round(st["a"]*M, 4), -13790.6278)
+        self.assertEqual(round(st["P"], 7), 1.5499708)
+        self.assertEqual(round(st["cv"]*M, 7), 32.9703870)
+        self.assertEqual(round(st["w"], 6), 478.608147)
 
 
 if __name__ == "__main__":

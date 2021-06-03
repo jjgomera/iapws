@@ -419,18 +419,31 @@ class H2ONH3(object):
         # Temperature reducing value, Eq 4
         Tc12 = 0.9648407/2*(IAPWS95.Tc+NH3.Tc)
         Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-x**1.125455)*Tc12
+
+        # sympy.diff("(1-x)^2*Tc1 + x^2*Tc2 + 2*x*(1-x^a)*Tc12", "x")
+        # Out[]: Tc1*(2*x - 2) - 2*Tc12*a*x**a + 2*Tc12*(1 - x**a) + 2*Tc2*x
         dTnx = -2*IAPWS95.Tc*(1-x) + 2*x*NH3.Tc + 2*Tc12*(1-x**1.125455) - \
             2*Tc12*1.12455*x**1.12455
 
         # Density reducing value, Eq 5
         b = 0.8978069
-        rhoc12 = 1/(1.2395117/2*(1/IAPWS95.rhoc+1/NH3.rhoc))
-        rhon = 1/((1-x)**2/IAPWS95.rhoc + x**2/NH3.rhoc
-                  + 2*x*(1-x**b)/rhoc12)
-        drhonx = -(2*b*x**b/rhoc12 + 2*(1-x**b)/rhoc12
-                   + 2*x/NH3.rhoc - 2*(1-x)/IAPWS95.rhoc)/(
-                       2*x*(1-x**b)/rhoc12 + x**2/NH3.rhoc
-                       + (1-x)**2/IAPWS95.rhoc)**2
+        rhoc1m = IAPWS95.rhoc/(IAPWS95.M/1000)
+        rhoc2m = NH3.rhoc/(NH3.M/1000)
+        M = (1-x)*IAPWS95.M + x*NH3.M
+
+        rhoc12 = 1/(1.2395117/2*(1/rhoc1m + 1/rhoc2m))
+        rhonm = 1/((1-x)**2/rhoc1m + x**2/rhoc2m
+                   + 2*x*(1-x**b)/rhoc12)
+        rhon = rhonm*M/1000
+
+        # sympy.diff("1/((1-x)^2/rhoc1 + x^2/rhoc2 + 2*x*(1-x^b)/rhoc12)", "x")
+        # Out[]: (2*b*x**b/rhoc12 - 2*x/rhoc2 - 2*(1 - x**b)/rhoc12 -
+                # (2*x - 2)/rhoc1)/(x**2/rhoc2 + 2*x*(1 - x**b)/rhoc12 +
+                # (1 - x)**2/rhoc1)**2
+        drhonx = M/1000*(2*b*x**b/rhoc12 - 2*(1-x**b)/rhoc12
+                         - 2*x/rhoc2m + 2*(1-x)/rhoc1m)/(
+                         2*x*(1-x**b)/rhoc12 + x**2/rhoc2m
+                         + (1-x)**2/rhoc1m)**2
 
         tau = Tn/T
         delta = rho/rhon

@@ -134,7 +134,6 @@ TODO
 
 Ammonia-water mixture:
 
-* FIXME: Ammonia-water mixture residual helmholtz. The values are good, bad difer by 1%
 * TODO: Add equilibrium routine
 
 I've tried to test all code and use all values for computer verification the standards give, but anyway the code can have hidden problem.
