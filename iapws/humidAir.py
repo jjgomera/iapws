@@ -567,7 +567,7 @@ class HumidAir(object):
         * mu: Relative chemical potential, [kJ/kg]
         * muw: Chemical potential of water, [kJ/kg]
         * M: Molar mass of humid air, [g/mol]
-        * HR: Humidity ratio, [-]
+        * HR: Humidity ratio, Mass fraction of water in dry air, [kg/kg]
         * RH: Relative humidity, [-]
     """
 
