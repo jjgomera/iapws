@@ -533,6 +533,8 @@ class HumidAir(object):
         Mass fraction of water in humid air, [kg/kg]
     xw : float
         Mole fraction of water in humid air, [-]
+    HR : float
+        Humidity ratio, Mass fraction of water in dry air, [kg/kg]
 
     Notes
     -----
@@ -578,7 +580,9 @@ class HumidAir(object):
               "A": None,
               "xa": None,
               "W": None,
-              "xw": None}
+              "xw": None,
+              "HR": None}
+
     status = 0
     msg = "Undefined"
 
@@ -590,15 +594,18 @@ class HumidAir(object):
     def __call__(self, **kwargs):
         """Make instance callable to can add input parameter one to one"""
         # Check alernate input parameters
-        if kwargs.get("v", 0):
+        if kwargs.get("v", None) is not None:
             kwargs["rho"] = 1./kwargs["v"]
             del kwargs["v"]
-        if kwargs.get("W", 0):
+        if kwargs.get("W", None) is not None:
             kwargs["A"] = 1-kwargs["W"]
             del kwargs["W"]
-        if kwargs.get("xw", 0):
+        if kwargs.get("xw", None) is not None:
             kwargs["xa"] = 1-kwargs["xw"]
             del kwargs["xw"]
+        if kwargs.get("HR", None) is not None:
+            kwargs["A"] = 1/(1+kwargs["HR"])
+            del kwargs["HR"]
 
         self.kwargs.update(kwargs)
 
