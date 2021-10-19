@@ -77,7 +77,7 @@ class Test(unittest.TestCase):
         """Table 7 from IAPWS95, pag 14"""
         state = IAPWS95(rho=996.556, T=300)
         # See footnote for imprecise P value in last significant figures
-        self.assertEqual(round(state.P*1e3, 7), 99.241835)
+        self.assertEqual(round(state.P*1e3, 7), 99.2418352)
         self.assertEqual(round(state.cv, 8), 4.13018112)
         self.assertEqual(round(state.w, 5), 1501.51914)
         self.assertEqual(round(state.s, 9), 0.393062643)
