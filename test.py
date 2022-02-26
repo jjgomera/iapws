@@ -1360,7 +1360,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(P, 6), 959.203594)
 
     def test_D2O_Viscosity(self):
-        """Table 3, pag 8"""
+        # Table 3, pag 8
         self.assertEqual(round(_D2O_Viscosity(0, 298.15)*1e6, 6), 10.035938)
         self.assertEqual(round(_D2O_Viscosity(1105, 298.15)*1e6, 4), 1092.6424)
         self.assertEqual(round(_D2O_Viscosity(1130, 298.15)*1e6, 4), 1088.3626)
@@ -1384,41 +1384,29 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.mu*1e6, 6), 50.241640)
 
     def test_D2O_ThCond(self):
-        """Table B4 pag 17"""
-        lr = 0.742128e-3
-        Tr = 643.847
-        rhor = 358
-        self.assertEqual(round(_D2O_ThCond(3.09*rhor, 0.431*Tr)/lr, 9), 762.915707396)
-        self.assertEqual(round(_D2O_ThCond(3.23*rhor, 0.431*Tr)/lr, 9), 833.912049618)
-        self.assertEqual(round(_D2O_ThCond(0.0002*rhor, 0.5*Tr)/lr, 9), 27.006536978)
-        self.assertEqual(round(_D2O_ThCond(3.07*rhor, 0.5*Tr)/lr, 9), 835.786416818)
-        self.assertEqual(round(_D2O_ThCond(3.18*rhor, 0.5*Tr)/lr, 9), 891.181752526)
-        self.assertEqual(round(_D2O_ThCond(0.0027*rhor, 0.6*Tr)/lr, 9), 35.339949553)
-        self.assertEqual(round(_D2O_ThCond(2.95*rhor, 0.6*Tr)/lr, 9), 861.240794445)
-        self.assertEqual(round(_D2O_ThCond(3.07*rhor, 0.6*Tr)/lr, 9), 919.859094854)
-        self.assertEqual(round(_D2O_ThCond(0.0295*rhor, 0.75*Tr)/lr, 9), 55.216750017)
-        self.assertEqual(round(_D2O_ThCond(2.65*rhor, 0.75*Tr)/lr, 9), 790.442563472)
-        self.assertEqual(round(_D2O_ThCond(2.83*rhor, 0.75*Tr)/lr, 9), 869.672292625)
-        self.assertEqual(round(_D2O_ThCond(0.08*rhor, 0.9*Tr)/lr, 9), 74.522283066)
-        self.assertEqual(round(_D2O_ThCond(0.163*rhor, 0.9*Tr)/lr, 9), 106.301972320)
-        self.assertEqual(round(_D2O_ThCond(2.16*rhor, 0.9*Tr)/lr, 9), 627.777590127)
-        self.assertEqual(round(_D2O_ThCond(2.52*rhor, 0.9*Tr)/lr, 9), 761.055043002)
-        self.assertEqual(round(_D2O_ThCond(0.3*rhor, Tr)/lr, 9), 143.422002971)
-        self.assertEqual(round(_D2O_ThCond(0.7*rhor, Tr)/lr, 9), 469.015122112)
-        self.assertEqual(round(_D2O_ThCond(1.55*rhor, Tr)/lr, 9), 502.846952426)
-        self.assertEqual(round(_D2O_ThCond(2.26*rhor, Tr)/lr, 9), 668.743524402)
-        self.assertEqual(round(_D2O_ThCond(0.49*rhor, 1.1*Tr)/lr, 9), 184.813462109)
-        self.assertEqual(round(_D2O_ThCond(0.98*rhor, 1.1*Tr)/lr, 9), 326.652382218)
-        self.assertEqual(round(_D2O_ThCond(1.47*rhor, 1.1*Tr)/lr, 9), 438.370305052)
-        self.assertEqual(round(_D2O_ThCond(1.96*rhor, 1.1*Tr)/lr, 9), 572.014411428)
-        self.assertEqual(round(_D2O_ThCond(0.4*rhor, 1.2*Tr)/lr, 9), 160.059403824)
-        self.assertEqual(round(_D2O_ThCond(0.8*rhor, 1.2*Tr)/lr, 9), 259.605241187)
-        self.assertEqual(round(_D2O_ThCond(1.2*rhor, 1.2*Tr)/lr, 9), 362.179570932)
-        self.assertEqual(round(_D2O_ThCond(1.61*rhor, 1.2*Tr)/lr, 9), 471.747729424)
-        self.assertEqual(round(_D2O_ThCond(0.3*rhor, 1.27*Tr)/lr, 9), 145.249914694)
-        self.assertEqual(round(_D2O_ThCond(0.6*rhor, 1.27*Tr)/lr, 9), 211.996299238)
-        self.assertEqual(round(_D2O_ThCond(0.95*rhor, 1.27*Tr)/lr, 9), 299.251471210)
-        self.assertEqual(round(_D2O_ThCond(1.37*rhor, 1.27*Tr)/lr, 9), 409.359675394)
+        # Table 3, pag 8
+        self.assertEqual(round(_D2O_ThCond(0, 298.15)*1e3, 4), 17.7498)
+        self.assertEqual(round(_D2O_ThCond(1104.5, 298.15)*1e3, 3), 599.557)
+        self.assertEqual(round(_D2O_ThCond(1200, 298.15)*1e3, 3), 690.421)
+        self.assertEqual(round(_D2O_ThCond(0, 825)*1e3, 4), 76.4492)
+
+        # Table 4, pag 8
+        fluid = D2O(rho=1, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 4), 52.4527)
+        fluid = D2O(rho=106, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 103.342)
+        fluid = D2O(rho=256, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 394.612)
+        fluid = D2O(rho=306, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 801.382)
+        fluid = D2O(rho=356, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 1278.423)
+        fluid = D2O(rho=406, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 670.833)
+        fluid = D2O(rho=456, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 423.603)
+        fluid = D2O(rho=750, T=644.1)
+        self.assertEqual(round(fluid.k*1e3, 3), 454.846)
 
     def test_D2O_Tension(self):
         """Selected values from table 1"""

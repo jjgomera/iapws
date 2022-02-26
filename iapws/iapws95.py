@@ -2747,13 +2747,17 @@ class D2O(MEoS):
 
     def _visco(self, rho, T, fase):
         ref = D2O()
-        st = ref._Helmholtz(rho, 1.5*Tc_D2O)
+        s = ref._Helmholtz(rho, 1.5*Tc_D2O)
         delta = rho/rhoc_D2O
-        drho = 1e3/self.R/1.5/Tc_D2O/(1+2*delta*st["fird"]+delta**2*st["firdd"])
+        drho = 1e3/self.R/1.5/Tc_D2O/(1+2*delta*s["fird"]+delta**2*s["firdd"])
         return _D2O_Viscosity(rho, T, fase, drho)
 
     def _thermo(self, rho, T, fase):
-        return _D2O_ThCond(rho, T)
+        ref = D2O()
+        s = ref._Helmholtz(rho, 1.5*Tc_D2O)
+        delta = rho/rhoc_D2O
+        drho = 1e3/self.R/1.5/Tc_D2O/(1+2*delta*s["fird"]+delta**2*s["firdd"])
+        return _D2O_ThCond(rho, T, fase, drho)
 
     def _surface(self, T):
         s = _D2O_Tension(T)
