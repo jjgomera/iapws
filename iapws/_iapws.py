@@ -18,10 +18,10 @@ Miscelaneous IAPWS standards. This module include:
     * :func:`_D2O_Viscosity`: Viscosity correlation for heavy water
     * :func:`_D2O_ThCond`: Thermal conductivity correlation for heavy water
     * :func:`_D2O_Tension`: Surface tension correlation for heavy water
-    * :func:`_D2O_Sublimation_Pressure`: Sublimation Pressure correlation for
-    heavy water
+    * :func:`_D2O_Sublimation_Pressure`: Sublimation Pressure correlation
+      for heavy water
     * :func:`_D2O_Melting_Pressure`: Melting Pressure correlation for heavy
-    water
+      water
     * :func:`_Henry`: Henry constant for liquid-gas equilibrium
     * :func:`_Kvalue`: Vapor-liquid distribution constant
 """
@@ -92,7 +92,7 @@ def _Ice(T, P):
             * gtp: [∂²g/∂T∂P]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * T ≤ 273.16
@@ -246,7 +246,7 @@ def _Liquid(T, P=0.1):
             * epsilon: Dielectric constant, [-]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 253.15 ≤ T ≤ 383.15
@@ -439,7 +439,7 @@ def _Supercooled(T, P):
             * w: Speed of sound, [m/s²]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * Tm ≤ T ≤ 300
@@ -594,7 +594,7 @@ def _Sublimation_Pressure(T):
         Pressure at sublimation line, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 50 ≤ T ≤ 273.16
@@ -639,7 +639,7 @@ def _Melting_Pressure(T, ice="Ih"):
         Pressure at sublimation line, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 251.165 ≤ T ≤ 715
@@ -902,7 +902,7 @@ def _Tension(T):
         Surface tension, [N/m]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 248.15 ≤ T ≤ 647
@@ -946,7 +946,7 @@ def _Dielectric(rho, T):
         Dielectric constant, [-]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 238 ≤ T ≤ 1200
@@ -1010,7 +1010,7 @@ def _Refractive(rho, T, l=0.5893):
         Refractive index, [-]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0 ≤ ρ ≤ 1060
@@ -1062,7 +1062,7 @@ def _Kw(rho, T):
         Ionization constant in -log10(kw), [-]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0 ≤ ρ ≤ 1250
@@ -1116,7 +1116,7 @@ def _Conductivity(rho, T):
         Electrolytic conductivity, [S/m]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 600 ≤ ρ ≤ 1200
@@ -1343,7 +1343,7 @@ def _D2O_Tension(T):
         Surface tension, [N/m]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 269.65 ≤ T ≤ 643.847
@@ -1381,7 +1381,7 @@ def _D2O_Sublimation_Pressure(T):
         Pressure at sublimation line, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 210 ≤ T ≤ 276.969
@@ -1426,7 +1426,7 @@ def _D2O_Melting_Pressure(T, ice="Ih"):
         Pressure at melting line, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 254.415 ≤ T ≤ 315

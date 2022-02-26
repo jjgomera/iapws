@@ -591,7 +591,7 @@ def Ttr(x):
         Triple point temperature, [K]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0 ≤ x ≤ 1

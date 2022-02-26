@@ -57,7 +57,7 @@ def _virial(T):
             * Cawwtt: d²Caww/dT², [m⁶/molK²]
 
     Notes
-    ------
+    -----
     Raise :class:`Warning` if T isn't in range of validity:
 
         * Baa: 60 ≤ T ≤ 2000
@@ -179,7 +179,7 @@ def _fugacity(T, P, x):
         fugacity coefficient, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in range of validity:
 
         * 193 ≤ T ≤ 473

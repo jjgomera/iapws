@@ -117,7 +117,7 @@ def _h13_s(s):
         Specific enthalpy, [kJ/kg]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * s(100MPa,623.15K) ≤ s ≤ s'(623.15K)
@@ -226,7 +226,7 @@ def _t_hs(h, s):
         Temperature, [K]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 5.048096828 ≤ s ≤ 5.260578707
@@ -289,7 +289,7 @@ def _PSat_T(T):
         Pressure, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 273.15 ≤ T ≤ 647.096
@@ -334,7 +334,7 @@ def _TSat_P(P):
         Temperature, [K]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0.00061121 ≤ P ≤ 22.064
@@ -380,7 +380,7 @@ def _PSat_h(h):
         Pressure, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * h'(623.15K) ≤ h ≤ h''(623.15K)
@@ -434,7 +434,7 @@ def _PSat_s(s):
         Pressure, [MPa]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * s'(623.15K) ≤ s ≤ s''(623.15K)
@@ -487,7 +487,7 @@ def _h1_s(s):
         Specific enthalpy, [kJ/kg]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * s'(273.15K) ≤ s ≤ s'(623.15K)
@@ -546,7 +546,7 @@ def _h3a_s(s):
         Specific enthalpy, [kJ/kg]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * s'(623.15K) ≤ s ≤ sc
@@ -601,7 +601,7 @@ def _h2ab_s(s):
         Specific enthalpy, [kJ/kg]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 5.85 ≤ s ≤ s"(273.15K)
@@ -662,7 +662,7 @@ def _h2c3b_s(s):
         Specific enthalpy, [kJ/kg]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * sc ≤ s ≤ 5.85

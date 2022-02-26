@@ -123,7 +123,7 @@ class SeaWater(object):
         Haline contraction coefficient, [kg/kg]
 
     Notes
-    ------
+    -----
     :class:`Warning` if input isn't in limit:
 
         * 261 ≤ T ≤ 353
@@ -589,7 +589,7 @@ def _ThCond_SeaWater(T, P, S):
         Thermal conductivity excess relative to that of the pure water, [W/mK]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 273.15 ≤ T ≤ 523.15
@@ -642,7 +642,7 @@ def _Tension_SeaWater(T, S):
         Surface tension, [N/m]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0 ≤ S ≤ 0.131  for 274.15 ≤ T ≤ 365.15
@@ -692,7 +692,7 @@ def _solNa2SO4(T, mH2SO4, mNaCl):
         Molal solutility of sodium sulfate, [mol/kg(water)]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 523.15 ≤ T ≤ 623.15
@@ -748,7 +748,7 @@ def _critNaCl(x):
             * rhoc: critical density, [kg/m³]
 
     Notes
-    ------
+    -----
     Raise :class:`NotImplementedError` if input isn't in limit:
 
         * 0 ≤ x ≤ 0.12
