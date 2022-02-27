@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """IAPWS-IF97 standard implementation
 
-.. image:: https://raw.githubusercontent.com/jjgomera/iapws/master/images/iapws97.png
+.. image:: images/iapws97.png
     :alt: iapws97
 
 The module implement the fundamental equation for the five regions (rectangular
