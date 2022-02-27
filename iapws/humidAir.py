@@ -802,7 +802,7 @@ class HumidAir(object):
         prop["ks"] = 1000*fav["firtt"]/rho**2/(                         # Eq T9
             fav["firtt"]*(2*fav["fird"]+rho*fav["firdd"])-rho*fav["firdt"]**2)
         prop["w"] = (rho**2*1000*(fav["firtt"]*fav["firdd"]-fav["firdt"]**2)
-                     / fav["firtt"]+2*rho*fav["fird"]*1000)**0.5        # Eq T10
+                     / fav["firtt"]+2*rho*fav["fird"]*1000)**0.5       # Eq T10
         return prop
 
     def _coligative(self, rho, A, fav):
@@ -879,7 +879,7 @@ class HumidAir(object):
         Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
         Thermodynamic Properties of Seawater, Table 6,
         http://www.iapws.org/relguide/SeaAir.html
-        """
+        """  # noqa
         water = IAPWS95()
         rhov = (1-A)*rho
         fv = water._derivDimensional(rhov, T)
@@ -951,7 +951,7 @@ class HumidAir(object):
         Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
         Thermodynamic Properties of Seawater, Table 10,
         http://www.iapws.org/relguide/SeaAir.html
-        """
+        """  # noqa
         Ma = Air.M/1000
         Mw = IAPWS95.M/1000
         vir = _virial(T)
