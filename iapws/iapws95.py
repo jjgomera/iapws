@@ -277,7 +277,7 @@ class MEoS(_fase):
         Vapor quality, [-]
 
     l : float, optional
-        Wavelength of light, for refractive index, [nm]
+        Wavelength of light, for refractive index, [μm]
     rho0 : float, optional
         Initial value of density, to improve iteration, [kg/m³]
     T0 : float, optional

@@ -4231,7 +4231,7 @@ class IAPWS97(object):
     x : float
         Vapor quality, [-]
     l : float, optional
-        Wavelength of light, for refractive index, [nm]
+        Wavelength of light, for refractive index, [μm]
 
     Notes
     -----
