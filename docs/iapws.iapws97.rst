@@ -6,6 +6,3 @@ iapws.iapws97 module
     :private-members:
     :undoc-members:
     :member-order: bysource
-
-.. autoclass:: IAPWS97
-    :members: derivative
