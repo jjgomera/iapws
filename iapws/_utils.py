@@ -242,21 +242,86 @@ def deriv_G(state, z, x, y, fase):
         mul = -1/fase.rho**2
         x = "v"
 
-    dT = {"P": 0,
-          "T": 1,
-          "v": fase.v*fase.alfav,
-          "u": fase.cp-state.P*1000*fase.v*fase.alfav,
-          "h": fase.cp,
-          "s": fase.cp/state.T,
-          "g": -fase.s,
-          "a": -state.P*1000*fase.v*fase.alfav-fase.s}
-    dP = {"P": 1,
-          "T": 0,
-          "v": -fase.v*fase.xkappa,
-          "u": fase.v*(state.P*1000*fase.xkappa-state.T*fase.alfav),
-          "h": fase.v*(1-state.T*fase.alfav),
-          "s": -fase.v*fase.alfav,
-          "g": fase.v,
-          "a": state.P*1000*fase.v*fase.xkappa}
-    deriv = (dP[z]*dT[y]-dT[z]*dP[y])/(dP[x]*dT[y]-dT[x]*dP[y])
+    if x == "P":
+        dPdx = 1.0
+        dTdx = 0.0
+    elif x == "T":
+        dPdx = 0.0
+        dTdx = 1.0
+    elif x == "v":
+        dPdx = -fase.v*fase.xkappa
+        dTdx = fase.v*fase.alfav
+    elif x == "u":
+        dPdx = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dTdx = fase.cp-state.P*1000.0*fase.v*fase.alfav
+    elif x == "h":
+        dPdx = fase.v*(1.0-state.T*fase.alfav)
+        dTdx = fase.cp
+    elif x == "s":
+        dPdx = -fase.v * fase.alfav
+        dTdx = fase.cp/state.T
+    elif x == "g":
+        dPdx = fase.v
+        dTdx = -fase.s
+    elif x == "a":
+        dPdx = state.P*1000.0*fase.v*fase.xkappa
+        dTdx = -state.P * 1000.0 * fase.v * fase.alfav - fase.s
+    else:
+        raise ValueError("x must be one of P, T, v, u, h, s, g, a")
+
+    if y == "P":
+        dPdy = 1.0
+        dTdy = 0.0
+    elif y == "T":
+        dPdy = 0.0
+        dTdy = 1.0
+    elif y == "v":
+        dPdy = -fase.v*fase.xkappa
+        dTdy = fase.v*fase.alfav
+    elif y == "u":
+        dPdy = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dTdy = fase.cp-state.P*1000.0*fase.v*fase.alfav
+    elif y == "h":
+        dPdy = fase.v*(1.0-state.T*fase.alfav)
+        dTdy = fase.cp
+    elif y == "s":
+        dPdy = -fase.v * fase.alfav
+        dTdy = fase.cp/state.T
+    elif y == "g":
+        dPdy = fase.v
+        dTdy = -fase.s
+    elif y == "a":
+        dPdy = state.P*1000.0*fase.v*fase.xkappa
+        dTdy = -state.P * 1000.0 * fase.v * fase.alfav - fase.s
+    else:
+        raise ValueError("y must be one of P, T, v, u, h, s, g, a")
+
+    if z == "P":
+        dPdz = 1.0
+        dTdz = 0.0
+    elif z == "T":
+        dPdz = 0.0
+        dTdz = 1.0
+    elif z == "v":
+        dPdz = -fase.v*fase.xkappa
+        dTdz = fase.v*fase.alfav
+    elif z == "u":
+        dPdz = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dTdz = fase.cp-state.P*1000.0*fase.v*fase.alfav
+    elif z == "h":
+        dPdz = fase.v*(1.0-state.T*fase.alfav)
+        dTdz = fase.cp
+    elif z == "s":
+        dPdz = -fase.v * fase.alfav
+        dTdz = fase.cp/state.T
+    elif z == "g":
+        dPdz = fase.v
+        dTdz = -fase.s
+    elif z == "a":
+        dPdz = state.P*1000.0*fase.v*fase.xkappa
+        dTdz = -state.P * 1000.0 * fase.v * fase.alfav - s
+    else:
+        raise ValueError("z must be one of P, T, v, u, h, s, g, a")
+
+    deriv = (dPdz * dTdy - dTdz * dPdy) / (dPdx * dTdy - dTdx * dPdy)
     return mul*deriv
