@@ -22,8 +22,8 @@
     :target: http://iapws.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://zenodo.org/badge/19471942.svg
-   :target: https://zenodo.org/badge/latestdoi/19471942
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4744318.svg
+   :target: https://doi.org/10.5281/zenodo.4744318
    :alt: DOI
 
 

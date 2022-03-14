@@ -565,6 +565,7 @@ class HumidAir(object):
         * W: Mass fraction of water in humid air, [kg/kg]
         * xa: Mole fraction of dry air, [-]
         * xw: Mole fraction of water, [-]
+        * Pv: Partial pressure of water, [MPa]
         * xa_sat: Mole fraction of dry air at saturation state, [-]
         * mu: Relative chemical potential, [kJ/kg]
         * muw: Chemical potential of water, [kJ/kg]
