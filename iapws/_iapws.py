@@ -29,10 +29,10 @@ Miscelaneous IAPWS standards. This module include:
 from __future__ import division
 
 from cmath import log as log_c
-from math import log, exp, tan, atan, acos, sin, pi, log10, copysign
+from math import log, exp, tan, atan, acos, sin, pi, log10
 import warnings
 
-from scipy.optimize import minimize
+from scipy.optimize import newton
 
 
 # Constants
@@ -385,29 +385,6 @@ def _Liquid(T, P=0.1):
     return propiedades
 
 
-class _Supercooled_minimize(object):
-
-    def __init__(self, L, omega, xmin, xmax):
-        self.L = L
-        self.omega = omega
-        self.xmin = xmin
-        self.xmax = xmax
-        self.f_inner_value_sign = 0.0
-
-    def f(self, x):
-        f_inner_value = self.L+log(x/(1-x))+self.omega*(1-2*x)
-        self.f_inner_value_sign = copysign(1.0, f_inner_value)
-        return abs(f_inner_value)
-
-    def jac(self, x):
-        return self.f_inner_value_sign*(1/(x*(1 - x)) - 2*self.omega)
-
-    @property
-    def x(self):
-        return minimize(self.f, x0=((self.xmin+self.xmax)/2,),
-                        bounds=((self.xmin, self.xmax),), jac=self.jac)["x"][0]
-
-
 # IAPWS-15 for supercooled liquid water
 def _Supercooled(T, P):
     """Guideline on thermodynamic properties of supercooled water
@@ -448,15 +425,17 @@ def _Supercooled(T, P):
     The minimum temperature in range of validity is the melting temperature, it
     depend of pressure
 
+    Raise :class:`RuntimeError` if solution isn't founded
+
     Examples
     --------
-    >>> liq = _Supercooled(235.15, 0.101325)
+    >>> liq = _supercooled(235.15, 0.101325)
     >>> liq["rho"], liq["cp"], liq["w"]
     968.09999 5.997563 1134.5855
 
     References
     ----------
-    IAPWS, Guideline on Thermodynamic Properties of Supercooled Water,
+    iapws, guideline on thermodynamic properties of supercooled water,
     http://iapws.org/relguide/Supercooled.html
     """
     # Check input in range of validity
@@ -532,7 +511,28 @@ def _Supercooled(T, P):
         xmin = 0.99*exp(-50/49*L-omega)
         xmax = min(1.1*exp(-L-omega), 0.0101)
 
-    x = _Supercooled_minimize(L=L, omega=omega, xmin=xmin, xmax=xmax).x
+    # Eq 8
+    def f(x):
+        "Function for iterative calculation"
+        if x < xmin:
+            x = xmin
+        if x > xmax:
+            x = xmax
+        return L+log(x/(1-x))+omega*(1-2*x)
+
+    x = None
+    for xo in (xmin, xmax, (xmin+xmax)/2):
+        try:
+            x, sol = newton(f, xo, full_output=True)
+        except RuntimeError:
+            pass
+        else:
+            if sol.converged:
+                break
+
+    # Exit when solution don't found
+    if not x:
+        raise RuntimeError("Solution don't found")
 
     # Eq 12
     fi = 2*x-1
