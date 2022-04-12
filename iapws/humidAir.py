@@ -540,7 +540,7 @@ class HumidAir(object):
     -----
     * It needs two incoming properties of T, P, rho.
     * v as a alternate input parameter to rho
-    * For composition need one of A, xa, W, xw.
+    * For composition need one of A, xa, W, xw, HR.
 
     The calculated instance has the following properties:
 
