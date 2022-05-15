@@ -5,7 +5,7 @@ tags:
   - chemistry
   - physics
 authors:
-  - name: Juan José Gómez Romera^[jjgomera@gmail.com]
+  - name: Juan José Gómez-Romera^[jjgomera@gmail.com]
     orcid: 0000-0002-0406-1180
     affiliation: 1
 affiliations:
@@ -18,81 +18,38 @@ bibliography: paper.bib
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+Water is possibly the most important chemical compound. Due to both its uses
+and its abundance, being able to predict its physical properties is essential
+to be able to simulate any process in which water participates.
 
-# Statement of need
+The International Association for the Properties of Water and Steam,
+[IAPWS](http://iapws.org/), provides internationally accepted formulations for
+the properties of light and heavy steam for scientific and industrial
+applications.
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+iapws is a python module that implements those formulations defined by the
+IAPWS for the calculation of the properties of water and steam.
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+# Description
 
-# Mathematics
+This module implements almost the full set of standards:
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+* R1-76(2014): Revised Release on the Surface Tension of Ordynary Water Substance, [@Surf].
+* R2-83(1992): Release on the Values of Temperature, Pressure and Density of Ordynary and Heavy Water Substances at their Respectives Critical Points.
+* R5-85(1994): Release on Surface Tension of Heavy Water Substance.
+* R6-95(2018): Revised Release on the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use, [@IAPWS95].
+* R7-97(2012): Revised Release on the IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam, [@IF97].
+* R8-97: Release on the Static Dielectric Constant of Ordinary Water Substance for Temperatures from 238 K to 873 K and Pressures up to 1000 MPa, [@Dielec].
+* R9-97: Release on the Refractive Index of Ordinary Water Substance as a Function of Wavelength, Temperature and Pressure, [@Rindex].
+* R10-06(2009): Revised Release on the Equation of State 2006 for H2O Ice Ih, [@Ice].
+* R11-07(2019): Release on the Ionization Constant of H2O, [@Ionization].
+* R12-08: Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance, [@Visc].
+* R13-08: Release on the IAPWS Formulation 2008 for the Thermodynamic Properties of Seawater, [@Seawater].
+* R14-08(2011): Revised Release on the Pressure along the Melting and Sublimation Curves of Ordinary Water Substance, [@MeltSub].
+* R15-11: Release on the IAPWS Formulation 2011 for the Thermal Conductivity of Ordinary Water Substance, [@ThCond].
+* R16-17(2018): Release on the IAPWS Formulation 2017 for the Thermodynamic Properties of Heavy Water, [@Heavy].
+* R17-20: Release on the IAPWS Formulation 2020 for the Viscosity of Heavy Water, [@D2OVisc].
+* R18-21: Release on the IAPWS Formulation 2021 for the Thermal Conductivity of Heavy Water, [@D2OThCond].
 
-Double dollars make self-standing equations:
-
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
-
-# Acknowledgements
-
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
 
 # References
