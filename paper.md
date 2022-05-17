@@ -19,13 +19,13 @@ bibliography: paper.bib
 
 # Summary
 
-Water is possibly the most important chemical compound. Due to both its uses
-and its abundance, being able to predict its physical properties is essential
-to be able to simulate any process in which water participates.
+Water is possibly the most important chemical compound in the industry. Due to
+both its uses and its abundance, being able to predict its physical properties
+is essential to simulate any process in which water participates.
 
 The International Association for the Properties of Water and Steam,
 [IAPWS](http://iapws.org/), provides internationally accepted formulations for
-the properties of light and heavy steam for scientific and industrial
+the properties of light and heavy water and steam for scientific and industrial
 applications.
 
 
