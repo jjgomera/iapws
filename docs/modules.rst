@@ -41,8 +41,8 @@ This module implements almost the full set of standards:
 
 Releases:
 
-* R1-76(2014): Revised Release on the Surface Tension of Ordynary Water Substance, :func:`iapws._iapws._Tension`
-* R2-83(1992): Release on the Values of Temperature, Pressure and Density of Ordynary and Heavy Water Substances at their Respectives Critical Points, :func:`iapws._iapws`
+* R1-76(2014): Revised Release on the Surface Tension of Ordinary Water Substance, :func:`iapws._iapws._Tension`
+* R2-83(1992): Release on the Values of Temperature, Pressure and Density of Ordinary and Heavy Water Substances at their Respective Critical Points, :func:`iapws._iapws`
 * R5-85(1994): Release on Surface Tension of Heavy Water Substance, :func:`iapws._iapws._D2O_Tension`
 * R6-95(2018): Revised Release on the IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use, :func:`iapws.iapws95.IAPWS95`
 * R7-97(2012): Revised Release on the IAPWS Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam, :func:`iapws.iapws97`
