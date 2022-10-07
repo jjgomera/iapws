@@ -2092,16 +2092,18 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.1
         """
-        if cls.Tt < T < cls.Tc:
-            Tita = 1-T/cls.Tc
-            suma = 0
-            for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
-                suma += n*Tita**x
-            Pr = exp(cls.Tc/T*suma)
-            Pv = Pr*cls.Pc
-            return Pv
-        else:
-            return None
+        if T < cls.Tt:
+            T = cls.Tt
+        elif T > cls.Tc:
+            T = cls.Tc
+
+        Tita = 1-T/cls.Tc
+        suma = 0
+        for n, x in zip(cls._Pv["ao"], cls._Pv["exp"]):
+            suma += n*Tita**x
+        Pr = exp(cls.Tc/T*suma)
+        Pv = Pr*cls.Pc
+        return Pv
 
     @classmethod
     def _Liquid_Density(cls, T):
@@ -2123,19 +2125,21 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.2
         """
-        if cls.Tt < T < cls.Tc:
-            eq = cls._rhoL["eq"]
-            Tita = 1-T/cls.Tc
-            if eq == 2:
-                Tita = Tita**(1./3)
-            suma = 0
-            for n, x in zip(cls._rhoL["ao"], cls._rhoL["exp"]):
-                suma += n*Tita**x
-            Pr = suma+1
-            rho = Pr*cls.rhoc
-            return rho
-        else:
-            return None
+        if T < cls.Tt:
+            T = cls.Tt
+        elif T > cls.Tc:
+            T = cls.Tc
+
+        eq = cls._rhoL["eq"]
+        Tita = 1-T/cls.Tc
+        if eq == 2:
+            Tita = Tita**(1./3)
+        suma = 0
+        for n, x in zip(cls._rhoL["ao"], cls._rhoL["exp"]):
+            suma += n*Tita**x
+        Pr = suma+1
+        rho = Pr*cls.rhoc
+        return rho
 
     @classmethod
     def _Vapor_Density(cls, T):
@@ -2157,19 +2161,21 @@ class MEoS(_fase):
         Ordinary Water Substance September 1992,
         http://www.iapws.org/relguide/Supp-sat.html, Eq.3
         """
-        if cls.Tt < T < cls.Tc:
-            eq = cls._rhoG["eq"]
-            Tita = 1-T/cls.Tc
-            if eq == 4:
-                Tita = Tita**(1./3)
-            suma = 0
-            for n, x in zip(cls._rhoG["ao"], cls._rhoG["exp"]):
-                suma += n*Tita**x
-            Pr = exp(suma)
-            rho = Pr*cls.rhoc
-            return rho
-        else:
-            return None
+        if T < cls.Tt:
+            T = cls.Tt
+        elif T > cls.Tc:
+            T = cls.Tc
+
+        eq = cls._rhoG["eq"]
+        Tita = 1-T/cls.Tc
+        if eq == 4:
+            Tita = Tita**(1./3)
+        suma = 0
+        for n, x in zip(cls._rhoG["ao"], cls._rhoG["exp"]):
+            suma += n*Tita**x
+        Pr = exp(suma)
+        rho = Pr*cls.rhoc
+        return rho
 
     @classmethod
     def _dPdT_sat(cls, T):

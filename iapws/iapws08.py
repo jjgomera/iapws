@@ -455,7 +455,10 @@ def _Tb(P, S):
         ps = SeaWater._saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gv
 
-    to = _TSat_P(P)
+    try:
+        to = _TSat_P(P)
+    except NotImplementedError:
+        to = 300
     rinput = fsolve(f, to, full_output=True)
     Tb = fsolve(f, to)[0]
     if rinput[2] == 1:
@@ -492,7 +495,10 @@ def _Tf(P, S):
         ps = SeaWater._saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gih
 
-    to = _TSat_P(P)
+    try:
+        to = _TSat_P(P)
+    except NotImplementedError:
+        to = 300
     rinput = fsolve(f, to, full_output=True)
     Tf = fsolve(f, to)[0]
     if rinput[2] == 1:
