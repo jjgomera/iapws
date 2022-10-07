@@ -241,7 +241,7 @@ def _Liquid(T, P=0.1):
             * alfav: Cubic expansion coefficient, [1/K]
             * xkappa : Isothermal compressibility, [1/MPa]
             * ks: Isentropic compressibility, [1/MPa]
-            * mu: Viscosity, [mPas]
+            * mu: Viscosity, [Pas]
             * k: Thermal conductivity, [W/mK]
             * epsilon: Dielectric constant, [-]
 
