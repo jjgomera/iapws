@@ -25,7 +25,7 @@ import warnings
 from scipy.optimize import fsolve
 
 from .iapws95 import IAPWS95
-from .iapws97 import IAPWS97, _Region1, _Region2
+from .iapws97 import IAPWS97, _Region1, _Region2, _TSat_P
 from ._iapws import _ThCond, Tc, Pc, rhoc, _Ice, _Tension
 from ._utils import deriv_G
 
@@ -455,8 +455,11 @@ def _Tb(P, S):
         ps = SeaWater._saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gv
 
-    Tb = fsolve(f, 300)[0]
-    return Tb
+    to = _TSat_P(P)
+    rinput = fsolve(f, to, full_output=True)
+    Tb = fsolve(f, to)[0]
+    if rinput[2] == 1:
+        return Tb
 
 
 def _Tf(P, S):
@@ -489,8 +492,11 @@ def _Tf(P, S):
         ps = SeaWater._saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gih
 
-    Tf = fsolve(f, 300)[0]
-    return Tf
+    to = _TSat_P(P)
+    rinput = fsolve(f, to, full_output=True)
+    Tf = fsolve(f, to)[0]
+    if rinput[2] == 1:
+        return Tf
 
 
 def _Triple(S):
