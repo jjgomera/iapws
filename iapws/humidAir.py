@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements
+# pylint: disable=too-many-instance-attributes, too-many-boolean-expressions
+
 """
 Module with Air-water mixture properties and related properties. The module
 include:
@@ -200,9 +204,9 @@ def _fugacity(T, P, x):
     """
     # Check input parameters
     if T < 193 or T > 473 or P < 0 or P > 5 or x < 0 or x > 1:
-        raise(NotImplementedError("Input not in range of validity"))
+        raise NotImplementedError("Input not in range of validity")
 
-    R = 8.314462  # J/molK
+    Rg = 8.314462  # J/molK
 
     # Virial coefficients
     vir = _virial(T)
@@ -217,7 +221,7 @@ def _fugacity(T, P, x):
         (x*(3*x-4)*vir["Bww"]+2*(1-x)*(3*x-2)*vir["Baw"]+3*(1-x)**2*vir["Baa"])
 
     # Eq 2
-    fv = x*P*exp(beta*P*1e6/R/T+0.5*gamma*(P*1e6/R/T)**2)
+    fv = x*P*exp(beta*P*1e6/Rg/T+0.5*gamma*(P*1e6/Rg/T)**2)
     return fv
 
 
@@ -226,6 +230,8 @@ class MEoSBlend(MEoS):
     Special meos class to implement pseudocomponent blend and defining its
     ancillary dew and bubble point
     """
+
+    _blend = {}
 
     @classmethod
     def _dewP(cls, T):
@@ -511,7 +517,7 @@ class Air(MEoSBlend):
         return k*1e-3
 
 
-class HumidAir(object):
+class HumidAir():
     """
     Humid air class with complete functionality
 
@@ -586,6 +592,36 @@ class HumidAir(object):
 
     status = 0
     msg = "Undefined"
+    _mode = None
+    _composition = None
+
+    T = None
+    rho = None
+    v = None
+    P = None
+    s = None
+    cp = None
+    h = None
+    g = None
+    u = None
+    alfav = None
+    betas = None
+    xkappa = None
+    ks= None
+    w = None
+
+    A = None
+    W = None
+    mu = None
+    muw = None
+    M = None
+    HR = None
+    xa = None
+    xw = None
+    Pv = None
+
+    xa_sat = None
+    RH = None
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
@@ -750,11 +786,12 @@ class HumidAir(object):
         Asat = rinput[0][1]
         if rinput[2] == 1 and 0 <= Asat <= 1:
             return Asat
-        else:
-            warnings.warn("Convergence failed")
-            print(rinput)
 
-    def _prop(self, T, rho, fav):
+        warnings.warn("Convergence failed")
+        print(rinput)
+
+    @staticmethod
+    def _prop(T, rho, fav):
         """Thermodynamic properties of humid air
 
         Parameters
@@ -806,7 +843,8 @@ class HumidAir(object):
                      / fav["firtt"]+2*rho*fav["fird"]*1000)**0.5       # Eq T10
         return prop
 
-    def _coligative(self, rho, A, fav):
+    @staticmethod
+    def _coligative(rho, A, fav):
         """Miscelaneous properties of humid air
 
         Parameters
@@ -918,7 +956,8 @@ class HumidAir(object):
         prop["firdd"] = (1-A)**3*fv["firdd"]+A**3*fa["firdd"]+fmix["firdd"]
         return prop
 
-    def _fmix(self, T, rho, A):
+    @staticmethod
+    def _fmix(T, rho, A):
         r"""Specific Helmholtz energy of air-water interaction
 
         Parameters
@@ -952,8 +991,8 @@ class HumidAir(object):
         Seawater and Ice, Consistent with the IAPWS Formulation 2008 for the
         Thermodynamic Properties of Seawater, Table 10,
         http://www.iapws.org/relguide/SeaAir.html
-        """  # noqa
-        Ma = Air.M/1000
+        """
+        ma = Air.M/1000
         Mw = IAPWS95.M/1000
         vir = _virial(T)
         Baw = vir["Baw"]
@@ -967,31 +1006,31 @@ class HumidAir(object):
         Cawwtt = vir["Cawwtt"]
 
         # Eq T45
-        f = 2*A*(1-A)*rho*R*T/Ma/Mw*(Baw+3*rho/4*(A/Ma*Caaw+(1-A)/Mw*Caww))
+        f = 2*A*(1-A)*rho*R*T/ma/Mw*(Baw+3*rho/4*(A/ma*Caaw+(1-A)/Mw*Caww))
         # Eq T46
-        fa = 2*rho*R*T/Ma/Mw*((1-2*A)*Baw+3*rho/4*(
-            A*(2-3*A)/Ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
+        fa = 2*rho*R*T/ma/Mw*((1-2*A)*Baw+3*rho/4*(
+            A*(2-3*A)/ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
         # Eq T47
-        ft = 2*A*(1-A)*rho*R/Ma/Mw*(
-            Baw+T*Bawt+3*rho/4*(A/Ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
+        ft = 2*A*(1-A)*rho*R/ma/Mw*(
+            Baw+T*Bawt+3*rho/4*(A/ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
         # Eq T48
-        fd = A*(1-A)*R*T/Ma/Mw*(2*Baw+3*rho*(A/Ma*Caaw+(1-A)/Mw*Caww))
+        fd = A*(1-A)*R*T/ma/Mw*(2*Baw+3*rho*(A/ma*Caaw+(1-A)/Mw*Caww))
         # Eq T49
-        faa = rho*R*T/Ma/Mw*(-4*Baw+3*rho*((1-3*A)/Ma*Caaw-(2-3*A)/Mw*Caww))
+        faa = rho*R*T/ma/Mw*(-4*Baw+3*rho*((1-3*A)/ma*Caaw-(2-3*A)/Mw*Caww))
         # Eq T50
-        fat = 2*rho*R/Ma/Mw*(1-2*A)*(Baw+T*Bawt)+3*rho**2*R/2/Ma/Mw*(
-            A*(2-3*A)/Ma*(Caaw+T*Caawt)+(1-A)*(1-3*A)/Mw*(Caww+T*Cawwt))
+        fat = 2*rho*R/ma/Mw*(1-2*A)*(Baw+T*Bawt)+3*rho**2*R/2/ma/Mw*(
+            A*(2-3*A)/ma*(Caaw+T*Caawt)+(1-A)*(1-3*A)/Mw*(Caww+T*Cawwt))
         # Eq T51
-        fad = 2*R*T/Ma/Mw*((1-2*A)*Baw+3/2*rho*(
-            A*(2-3*A)/Ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
+        fad = 2*R*T/ma/Mw*((1-2*A)*Baw+3/2*rho*(
+            A*(2-3*A)/ma*Caaw+(1-A)*(1-3*A)/Mw*Caww))
         # Eq T52
-        ftt = 2*A*(1-A)*rho*R/Ma/Mw*(2*Bawt+T*Bawtt+3*rho/4*(
-            A/Ma*(2*Caawt+T*Caawtt)+(1-A)/Mw*(2*Cawwt+T*Cawwtt)))
+        ftt = 2*A*(1-A)*rho*R/ma/Mw*(2*Bawt+T*Bawtt+3*rho/4*(
+            A/ma*(2*Caawt+T*Caawtt)+(1-A)/Mw*(2*Cawwt+T*Cawwtt)))
         # Eq T53
-        ftd = 2*A*(1-A)*R/Ma/Mw*(Baw+T*Bawt+3*rho/2*(
-            A/Ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
+        ftd = 2*A*(1-A)*R/ma/Mw*(Baw+T*Bawt+3*rho/2*(
+            A/ma*(Caaw+T*Caawt)+(1-A)/Mw*(Caww+T*Cawwt)))
         # Eq T54
-        fdd = 3*A*(1-A)*R*T/Ma/Mw*(A/Ma*Caaw+(1-A)/Mw*Caww)
+        fdd = 3*A*(1-A)*R*T/ma/Mw*(A/ma*Caaw+(1-A)/Mw*Caww)
 
         prop = {}
         prop["fir"] = f/1000

@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
+# pylint: disable=too-many-locals, too-many-statements
+
 """
 Module with Ammonia-water mixture properties and related properties. The module
 include:
@@ -204,7 +207,7 @@ class NH3(MEoS):
         return k
 
 
-class H2ONH3(object):
+class H2ONH3():
     """Ammonia-water mixtures."""
 
     # TODO: Add equilibrium routine
@@ -245,7 +248,7 @@ class H2ONH3(object):
         Properties of Ammonia-Water Mixtures,
         http://www.iapws.org/relguide/nh3h2o.pdf, Table 4
         """
-        # FIXME: The values are good, bad difer by 1%, a error I can find
+        # FIXME: The values are good, bad difer by 1%, a error I can´t find
         # In Pressure happen and only use fird
 
         M = (1-x)*IAPWS95.M + x*NH3.M
@@ -287,7 +290,8 @@ class H2ONH3(object):
         prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
         return prop
 
-    def _phi0(self, rho, T, x):
+    @staticmethod
+    def _phi0(rho, T, x):
         """Ideal gas Helmholtz energy of binary mixtures and derivatives
 
         Parameters
@@ -470,7 +474,8 @@ class H2ONH3(object):
             tau/Tn*dTnx*prop["firt"]
         return prop
 
-    def _Dphir(self, tau, delta, x):
+    @staticmethod
+    def _Dphir(tau, delta, x):
         """Departure function to the residual contribution to the free
         Helmholtz energy
 
@@ -603,13 +608,13 @@ def Ttr(x):
     http://www.iapws.org/relguide/nh3h2o.pdf, Eq 9
     """
     if 0 <= x <= 0.33367:
-        Ttr = 273.16*(1-0.3439823*x-1.3274271*x**2-274.973*x**3)
+        Tr = 273.16*(1-0.3439823*x-1.3274271*x**2-274.973*x**3)
     elif 0.33367 < x <= 0.58396:
-        Ttr = 193.549*(1-4.987368*(x-0.5)**2)
+        Tr = 193.549*(1-4.987368*(x-0.5)**2)
     elif 0.58396 < x <= 0.81473:
-        Ttr = 194.38*(1-4.886151*(x-2/3)**2+10.37298*(x-2/3)**3)
+        Tr = 194.38*(1-4.886151*(x-2/3)**2+10.37298*(x-2/3)**3)
     elif 0.81473 < x <= 1:
-        Ttr = 195.495*(1-0.323998*(1-x)-15.87560*(1-x)**4)
+        Tr = 195.495*(1-0.323998*(1-x)-15.87560*(1-x)**4)
     else:
         raise NotImplementedError("Incoming out of bound")
-    return Ttr
+    return Tr

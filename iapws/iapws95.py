@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
+# pylint: disable=too-many-lines, too-many-locals, too-many-instance-attributes
+# pylint: disable=too-many-branches, too-many-statements
 
 """
 Implemented multiparameter equation of state as a Helmholtz free energy:
@@ -369,10 +372,12 @@ class MEoS(_fase):
         * hInput: Specific heat input, [kJ/kg]
     """
 
-    CP = None
-    _Pv = None
-    _rhoL = None
-    _rhoG = None
+    Fi0 = {}
+    _constants = {}
+    _Pv = {}
+    _rhoL = {}
+    _rhoG = {}
+    _surf = {}
 
     kwargs = {"T": 0.0,
               "P": 0.0,
@@ -386,8 +391,46 @@ class MEoS(_fase):
               "rho0": None,
               "T0": None,
               "x0": 0.5}
+
+    name = None
+    M = None
+    Tc = None
+    Pc = None
+    rhoc = None
+    Tt = None
+
     status = 0
     msg = "Undefined"
+    _mode = None
+
+    Liquid = None
+    Gas = None
+
+    T = None
+    Tr = None
+    P = None
+    Pr = None
+    x = None
+    phase = None
+
+    sigma = None
+    virialB = None
+    virialC = None
+    Hvap = None
+    Svap = None
+    invT = None
+
+    v0 = None
+    rho0 = None
+    h0 = None
+    u0 = None
+    s0 = None
+    a0 = None
+    g0 = None
+    cp0 = None
+    cv0 = None
+    cp0_cv = None
+    gamma0 = None
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
@@ -418,7 +461,7 @@ class MEoS(_fase):
             except RuntimeError as err:
                 self.status = 0
                 self.msg = err.args[0]
-                raise(err)
+                raise err
 
             # Add msg for extrapolation state
             if self.name == "water" and 130 <= self.T < 273.15:
@@ -506,8 +549,8 @@ class MEoS(_fase):
                     rhoo = 900
 
         self.R = self._constants["R"]/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rho_c = self._constants.get("rhoref", self.rhoc)
+        T_c = self._constants.get("Tref", self.Tc)
 
         propiedades = None
 
@@ -522,8 +565,8 @@ class MEoS(_fase):
                 except NotImplementedError:
                     if rho0:
                         rhoo = rho0
-                    elif T < self.Tc and P < self.Pc and \
-                            self._Vapor_Pressure(T) < P:
+                    elif T < self.Tc and \
+                            self._Vapor_Pressure(T) < P < self.Pc:
                         rhoo = self._Liquid_Density(T)
                     elif T < self.Tc and P < self.Pc:
                         rhoo = self._Vapor_Density(T)
@@ -531,8 +574,8 @@ class MEoS(_fase):
                         rhoo = self.rhoc*3
 
                 def f(rho):
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     fird = _phird(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
@@ -555,12 +598,12 @@ class MEoS(_fase):
                         x = 0
 
             elif self._mode == "Th":
-                tau = Tc/T
+                tau = T_c/T
                 ideal = self._phi0(tau, 1)
                 fiot = ideal["fiot"]
 
                 def f(rho):
-                    delta = rho/rhoc
+                    delta = rho/rho_c
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
                     ho = self.R*T*(1+tau*(fiot+firt)+delta*fird)
@@ -573,8 +616,8 @@ class MEoS(_fase):
                     x0 = self.kwargs["x0"]
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
+                    deltaL = rhol/rho_c
+                    deltaG = rhov/rho_c
 
                     firdL = _phird(tau, deltaL, self._constants)
                     firtL = _phirt(tau, deltaL, self._constants)
@@ -599,12 +642,12 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Ts":
-                tau = Tc/T
+                tau = T_c/T
 
                 def f(rho):
                     if rho < 0:
                         rho = 1e-20
-                    delta = rho/rhoc
+                    delta = rho/rho_c
 
                     ideal = self._phi0(tau, delta)
                     fio = ideal["fio"]
@@ -620,8 +663,8 @@ class MEoS(_fase):
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
+                    deltaL = rhol/rho_c
+                    deltaG = rhov/rho_c
 
                     idealL = self._phi0(tau, deltaL)
                     idealG = self._phi0(tau, deltaG)
@@ -652,12 +695,12 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Tu":
-                tau = Tc/T
+                tau = T_c/T
                 ideal = self._phi0(tau, 1)
                 fiot = ideal["fiot"]
 
                 def f(rho):
-                    delta = rho/rhoc
+                    delta = rho/rho_c
 
                     fird = _phird(tau, delta, self._constants)
                     firt = _phirt(tau, delta, self._constants)
@@ -672,8 +715,8 @@ class MEoS(_fase):
                 else:
                     rhov = self._Vapor_Density(T)
                     rhol = self._Liquid_Density(T)
-                    deltaL = rhol/rhoc
-                    deltaG = rhov/rhoc
+                    deltaL = rhol/rho_c
+                    deltaG = rhov/rho_c
 
                     firdL = _phird(tau, deltaL, self._constants)
                     firtL = _phirt(tau, deltaL, self._constants)
@@ -703,10 +746,10 @@ class MEoS(_fase):
                         rho = fsolve(f, rhoo)[0]
 
             elif self._mode == "Prho":
-                delta = rho/rhoc
+                delta = rho/rho_c
 
                 def f(T):
-                    tau = Tc/T
+                    tau = T_c/T
 
                     fird = _phird(tau, delta, self._constants)
                     Po = (1+delta*fird)*self.R*T*rho
@@ -719,7 +762,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -747,7 +790,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -757,8 +800,8 @@ class MEoS(_fase):
             elif self._mode == "Ph":
                 def funcion(parr):
                     rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fiot = ideal["fiot"]
@@ -775,7 +818,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog, x = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -811,7 +854,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -827,8 +870,8 @@ class MEoS(_fase):
                 if x0 is None or x0 == 0 or x0 == 1:
                     def f(parr):
                         rho, T = parr
-                        delta = rho/rhoc
-                        tau = Tc/T
+                        delta = rho/rho_c
+                        tau = T_c/T
 
                         ideal = self._phi0(tau, delta)
                         fio = ideal["fio"]
@@ -861,8 +904,8 @@ class MEoS(_fase):
             elif self._mode == "Pu":
                 def f(parr):
                     rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fiot = ideal["fiot"]
@@ -880,7 +923,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog, x = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -917,7 +960,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -925,10 +968,10 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhoh":
-                delta = rho/rhoc
+                delta = rho/rho_c
 
                 def f(T):
-                    tau = Tc/T
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fiot = ideal["fiot"]
@@ -943,7 +986,7 @@ class MEoS(_fase):
                 if T == To or rhov <= rho <= rhol:
                     def f(parr):
                         T, rhol, rhog = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -977,7 +1020,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -985,10 +1028,10 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhos":
-                delta = rho/rhoc
+                delta = rho/rho_c
 
                 def f(T):
-                    tau = Tc/T
+                    tau = T_c/T
                     ideal = self._phi0(tau, delta)
                     fio = ideal["fio"]
                     fiot = ideal["fiot"]
@@ -1004,7 +1047,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -1042,7 +1085,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -1050,10 +1093,10 @@ class MEoS(_fase):
                         liquido["fir"]-vapor["fir"]+log(rhoL/rhoG))/1000
 
             elif self._mode == "rhou":
-                delta = rho/rhoc
+                delta = rho/rho_c
 
                 def f(T):
-                    tau = Tc/T
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fiot = ideal["fiot"]
@@ -1069,7 +1112,7 @@ class MEoS(_fase):
                 if T == To or rhov <= rho <= rhol:
                     def f(parr):
                         T, rhol, rhog = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -1106,7 +1149,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -1116,8 +1159,8 @@ class MEoS(_fase):
             elif self._mode == "hs":
                 def f(parr):
                     rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fio = ideal["fio"]
@@ -1136,7 +1179,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog, x = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -1175,7 +1218,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -1185,8 +1228,8 @@ class MEoS(_fase):
             elif self._mode == "hu":
                 def f(parr):
                     rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fiot = ideal["fiot"]
@@ -1205,7 +1248,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog, x = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -1244,7 +1287,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -1254,8 +1297,8 @@ class MEoS(_fase):
             elif self._mode == "su":
                 def f(parr):
                     rho, T = parr
-                    delta = rho/rhoc
-                    tau = Tc/T
+                    delta = rho/rho_c
+                    tau = T_c/T
 
                     ideal = self._phi0(tau, delta)
                     fio = ideal["fio"]
@@ -1276,7 +1319,7 @@ class MEoS(_fase):
 
                     def f(parr):
                         T, rhol, rhog, x = parr
-                        tau = Tc/T
+                        tau = T_c/T
                         deltaL = rhol/self.rhoc
                         deltaG = rhog/self.rhoc
 
@@ -1320,7 +1363,7 @@ class MEoS(_fase):
                             break
 
                     if sum(abs(sol[1]["fvec"])) > 1e-5:
-                        raise(RuntimeError(sol[3]))
+                        raise RuntimeError(sol[3])
 
                     liquido = self._Helmholtz(rhoL, T)
                     vapor = self._Helmholtz(rhoG, T)
@@ -1378,7 +1421,7 @@ class MEoS(_fase):
                 deltaL = rhol/self.rhoc
                 deltaG = rhog/self.rhoc
 
-                tau = Tc/T
+                tau = T_c/T
 
                 firL = _phir(tau, deltaL, self._constants)
                 firG = _phir(tau, deltaG, self._constants)
@@ -1562,20 +1605,20 @@ class MEoS(_fase):
 
     def _saturation(self, T):
         """Saturation calculation for two phase search"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
+        rho_c = self._constants.get("rhoref", self.rhoc)
+        T_c = self._constants.get("Tref", self.Tc)
 
-        if T > Tc:
-            T = Tc
-        tau = Tc/T
+        if T > T_c:
+            T = T_c
+        tau = T_c/T
 
         rhoLo = self._Liquid_Density(T)
         rhoGo = self._Vapor_Density(T)
 
         def f(parr):
             rhol, rhog = parr
-            deltaL = rhol/rhoc
-            deltaG = rhog/rhoc
+            deltaL = rhol/rho_c
+            deltaG = rhog/rho_c
             phirL = _phir(tau, deltaL, self._constants)
             phirG = _phir(tau, deltaG, self._constants)
             phirdL = _phird(tau, deltaL, self._constants)
@@ -1638,10 +1681,10 @@ class MEoS(_fase):
             rho = 1e-20
         if T < 50:
             T = 50
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
-        delta = rho/rhoc
-        tau = Tc/T
+        rho_c = self._constants.get("rhoref", self.rhoc)
+        T_c = self._constants.get("Tref", self.Tc)
+        delta = rho/rho_c
+        tau = T_c/T
         ideal = self._phi0(tau, delta)
         fio = ideal["fio"]
         fiot = ideal["fiot"]
@@ -1673,10 +1716,10 @@ class MEoS(_fase):
 
     def _prop0(self, rho, T):
         """Ideal gas properties"""
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
-        delta = rho/rhoc
-        tau = Tc/T
+        rho_c = self._constants.get("rhoref", self.rhoc)
+        T_c = self._constants.get("Tref", self.Tc)
+        delta = rho/rho_c
+        tau = T_c/T
         ideal = self._phi0(tau, delta)
         fio = ideal["fio"]
         fiot = ideal["fiot"]
@@ -1905,8 +1948,8 @@ class MEoS(_fase):
                 * B: ∂fir/∂δ|δ->0
                 * C: ∂²fir/∂δ²|δ->0
         """
-        Tc = self._constants.get("Tref", self.Tc)
-        tau = Tc/T
+        T_c = self._constants.get("Tref", self.Tc)
+        tau = T_c/T
         B = C = 0
         delta = 1e-200
 
@@ -2018,10 +2061,10 @@ class MEoS(_fase):
             return prop
 
         R = self._constants.get("R")/self._constants.get("M", self.M)
-        rhoc = self._constants.get("rhoref", self.rhoc)
-        Tc = self._constants.get("Tref", self.Tc)
-        delta = rho/rhoc
-        tau = Tc/T
+        rho_c = self._constants.get("rhoref", self.rhoc)
+        T_c = self._constants.get("Tref", self.Tc)
+        delta = rho/rho_c
+        tau = T_c/T
 
         ideal = self._phi0(tau, delta)
         fio = ideal["fio"]
@@ -2041,10 +2084,10 @@ class MEoS(_fase):
         prop = {}
         prop["fir"] = R*T*(fio+fir)
         prop["firt"] = R*(fio+fir-(fiot+firt)*tau)
-        prop["fird"] = R*T/rhoc*(fiod+fird)
+        prop["fird"] = R*T/rho_c*(fiod+fird)
         prop["firtt"] = R*tau**2/T*(fiott+firtt)
-        prop["firdt"] = R/rhoc*(fiod+fird-firdt*tau)
-        prop["firdd"] = R*T/rhoc**2*(fiodd+firdd)
+        prop["firdt"] = R/rho_c*(fiod+fird-firdt*tau)
+        prop["firdd"] = R*T/rho_c**2*(fiodd+firdd)
         return prop
 
     def _surface(self, T):

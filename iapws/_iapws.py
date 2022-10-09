@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements
+# pylint: disable=too-many-branches, too-many-boolean-expressions
+
 """
 Miscelaneous IAPWS standards. This module include:
 
@@ -130,7 +134,7 @@ def _Ice(T, P):
         if Psub > P:
             # Zone Gas
             warnings.warn("Metastable ice in vapor region")
-    elif 251.165 < T:
+    elif T > 251.165:
         Pmel = _Melting_Pressure(T)
         if Pmel < P:
             # Zone Liquid
@@ -266,11 +270,11 @@ def _Liquid(T, P=0.1):
     # Check input in range of validity
     if T <= 253.15 or T >= 383.15 or P < 0.1 or P > 0.3:
         raise NotImplementedError("Incoming out of bound")
-    elif P != 0.1:
+    if P != 0.1:
         # Raise a warning if the P value is extrapolated
         warnings.warn("Using extrapolated values")
 
-    R = 0.46151805   # kJ/kgK
+    Rg = 0.46151805   # kJ/kgK
     Po = 0.1
     Tr = 10
     tau = T/Tr
@@ -292,37 +296,37 @@ def _Liquid(T, P=0.1):
 
     suma1 = sum(a[i]*alfa**n[i] for i in range(1, 4))
     suma2 = sum(b[i]*beta**m[i] for i in range(1, 5))
-    go = R*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
+    go = Rg*Tr*(c[1]+c[2]*tau+c[3]*tau*log(tau)+suma1+suma2)
 
     suma1 = sum(a[i]*alfa**n[i] for i in range(6, 11))
     suma2 = sum(b[i]*beta**m[i] for i in range(5, 11))
-    vo = R*Tr/Po/1000*(a[5]+suma1+suma2)
+    vo = Rg*Tr/Po/1000*(a[5]+suma1+suma2)
 
     suma1 = sum(a[i]*alfa**n[i] for i in range(11, 16))
     suma2 = sum(b[i]*beta**m[i] for i in range(11, 18))
-    vpo = R*Tr/Po**2/1000*(suma1+suma2)
+    vpo = Rg*Tr/Po**2/1000*(suma1+suma2)
 
     suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(1, 4))
     suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(1, 5))
-    so = -R*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
+    so = -Rg*(c[2]+c[3]*(1+log(tau))+suma1-suma2)
 
     suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(1, 4))
     suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(1, 5))
-    cpo = -R*(c[3]+tau*suma1+tau*suma2)
+    cpo = -Rg*(c[3]+tau*suma1+tau*suma2)
 
     suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(6, 11))
     suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(5, 11))
-    vto = R/Po/1000*(suma1-suma2)
+    vto = Rg/Po/1000*(suma1-suma2)
 
     # This properties are only neccessary for computing thermodynamic
     # properties at pressures different from 0.1 MPa
     suma1 = sum(n[i]*(n[i]+1)*a[i]*alfa**(n[i]+2) for i in range(6, 11))
     suma2 = sum(m[i]*(m[i]+1)*b[i]*beta**(m[i]+2) for i in range(5, 11))
-    vtto = R/Tr/Po/1000*(suma1+suma2)
+    vtto = Rg/Tr/Po/1000*(suma1+suma2)
 
     suma1 = sum(n[i]*a[i]*alfa**(n[i]+1) for i in range(11, 16))
     suma2 = sum(m[i]*b[i]*beta**(m[i]+1) for i in range(11, 18))
-    vpto = R/Po**2/1000*(suma1-suma2)
+    vpto = Rg/Po**2/1000*(suma1-suma2)
 
     if P != 0.1:
         go += vo*(P-0.1)
@@ -330,7 +334,7 @@ def _Liquid(T, P=0.1):
         cpo -= T*vtto*(P-0.1)
         vo -= vpo*(P-0.1)
         vto += vpto*(P-0.1)
-        vppo = 3.24e-10*R*Tr/0.1**3
+        vppo = 3.24e-10*Rg*Tr/0.1**3
         vpo += vppo*(P-0.1)
 
     h = go+T*so
@@ -452,8 +456,8 @@ def _Supercooled(T, P):
     # Parameters, Table 1
     Tll = 228.2
     rho0 = 1081.6482
-    R = 0.461523087
-    pi0 = 300e3/rho0/R/Tll
+    Rg = 0.461523087
+    pi0 = 300e3/rho0/Rg/Tll
     omega0 = 0.5212269
     L0 = 0.76317954
     k0 = 0.072158686
@@ -462,7 +466,7 @@ def _Supercooled(T, P):
 
     # Reducing parameters, Eq 2
     tau = T/Tll-1
-    p = P*1000/rho0/R/Tll
+    p = P*1000/rho0/Rg/Tll
     tau_ = tau+1
     p_ = p+pi0
 
@@ -556,7 +560,7 @@ def _Supercooled(T, P):
     prop["g"] = phir+(tau+1)*(x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))
 
     # Eq 14
-    prop["s"] = -R*((tau+1)/2*Lt*(fi+1)
+    prop["s"] = -Rg*((tau+1)/2*Lt*(fi+1)
                     + (x*L+x*log(x)+(1-x)*log(1-x)+omega*x*(1-x))+phirt)
 
     # Basic derived state properties
@@ -565,12 +569,12 @@ def _Supercooled(T, P):
     prop["a"] = prop["u"]-T*prop["s"]
 
     # Eq 15
-    prop["xkappa"] = prop["rho"]/rho0**2/R*1000/Tll*(
+    prop["xkappa"] = prop["rho"]/rho0**2/Rg*1000/Tll*(
         (tau+1)/2*(Xi*(Lp-omega0*fi)**2-(fi+1)*Lpp)-phirpp)
     prop["alfap"] = prop["rho"]/rho0/Tll*(
         Ltp/2*(tau+1)*(fi+1) + (omega0*(1-fi**2)/2+Lp*(fi+1))/2
         - (tau+1)*Lt/2*Xi*(Lp-omega0*fi) + phirtp)
-    prop["cp"] = -R*(tau+1)*(Lt*(fi+1)+(tau+1)/2*(Ltt*(fi+1)-Lt**2*Xi)+phirtt)
+    prop["cp"] = -Rg*(tau+1)*(Lt*(fi+1)+(tau+1)/2*(Ltt*(fi+1)-Lt**2*Xi)+phirtt)
 
     # Eq 16
     prop["cv"] = prop["cp"]-T*prop["alfap"]**2/prop["rho"]/prop["xkappa"]*1e3
@@ -617,8 +621,8 @@ def _Sublimation_Pressure(T):
         for ai, expi in zip(a, expo):
             suma += ai*Tita**expi
         return exp(suma/Tita)*Pt
-    else:
-        raise NotImplementedError("Incoming out of bound")
+
+    raise NotImplementedError("Incoming out of bound")
 
 
 def _Melting_Pressure(T, ice="Ih"):
@@ -840,7 +844,7 @@ def _ThCond(rho, T, fase=None, drho=None):
 
     # Critical enhancement
     if fase:
-        R = 0.46151805
+        Rg = 0.46151805
 
         if not drho:
             # Industrial formulation
@@ -877,7 +881,7 @@ def _ThCond(rho, T, fase=None, drho=None):
                 1-exp(-1/(1/y+y**2/3/d**2))))
 
         # Eq 18
-        k2 = 177.8514*d*fase.cp/R*Tr/fase.mu*1e-6*Z
+        k2 = 177.8514*d*fase.cp/Rg*Tr/fase.mu*1e-6*Z
 
     else:
         # No critical enhancement
@@ -926,8 +930,8 @@ def _Tension(T):
 
         # The equation give surface tension in mN/m², converted to N/m²
         return 1e-3*sigma
-    else:
-        raise NotImplementedError("Incoming out of bound")
+
+    raise NotImplementedError("Incoming out of bound")
 
 
 def _Dielectric(rho, T):
@@ -1304,7 +1308,7 @@ def _D2O_ThCond(rho, T, fase=None, drho=None):
 
     # Critical enhancement
     if fase and drho:
-        R = 0.415151994
+        Rg = 0.415151994
         DeltaX = d*(Pc_D2O/rhoc_D2O*fase.drhodP_T-Pc_D2O/rhoc_D2O*drho*1.5/Tr)
         if DeltaX < 0:
             DeltaX = 0
@@ -1320,7 +1324,7 @@ def _D2O_ThCond(rho, T, fase=None, drho=None):
                 1-exp(-1/(1/y+y**2/3/d**2))))
 
         # Eq 18
-        k2 = 175.987*d*fase.cp/R*Tr/fase.mu*1e-6*Z
+        k2 = 175.987*d*fase.cp/Rg*Tr/fase.mu*1e-6*Z
 
     else:
         # No critical enhancement
@@ -1365,8 +1369,8 @@ def _D2O_Tension(T):
     Tr = T/643.847
     if 269.65 <= T < 643.847:
         return 1e-3*(238*(1-Tr)**1.25*(1-0.639*(1-Tr)))
-    else:
-        raise NotImplementedError("Incoming out of bound")
+
+    raise NotImplementedError("Incoming out of bound")
 
 
 def _D2O_Sublimation_Pressure(T):
@@ -1406,8 +1410,8 @@ def _D2O_Sublimation_Pressure(T):
         for a, t in zip(ai, ti):
             suma += a*(1-Tita**t)
         return exp(suma)*0.00066159
-    else:
-        raise NotImplementedError("Incoming out of bound")
+
+    raise NotImplementedError("Incoming out of bound")
 
 
 def _D2O_Melting_Pressure(T, ice="Ih"):
@@ -1536,7 +1540,7 @@ def _Henry(T, gas, liquid="H2O"):
         "CH4(D2O)": (288.16, 517.46)}
 
     # Check input parameters
-    if liquid != "D2O" and liquid != "H2O":
+    if liquid not in ("D2O", "H2O"):
         raise NotImplementedError("Solvent liquid unsupported")
     if gas not in limit:
         raise NotImplementedError("Gas unsupported")
@@ -1546,13 +1550,13 @@ def _Henry(T, gas, liquid="H2O"):
         warnings.warn("Temperature out of data of correlation")
 
     if liquid == "D2O":
-        Tc = 643.847
-        Pc = 21.671
+        Tc_ = Tc_D2O
+        Pc_ = 21.671
     else:
-        Tc = 647.096
-        Pc = 22.064
+        Tc_ = Tc
+        Pc_ = Pc
 
-    Tr = T/Tc
+    Tr = T/Tc_
     tau = 1-Tr
 
     # Eq 4
@@ -1563,7 +1567,7 @@ def _Henry(T, gas, liquid="H2O"):
     else:
         ai = [-7.896657, 24.73308, -27.81128, 9.355913, -9.220083]
         bi = [1, 1.89, 2, 3, 3.6]
-    ps = Pc*exp(1/Tr*sum(a*tau**b for a, b in zip(ai, bi)))
+    ps = Pc_*exp(1/Tr*sum(a*tau**b for a, b in zip(ai, bi)))
 
     # Select values from Table 2
     par = {
@@ -1661,7 +1665,7 @@ def _Kvalue(T, gas, liquid="H2O"):
         "CH4(D2O)": (288.16, 517.46)}
 
     # Check input parameters
-    if liquid != "D2O" and liquid != "H2O":
+    if liquid not in ("D2O", "H2O"):
         raise NotImplementedError("Solvent liquid unsupported")
     if gas not in limit:
         raise NotImplementedError("Gas unsupported")
@@ -1671,11 +1675,11 @@ def _Kvalue(T, gas, liquid="H2O"):
         warnings.warn("Temperature out of data of correlation")
 
     if liquid == "D2O":
-        Tc = 643.847
+        Tc_ = Tc_D2O
     else:
-        Tc = 647.096
+        Tc_ = Tc
 
-    Tr = T/Tc
+    Tr = T/Tc_
     tau = 1-Tr
 
     # Eq 6

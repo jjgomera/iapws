@@ -1509,7 +1509,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 16), -0.677700318e-7)
         self.assertEqual(round(state["gpp"], 15), -0.508928895e-6)
 
-        state = fluid._saline(273.15, 0.101325, 0.03516504)
+        state = fluid.saline(273.15, 0.101325, 0.03516504)
         self.assertEqual(round(state["g"], 9), -0.101342742)
         self.assertEqual(round(state["gs"], 7), 63.9974067)
         self.assertEqual(round(state["gt"], 12), -0.000147643376)
@@ -1548,7 +1548,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 15), 0.659051552e-6)
         self.assertEqual(round(state["gpp"], 14), -0.47467282e-6)
 
-        state = fluid._saline(353, 0.101325, 0.1)
+        state = fluid.saline(353, 0.101325, 0.1)
         self.assertEqual(round(state["g"], 7), 15.0871740)
         self.assertEqual(round(state["gs"], 6), 251.957276)
         self.assertEqual(round(state["gt"], 9), 0.156230907)
@@ -1587,7 +1587,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 15), 0.199079571e-6)
         self.assertEqual(round(state["gpp"], 15), -0.371530889e-6)
 
-        state = fluid._saline(273.15, 100, 0.03516504)
+        state = fluid.saline(273.15, 100, 0.03516504)
         self.assertEqual(round(state["g"], 8), -2.60093051)
         self.assertEqual(round(state["gs"], 8), -5.45861581)
         self.assertEqual(round(state["gt"], 11), 0.00754045685)
@@ -1682,7 +1682,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 16), -0.676992620e-7)
         self.assertEqual(round(state["gpp"], 15), -0.508885499e-6)
 
-        state = fluid._saline(273.15, 0.101325, 0.03516504)
+        state = fluid.saline(273.15, 0.101325, 0.03516504)
         self.assertEqual(round(state["g"], 9), -0.101342742)
         self.assertEqual(round(state["gs"], 7), 0.639974067e2)
         self.assertEqual(round(state["gt"], 12), -0.147643376e-3)
@@ -1719,7 +1719,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 15), 0.659344070e-6)
         self.assertEqual(round(state["gpp"], 15), -0.473220602e-6)
 
-        state = fluid._saline(353, 0.101325, 0.1)
+        state = fluid.saline(353, 0.101325, 0.1)
         self.assertEqual(round(state["g"], 7), 0.150871740e2)
         self.assertEqual(round(state["gs"], 6), 0.251957276e3)
         self.assertEqual(round(state["gt"], 9), 0.156230907)
@@ -1757,7 +1757,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(state["gtp"], 15), 0.202974451e-6)
         self.assertEqual(round(state["gpp"], 15), -0.371594622e-6)
 
-        state = fluid._saline(273.15, 100, 0.03516504)
+        state = fluid.saline(273.15, 100, 0.03516504)
         self.assertEqual(round(state["g"], 8), -0.260093051e1)
         self.assertEqual(round(state["gs"], 8), -0.545861581e1)
         self.assertEqual(round(state["gt"], 11), 0.754045685e-2)

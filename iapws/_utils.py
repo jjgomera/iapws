@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name, too-many-branches, too-many-statements
+# pylint: disable=too-many-arguments
+
 """
 Miscelaneous internal utilities. This module include:
 
@@ -61,7 +64,7 @@ def getphase(Tc, Pc, T, P, x, region):
     return phase
 
 
-class _fase(object):
+class _fase():
     """Class to implement a null phase"""
 
     v = None
@@ -311,7 +314,7 @@ def deriv_G(state, z, x, y, fase):
         dPdx = -fase.v*fase.xkappa
         dTdx = fase.v*fase.alfav
     elif x == "u":
-        dPdx = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dPdx = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
         dTdx = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif x == "h":
         dPdx = fase.v*(1.0-state.T*fase.alfav)
@@ -338,7 +341,7 @@ def deriv_G(state, z, x, y, fase):
         dPdy = -fase.v*fase.xkappa
         dTdy = fase.v*fase.alfav
     elif y == "u":
-        dPdy = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dPdy = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
         dTdy = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif y == "h":
         dPdy = fase.v*(1.0-state.T*fase.alfav)
@@ -365,7 +368,7 @@ def deriv_G(state, z, x, y, fase):
         dPdz = -fase.v*fase.xkappa
         dTdz = fase.v*fase.alfav
     elif z == "u":
-        dPdz = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav),
+        dPdz = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
         dTdz = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif z == "h":
         dPdz = fase.v*(1.0-state.T*fase.alfav)

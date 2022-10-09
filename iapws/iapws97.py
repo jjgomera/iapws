@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-lines, too-many-statements, too-many-locals
+# pylint: disable=too-many-instance-attributes, too-many-branches
+# pylint: disable=invalid-name
+
 """IAPWS-IF97 standard implementation
 
 .. image:: images/iapws97.png
@@ -2214,8 +2218,8 @@ def _Backward3_v_Ph(P, h):
     hf = _h_3ab(P)
     if h <= hf:
         return _Backward3a_v_Ph(P, h)
-    else:
-        return _Backward3b_v_Ph(P, h)
+
+    return _Backward3b_v_Ph(P, h)
 
 
 def _Backward3a_T_Ph(P, h):
@@ -2469,8 +2473,8 @@ def _Backward3_v_Ps(P, s):
     """
     if s <= sc:
         return _Backward3a_v_Ps(P, s)
-    else:
-        return _Backward3b_v_Ps(P, s)
+
+    return _Backward3b_v_Ps(P, s)
 
 
 def _Backward3a_T_Ps(P, s):
@@ -2593,12 +2597,10 @@ def _Backward3_T_Ps(P, s):
     T : float
         Temperature, [K]
     """
-    sc = 4.41202148223476
     if s <= sc:
-        T = _Backward3a_T_Ps(P, s)
-    else:
-        T = _Backward3b_T_Ps(P, s)
-    return T
+        return _Backward3a_T_Ps(P, s)
+
+    return _Backward3b_T_Ps(P, s)
 
 
 def _Backward3a_P_hs(h, s):
@@ -2730,11 +2732,10 @@ def _Backward3_P_hs(h, s):
     P : float
         Pressure, [MPa]
     """
-    sc = 4.41202148223476
     if s <= sc:
         return _Backward3a_P_hs(h, s)
-    else:
-        return _Backward3b_P_hs(h, s)
+
+    return _Backward3b_P_hs(h, s)
 
 
 def _Backward3_sat_v_P(P, T, x):
@@ -3561,10 +3562,10 @@ def _Backward3x_v_PT(T, P, x):
         for i, j, ni in zip(Li[x], Lj[x], n[x]):
             suma += ni * (Pr-a)**i * (Tr-b)**j
         return v_*exp(suma)
-    else:
-        for i, j, ni in zip(Li[x], Lj[x], n[x]):
-            suma += ni * (Pr-a)**(c*i) * (Tr-b)**(j*d)
-        return v_*suma**e
+
+    for i, j, ni in zip(Li[x], Lj[x], n[x]):
+        suma += ni * (Pr-a)**(c*i) * (Tr-b)**(j*d)
+    return v_*suma**e
 
 
 # Region 4
@@ -4202,20 +4203,20 @@ def prop0(T, P):
         Pr = P/1.
         go, gop, gopp, got, gott, gopt = Region5_cp0(Tr, Pr)
 
-    prop0 = {}
-    prop0["v"] = Pr*gop*R*T/P/1000
-    prop0["h"] = Tr*got*R*T
-    prop0["s"] = R*(Tr*got-go)
-    prop0["cp"] = -R*Tr**2*gott
-    prop0["cv"] = R*(-Tr**2*gott-1)
+    p0 = {}
+    p0["v"] = Pr*gop*R*T/P/1000
+    p0["h"] = Tr*got*R*T
+    p0["s"] = R*(Tr*got-go)
+    p0["cp"] = -R*Tr**2*gott
+    p0["cv"] = R*(-Tr**2*gott-1)
 
-    prop0["w"] = (R*T*1000/(1+1/Tr**2/gott))**0.5
-    prop0["alfav"] = 1/T
-    prop0["xkappa"] = 1/P
-    return prop0
+    p0["w"] = (R*T*1000/(1+1/Tr**2/gott))**0.5
+    p0["alfav"] = 1/T
+    p0["xkappa"] = 1/P
+    return p0
 
 
-class IAPWS97(object):
+class IAPWS97(_fase):
     """Class to model a state of liquid water or steam with the IAPWS-IF97
 
     Parameters
@@ -4314,6 +4315,15 @@ class IAPWS97(object):
     1.8714 1.4098 2594.66 9.471 444.93
     """
 
+    M = 18.015257  # kg/kmol
+    Pc = Pc
+    Tc = Tc
+    rhoc = rhoc
+    Tt = Tt
+    Tb = Tb
+    f_accent = f_acent
+    dipole = Dipole
+
     kwargs = {"T": 0.0,
               "P": 0.0,
               "x": None,
@@ -4323,6 +4333,41 @@ class IAPWS97(object):
               "l": 0.5893}
     status = 0
     msg = "Unknown variables"
+    _thermo = ""
+    region = None
+
+    Liquid = None
+    Vapor = None
+
+    T = None
+    P = None
+    v = None
+    rho = None
+    phase = None
+    x = None
+    Tr = None
+    Pr = None
+    sigma = None
+
+    v0 = None
+    h0 = None
+    u0 = None
+    s0 = None
+    a0 = None
+    g0 = None
+    cp0 = None
+    cv0 = None
+    cp0_cv = None
+    w0 = None
+    gamma0 = None
+
+    h = None
+    u = None
+    s = None
+    a = None
+    g = None
+    Hvap = None
+    Svap = None
 
     def __init__(self, **kwargs):
         self.kwargs = IAPWS97.kwargs.copy()
@@ -4347,17 +4392,19 @@ class IAPWS97(object):
             self._thermo = "Ph"
         elif self.kwargs["P"] and self.kwargs["s"] is not None:
             self._thermo = "Ps"
-        # TODO: Add other pairs definitions options
-        # elif self.kwargs["P"] and self.kwargs["v"]:
-            # self._thermo = "Pv"
-        # elif self.kwargs["T"] and self.kwargs["s"] is not None:
-            # self._thermo = "Ts"
         elif self.kwargs["h"] is not None and self.kwargs["s"] is not None:
             self._thermo = "hs"
         elif self.kwargs["T"] and self.kwargs["x"] is not None:
             self._thermo = "Tx"
         elif self.kwargs["P"] and self.kwargs["x"] is not None:
             self._thermo = "Px"
+
+        # TODO: Add other pairs definitions options
+        # elif self.kwargs["P"] and self.kwargs["v"]:
+            # self._thermo = "Pv"
+        # elif self.kwargs["T"] and self.kwargs["s"] is not None:
+            # self._thermo = "Ts"
+
         return self._thermo
 
     def calculo(self):
@@ -4586,20 +4633,8 @@ class IAPWS97(object):
             self.sigma = _Tension(T)
             propiedades["x"] = x
 
-        self.M = 18.015257  # kg/kmol
-        self.Pc = Pc
-        self.Tc = Tc
-        self.rhoc = rhoc
-        self.Tt = Tt
-        self.Tb = Tb
-        self.f_accent = f_acent
-        self.dipole = Dipole
-
         self.x = propiedades["x"]
         self.region = propiedades["region"]
-        self.name = "water"
-        self.synonim = "R-718"
-        self.CAS = "7732-18-5"
 
         self.T = propiedades["T"]
         self.P = propiedades["P"]

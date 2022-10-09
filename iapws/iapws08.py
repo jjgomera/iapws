@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
+# pylint: disable=too-many-instance-attributes, too-many-boolean-expressions
+# pylint: disable=too-many-locals
+
 """
 IAPWS standard for Seawater IAPWS08 and related functionality. The module
 include:
@@ -41,7 +45,7 @@ Po = 0.101325
 To = 273.15
 
 
-class SeaWater(object):
+class SeaWater():
     """
     Class to model seawater with standard IAPWS-08
 
@@ -170,6 +174,31 @@ class SeaWater(object):
     status = 0
     msg = "Undefined"
 
+    T = None
+    P = None
+    rho = None
+    v = None
+    s = None
+    cp = None
+    cv = None
+    h = None
+    u = None
+    a = None
+    alfav = None
+    betas = None
+    xkappa = None
+    ks = None
+    w = None
+    k = None
+
+    sigma = None
+    m = None
+    mu = None
+    muw = None
+    mus = None
+    osm = None
+    haline = None
+
     def __init__(self, **kwargs):
         """Constructor, initinialice kwargs"""
         self.kwargs = SeaWater.kwargs.copy()
@@ -198,7 +227,7 @@ class SeaWater(object):
             pw = self._waterIF97(T, P)
         else:
             pw = self._water(T, P)
-        ps = self._saline(T, P, S)
+        ps = self.saline(T, P, S)
 
         prop = {}
         for key in ps:
@@ -237,7 +266,7 @@ class SeaWater(object):
         try:
             self.sigma = _Tension_SeaWater(T, S)
         except NotImplementedError:
-            self.sigma = None
+            pass
 
         if S:
             self.mu = prop["gs"]
@@ -245,12 +274,6 @@ class SeaWater(object):
             self.mus = prop["g"]+(1-S)*prop["gs"]
             self.osm = -(ps["g"]-S*prop["gs"])/self.m/Rm/T
             self.haline = -prop["gsp"]/prop["gp"]
-        else:
-            self.mu = None
-            self.muw = None
-            self.mus = None
-            self.osm = None
-            self.haline = None
 
     def derivative(self, z, x, y):
         """
@@ -344,13 +367,12 @@ class SeaWater(object):
         return prop
 
     @classmethod
-    def _saline(cls, T, P, S):
+    def saline(cls, T, P, S):
         """Eq 4"""
         # Check input in range of validity
         if T <= 261 or T > 353 or P <= 0 or P > 100 or S < 0 or S > 0.12:
             warnings.warn("Incoming out of bound")
 
-        S_ = 0.03516504*40/35
         X = (S/S_)**0.5
         tau = (T-273.15)/40
         pi = (P-0.101325)/100
@@ -452,7 +474,7 @@ def _Tb(P, S):
         pv = _Region2(T, P)
         gv = pv["h"]-T*pv["s"]
 
-        ps = SeaWater._saline(T, P, S)
+        ps = SeaWater.saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gv
 
     try:
@@ -492,7 +514,7 @@ def _Tf(P, S):
 
         gih = _Ice(T, P)["g"]
 
-        ps = SeaWater._saline(T, P, S)
+        ps = SeaWater.saline(T, P, S)
         return -ps["g"]+S*ps["gs"]-gw+gih
 
     try:
@@ -536,7 +558,7 @@ def _Triple(S):
         gv = pv["h"]-T*pv["s"]
 
         gih = _Ice(T, P)["g"]
-        ps = SeaWater._saline(T, P, S)
+        ps = SeaWater.saline(T, P, S)
 
         return -ps["g"]+S*ps["gs"]-gw+gih, -ps["g"]+S*ps["gs"]-gw+gv
 
@@ -576,7 +598,7 @@ def _OsmoticPressure(T, P, S):
     def f(Posm):
         pw2 = _Region1(T, P+Posm)
         gw2 = pw2["h"]-T*pw2["s"]
-        ps = SeaWater._saline(T, P+Posm, S)
+        ps = SeaWater.saline(T, P+Posm, S)
         return -ps["g"]+S*ps["gs"]-gw+gw2
 
     Posm = fsolve(f, 0)[0]
