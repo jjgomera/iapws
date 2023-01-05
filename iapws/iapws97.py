@@ -104,7 +104,7 @@ Pmin = 0.000611212677444
 # Ps_623 = _PSat_T(623.15)  # P Saturation at 623.15 K, boundary region 1-3
 Ps_623 = 16.5291642526
 
-
+# TODO: Vectorize
 # Boundary Region1-Region3
 def _h13_s(s):
     """Define the boundary between Region 1 and 3, h=f(s)
@@ -181,7 +181,7 @@ def _P23_T(T):
     >>> _P23_T(623.15)
     16.52916425
     """
-    n = [0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2]
+    n = (0.34805185628969e3, -0.11671859879975e1, 0.10192970039326e-2)
     return n[0]+n[1]*T+n[2]*T**2
 
 
@@ -209,10 +209,10 @@ def _t_P(P):
     >>> _t_P(16.52916425)
     623.15
     """
-    n = [0.10192970039326e-2, 0.57254459862746e3, 0.1391883977870e2]
+    n = (0.10192970039326e-2, 0.57254459862746e3, 0.1391883977870e2)
     return n[1]+((P-n[2])/n[0])**0.5
 
-
+# TODO: Vectorize
 def _t_hs(h, s):
     """Define the boundary between Region 2 and 3, T=f(h,s)
 
@@ -312,10 +312,10 @@ def _PSat_T(T):
     if T < 273.15 or T > Tc:
         raise NotImplementedError("Incoming out of bound")
 
-    n = [0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
+    n = (0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
          0.12020824702470E+05, -0.32325550322333E+07, 0.14915108613530E+02,
          -0.48232657361591E+04, 0.40511340542057E+06, -0.23855557567849E+00,
-         0.65017534844798E+03]
+         0.65017534844798E+03)
     tita = T+n[9]/(T-n[10])
     A = tita**2+n[1]*tita+n[2]
     B = n[3]*tita**2+n[4]*tita+n[5]
@@ -357,10 +357,10 @@ def _TSat_P(P):
     if P < 611.212677/1e6 or P > 22.064:
         raise NotImplementedError("Incoming out of bound")
 
-    n = [0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
+    n = (0, 0.11670521452767E+04, -0.72421316703206E+06, -0.17073846940092E+02,
          0.12020824702470E+05, -0.32325550322333E+07, 0.14915108613530E+02,
          -0.48232657361591E+04, 0.40511340542057E+06, -0.23855557567849E+00,
-         0.65017534844798E+03]
+         0.65017534844798E+03)
     beta = P**0.25
     E = beta**2+n[3]*beta+n[6]
     F = n[1]*beta**2+n[4]*beta+n[7]
@@ -368,7 +368,7 @@ def _TSat_P(P):
     D = 2*G/(-F-(F**2-4*E*G)**0.5)
     return (n[10]+D-((n[10]+D)**2-4*(n[9]+n[10]*D))**0.5)/2
 
-
+# TODO: Vectorize
 def _PSat_h(h):
     """Define the saturated line, P=f(h) for region 3
 
@@ -422,7 +422,7 @@ def _PSat_h(h):
         suma += ni * (nu-1.02)**i * (nu-0.608)**j
     return 22*suma
 
-
+# TODO: Vectorize
 def _PSat_s(s):
     """Define the saturated line, P=f(s) for region 3
 
@@ -475,7 +475,7 @@ def _PSat_s(s):
         suma += ni * (sigma-1.03)**i * (sigma-0.699)**j
     return 22*suma
 
-
+# TODO: Vectorize
 def _h1_s(s):
     """Define the saturated line boundary between Region 1 and 4, h=f(s)
 
@@ -534,7 +534,7 @@ def _h1_s(s):
         suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
-
+# TODO: Vectorize
 def _h3a_s(s):
     """Define the saturated line boundary between Region 4 and 3a, h=f(s)
 
@@ -589,7 +589,7 @@ def _h3a_s(s):
         suma += ni * (sigma-1.09)**i * (sigma+0.366e-4)**j
     return 1700*suma
 
-
+# TODO: Vectorize
 def _h2ab_s(s):
     """Define the saturated line boundary between Region 4 and 2a-2b, h=f(s)
 
@@ -650,7 +650,7 @@ def _h2ab_s(s):
         suma += ni * (1/sigma1-0.513)**i * (sigma2-0.524)**j
     return 2800*exp(suma)
 
-
+# TODO: Vectorize
 def _h2c3b_s(s):
     """Define the saturated line boundary between Region 4 and 2c-3b, h=f(s)
 
@@ -809,7 +809,7 @@ def _Region1(T, P):
     propiedades["x"] = 0
     return propiedades
 
-
+# TODO: Vectorize
 def _Backward1_T_Ph(P, h):
     """
     Backward equation for region 1, T=f(P,h)
@@ -857,7 +857,7 @@ def _Backward1_T_Ph(P, h):
         T += ni * Pr**i * (nu+1)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward1_T_Ps(P, s):
     """Backward equation for region 1, T=f(P,s)
 
@@ -903,7 +903,7 @@ def _Backward1_T_Ps(P, s):
         T += ni * Pr**i * (sigma+2)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward1_P_hs(h, s):
     """Backward equation for region 1, P=f(h,s)
 
@@ -1070,7 +1070,7 @@ def _Region2(T, P):
     propiedades["x"] = 1
     return propiedades
 
-
+# TODO: Vectorize
 def Region2_cp0(Tr, Pr):
     """Ideal properties for Region 2
 
@@ -1205,7 +1205,7 @@ def _hab_s(s):
             0.421073558227969e3*s**2+0.276349063799944e2*s**3
     return h
 
-
+# TODO: Vectorize
 def _Backward2a_T_Ph(P, h):
     """Backward equation for region 2a, T=f(P,h)
 
@@ -1258,7 +1258,7 @@ def _Backward2a_T_Ph(P, h):
         T += ni * Pr**i * (nu-2.1)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward2b_T_Ph(P, h):
     """Backward equation for region 2b, T=f(P,h)
 
@@ -1313,7 +1313,7 @@ def _Backward2b_T_Ph(P, h):
         T += ni * (Pr-2)**i * (nu-2.6)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward2c_T_Ph(P, h):
     """Backward equation for region 2c, T=f(P,h)
 
@@ -1394,7 +1394,7 @@ def _Backward2_T_Ph(P, h):
         T = max(Tsat, T)
     return T
 
-
+# TODO: Vectorize
 def _Backward2a_T_Ps(P, s):
     """Backward equation for region 2a, T=f(P,s)
 
@@ -1454,7 +1454,7 @@ def _Backward2a_T_Ps(P, s):
         T += ni * Pr**i * (sigma-2)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward2b_T_Ps(P, s):
     """Backward equation for region 2b, T=f(P,s)
 
@@ -1511,7 +1511,7 @@ def _Backward2b_T_Ps(P, s):
         T += ni * Pr**i * (10-sigma)**j
     return T
 
-
+# TODO: Vectorize
 def _Backward2c_T_Ps(P, s):
     """Backward equation for region 2c, T=f(P,s)
 
@@ -1590,7 +1590,7 @@ def _Backward2_T_Ps(P, s):
         T = max(Tsat, T)
     return T
 
-
+# TODO: Vectorize
 def _Backward2a_P_hs(h, s):
     """Backward equation for region 2a, P=f(h,s)
 
@@ -1644,7 +1644,7 @@ def _Backward2a_P_hs(h, s):
         suma += ni * (nu-0.5)**i * (sigma-1.2)**j
     return 4*suma**4
 
-
+# TODO: Vectorize
 def _Backward2b_P_hs(h, s):
     """Backward equation for region 2b, P=f(h,s)
 
@@ -1699,7 +1699,7 @@ def _Backward2b_P_hs(h, s):
         suma += ni * (nu-0.6)**i * (sigma-1.01)**j
     return 100*suma**4
 
-
+# TODO: Vectorize
 def _Backward2c_P_hs(h, s):
     """Backward equation for region 2c, P=f(h,s)
 
@@ -1910,7 +1910,7 @@ def _h_3ab(P):
     return 0.201464004206875e4 + 3.74696550136983*P - \
         0.0219921901054187*P**2+0.875131686009950e-4*P**3
 
-
+# TODO: Vectorize
 def _tab_P(P):
     """Define the boundary between Region 3a-3b, T=f(P)
 
@@ -1946,7 +1946,7 @@ def _tab_P(P):
         T += ni * log(Pr)**i
     return T
 
-
+# TODO: Vectorize
 def _top_P(P):
     """Define the boundary between Region 3o-3p, T=f(P)
 
@@ -1982,7 +1982,7 @@ def _top_P(P):
         T += ni * log(Pr)**i
     return T
 
-
+# TODO: Vectorize
 def _twx_P(P):
     """Define the boundary between Region 3w-3x, T=f(P)
 
@@ -2046,7 +2046,7 @@ def _tef_P(P):
     """
     return 3.727888004*(P-22.064)+647.096
 
-
+# TODO: Find a way to vectorize this
 def _txx_P(P, xy):
     """Define the boundary between 3x-3y, T=f(P)
 
@@ -2113,7 +2113,7 @@ def _txx_P(P, xy):
         T += ni * Pr**i
     return T
 
-
+# TODO: Vectorize
 def _Backward3a_v_Ph(P, h):
     """Backward equation for region 3a, v=f(P,h)
 
@@ -2166,7 +2166,7 @@ def _Backward3a_v_Ph(P, h):
         suma += ni * (Pr+0.128)**i * (nu-0.727)**j
     return 0.0028*suma
 
-
+# TODO: Vectorize
 def _Backward3b_v_Ph(P, h):
     """Backward equation for region 3b, v=f(P,h)
 
@@ -2240,7 +2240,7 @@ def _Backward3_v_Ph(P, h):
 
     return _Backward3b_v_Ph(P, h)
 
-
+# TODO: Vectorize
 def _Backward3a_T_Ph(P, h):
     """Backward equation for region 3a, T=f(P,h)
 
@@ -2293,7 +2293,7 @@ def _Backward3a_T_Ph(P, h):
         suma += n*(Pr+0.240)**i*(nu-0.615)**j
     return 760*suma
 
-
+# TODO: Vectorize
 def _Backward3b_T_Ph(P, h):
     """Backward equation for region 3b, T=f(P,h)
 
@@ -2369,7 +2369,7 @@ def _Backward3_T_Ph(P, h):
         T = _Backward3b_T_Ph(P, h)
     return T
 
-
+# TODO: Vectorize
 def _Backward3a_v_Ps(P, s):
     """Backward equation for region 3a, v=f(P,s)
 
@@ -2421,7 +2421,7 @@ def _Backward3a_v_Ps(P, s):
         suma += ni * (Pr+0.187)**i * (sigma-0.755)**j
     return 0.0028*suma
 
-
+# TODO: Vectorize
 def _Backward3b_v_Ps(P, s):
     """Backward equation for region 3b, v=f(P,s)
 
@@ -2495,7 +2495,7 @@ def _Backward3_v_Ps(P, s):
 
     return _Backward3b_v_Ps(P, s)
 
-
+# TODO: Vectorize
 def _Backward3a_T_Ps(P, s):
     """Backward equation for region 3a, T=f(P,s)
 
@@ -2548,7 +2548,7 @@ def _Backward3a_T_Ps(P, s):
         suma += ni * (Pr+0.240)**i * (sigma-0.703)**j
     return 760*suma
 
-
+# TODO: Vectorize
 def _Backward3b_T_Ps(P, s):
     """Backward equation for region 3b, T=f(P,s)
 
@@ -2621,7 +2621,7 @@ def _Backward3_T_Ps(P, s):
 
     return _Backward3b_T_Ps(P, s)
 
-
+# TODO: Vectorize
 def _Backward3a_P_hs(h, s):
     """Backward equation for region 3a, P=f(h,s)
 
@@ -2677,7 +2677,7 @@ def _Backward3a_P_hs(h, s):
         suma += ni * (nu-1.01)**i * (sigma-0.75)**j
     return 99*suma
 
-
+# TODO: Vectorize
 def _Backward3b_P_hs(h, s):
     """Backward equation for region 3b, P=f(h,s)
 
@@ -2981,7 +2981,7 @@ def _Backward3_v_PT(P, T):
 
     return _Backward3x_v_PT(T, P, region)
 
-
+# TODO: Find a way to vectorize this
 def _Backward3x_v_PT(T, P, x):
     """Backward equation for region 3x, v=f(P,T)
 
@@ -3635,7 +3635,22 @@ def _Region4(P, x):
     propiedades["x"] = x
     return propiedades
 
-
+_Backward4_T_hs_Li = np.array([0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 6,
+          8, 10, 10, 12, 14, 14, 16, 16, 18, 18, 18, 20, 28])
+_Backward4_T_hs_Lj = np.array([0, 3, 12, 0, 1, 2, 5, 0, 5, 8, 0, 2, 3, 4, 0, 1, 1, 2, 4, 16, 6, 8,
+          22, 1, 20, 36, 24, 1, 28, 12, 32, 14, 22, 36, 24, 36])
+_Backward4_T_hs_n = np.array([0.179882673606601, -0.267507455199603, 0.116276722612600e1,
+         0.147545428713616, -0.512871635973248, 0.421333567697984,
+         0.563749522189870, 0.429274443819153, -0.335704552142140e1,
+         0.108890916499278e2, -0.248483390456012, 0.304153221906390,
+         -0.494819763939905, 0.107551674933261e1, 0.733888415457688e-1,
+         0.140170545411085e-1, -0.106110975998808, 0.168324361811875e-1,
+         0.125028363714877e1, 0.101316840309509e4, -0.151791558000712e1,
+         0.524277865990866e2, 0.230495545563912e5, 0.249459806365456e-1,
+         0.210796467412137e7, 0.366836848613065e9, -0.144814105365163e9,
+         -0.179276373003590e-2, 0.489955602100459e10, 0.471262212070518e3,
+         -0.829294390198652e11, -0.171545662263191e4, 0.355777682973575e7,
+         0.586062760258436e12, -0.129887635078195e8, 0.317247449371057e11])
 def _Backward4_T_hs(h, s):
     """Backward equation for region 4, T=f(h,s)
 
@@ -3668,28 +3683,11 @@ def _Backward4_T_hs(h, s):
     >>> _Backward4_T_hs(2500,5.5)
     522.5579013
     """
-    Li = [0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 6,
-          8, 10, 10, 12, 14, 14, 16, 16, 18, 18, 18, 20, 28]
-    Lj = [0, 3, 12, 0, 1, 2, 5, 0, 5, 8, 0, 2, 3, 4, 0, 1, 1, 2, 4, 16, 6, 8,
-          22, 1, 20, 36, 24, 1, 28, 12, 32, 14, 22, 36, 24, 36]
-    n = [0.179882673606601, -0.267507455199603, 0.116276722612600e1,
-         0.147545428713616, -0.512871635973248, 0.421333567697984,
-         0.563749522189870, 0.429274443819153, -0.335704552142140e1,
-         0.108890916499278e2, -0.248483390456012, 0.304153221906390,
-         -0.494819763939905, 0.107551674933261e1, 0.733888415457688e-1,
-         0.140170545411085e-1, -0.106110975998808, 0.168324361811875e-1,
-         0.125028363714877e1, 0.101316840309509e4, -0.151791558000712e1,
-         0.524277865990866e2, 0.230495545563912e5, 0.249459806365456e-1,
-         0.210796467412137e7, 0.366836848613065e9, -0.144814105365163e9,
-         -0.179276373003590e-2, 0.489955602100459e10, 0.471262212070518e3,
-         -0.829294390198652e11, -0.171545662263191e4, 0.355777682973575e7,
-         0.586062760258436e12, -0.129887635078195e8, 0.317247449371057e11]
 
     nu = h/2800
     sigma = s/9.2
-    suma = 0
-    for i, j, ni in zip(Li, Lj, n):
-        suma += ni * (nu-0.119)**i * (sigma-1.07)**j
+
+    suma = np.sum(_Backward4_T_hs_n*(nu-0.119)**_Backward4_T_hs_Li*(sigma-1.07)**_Backward4_T_hs_Lj)
     return 550*suma
 
 
@@ -3788,7 +3786,13 @@ def _Region5(T, P):
     propiedades["x"] = 1
     return propiedades
 
-
+_Region5_cp0_Jo = np.array([0, 1, -3, -2, -1, 2])
+_Region5_cp0_no = np.array([-0.13179983674201e2, 0.68540841634434e1, -0.24805148933466e-1,
+          0.36901534980333, -0.31161318213925e1, -0.32961626538917])
+_Region5_cp0_no_Jo_product = _Region5_cp0_no*_Region5_cp0_Jo
+_Region5_cp0_Jo_less_1 = _Region5_cp0_Jo - 1
+_Region5_cp0_Jo_less_2 = _Region5_cp0_Jo - 2
+_Region5_cp0_no_Jo_Jo_less_1_product = _Region5_cp0_no*_Region5_cp0_Jo*_Region5_cp0_Jo_less_1
 def Region5_cp0(Tr, Pr):
     """Ideal properties for Region 5
 
@@ -3817,17 +3821,12 @@ def Region5_cp0(Tr, Pr):
     Thermodynamic Properties of Water and Steam August 2007,
     http://www.iapws.org/relguide/IF97-Rev.html, Eq 33
     """
-    Jo = [0, 1, -3, -2, -1, 2]
-    no = [-0.13179983674201e2, 0.68540841634434e1, -0.24805148933466e-1,
-          0.36901534980333, -0.31161318213925e1, -0.32961626538917]
-    go = log(Pr)
     gop = Pr**-1
     gopp = -Pr**-2
-    got = gott = gopt = 0
-    for j, ni in zip(Jo, no):
-        go += ni * Tr**j
-        got += ni*j * Tr**(j-1)
-        gott += ni*j*(j-1) * Tr**(j-2)
+    gopt = 0
+    go = log(Pr) + np.sum(_Region5_cp0_no * Tr**_Region5_cp0_Jo)
+    got = np.sum(_Region5_cp0_no_Jo_product * Tr**_Region5_cp0_Jo_less_1)
+    gott = np.sum(_Region5_cp0_no_Jo_Jo_less_1_product * Tr**_Region5_cp0_Jo_less_2)
 
     return go, gop, gopp, got, gott, gopt
 
