@@ -3694,6 +3694,17 @@ def _Backward4_T_hs(h, s):
 
 
 # Region 5
+_Region5_Ir = np.array([1, 1, 1, 2, 2, 3])
+_Region5_Jr = np.array([1, 2, 3, 3, 9, 7])
+_Region5_nr = np.array([0.15736404855259e-2, 0.90153761673944e-3, -0.50270077677648e-2,
+          0.22440037409485e-5, -0.41163275453471e-5, 0.37919454822955e-7])
+_Region5_nr_Ir_product = _Region5_nr*_Region5_Ir
+_Region5_nr_Jr_product = _Region5_nr*_Region5_Jr
+_Region5_nr_Ir_Jr_product = _Region5_nr*_Region5_Ir*_Region5_Jr
+_Region5_Ir_less_1 = _Region5_Ir - 1
+_Region5_Ir_less_2 = _Region5_Ir - 2
+_Region5_Jr_less_1 = _Region5_Jr - 1
+_Region5_Jr_less_2 = _Region5_Jr - 2
 def _Region5(T, P):
     """Basic equation for region 5
 
@@ -3753,18 +3764,12 @@ def _Region5(T, P):
 
     go, gop, gopp, got, gott, gopt = Region5_cp0(Tr, Pr)
 
-    Ir = [1, 1, 1, 2, 2, 3]
-    Jr = [1, 2, 3, 3, 9, 7]
-    nr = [0.15736404855259e-2, 0.90153761673944e-3, -0.50270077677648e-2,
-          0.22440037409485e-5, -0.41163275453471e-5, 0.37919454822955e-7]
-    gr = grp = grpp = grt = grtt = grpt = 0
-    for i, j, ni in zip(Ir, Jr, nr):
-        gr += ni * Pr**i * Tr**j
-        grp += ni*i * Pr**(i-1) * Tr**j
-        grpp += ni*i*(i-1) * Pr**(i-2) * Tr**j
-        grt += ni*j * Pr**i * Tr**(j-1)
-        grtt += ni*j*(j-1) * Pr**i * Tr**(j-2)
-        grpt += ni*i*j * Pr**(i-1) * Tr**(j-1)
+    gr = np.sum(_Region5_nr * Pr**_Region5_Ir * Tr**_Region5_Jr)
+    grp = np.sum(_Region5_nr_Ir_product * Pr**( _Region5_Ir_less_1) * Tr**_Region5_Jr)
+    grpp = np.sum(_Region5_nr_Ir_product * (_Region5_Ir_less_1) * Pr**( _Region5_Ir_less_2) * Tr**_Region5_Jr)
+    grt = np.sum(_Region5_nr_Jr_product * Pr**_Region5_Ir * Tr**( _Region5_Jr_less_1))
+    grtt = np.sum(_Region5_nr_Jr_product * (_Region5_Jr_less_1) * Pr**_Region5_Ir * Tr**( _Region5_Jr_less_2))
+    grpt = np.sum(_Region5_nr_Ir_Jr_product * Pr**( _Region5_Ir_less_1) * Tr**( _Region5_Jr_less_1))
 
     propiedades = {}
     propiedades["T"] = T
