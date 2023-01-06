@@ -1,5 +1,0 @@
-iapws
-scipy
-numpy
-matplotlib
-setuptools

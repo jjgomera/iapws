@@ -2036,7 +2036,6 @@ def _tef_P(P):
     return 3.727888004 * (P - 22.064) + 647.096
 
 
-# TODO: Find a way to vectorize this
 def _txx_P(P, xy):
     """Define the boundary between 3x-3y, T=f(P)
 
