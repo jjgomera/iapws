@@ -207,7 +207,7 @@ class NH3(MEoS):
         return k
 
 
-class H2ONH3():
+class H2ONH3(object):
     """Ammonia-water mixtures."""
 
     # TODO: Add equilibrium routine

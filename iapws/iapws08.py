@@ -45,7 +45,7 @@ Po = 0.101325
 To = 273.15
 
 
-class SeaWater():
+class SeaWater(object):
     """
     Class to model seawater with standard IAPWS-08
 

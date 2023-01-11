@@ -517,7 +517,7 @@ class Air(MEoSBlend):
         return k*1e-3
 
 
-class HumidAir():
+class HumidAir(object):
     """
     Humid air class with complete functionality
 
