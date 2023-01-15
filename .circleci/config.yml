@@ -35,8 +35,16 @@ jobs:
           pip-dependency-file: requirements_test.txt  # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
       - run:
           name: Run tests
-          # This assumes pytest is installed via the install-package step above
+          # This assumes coverage is installed via the install-package step above
           command: coverage3 run test.py
+      - run:
+          name: Run tests
+          # This assumes coverage is installed via the install-package step above
+          command: coveralls
+      - run:
+          name: Run tests
+          # This assumes codecov is installed via the install-package step above
+          command: codecov
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
