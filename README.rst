@@ -1,5 +1,5 @@
-.. image:: https://api.travis-ci.org/jjgomera/iapws.svg?branch=master
-    :target: https://travis-ci.org/jjgomera/iapws
+.. image:: https://dl.circleci.com/status-badge/img/gh/jjgomera/iapws/tree/master.svg?style=svg
+    :target: https://dl.circleci.com/status-badge/redirect/gh/jjgomera/iapws/tree/master
     :alt: Build Status
 
 .. image:: https://ci.appveyor.com/api/projects/status/a128sh8e50cjsiya?svg=true
