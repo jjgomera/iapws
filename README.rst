@@ -14,9 +14,9 @@
     :target: https://codecov.io/gh/jjgomera/iapws
     :alt: codecov.io analysis
 
-.. image:: https://landscape.io/github/jjgomera/iapws/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/jjgomera/iapws/master
-   :alt: Code Health
+.. image:: https://app.codacy.com/project/badge/Grade/bb92d537dfa1461d919a0782f3c398b9
+    :target: https://www.codacy.com/gh/jjgomera/iapws/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jjgomera/iapws&amp;utm_campaign=Badge_Grade
+    :alt: Code Quality
 
 .. image:: http://readthedocs.org/projects/iapws/badge/?version=latest
     :target: http://iapws.readthedocs.io/en/latest/?badge=latest
