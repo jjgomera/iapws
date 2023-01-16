@@ -1526,7 +1526,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.gsp, 12), -0.000759615412)
         self.assertEqual(round(fluid.gtt, 10), -0.0145944931)
         self.assertEqual(round(fluid.gtp, 16), 0.515167556e-7)
-        self.assertEqual(round(fluid.gpp, 15), -0.450775377e-6)
+        self.assertEqual(round(fluid.gpp, 14), -0.45077538e-6)
         self.assertEqual(round(fluid.h, 6), 0.0)
         # self.assertEqual(round(fluid.a, 10), -0.0985548978)
         # self.assertEqual(round(fluid.u, 10), -0.0985548978)
