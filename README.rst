@@ -127,7 +127,6 @@ IAPWS-08 for seawater (`see full documentation <https://iapws.readthedocs.io/en/
 TODO
 ====
 
-* FIXME: Electrolytic conductiviy
 * TODO: Improve convergence in two phase region for IAPWS95 and D2O class
 * TODO: Implement SBTL method for fast calculation
 * TODO: Implement TTSE method for fast calculation

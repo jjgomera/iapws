@@ -2248,13 +2248,13 @@ class Test(unittest.TestCase):
         self.assertEqual(round(log(_Kvalue(500, "CH4", "D2O")), 4), 6.9021)
         self.assertEqual(round(log(_Kvalue(600, "CH4", "D2O")), 4), 3.8126)
 
-    def xest_Conductivity(self):
+    def test_Conductivity(self):
         """Selected values from table II"""
-        self.assertEqual(round(_Conductivity(600, 673.15), 9), 1.57e-6)
-        self.assertEqual(round(_Conductivity(800, 1073.15), 9), 103e-6)
-        self.assertEqual(round(_Conductivity(900, 473.15), 9), 4.19e-6)
-        self.assertEqual(round(_Conductivity(1100, 273.16), 9), 0.0333e-6)
-        self.assertEqual(round(_Conductivity(1100, 473.15), 9), 22.8e-6)
+        self.assertEqual(round(_Conductivity(600, 673.15), 6), 1.57e-4)
+        self.assertEqual(round(_Conductivity(800, 1073.15), 4), 103e-4)
+        self.assertEqual(round(_Conductivity(900, 473.15), 6), 4.19e-4)
+        self.assertEqual(round(_Conductivity(1100, 273.16), 8), 0.0333e-4)
+        self.assertEqual(round(_Conductivity(1100, 473.15), 5), 22.8e-4)
 
     def test_virial(self):
         """Tables 7 & 8, page 10"""

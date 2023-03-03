@@ -1139,23 +1139,37 @@ def _Conductivity(rho, T):
     Supercritical Water from 0°C to 800°C and Pressures up to 1000 MPa,
     http://www.iapws.org/relguide/conduct.pdf
     """
-    # FIXME: Dont work
+    # density in g/l
     rho_ = rho/1000
-    kw = 10**-_Kw(rho, T)
+
+    # This guideline predates the current standard on the ionization constant,
+    # therefore the standard accepted at that time must be used in order to
+    # obtain the values of the tables for testing.
+    # Marshall, W.L., Franck, E.U.
+    # Ion product of water substance, 0-1000ºC, 1-10,000 bars New International
+    # Formulation and its background
+    # J. Phys. Chem. Ref. Data 10(2) (1981) 295-304
+    # doi: 10.1063/1.555643
+
+    # Eq 4
+    kw = 10**(-4.098 - 3245.2/T + 2.2362e5/T**2 - 3.984e7/T**3 +
+              (13.957 - 1262.3/T + 8.5641e5/T**2)*log10(rho_))
+
+    # kw = 10**-_Kw(rho, T)
 
     A = [1850., 1410., 2.16417e-6, 1.81609e-7, -1.75297e-9, 7.20708e-12]
     B = [16., 11.6, 3.26e-4, -2.3e-6, 1.1e-8]
     t = T-273.15
 
-    Loo = A[0]-1/(1/A[1]+sum(A[i+2]*t**(i+1) for i in range(4)))      # Eq 5
-    rho_h = B[0]-1/(1/B[1]+sum(B[i+2]*t**(i+1) for i in range(3)))    # Eq 6
+    Loo = A[0]-1/(1/A[1] + A[2]*t + A[3]*t**2 + A[4]*t**3 + A[5]*t**4)   # Eq 5
+    rho_h = B[0]-1/(1/B[1] + B[2]*t + B[3]*t**2 + B[4]*t**3)             # Eq 6
 
     # Eq 4
     L_o = (rho_h-rho_)*Loo/rho_h
 
     # Eq 1
-    k = 100*1e-3*L_o*kw**0.5*rho_
-    return k
+    k = 1e-3*L_o*kw**0.5*rho_
+    return k*1e2
 
 
 # Heavy water transport properties

@@ -38,11 +38,11 @@ jobs:
           # This assumes coverage is installed via the install-package step above
           command: coverage3 run test.py
       - run:
-          name: Run tests
+          name: Export data to coveralls 
           # This assumes coverage is installed via the install-package step above
           command: coveralls
       - run:
-          name: Run tests
+          name: Export data to codecov
           # This assumes codecov is installed via the install-package step above
           command: codecov
 
