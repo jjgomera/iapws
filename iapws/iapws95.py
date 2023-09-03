@@ -1557,7 +1557,8 @@ class MEoS(_fase):
         fase.kappa = -self.derivative("v", "P", "T", fase)/fase.v*1e3
         fase.betas = self.derivative("T", "P", "s", fase)
 
-        fase.gamma = -fase.v/self.P*self.derivative("P", "v", "s", fase)*1e-3
+        fase.gamma = -fase.v/self.P \
+            * self.derivative("P", "v", "T", fase)*fase.cp_cv*1e-3
         fase.kt = -fase.v/self.P*self.derivative("P", "v", "T", fase)*1e-3
         fase.ks = -self.derivative("v", "P", "s", fase)/fase.v*1e3
         fase.Kt = -fase.v*self.derivative("P", "v", "s", fase)*1e-3
