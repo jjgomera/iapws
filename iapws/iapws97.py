@@ -3329,7 +3329,11 @@ def _Bound_Ph(P, h):
             try:
                 p34 = _PSat_h(h)
             except NotImplementedError:
-                p34 = Pc
+                hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
+                if h < hmin_Ps3:
+                    p34 = Ps_623
+                else:
+                    p34 = Pc
             if P < p34:
                 region = 4
             else:
@@ -3403,7 +3407,11 @@ def _Bound_Ps(P, s):
             try:
                 p34 = _PSat_s(s)
             except NotImplementedError:
-                p34 = Pc
+                smin_Ps3 = _Region1(623.15, Ps_623)["s"]
+                if s < smin_Ps3:
+                    p34 = Ps_623
+                else:
+                    p34 = Pc
             if P < p34:
                 region = 4
             else:
@@ -3895,15 +3903,10 @@ class IAPWS97(_fase):
                     x = (h - h1) / (h2 - h1)
                     propiedades = _Region4(P, x)
                 else:
-                    vo = _Backward3_v_Ph(P, h)
-                    To = _Backward3_T_Ph(P, h)
-
-                    def funcion(par):
-                        return (_Region3(par[0], par[1])["h"] - h,
-                                _Region3(par[0], par[1])["P"] - P)
-
-                    rho, T = fsolve(funcion, [1 / vo, To])
-                    propiedades = _Region3(rho, T)
+                    h1 = _Region4(P, 0)["h"]
+                    h2 = _Region4(P, 1)["h"]
+                    x = (h - h1) / (h2 - h1)
+                    propiedades = _Region4(P, x)
             elif region == 5:
                 T = newton(lambda T: _Region5(T, P)["h"] - h, 1500)
                 propiedades = _Region5(T, P)
@@ -3939,15 +3942,10 @@ class IAPWS97(_fase):
                     x = (s - s1) / (s2 - s1)
                     propiedades = _Region4(P, x)
                 else:
-                    vo = _Backward3_v_Ps(P, s)
-                    To = _Backward3_T_Ps(P, s)
-
-                    def funcion(par):
-                        return (_Region3(par[0], par[1])["s"] - s,
-                                _Region3(par[0], par[1])["P"] - P)
-
-                    rho, T = fsolve(funcion, [1 / vo, To])
-                    propiedades = _Region3(rho, T)
+                    s1 = _Region4(P, 0)["s"]
+                    s2 = _Region4(P, 1)["s"]
+                    x = (s - s1) / (s2 - s1)
+                    propiedades = _Region4(P, x)
             elif region == 5:
                 T = newton(lambda T: _Region5(T, P)["s"] - s, 1500)
                 propiedades = _Region5(T, P)
