@@ -1455,8 +1455,13 @@ class MEoS(_fase):
             region = 0
         self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x, region)
 
+        if 0 < x < 1:
+            rho = vapor["rho"]
+        else:
+            rho = propiedades["rho"]
+
         # Ideal properties
-        cp0 = self._prop0(propiedades["rho"], self.T)
+        cp0 = self._prop0(rho, self.T)
         self.v0 = self.R*self.T/self.P/1000
         self.rho0 = 1./self.v0
         self.h0 = cp0.h
