@@ -1455,21 +1455,6 @@ class MEoS(_fase):
             region = 0
         self.phase = getphase(self.Tc, self.Pc, self.T, self.P, self.x, region)
 
-        # Ideal properties
-        cp0 = self._prop0(propiedades["rho"], self.T)
-        self.v0 = self.R*self.T/self.P/1000
-        self.rho0 = 1./self.v0
-        self.h0 = cp0.h
-        self.u0 = self.h0-self.P*self.v0
-        self.s0 = cp0.s
-        self.a0 = self.u0-self.T*self.s0
-        self.g0 = self.h0-self.T*self.s0
-        self.cp0 = cp0.cp
-        self.cv0 = cp0.cv
-        self.cp0_cv = self.cp0/self.cv0
-        cp0.v = self.v0
-        self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
-
         self.Liquid = _fase()
         self.Gas = _fase()
         if x == 0:
@@ -1518,6 +1503,21 @@ class MEoS(_fase):
 
         self.invT = -1/self.T
 
+        # Ideal properties
+        cp0 = self._prop0(self.rho, self.T)
+        self.v0 = self.R*self.T/self.P/1000
+        self.rho0 = 1./self.v0
+        self.h0 = cp0.h
+        self.u0 = self.h0-self.P*self.v0
+        self.s0 = cp0.s
+        self.a0 = self.u0-self.T*self.s0
+        self.g0 = self.h0-self.T*self.s0
+        self.cp0 = cp0.cp
+        self.cv0 = cp0.cv
+        self.cp0_cv = self.cp0/self.cv0
+        cp0.v = self.v0
+        self.gamma0 = -self.v0/self.P/1000*self.derivative("P", "v", "s", cp0)
+
     def fill(self, fase, estado):
         """Fill phase properties"""
         fase.rho = estado["rho"]
@@ -1530,7 +1530,8 @@ class MEoS(_fase):
         fase.g = fase.h-self.T*fase.s
 
         fase.Z = self.P*fase.v/self.T/self.R*1e3
-        fase.fi = exp((fase.g-self.g0)/self.R/self.T)
+        fase.fi = exp(estado["fir"]+estado["delta"]*estado["fird"]
+                      - log(1+estado["delta"]*estado["fird"]))
         fase.f = fase.fi*self.P
         fase.cv = estado["cv"]
 
