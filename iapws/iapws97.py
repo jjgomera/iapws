@@ -4087,33 +4087,19 @@ class IAPWS97(_fase):
         self.Pr = self.P / self.Pc
 
         # Ideal properties
-        if self.region in [2, 5]:
-            cp0 = prop0(self.T, self.P)
-            self.v0 = cp0["v"]
-            self.h0 = cp0["h"]
-            self.u0 = self.h0 - self.P * 1000 * self.v0
-            self.s0 = cp0["s"]
-            self.a0 = self.u0 - self.T * self.s0
-            self.g0 = self.h0 - self.T * self.s0
+        cp0 = prop0(self.T, self.P)
+        self.v0 = cp0["v"]
+        self.h0 = cp0["h"]
+        self.u0 = self.h0 - self.P * 1000 * self.v0
+        self.s0 = cp0["s"]
+        self.a0 = self.u0 - self.T * self.s0
+        self.g0 = self.h0 - self.T * self.s0
 
-            self.cp0 = cp0["cp"]
-            self.cv0 = cp0["cv"]
-            self.cp0_cv = self.cp0 / self.cv0
-            self.w0 = cp0["w"]
-            self.gamma0 = self.cp0_cv
-        else:
-            self.v0 = None
-            self.h0 = None
-            self.u0 = None
-            self.s0 = None
-            self.a0 = None
-            self.g0 = 0
-
-            self.cp0 = None
-            self.cv0 = None
-            self.cp0_cv = None
-            self.w0 = None
-            self.gamma0 = None
+        self.cp0 = cp0["cp"]
+        self.cv0 = cp0["cv"]
+        self.cp0_cv = self.cp0 / self.cv0
+        self.w0 = cp0["w"]
+        self.gamma0 = self.cp0_cv
 
         self.Liquid = _fase()
         self.Vapor = _fase()

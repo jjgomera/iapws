@@ -750,7 +750,7 @@ def _Viscosity(rho, T, fase=None, drho=None):
     mu1 = exp(Dr*sum((1/Tr-1)**i*h*(Dr-1)**j for i, j, h in zip(li, lj, Hij)))
 
     # Critical enhancement
-    if fase and drho:
+    if rho and fase and drho:
         qc = 1/1.9
         qd = 1/1.1
 
@@ -843,7 +843,7 @@ def _ThCond(rho, T, fase=None, drho=None):
     k1 = exp(d*sum((1/Tr-1)**i*n*(d-1)**j for i, j, n in zip(li, lj, nij)))
 
     # Critical enhancement
-    if fase:
+    if rho and fase:
         Rg = 0.46151805
 
         if not drho:
@@ -1227,7 +1227,7 @@ def _D2O_Viscosity(rho, T, fase=None, drho=None):
     mu1 = exp(rhor*sum(arr))
 
     # Critical enhancement
-    if fase and drho:
+    if rho and fase and drho:
         qc = 1/1.9
         qd = 1/0.4
 
@@ -1321,7 +1321,7 @@ def _D2O_ThCond(rho, T, fase=None, drho=None):
     k1 = exp(d*sum((1/Tr-1)**i * n*(d-1)**j for i, j, n in zip(li, lj, nij)))
 
     # Critical enhancement
-    if fase and drho:
+    if rho and fase and drho:
         Rg = 0.415151994
         DeltaX = d*(Pc_D2O/rhoc_D2O*fase.drhodP_T-Pc_D2O/rhoc_D2O*drho*1.5/Tr)
         if DeltaX < 0:
