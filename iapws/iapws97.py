@@ -3329,11 +3329,7 @@ def _Bound_Ph(P, h):
             try:
                 p34 = _PSat_h(h)
             except NotImplementedError:
-                hmin_Ps3 = _Region1(623.15, Ps_623)["h"]
-                if h < hmin_Ps3:
-                    p34 = Ps_623
-                else:
-                    p34 = Pc
+                p34 = Ps_623
             if P < p34:
                 region = 4
             else:

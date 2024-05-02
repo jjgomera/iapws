@@ -21,10 +21,10 @@ fluid = iapws.IAPWS97
 
 # Define kind of plot
 xAxis = "s"
-yAxis = "P"
+yAxis = "T"
 
 # Point count for line, high value get more definition but slow calculate time
-points = 50
+points = 200
 
 # Saturation line format
 isosat_kw = {"ls": "-", "color": "black", "lw": 1}
@@ -45,7 +45,7 @@ isoP_kw = {"ls": "-", "color": "blue", "lw": 0.5}
 labelP_kw = {"size": "xx-small", "ha": "center", "va": "center"}
 
 # Isoenthalpic lines to plot
-isoh = np.arange(200, 4400, 200)
+isoh = np.arange(200, 4400, 100)
 isoh_kw = {"ls": "-", "color": "green", "lw": 0.5}
 labelh_kw = {"size": "xx-small", "ha": "center", "va": "center"}
 
@@ -296,7 +296,10 @@ if xAxis != "v" and yAxis != "v":
     print("Calculating isochor lines...")
     for v in isov:
         print("    v=%s" % v)
-        pts = [iapws.IAPWS95(T=t, v=v) for t in Tl]
+        try:
+            pts = [fluid(T=t, v=v) for t in Tl]
+        except OverflowError:
+            continue
         x = []
         y = []
         for p in pts:
