@@ -4099,6 +4099,7 @@ class IAPWS97(_fase):
 
         self.Liquid = _fase()
         self.Vapor = _fase()
+        self.Gas = self.Vapor
         if self.x == 0:
             # only liquid phase
             self.fill(self, propiedades)

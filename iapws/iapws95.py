@@ -1462,6 +1462,7 @@ class MEoS(_fase):
 
         self.Liquid = _fase()
         self.Gas = _fase()
+        self.Vapor = self.Gas
         if x == 0:
             # liquid phase
             self.fill(self.Liquid, propiedades)
