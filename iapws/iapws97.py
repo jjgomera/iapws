@@ -4110,9 +4110,15 @@ class IAPWS97(_fase):
             self.fill(self.Vapor, propiedades)
         else:
             # two phases
-            liquido = _Region1(self.T, self.P)
+            if 623.15 < self.T <= Tc:
+                rhol = 1. / _Backward3_sat_v_P(self.P, self.T, 0)
+                liquido = _Region3(rhol, self.T)
+                rhov = 1. / _Backward3_sat_v_P(self.P, self.T, 1)
+                vapor = _Region3(rhov, self.T)
+            else:
+                liquido = _Region1(self.T, self.P)
+                vapor = _Region2(self.T, self.P)
             self.fill(self.Liquid, liquido)
-            vapor = _Region2(self.T, self.P)
             self.fill(self.Vapor, vapor)
 
             self.h = propiedades["h"]
