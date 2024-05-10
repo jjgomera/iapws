@@ -1509,7 +1509,10 @@ def _Region3(rho, T):
     propiedades["alfav"] = (gd - Tr * gdt) / (2 * gd + d * gdd) / T
     propiedades["kt"] = 1 / (2 * d * gd + d ** 2 * gdd) / rho / R / T * 1000
     propiedades["region"] = 3
-    propiedades["x"] = 1
+    if T < Tc and propiedades["P"] < Pc:
+        propiedades["x"] = 0
+    else:
+        propiedades["x"] = 1
     return propiedades
 
 
