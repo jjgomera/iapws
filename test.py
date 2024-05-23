@@ -8,15 +8,16 @@ import unittest
 
 from iapws.iapws97 import (IAPWS97, IAPWS97_Tx, IAPWS97_Px, IAPWS97_Ph,
                            IAPWS97_Ps, IAPWS97_PT)
-from iapws.iapws97 import (_Region1, _Region2, _Region3, _Region5,
-                           _Backward1_T_Ph, _Backward1_T_Ps, _Backward1_P_hs,
-                           _Backward2_T_Ph, _Backward2_T_Ps, _Backward2_P_hs,
-                           _h_3ab, _Backward3_T_Ph, _Backward3_v_Ph,
-                           _Backward3_T_Ps, _Backward3_v_Ps, _PSat_h, _PSat_s,
-                           _Backward3_P_hs, _h1_s, _h3a_s, _h2ab_s, _h2c3b_s,
-                           _PSat_T, _TSat_P, _h13_s, _t_hs, _Backward4_T_hs,
-                           _tab_P, _top_P, _twx_P, _tef_P, _txx_P, _hab_s,
-                           _Backward3_v_PT, _P23_T, _t_P, _P_2bc, _hbc_P)
+from iapws.iapws97 import (_Region1, _Region2, _Region2_meta, _Region3,
+                           _Region5, _Backward1_T_Ph, _Backward1_T_Ps,
+                           _Backward1_P_hs, _Backward2_T_Ph, _Backward2_T_Ps,
+                           _Backward2_P_hs, _h_3ab, _Backward3_T_Ph,
+                           _Backward3_v_Ph, _Backward3_T_Ps, _Backward3_v_Ps,
+                           _PSat_h, _PSat_s, _Backward3_P_hs, _h1_s, _h3a_s,
+                           _h2ab_s, _h2c3b_s, _PSat_T, _TSat_P, _h13_s, _t_hs,
+                           _Backward4_T_hs, _tab_P, _top_P, _twx_P, _tef_P,
+                           _txx_P, _hab_s, _Backward3_v_PT, _P23_T, _t_P,
+                           _P_2bc, _hbc_P)
 from iapws.iapws95 import (IAPWS95, IAPWS95_PT, IAPWS95_Tx, IAPWS95_Ph,
                            IAPWS95_Px, IAPWS95_Ps, D2O)
 from iapws.iapws08 import (SeaWater, _ThCond_SeaWater, _Tension_SeaWater,
@@ -561,6 +562,31 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid["s"], 8), 5.17540298)
         self.assertEqual(round(fluid["cp"], 7), 10.3505092)
         self.assertEqual(round(fluid["w"], 6), 480.386523)
+
+        # Supplementary equation for the metastable region, Table 18 pag 20
+        fluid = _Region2_meta(450, 1)
+        self.assertEqual(round(fluid["v"], 9), 0.192516540)
+        self.assertEqual(round(fluid["h"], 5), 2768.81115)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2576.29461)
+        self.assertEqual(round(fluid["s"], 8), 6.56660377)
+        self.assertEqual(round(fluid["cp"], 8), 2.76349265)
+        self.assertEqual(round(fluid["w"], 6), 498.408101)
+
+        fluid = _Region2_meta(440, 1)
+        self.assertEqual(round(fluid["v"], 9), 0.186212297)
+        self.assertEqual(round(fluid["h"], 5), 2740.15123)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2553.93894)
+        self.assertEqual(round(fluid["s"], 8), 6.50218759)
+        self.assertEqual(round(fluid["cp"], 8), 2.98166443)
+        self.assertEqual(round(fluid["w"], 6), 489.363295)
+
+        fluid = _Region2_meta(450, 1.5)
+        self.assertEqual(round(fluid["v"], 9), 0.121685206)
+        self.assertEqual(round(fluid["h"], 5), 2721.34539)
+        self.assertEqual(round(fluid["h"]-fluid["P"]*1000*fluid["v"], 5), 2538.81758)
+        self.assertEqual(round(fluid["s"], 8), 6.29170440)
+        self.assertEqual(round(fluid["cp"], 8), 3.62795578)
+        self.assertEqual(round(fluid["w"], 6), 481.941819)
 
         # Backward2_T_Ph Table 24 pag 25
         self.assertEqual(round(_Backward2_T_Ph(0.001, 3000), 6), 534.433241)

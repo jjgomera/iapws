@@ -891,7 +891,7 @@ def _Region2(T, P):
     return propiedades
 
 
-def Region2_cp0(Tr, Pr):
+def Region2_cp0(Tr, Pr, meta=False):
     """Ideal properties for Region 2
 
     Parameters
@@ -900,6 +900,8 @@ def Region2_cp0(Tr, Pr):
         Reduced temperature, [-]
     Pr : float
         Reduced pressure, [-]
+    meta : boolean
+        Boolean to set the calculation from metastable region
 
     Returns
     -------
@@ -920,15 +922,104 @@ def Region2_cp0(Tr, Pr):
     http://www.iapws.org/relguide/IF97-Rev.html, Eq 16
 
     """
+    if meta:
+        no = Const.Region2_cp0_no_meta
+    else:
+        no = Const.Region2_cp0_no
+
     go = log(Pr)
     gop = Pr ** -1
     gopp = -Pr ** -2
     gopt = 0
-    go += np.sum(Const.Region2_cp0_no * Tr ** Const.Region2_cp0_Jo)
-    got = np.sum(Const.Region2_cp0_no * Const.Region2_cp0_Jo * Tr ** (Const.Region2_cp0_Jo - 1))
+    go += np.sum(no * Tr ** Const.Region2_cp0_Jo)
+    got = np.sum(no * Const.Region2_cp0_Jo * Tr ** (Const.Region2_cp0_Jo - 1))
     gott = np.sum(
-        Const.Region2_cp0_no * Const.Region2_cp0_Jo * (Const.Region2_cp0_Jo - 1) * Tr ** (Const.Region2_cp0_Jo - 2))
+        no * Const.Region2_cp0_Jo * (Const.Region2_cp0_Jo - 1) * Tr ** (Const.Region2_cp0_Jo - 2))
     return go, gop, gopp, got, gott, gopt
+
+
+def _Region2_meta(T, P):
+    """Basic equation for region 2 in the metaestable region
+
+    Parameters
+    ----------
+    T : float
+        Temperature, [K]
+    P : float
+        Pressure, [MPa]
+
+    Returns
+    -------
+    prop : dict
+        Dict with calculated properties. The available properties are:
+
+            * v: Specific volume, [m³/kg]
+            * h: Specific enthalpy, [kJ/kg]
+            * s: Specific entropy, [kJ/kgK]
+            * cp: Specific isobaric heat capacity, [kJ/kgK]
+            * cv: Specific isocoric heat capacity, [kJ/kgK]
+            * w: Speed of sound, [m/s]
+            * alfav: Cubic expansion coefficient, [1/K]
+            * kt: Isothermal compressibility, [1/MPa]
+
+    References
+    ----------
+    IAPWS, Revised Release on the IAPWS Industrial Formulation 1997 for the
+    Thermodynamic Properties of Water and Steam August 2007,
+    http://www.iapws.org/relguide/IF97-Rev.html, Eq 18-19
+
+    Examples
+    --------
+    >>> _Region2_meta(450, 1)["v"]
+    0.192516540
+    >>> _Region2_meta(450, 1)["h"]
+    2768.81115
+    >>> _Region2_meta(450, 1)["h"]-1000*_Region2_meta(450, 1)["v"]
+    2576.29461
+    >>> _Region2_meta(450, 1)["s"]
+    6.56660377
+    >>> _Region2_meta(450, 1)["cp"]
+    2.76349265
+    >>> _Region2_meta(450, 1)["w"]
+    498.408101
+    """
+    if P < 0:
+        P = Pmin
+
+    Tr = 540 / T
+    Pr = P / 1
+
+    go, gop, gopp, got, gott, gopt = Region2_cp0(Tr, Pr, True)
+
+    gr = np.sum(Const.Region2_nr_m * Pr ** Const.Region2_Ir_m * (Tr - 0.5) ** Const.Region2_Jr_m)
+    grp = np.sum(Const.Region2_nr_Ir_product_m * Pr ** Const.Region2_Ir_less_1_m * (Tr - 0.5) ** Const.Region2_Jr_m)
+    grpp = np.sum(
+        Const.Region2_nr_Ir_product_m * Const.Region2_Ir_less_1_m * Pr ** Const.Region2_Ir_less_2_m * (
+                    Tr - 0.5) ** Const.Region2_Jr_m)
+    grt = np.sum(Const.Region2_nr_Jr_product_m * Pr ** Const.Region2_Ir_m * (Tr - 0.5) ** Const.Region2_Jr_less_1_m)
+    grtt = np.sum(
+        Const.Region2_nr_Jr_product_m * Const.Region2_Jr_less_1_m * Pr ** Const.Region2_Ir_m *
+        (Tr - 0.5) ** Const.Region2_Jr_less_2_m)
+    grpt = np.sum(
+        Const.Region2_nr_Ir_Jr_product_m * Pr ** Const.Region2_Ir_less_1_m * (Tr - 0.5) ** Const.Region2_Jr_less_1_m)
+
+    propiedades = {}
+    propiedades["T"] = T
+    propiedades["P"] = P
+    propiedades["v"] = Pr * (gop + grp) * R * T / P / 1000
+    propiedades["h"] = Tr * (got + grt) * R * T
+    propiedades["s"] = R * (Tr * (got + grt) - (go + gr))
+    propiedades["cp"] = -R * Tr ** 2 * (gott + grtt)
+    propiedades["cv"] = R * (-Tr ** 2 * (gott + grtt) - (1 + Pr * grp - Tr * Pr * grpt) ** 2
+                             / (1 - Pr ** 2 * grpp))
+    propiedades["w"] = (R * T * 1000 * (1 + 2 * Pr * grp + Pr ** 2 * grp ** 2) / (1 - Pr ** 2 * grpp + (
+            1 + Pr * grp - Tr * Pr * grpt) ** 2 / Tr ** 2 / (gott + grtt))) ** 0.5
+    propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
+    propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
+    propiedades["region"] = 2
+    propiedades["x"] = 1
+    return propiedades
+
 
 
 def _P_2bc(h):
