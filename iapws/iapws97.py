@@ -145,8 +145,11 @@ def _h13_s(s):
     if s < 3.397782955 or s > 3.77828134:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.h13_s_n
+    Li = Const.h13_s_Li
+    Lj = Const.h13_s_Lj
     sigma = s / 3.8
-    suma = np.sum(Const.h13_s_n * (sigma - 0.884) ** Const.h13_s_Li * (sigma - 0.864) ** Const.h13_s_Lj)
+    suma = np.sum(n * (sigma - 0.884) ** Li * (sigma - 0.864) ** Lj)
     return 1700 * suma
 
 
@@ -251,7 +254,10 @@ def _t_hs(h, s):
 
     nu = h / 3000
     sigma = s / 5.3
-    suma = np.sum(Const.t_hs_n * (nu - 0.727) ** Const.t_hs_Li * (sigma - 0.864) ** Const.t_hs_Lj)
+    n = Const.t_hs_n
+    Li = Const.t_hs_Li
+    Lj = Const.t_hs_Lj
+    suma = np.sum(n * (nu - 0.727) ** Li * (sigma - 0.864) ** Lj)
     return 900 * suma
 
 
@@ -386,8 +392,11 @@ def _PSat_h(h):
     if h < hmin_Ps3 or h > hmax_Ps3:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.PSat_h_n
+    Li = Const.PSat_h_Li
+    Lj = Const.PSat_h_Lj
     nu = h / 2600
-    suma = np.sum(Const.PSat_h_n * (nu - 1.02) ** Const.PSat_h_Li * (nu - 0.608) ** Const.PSat_h_Lj)
+    suma = np.sum(n * (nu - 1.02) ** Li * (nu - 0.608) ** Lj)
     return 22 * suma
 
 
@@ -430,8 +439,12 @@ def _PSat_s(s):
     if s < smin_Ps3 or s > smax_Ps3:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.PSat_s_n
+    Li = Const.PSat_s_Li
+    Lj = Const.PSat_s_Lj
+
     sigma = s / 5.2
-    suma = np.sum(Const.PSat_s_n * (sigma - 1.03) ** Const.PSat_s_Li * (sigma - 0.699) ** Const.PSat_s_Lj)
+    suma = np.sum(n * (sigma - 1.03) ** Li * (sigma - 0.699) ** Lj)
     return 22 * suma
 
 
@@ -473,8 +486,12 @@ def _h1_s(s):
     if s < -1.545495919e-4 or s > 3.77828134:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.h1_s_n
+    Li = Const.h1_s_Li
+    Lj = Const.h1_s_Lj
+
     sigma = s / 3.8
-    suma = np.sum(Const.h1_s_n * (sigma - 1.09) ** Const.h1_s_Li * (sigma + 0.366e-4) ** Const.h1_s_Lj)
+    suma = np.sum(n * (sigma - 1.09) ** Li * (sigma + 0.366e-4) ** Lj)
     return 1700 * suma
 
 
@@ -516,8 +533,12 @@ def _h3a_s(s):
     if s < 3.77828134 or s > 4.41202148223476:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.h3a_s_n
+    Li = Const.h3a_s_Li
+    Lj = Const.h3a_s_Lj
+
     sigma = s / 3.8
-    suma = np.sum(Const.h3a_s_n * (sigma - 1.09) ** Const.h3a_s_Li * (sigma + 0.366e-4) ** Const.h3a_s_Lj)
+    suma = np.sum(n * (sigma - 1.09) ** Li * (sigma + 0.366e-4) ** Lj)
     return 1700 * suma
 
 
@@ -559,9 +580,13 @@ def _h2ab_s(s):
     if s < 5.85 or s > 9.155759395:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.h2ab_s_n
+    Li = Const.h2ab_s_Li
+    Lj = Const.h2ab_s_Lj
+
     sigma1 = s / 5.21
     sigma2 = s / 9.2
-    suma = np.sum(Const.h2ab_s_n * (1 / sigma1 - 0.513) ** Const.h2ab_s_Li * (sigma2 - 0.524) ** Const.h2ab_s_Lj)
+    suma = np.sum(n * (1 / sigma1 - 0.513) ** Li * (sigma2 - 0.524) ** Lj)
     return 2800 * exp(suma)
 
 
@@ -603,8 +628,12 @@ def _h2c3b_s(s):
     if s < 4.41202148223476 or s > 5.85:
         raise NotImplementedError("Incoming out of bound")
 
+    n = Const.h2c3b_s_n
+    Li = Const.h2c3b_s_Li
+    Lj = Const.h2c3b_s_Lj
+
     sigma = s / 5.9
-    suma = np.sum(Const.h2c3b_s_n * (sigma - 1.02) ** Const.h2c3b_s_Li * (sigma - 0.726) ** Const.h2c3b_s_Lj)
+    suma = np.sum(n * (sigma - 1.02) ** Li * (sigma - 0.726) ** Lj)
     return 2800 * suma ** 4
 
 
@@ -666,19 +695,20 @@ def _Region1(T, P):
     Tr = 1386 / T
     Pr = P / 16.53
 
-    g = np.sum(Const.Region1_n * (7.1 - Pr) ** Const.Region1_Li * (Tr - 1.222) ** Const.Region1_Lj)
-    gp = -np.sum(
-        Const.Region1_n_Li_product * (7.1 - Pr) ** Const.Region1_Li_less_1 * (Tr - 1.222) ** Const.Region1_Lj)
-    gpp = np.sum(
-        Const.Region1_n_Li_product * Const.Region1_Li_less_1 * (7.1 - Pr) ** Const.Region1_Li_less_2 * (
-                    Tr - 1.222) ** Const.Region1_Lj)
-    gt = np.sum(
-        Const.Region1_n_Lj_product * (7.1 - Pr) ** Const.Region1_Li * (Tr - 1.222) ** Const.Region1_Lj_less_1)
-    gtt = np.sum(
-        Const.Region1_n_Lj_product * Const.Region1_Lj_less_1 * (7.1 - Pr) ** Const.Region1_Li * (Tr - 1.222) ** (
-            Const.Region1_Lj_less_2))
-    gpt = -np.sum(Const.Region1_n_Li_Lj_product * (7.1 - Pr) ** Const.Region1_Li_less_1 * (Tr - 1.222) ** (
-        Const.Region1_Lj_less_1))
+    n = Const.Region1_n
+    Li = Const.Region1_Li
+    Lj = Const.Region1_Lj
+    Li_1 = Const.Region1_Li_less_1
+    Li_2 = Const.Region1_Li_less_2
+    Lj_1 = Const.Region1_Lj_less_1
+    Lj_2 = Const.Region1_Lj_less_2
+
+    g = np.sum(n * (7.1-Pr)**Li * (Tr-1.222)**Lj)
+    gp = -np.sum(n * Li * (7.1-Pr)**Li_1 * (Tr-1.222)**Lj)
+    gpp = np.sum(n * Li * Li_1 * (7.1-Pr)**Li_2 * (Tr-1.222)**Lj)
+    gt = np.sum(n * Lj * (7.1-Pr)**Li * (Tr-1.222)**Lj_1)
+    gtt = np.sum(n * Lj * Lj_1 * (7.1-Pr)**Li * (Tr-1.222)**Lj_2)
+    gpt = -np.sum(n * Li * Lj * (7.1-Pr)**Li_1 * (Tr-1.222)**Lj_1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -688,7 +718,8 @@ def _Region1(T, P):
     propiedades["s"] = R * (Tr * gt - g)
     propiedades["cp"] = -R * Tr ** 2 * gtt
     propiedades["cv"] = R * (-Tr ** 2 * gtt + (gp - Tr * gpt) ** 2 / gpp)
-    propiedades["w"] = sqrt(R * T * 1000 * gp ** 2 / ((gp - Tr * gpt) ** 2 / (Tr ** 2 * gtt) - gpp))
+    propiedades["w"] = sqrt(R * T * 1000 * gp ** 2 / \
+                            ((gp - Tr * gpt) ** 2 / (Tr ** 2 * gtt) - gpp))
     propiedades["alfav"] = (1 - Tr * gpt / gp) / T
     propiedades["kt"] = -Pr * gpp / gp / P
     propiedades["region"] = 1
@@ -722,9 +753,13 @@ def _Backward1_T_Ph(P, h):
     611.041229
     """
 
+    n = Const.Backward1_T_Ph_n
+    Li = Const.Backward1_T_Ph_Li
+    Lj = Const.Backward1_T_Ph_Lj
+
     Pr = P / 1
     nu = h / 2500
-    T = np.sum(Const.Backward1_T_Ph_n * Pr ** Const.Backward1_T_Ph_Li * (nu + 1) ** Const.Backward1_T_Ph_Lj)
+    T = np.sum(n * Pr ** Li * (nu + 1) ** Lj)
     return T
 
 
@@ -757,9 +792,13 @@ def _Backward1_T_Ps(P, s):
     565.899909
     """
 
+    n = Const.Backward1_T_Ps_n
+    Li = Const.Backward1_T_Ps_Li
+    Lj = Const.Backward1_T_Ps_Lj
+
     Pr = P / 1
     sigma = s / 1
-    T = np.sum(Const.Backward1_T_Ps_n * Pr ** Const.Backward1_T_Ps_Li * (sigma + 2) ** Const.Backward1_T_Ps_Lj)
+    T = np.sum(n * Pr ** Li * (sigma + 2) ** Lj)
     return T
 
 
@@ -794,10 +833,14 @@ def _Backward1_P_hs(h, s):
     >>> _Backward1_P_hs(1500,3.4)
     58.68294423
     """
+
+    n = Const.Backward1_P_hs_n
+    Li = Const.Backward1_P_hs_Li
+    Lj = Const.Backward1_P_hs_Lj
+
     nu = h / 3400
     sigma = s / 7.6
-    P = np.sum(
-        Const.Backward1_P_hs_n * (nu + 0.05) ** Const.Backward1_P_hs_Li * (sigma + 0.05) ** Const.Backward1_P_hs_Lj)
+    P = np.sum(n * (nu + 0.05) ** Li * (sigma + 0.05) ** Lj)
     return 100 * P
 
 
@@ -856,22 +899,25 @@ def _Region2(T, P):
     if P < 0:
         P = Pmin
 
+    n = Const.Region2_n
+    Li = Const.Region2_Li
+    Lj = Const.Region2_Lj
+    Li_1 = Const.Region2_Li_less_1
+    Li_2 = Const.Region2_Li_less_2
+    Lj_1 = Const.Region2_Lj_less_1
+    Lj_2 = Const.Region2_Lj_less_2
+
     Tr = 540 / T
     Pr = P / 1
 
     go, gop, gopp, got, gott, gopt = Region2_cp0(Tr, Pr)
 
-    gr = np.sum(Const.Region2_nr * Pr ** Const.Region2_Ir * (Tr - 0.5) ** Const.Region2_Jr)
-    grp = np.sum(Const.Region2_nr_Ir_product * Pr ** Const.Region2_Ir_less_1 * (Tr - 0.5) ** Const.Region2_Jr)
-    grpp = np.sum(
-        Const.Region2_nr_Ir_product * Const.Region2_Ir_less_1 * Pr ** Const.Region2_Ir_less_2 * (
-                    Tr - 0.5) ** Const.Region2_Jr)
-    grt = np.sum(Const.Region2_nr_Jr_product * Pr ** Const.Region2_Ir * (Tr - 0.5) ** Const.Region2_Jr_less_1)
-    grtt = np.sum(
-        Const.Region2_nr_Jr_product * Const.Region2_Jr_less_1 * Pr ** Const.Region2_Ir *
-        (Tr - 0.5) ** Const.Region2_Jr_less_2)
-    grpt = np.sum(
-        Const.Region2_nr_Ir_Jr_product * Pr ** Const.Region2_Ir_less_1 * (Tr - 0.5) ** Const.Region2_Jr_less_1)
+    gr = np.sum(n * Pr**Li * (Tr-0.5)**Lj)
+    grp = np.sum(n * Li * Pr**Li_1 * (Tr-0.5)**Lj)
+    grpp = np.sum(n * Li * Li_1 * Pr**Li_2 * (Tr-0.5)**Lj)
+    grt = np.sum(n * Lj * Pr**Li * (Tr-0.5)**Lj_1)
+    grtt = np.sum(n * Lj * Lj_1 * Pr**Li * (Tr-0.5)**Lj_2)
+    grpt = np.sum(n * Li * Lj * Pr**Li_1 * (Tr-0.5)**Lj_1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -880,10 +926,11 @@ def _Region2(T, P):
     propiedades["h"] = Tr * (got + grt) * R * T
     propiedades["s"] = R * (Tr * (got + grt) - (go + gr))
     propiedades["cp"] = -R * Tr ** 2 * (gott + grtt)
-    propiedades["cv"] = R * (-Tr ** 2 * (gott + grtt) - (1 + Pr * grp - Tr * Pr * grpt) ** 2
+    propiedades["cv"] = R * (-Tr**2*(gott+grtt) - (1 + Pr*grp - Tr*Pr*grpt)**2
                              / (1 - Pr ** 2 * grpp))
-    propiedades["w"] = (R * T * 1000 * (1 + 2 * Pr * grp + Pr ** 2 * grp ** 2) / (1 - Pr ** 2 * grpp + (
-            1 + Pr * grp - Tr * Pr * grpt) ** 2 / Tr ** 2 / (gott + grtt))) ** 0.5
+    propiedades["w"] = (R*T*1000*(1 + 2*Pr*grp + Pr**2*grp**2)
+                        / (1 - Pr**2*grpp + (1 + Pr*grp - Tr*Pr*grpt)**2
+                           / Tr**2 / (gott + grtt))) ** 0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
     propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 2
@@ -926,15 +973,15 @@ def Region2_cp0(Tr, Pr, meta=False):
         no = Const.Region2_cp0_no_meta
     else:
         no = Const.Region2_cp0_no
+    Jo = Const.Region2_cp0_Jo
 
     go = log(Pr)
     gop = Pr ** -1
     gopp = -Pr ** -2
     gopt = 0
-    go += np.sum(no * Tr ** Const.Region2_cp0_Jo)
-    got = np.sum(no * Const.Region2_cp0_Jo * Tr ** (Const.Region2_cp0_Jo - 1))
-    gott = np.sum(
-        no * Const.Region2_cp0_Jo * (Const.Region2_cp0_Jo - 1) * Tr ** (Const.Region2_cp0_Jo - 2))
+    go += np.sum(no * Tr**Jo)
+    got = np.sum(no * Jo * Tr**(Jo-1))
+    gott = np.sum(no * Jo * (Jo-1) * Tr**(Jo-2))
     return go, gop, gopp, got, gott, gopt
 
 
@@ -986,22 +1033,25 @@ def _Region2_meta(T, P):
     if P < 0:
         P = Pmin
 
+    n = Const.Region2_nr_m
+    Ir = Const.Region2_Ir_m
+    Jr = Const.Region2_Jr_m
+    Ir_1 = Const.Region2_Li_less_1_m
+    Ir_2 = Const.Region2_Li_less_2_m
+    Jr_1 = Const.Region2_Lj_less_1_m
+    Jr_2 = Const.Region2_Lj_less_2_m
+
     Tr = 540 / T
     Pr = P / 1
 
     go, gop, gopp, got, gott, gopt = Region2_cp0(Tr, Pr, True)
 
-    gr = np.sum(Const.Region2_nr_m * Pr ** Const.Region2_Ir_m * (Tr - 0.5) ** Const.Region2_Jr_m)
-    grp = np.sum(Const.Region2_nr_Ir_product_m * Pr ** Const.Region2_Ir_less_1_m * (Tr - 0.5) ** Const.Region2_Jr_m)
-    grpp = np.sum(
-        Const.Region2_nr_Ir_product_m * Const.Region2_Ir_less_1_m * Pr ** Const.Region2_Ir_less_2_m * (
-                    Tr - 0.5) ** Const.Region2_Jr_m)
-    grt = np.sum(Const.Region2_nr_Jr_product_m * Pr ** Const.Region2_Ir_m * (Tr - 0.5) ** Const.Region2_Jr_less_1_m)
-    grtt = np.sum(
-        Const.Region2_nr_Jr_product_m * Const.Region2_Jr_less_1_m * Pr ** Const.Region2_Ir_m *
-        (Tr - 0.5) ** Const.Region2_Jr_less_2_m)
-    grpt = np.sum(
-        Const.Region2_nr_Ir_Jr_product_m * Pr ** Const.Region2_Ir_less_1_m * (Tr - 0.5) ** Const.Region2_Jr_less_1_m)
+    gr = np.sum(n * Pr**Ir * (Tr-0.5)**Jr)
+    grp = np.sum(n * Ir * Pr**Ir_1 * (Tr-0.5)**Jr)
+    grpp = np.sum(n * Ir * Ir_1 * Pr**Ir_2 * (Tr-0.5)**Jr)
+    grt = np.sum(n * Jr * Pr**Ir * (Tr-0.5)**Jr_1)
+    grtt = np.sum(n * Jr * Jr_1 * Pr**Ir * (Tr-0.5)**Jr_2)
+    grpt = np.sum(n * Ir * Jr * Pr**Ir_1 * (Tr-0.5)**Jr_1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -1010,16 +1060,16 @@ def _Region2_meta(T, P):
     propiedades["h"] = Tr * (got + grt) * R * T
     propiedades["s"] = R * (Tr * (got + grt) - (go + gr))
     propiedades["cp"] = -R * Tr ** 2 * (gott + grtt)
-    propiedades["cv"] = R * (-Tr ** 2 * (gott + grtt) - (1 + Pr * grp - Tr * Pr * grpt) ** 2
-                             / (1 - Pr ** 2 * grpp))
-    propiedades["w"] = (R * T * 1000 * (1 + 2 * Pr * grp + Pr ** 2 * grp ** 2) / (1 - Pr ** 2 * grpp + (
-            1 + Pr * grp - Tr * Pr * grpt) ** 2 / Tr ** 2 / (gott + grtt))) ** 0.5
+    propiedades["cv"] = R * (-Tr**2*(gott+grtt) - (1+Pr*grp-Tr*Pr*grpt)**2
+                             / (1-Pr**2*grpp))
+    propiedades["w"] = (R*T*1000*(1 + 2*Pr*grp + Pr**2*grp**2)
+                        / (1-Pr**2*grpp + (1+Pr*grp-Tr*Pr*grpt)**2 / Tr**2
+                           / (gott + grtt))) ** 0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
     propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 2
     propiedades["x"] = 1
     return propiedades
-
 
 
 def _P_2bc(h):
@@ -1073,7 +1123,7 @@ def _hbc_P(P):
     >>> _hbc_P(100)
     3516.004323
     """
-    return 0.26526571908428e4 + ((P - 0.45257578905948e1) / 1.2809002730136e-4) ** 0.5
+    return 0.26526571908428e4 + ((P-4.5257578905948) / 1.2809002730136e-4)**0.5
 
 
 def _hab_s(s):
@@ -1141,9 +1191,13 @@ def _Backward2a_T_Ph(P, h):
     >>> _Backward2a_T_Ph(3,4000)
     1010.77577
     """
+    n = Const.Backward2a_T_Ph_n
+    Li = Const.Backward2a_T_Ph_Li
+    Lj = Const.Backward2a_T_Ph_Lj
+
     Pr = P / 1
     nu = h / 2000
-    T = np.sum(Const.Backward2a_T_Ph_n * Pr ** Const.Backward2a_T_Ph_Li * (nu - 2.1) ** Const.Backward2a_T_Ph_Lj)
+    T = np.sum(n * Pr**Li * (nu-2.1)**Lj)
     return T
 
 
@@ -1175,10 +1229,13 @@ def _Backward2b_T_Ph(P, h):
     >>> _Backward2b_T_Ph(25,3500)
     875.279054
     """
+    n = Const.Backward2b_T_Ph_n
+    Li = Const.Backward2b_T_Ph_Li
+    Lj = Const.Backward2b_T_Ph_Lj
+
     Pr = P / 1
     nu = h / 2000
-    T = np.sum(
-        Const.Backward2b_T_Ph_n * (Pr - 2) ** Const.Backward2b_T_Ph_Li * (nu - 2.6) ** Const.Backward2b_T_Ph_Lj)
+    T = np.sum(n * (Pr-2)**Li * (nu-2.6)**Lj)
     return T
 
 
@@ -1210,10 +1267,13 @@ def _Backward2c_T_Ph(P, h):
     >>> _Backward2c_T_Ph(60,3200)
     882.756860
     """
+    n = Const.Backward2c_T_Ph_n
+    Li = Const.Backward2c_T_Ph_Li
+    Lj = Const.Backward2c_T_Ph_Lj
+
     Pr = P / 1
     nu = h / 2000
-    T = np.sum(
-        Const.Backward2c_T_Ph_n * (Pr + 25) ** Const.Backward2c_T_Ph_Li * (nu - 1.8) ** Const.Backward2c_T_Ph_Lj)
+    T = np.sum(n * (Pr+25)**Li * (nu-1.8)**Lj)
     return T
 
 
@@ -1277,9 +1337,13 @@ def _Backward2a_T_Ps(P, s):
     >>> _Backward2a_T_Ps(2.5,8)
     1039.84917
     """
+    n = Const.Backward2a_T_Ps_n
+    Li = Const.Backward2a_T_Ps_Li
+    Lj = Const.Backward2a_T_Ps_Lj
+
     Pr = P / 1
     sigma = s / 2
-    T = np.sum(Const.Backward2a_T_Ps_n * Pr ** Const.Backward2a_T_Ps_Li * (sigma - 2) ** Const.Backward2a_T_Ps_Lj)
+    T = np.sum(n * Pr**Li * (sigma-2)**Lj)
     return T
 
 
@@ -1311,9 +1375,13 @@ def _Backward2b_T_Ps(P, s):
     >>> _Backward2b_T_Ps(90,6)
     1038.01126
     """
+    n = Const.Backward2b_T_Ps_n
+    Li = Const.Backward2b_T_Ps_Li
+    Lj = Const.Backward2b_T_Ps_Lj
+
     Pr = P / 1
     sigma = s / 0.7853
-    T = np.sum(Const.Backward2b_T_Ps_n * Pr ** Const.Backward2b_T_Ps_Li * (10 - sigma) ** Const.Backward2b_T_Ps_Lj)
+    T = np.sum(n * Pr**Li * (10-sigma)**Lj)
     return T
 
 
@@ -1345,9 +1413,13 @@ def _Backward2c_T_Ps(P, s):
     >>> _Backward2c_T_Ps(80,5.75)
     949.017998
     """
+    n = Const.Backward2c_T_Ps_n
+    Li = Const.Backward2c_T_Ps_Li
+    Lj = Const.Backward2c_T_Ps_Lj
+
     Pr = P / 1
     sigma = s / 2.9251
-    T = np.sum(Const.Backward2c_T_Ps_n * Pr ** Const.Backward2c_T_Ps_Li * (2 - sigma) ** Const.Backward2c_T_Ps_Lj)
+    T = np.sum(n * Pr**Li * (2-sigma)**Lj)
     return T
 
 
@@ -1410,10 +1482,13 @@ def _Backward2a_P_hs(h, s):
     >>> _Backward2a_P_hs(4100,9.5)
     0.1024788997
     """
+    n = Const.Backward2a_P_hs_n
+    Li = Const.Backward2a_P_hs_Li
+    Lj = Const.Backward2a_P_hs_Lj
+
     nu = h / 4200
     sigma = s / 12
-    suma = np.sum(
-        Const.Backward2a_P_hs_n * (nu - 0.5) ** Const.Backward2a_P_hs_Li * (sigma - 1.2) ** Const.Backward2a_P_hs_Lj)
+    suma = np.sum(n * (nu-0.5)**Li * (sigma-1.2)**Lj)
     return 4 * suma ** 4
 
 
@@ -1448,10 +1523,13 @@ def _Backward2b_P_hs(h, s):
     >>> _Backward2b_P_hs(3600,7)
     7.527161441
     """
+    n = Const.Backward2b_P_hs_n
+    Li = Const.Backward2b_P_hs_Li
+    Lj = Const.Backward2b_P_hs_Lj
+
     nu = h / 4100
     sigma = s / 7.9
-    suma = np.sum(Const.Backward2b_P_hs_n * (nu - 0.6) ** Const.Backward2b_P_hs_Li * (
-                sigma - 1.01) ** Const.Backward2b_P_hs_Lj)
+    suma = np.sum(n * (nu-0.6)**Li * (sigma-1.01)**Lj)
     return 100 * suma ** 4
 
 
@@ -1486,10 +1564,13 @@ def _Backward2c_P_hs(h, s):
     >>> _Backward2c_P_hs(3400,5.8)
     83.76903879
     """
+    n = Const.Backward2c_P_hs_n
+    Li = Const.Backward2c_P_hs_Li
+    Lj = Const.Backward2c_P_hs_Lj
+
     nu = h / 3500
     sigma = s / 5.9
-    suma = np.sum(
-        Const.Backward2c_P_hs_n * (nu - 0.7) ** Const.Backward2c_P_hs_Li * (sigma - 1.1) ** Const.Backward2c_P_hs_Lj)
+    suma = np.sum(n * (nu-0.7)**Li * (sigma-1.1)**Lj)
     return 100 * suma ** 4
 
 
@@ -1576,16 +1657,20 @@ def _Region3(rho, T):
     d = rho / rhoc
     Tr = Tc / T
 
-    g = (1.0658070028513 * log(d)) + np.sum(Const.Region3_n * d ** Const.Region3_Li * Tr ** Const.Region3_Lj)
-    gd = (1.0658070028513 / d) + np.sum(
-        Const.Region3_n_Li_product * d ** Const.Region3_Li_less_1 * Tr ** Const.Region3_Lj)
-    gdd = (-1.0658070028513 / d ** 2) + np.sum(
-        Const.Region3_n_Li_product * Const.Region3_Li_less_1 * d ** (
-            Const.Region3_Li_less_2) * Tr ** Const.Region3_Lj)
-    gt = np.sum(Const.Region3_n_Lj_product * d ** Const.Region3_Li * Tr ** Const.Region3_Lj_less_1)
-    gtt = np.sum(Const.Region3_n_Lj_product * Const.Region3_Lj_less_1 * d ** Const.Region3_Li * Tr ** (
-        Const.Region3_Lj_less_2))
-    gdt = np.sum(Const.Region3_n_Li_Lj_product * d ** Const.Region3_Li_less_1 * Tr ** Const.Region3_Lj_less_1)
+    n = Const.Region3_n
+    Li = Const.Region3_Li
+    Lj = Const.Region3_Lj
+    Li_1 = Const.Region3_Li_less_1
+    Li_2 = Const.Region3_Li_less_2
+    Lj_1 = Const.Region3_Lj_less_1
+    Lj_2 = Const.Region3_Lj_less_2
+
+    g = (1.0658070028513 * log(d)) + np.sum(n * d**Li * Tr**Lj)
+    gd = (1.0658070028513 / d) + np.sum(n * Li * d**Li_1 * Tr**Lj)
+    gdd = (-1.0658070028513/d**2) + np.sum(n * Li * Li_1 * d**Li_2 * Tr**Lj)
+    gt = np.sum(n * Lj * d**Li * Tr**Lj_1)
+    gtt = np.sum(n * Lj * Lj_1 * d**Li * Tr**Lj_2)
+    gdt = np.sum(n * Li * Lj * d**Li_1 * Tr**Lj_1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -1593,10 +1678,10 @@ def _Region3(rho, T):
     propiedades["v"] = 1 / rho
     propiedades["h"] = R * T * (Tr * gt + d * gd)
     propiedades["s"] = R * (Tr * gt - g)
-    propiedades["cp"] = R * (-Tr ** 2 * gtt + (d * gd - d * Tr * gdt) ** 2 / (2 * d * gd + d ** 2 * gdd))
+    propiedades["cp"] = R * (-Tr**2*gtt+(d*gd-d*Tr*gdt)**2/(2*d*gd+d**2*gdd))
     propiedades["cv"] = -R * Tr ** 2 * gtt
-    propiedades["w"] = sqrt(R * T * 1000 * (2 * d * gd + d ** 2 * gdd - (d * gd - d * Tr * gdt) ** 2
-                                            / Tr ** 2 / gtt))
+    propiedades["w"] = sqrt(R*T*1000 * (2*d*gd + d**2*gdd
+                                        - (d*gd - d*Tr*gdt)**2 / Tr**2 / gtt))
     propiedades["alfav"] = (gd - Tr * gdt) / (2 * gd + d * gdd) / T
     propiedades["kt"] = 1 / (2 * d * gd + d ** 2 * gdd) / rho / R / T * 1000
     propiedades["region"] = 3
@@ -1625,7 +1710,9 @@ def _h_3ab(P):
     >>> _h_3ab(25)
     2095.936454
     """
-    return 0.201464004206875e4 + 3.74696550136983 * P - 0.0219921901054187 * P ** 2 + 0.875131686009950e-4 * P ** 3
+    h = 0.201464004206875e4 + 3.74696550136983*P - 0.0219921901054187*P**2 \
+        + 0.875131686009950e-4*P**3
+    return h
 
 
 def _tab_P(P):
@@ -1743,7 +1830,7 @@ def _tef_P(P):
     >>> _tef_P(40)
     713.9593992
     """
-    return 3.727888004 * (P - 22.064) + 647.096
+    return 3.727888004*(P-22.064) + 647.096
 
 
 def _txx_P(P, xy):
@@ -1842,10 +1929,13 @@ def _Backward3a_v_Ph(P, h):
     >>> _Backward3a_v_Ph(100,2100)
     0.001676229776
     """
+    n = Const.Backward3a_v_Ph_n
+    Li = Const.Backward3a_v_Ph_Li
+    Lj = Const.Backward3a_v_Ph_Lj
+
     Pr = P / 100
     nu = h / 2100
-    suma = np.sum(
-        Const.Backward3a_v_Ph_n * (Pr + 0.128) ** Const.Backward3a_v_Ph_Li * (nu - 0.727) ** Const.Backward3a_v_Ph_Lj)
+    suma = np.sum(n * (Pr+0.128)**Li * (nu-0.727)**Lj)
     return 0.0028 * suma
 
 
@@ -1878,10 +1968,13 @@ def _Backward3b_v_Ph(P, h):
     >>> _Backward3b_v_Ph(100,2700)
     0.002404234998
     """
+    n = Const.Backward3b_v_Ph_n
+    Li = Const.Backward3b_v_Ph_Li
+    Lj = Const.Backward3b_v_Ph_Lj
+
     Pr = P / 100
     nu = h / 2800
-    suma = np.sum(Const.Backward3b_v_Ph_n * (Pr + 0.0661) ** Const.Backward3b_v_Ph_Li * (
-                nu - 0.72) ** Const.Backward3b_v_Ph_Lj)
+    suma = np.sum(n * (Pr+0.0661)**Li * (nu-0.72)**Lj)
     return 0.0088 * suma
 
 
@@ -1936,10 +2029,13 @@ def _Backward3a_T_Ph(P, h):
     >>> _Backward3a_T_Ph(100,2100)
     733.6163014
     """
+    n = Const.Backward3a_T_Ph_n
+    Li = Const.Backward3a_T_Ph_Li
+    Lj = Const.Backward3a_T_Ph_Lj
+
     Pr = P / 100.
     nu = h / 2300.
-    suma = np.sum(Const.Backward3a_T_Ph_n * (Pr + 0.240) ** Const.Backward3a_T_Ph_Li * (
-                nu - 0.615) ** Const.Backward3a_T_Ph_Lj)
+    suma = np.sum(n * (Pr+0.240)**Li * (nu-0.615)**Lj)
     return 760 * suma
 
 
@@ -1972,10 +2068,13 @@ def _Backward3b_T_Ph(P, h):
     >>> _Backward3b_T_Ph(100,2700)
     842.0460876
     """
+    n = Const.Backward3b_T_Ph_n
+    Li = Const.Backward3b_T_Ph_Li
+    Lj = Const.Backward3b_T_Ph_Lj
+
     Pr = P / 100.
     nu = h / 2800.
-    suma = np.sum(
-        Const.Backward3b_T_Ph_n * (Pr + 0.298) ** Const.Backward3b_T_Ph_Li * (nu - 0.72) ** Const.Backward3b_T_Ph_Lj)
+    suma = np.sum(n * (Pr+0.298)**Li * (nu-0.72)**Lj)
     return 860 * suma
 
 
@@ -2031,10 +2130,13 @@ def _Backward3a_v_Ps(P, s):
     >>> _Backward3a_v_Ps(100,4)
     0.001555893131
     """
+    n = Const.Backward3a_v_Ps_n
+    Li = Const.Backward3a_v_Ps_Li
+    Lj = Const.Backward3a_v_Ps_Lj
+
     Pr = P / 100
     sigma = s / 4.4
-    suma = np.sum(Const.Backward3a_v_Ps_n * (Pr + 0.187) ** Const.Backward3a_v_Ps_Li * (
-                sigma - 0.755) ** Const.Backward3a_v_Ps_Lj)
+    suma = np.sum(n * (Pr+0.187)**Li * (sigma-0.755)**Lj)
     return 0.0028 * suma
 
 
@@ -2067,10 +2169,13 @@ def _Backward3b_v_Ps(P, s):
     >>> _Backward3b_v_Ps(100,5)
     0.002449610757
     """
+    n = Const.Backward3b_v_Ps_n
+    Li = Const.Backward3b_v_Ps_Li
+    Lj = Const.Backward3b_v_Ps_Lj
+
     Pr = P / 100
     sigma = s / 5.3
-    suma = np.sum(Const.Backward3b_v_Ps_n * (Pr + 0.298) ** Const.Backward3b_v_Ps_Li * (
-                sigma - 0.816) ** Const.Backward3b_v_Ps_Lj)
+    suma = np.sum(n * (Pr+0.298)**Li * (sigma-0.816)**Lj)
     return 0.0088 * suma
 
 
@@ -2124,10 +2229,13 @@ def _Backward3a_T_Ps(P, s):
     >>> _Backward3a_T_Ps(100,4)
     705.6880237
     """
+    n = Const.Backward3a_T_Ps_n
+    Li = Const.Backward3a_T_Ps_Li
+    Lj = Const.Backward3a_T_Ps_Lj
+
     Pr = P / 100
     sigma = s / 4.4
-    suma = np.sum(Const.Backward3a_T_Ps_n * (Pr + 0.240) ** Const.Backward3a_T_Ps_Li * (
-                sigma - 0.703) ** Const.Backward3a_T_Ps_Lj)
+    suma = np.sum(n * (Pr+0.240)**Li * (sigma-0.703)**Lj)
     return 760 * suma
 
 
@@ -2160,10 +2268,13 @@ def _Backward3b_T_Ps(P, s):
     >>> _Backward3b_T_Ps(100,5)
     847.4332825
     """
+    n = Const.Backward3b_T_Ps_n
+    Li = Const.Backward3b_T_Ps_Li
+    Lj = Const.Backward3b_T_Ps_Lj
+
     Pr = P / 100
     sigma = s / 5.3
-    suma = np.sum(Const.Backward3b_T_Ps_n * (Pr + 0.760) ** Const.Backward3b_T_Ps_Li * (
-                sigma - 0.818) ** Const.Backward3b_T_Ps_Lj)
+    suma = np.sum(n * (Pr+0.760)**Li * (sigma-0.818)**Lj)
     return 860 * suma
 
 
@@ -2220,10 +2331,13 @@ def _Backward3a_P_hs(h, s):
     >>> _Backward3a_P_hs(2100,4.3)
     60.78123340
     """
+    n = Const.Backward3a_P_hs_n
+    Li = Const.Backward3a_P_hs_Li
+    Lj = Const.Backward3a_P_hs_Lj
+
     nu = h / 2300
     sigma = s / 4.4
-    suma = np.sum(Const.Backward3a_P_hs_n * (nu - 1.01) ** Const.Backward3a_P_hs_Li * (
-                sigma - 0.75) ** Const.Backward3a_P_hs_Lj)
+    suma = np.sum(n * (nu-1.01)**Li * (sigma-0.75)**Lj)
     return 99 * suma
 
 
@@ -2259,11 +2373,13 @@ def _Backward3b_P_hs(h, s):
     >>> _Backward3b_P_hs(2700,5.0)
     88.39043281
     """
+    n = Const.Backward3b_P_hs_n
+    Li = Const.Backward3b_P_hs_Li
+    Lj = Const.Backward3b_P_hs_Lj
 
     nu = h / 2800
     sigma = s / 5.3
-    suma = np.sum(Const.Backward3b_P_hs_n * (nu - 0.681) ** Const.Backward3b_P_hs_Li * (
-                sigma - 0.792) ** Const.Backward3b_P_hs_Lj)
+    suma = np.sum(n * (nu-0.681)**Li * (sigma-0.792)**Lj)
     return 16.6 / suma
 
 
@@ -2644,478 +2760,19 @@ def _Backward3x_v_PT(T, P, x):
     >>> _Backward3x_v_PT(647.15,22.064,"z")
     0.003701940009
     """
-    par = {
-        "a": [0.0024, 100, 760, 0.085, 0.817, 1, 1, 1],
-        "b": [0.0041, 100, 860, 0.280, 0.779, 1, 1, 1],
-        "c": [0.0022, 40, 690, 0.259, 0.903, 1, 1, 1],
-        "d": [0.0029, 40, 690, 0.559, 0.939, 1, 1, 4],
-        "e": [0.0032, 40, 710, 0.587, 0.918, 1, 1, 1],
-        "f": [0.0064, 40, 730, 0.587, 0.891, 0.5, 1, 4],
-        "g": [0.0027, 25, 660, 0.872, 0.971, 1, 1, 4],
-        "h": [0.0032, 25, 660, 0.898, 0.983, 1, 1, 4],
-        "i": [0.0041, 25, 660, 0.910, 0.984, 0.5, 1, 4],
-        "j": [0.0054, 25, 670, 0.875, 0.964, 0.5, 1, 4],
-        "k": [0.0077, 25, 680, 0.802, 0.935, 1, 1, 1],
-        "l": [0.0026, 24, 650, 0.908, 0.989, 1, 1, 4],
-        "m": [0.0028, 23, 650, 1.000, 0.997, 1, 0.25, 1],
-        "n": [0.0031, 23, 650, 0.976, 0.997, None, None, None],
-        "o": [0.0034, 23, 650, 0.974, 0.996, 0.5, 1, 1],
-        "p": [0.0041, 23, 650, 0.972, 0.997, 0.5, 1, 1],
-        "q": [0.0022, 23, 650, 0.848, 0.983, 1, 1, 4],
-        "r": [0.0054, 23, 650, 0.874, 0.982, 1, 1, 1],
-        "s": [0.0022, 21, 640, 0.886, 0.990, 1, 1, 4],
-        "t": [0.0088, 20, 650, 0.803, 1.020, 1, 1, 1],
-        "u": [0.0026, 23, 650, 0.902, 0.988, 1, 1, 1],
-        "v": [0.0031, 23, 650, 0.960, 0.995, 1, 1, 1],
-        "w": [0.0039, 23, 650, 0.959, 0.995, 1, 1, 4],
-        "x": [0.0049, 23, 650, 0.910, 0.988, 1, 1, 1],
-        "y": [0.0031, 22, 650, 0.996, 0.994, 1, 1, 4],
-        "z": [0.0038, 22, 650, 0.993, 0.994, 1, 1, 4],
-    }
-
-    Li = {
-        "a": [-12, -12, -12, -10, -10, -10, -8, -8, -8, -6, -5, -5, -5, -4, -3,
-              -3, -3, -3, -2, -2, -2, -1, -1, -1, 0, 0, 1, 1, 2, 2],
-        "b": [-12, -12, -10, -10, -8, -6, -6, -6, -5, -5, -5, -4, -4, -4, -3,
-              -3, -3, -3, -3, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 3, 4, 4],
-        "c": [-12, -12, -12, -10, -10, -10, -8, -8, -8, -6, -5, -5, -5, -4, -4,
-              -3, -3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3,
-              8],
-        "d": [-12, -12, -12, -12, -12, -12, -10, -10, -10, -10, -10, -10, -10,
-              -8, -8, -8, -8, -6, -6, -5, -5, -5, -5, -4, -4, -4, -3, -3, -2,
-              -2, -1, -1, -1, 0, 0, 1, 1, 3],
-        "e": [-12, -12, -10, -10, -10, -10, -10, -8, -8, -8, -6, -5, -4, -4,
-              -3, -3, -3, -2, -2, -2, -2, -1, 0, 0, 1, 1, 1, 2, 2],
-        "f": [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 6, 7, 7,
-              10, 12, 12, 12, 14, 14, 14, 14, 14, 16, 16, 18, 18, 20, 20, 20,
-              22, 24, 24, 28, 32],
-        "g": [-12, -12, -12, -12, -12, -12, -10, -10, -10, -8, -8, -8, -8, -6,
-              -6, -5, -5, -4, -3, -2, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1,
-              3, 5, 6, 8, 10, 10],
-        "h": [-12, -12, -10, -10, -10, -10, -10, -10, -8, -8, -8, -8, -8, -6,
-              -6, -6, -5, -5, -5, -4, -4, -3, -3, -2, -1, -1, 0, 1, 1],
-        "i": [0, 0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 5, 5, 5, 7, 7, 8, 8, 10,
-              12, 12, 12, 14, 14, 14, 14, 18, 18, 18, 18, 18, 20, 20, 22, 24,
-              24, 32, 32, 36, 36],
-        "j": [0, 0, 0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6, 10, 12, 12, 14, 14,
-              14, 16, 18, 20, 20, 24, 24, 28, 28],
-        "k": [-2, -2, -1, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2,
-              2, 2, 2, 2, 5, 5, 5, 6, 6, 6, 6, 8, 10, 12],
-        "l": [-12, -12, -12, -12, -12, -10, -10, -8, -8, -8, -8, -8, -8, -8,
-              -6, -5, -5, -4, -4, -3, -3, -3, -3, -2, -2, -2, -1, -1, -1, 0, 0,
-              0, 0, 1, 1, 2, 4, 5, 5, 6, 10, 10, 14],
-        "m": [0, 3, 8, 20, 1, 3, 4, 5, 1, 6, 2, 4, 14, 2, 5, 3, 0, 1, 1, 1, 28,
-              2, 16, 0, 5, 0, 3, 4, 12, 16, 1, 8, 14, 0, 2, 3, 4, 8, 14, 24],
-        "n": [0, 3, 4, 6, 7, 10, 12, 14, 18, 0, 3, 5, 6, 8, 12, 0, 3, 7, 12,
-              2, 3, 4, 2, 4, 7, 4, 3, 5, 6, 0, 0, 3, 1, 0, 1, 0, 1, 0, 1],
-        "o": [0, 0, 0, 2, 3, 4, 4, 4, 4, 4, 5, 5, 6, 7, 8, 8, 8, 10, 10, 14,
-              14, 20, 20, 24],
-        "p": [0, 0, 0, 0, 1, 2, 3, 3, 4, 6, 7, 7, 8, 10, 12, 12, 12, 14, 14,
-              14, 16, 18, 20, 22, 24, 24, 36],
-        "q": [-12, -12, -10, -10, -10, -10, -8, -6, -5, -5, -4, -4, -3, -2,
-              -2, -2, -2, -1, -1, -1, 0, 1, 1, 1],
-        "r": [-8, -8, -3, -3, -3, -3, -3, 0, 0, 0, 0, 3, 3, 8, 8, 8, 8, 10,
-              10, 10, 10, 10, 10, 10, 10, 12, 14],
-        "s": [-12, -12, -10, -8, -6, -5, -5, -4, -4, -3, -3, -2, -1, -1, -1, 0,
-              0, 0, 0, 1, 1, 3, 3, 3, 4, 4, 4, 5, 14],
-        "t": [0, 0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4, 7, 7, 7, 7, 7, 10, 10, 10,
-              10, 10, 18, 20, 22, 22, 24, 28, 32, 32, 32, 36],
-        "u": [-12, -10, -10, -10, -8, -8, -8, -6, -6, -5, -5, -5, -3, -1, -1,
-              -1, -1, 0, 0, 1, 2, 2, 3, 5, 5, 5, 6, 6, 8, 8, 10, 12, 12, 12,
-              14, 14, 14, 14],
-        "v": [-10, -8, -6, -6, -6, -6, -6, -6, -5, -5, -5, -5, -5, -5, -4, -4,
-              -4, -4, -3, -3, -3, -2, -2, -1, -1, 0, 0, 0, 1, 1, 3, 4, 4, 4, 5,
-              8, 10, 12, 14],
-        "w": [-12, -12, -10, -10, -8, -8, -8, -6, -6, -6, -6, -5, -4, -4, -3,
-              -3, -2, -2, -1, -1, -1, 0, 0, 1, 2, 2, 3, 3, 5, 5, 5, 8, 8, 10,
-              10],
-        "x": [-8, -6, -5, -4, -4, -4, -3, -3, -1, 0, 0, 0, 1, 1, 2, 3, 3, 3, 4,
-              5, 5, 5, 6, 8, 8, 8, 8, 10, 12, 12, 12, 12, 14, 14, 14, 14],
-        "y": [0, 0, 0, 0, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 8, 8, 10, 12],
-        "z": [-8, -6, -5, -5, -4, -4, -4, -3, -3, -3, -2, -1, 0, 1, 2, 3, 3, 6,
-              6, 6, 6, 8, 8]}
-
-    Lj = {
-        "a": [5, 10, 12, 5, 10, 12, 5, 8, 10, 1, 1, 5, 10, 8, 0, 1, 3, 6, 0,
-              2, 3, 0, 1, 2, 0, 1, 0, 2, 0, 2],
-        "b": [10, 12, 8, 14, 8, 5, 6, 8, 5, 8, 10, 2, 4, 5, 0, 1, 2, 3, 5, 0,
-              2, 5, 0, 2, 0, 1, 0, 2, 0, 2, 0, 1],
-        "c": [6, 8, 10, 6, 8, 10, 5, 6, 7, 8, 1, 4, 7, 2, 8, 0, 3, 0, 4, 5, 0,
-              1, 2, 0, 1, 2, 0, 2, 0, 1, 3, 7, 0, 7, 1],
-        "d": [4, 6, 7, 10, 12, 16, 0, 2, 4, 6, 8, 10, 14, 3, 7, 8, 10, 6, 8, 1,
-              2, 5, 7, 0, 1, 7, 2, 4, 0, 1, 0, 1, 5, 0, 2, 0, 6, 0],
-        "e": [14, 16, 3, 6, 10, 14, 16, 7, 8, 10, 6, 6, 2, 4, 2, 6, 7, 0, 1,
-              3, 4, 0, 0, 1, 0, 4, 6, 0, 2],
-        "f": [-3, -2, -1, 0, 1, 2, -1, 1, 2, 3, 0, 1, -5, -2, 0, -3, -8, 1, -6,
-              -4, 1, -6, -10, -8, -4, -12, -10, -8, -6, -4, -10, -8, -12, -10,
-              -12, -10, -6, -12, -12, -4, -12, -12],
-        "g": [7, 12, 14, 18, 22, 24, 14, 20, 24, 7, 8, 10, 12, 8, 22, 7, 20,
-              22, 7, 3, 5, 14, 24, 2, 8, 18, 0, 1, 2, 0, 1, 3, 24, 22, 12, 3,
-              0, 6],
-        "h": [8, 12, 4, 6, 8, 10, 14, 16, 0, 1, 6, 7, 8, 4, 6, 8, 2, 3, 4, 2,
-              4, 1, 2, 0, 0, 2, 0, 0, 2],
-        "i": [0, 1, 10, -4, -2, -1, 0, 0, -5, 0, -3, -2, -1, -6, -1, 12, -4,
-              -3, -6, 10, -8, -12, -6, -4, -10, -8, -4, 5, -12, -10, -8, -6,
-              2, -12, -10, -12, -12, -8, -10, -5, -10, -8],
-        "j": [-1, 0, 1, -2, -1, 1, -1, 1, -2, -2, 2, -3, -2, 0, 3, -6, -8, -3,
-              -10, -8, -5, -10, -12, -12, -10, -12, -6, -12, -5],
-        "k": [10, 12, -5, 6, -12, -6, -2, -1, 0, 1, 2, 3, 14, -3, -2, 0, 1, 2,
-              -8, -6, -3, -2, 0, 4, -12, -6, -3, -12, -10, -8, -5, -12, -12,
-              -10],
-        "l": [14, 16, 18, 20, 22, 14, 24, 6, 10, 12, 14, 18, 24, 36, 8, 4, 5,
-              7, 16, 1, 3, 18, 20, 2, 3, 10, 0, 1, 3, 0, 1, 2, 12, 0, 16, 1, 0,
-              0, 1, 14, 4, 12, 10],
-        "m": [0, 0, 0, 2, 5, 5, 5, 5, 6, 6, 7, 8, 8, 10, 10, 12, 14, 14, 18,
-              20, 20, 22, 22, 24, 24, 28, 28, 28, 28, 28, 32, 32, 32, 36, 36,
-              36, 36, 36, 36, 36],
-        "n": [-12, -12, -12, -12, -12, -12, -12, -12, -12, -10, -10, -10, -10,
-              -10, -10, -8, -8, -8, -8, -6, -6, -6, -5, -5, -5, -4, -3, -3,
-              -3, -2, -1, -1, 0, 1, 1, 2, 4, 5, 6],
-        "o": [-12, -4, -1, -1, -10, -12, -8, -5, -4, -1, -4, -3, -8, -12, -10,
-              -8, -4, -12, -8, -12, -8, -12, -10, -12],
-        "p": [-1, 0, 1, 2, 1, -1, -3, 0, -2, -2, -5, -4, -2, -3, -12, -6, -5,
-              -10, -8, -3, -8, -8, -10, -10, -12, -8, -12],
-        "q": [10, 12, 6, 7, 8, 10, 8, 6, 2, 5, 3, 4, 3, 0, 1, 2, 4, 0, 1, 2,
-              0, 0, 1, 3],
-        "r": [6, 14, -3, 3, 4, 5, 8, -1, 0, 1, 5, -6, -2, -12, -10, -8, -5,
-              -12, -10, -8, -6, -5, -4, -3, -2, -12, -12],
-        "s": [20, 24, 22, 14, 36, 8, 16, 6, 32, 3, 8, 4, 1, 2, 3, 0, 1, 4, 28,
-              0, 32, 0, 1, 2, 3, 18, 24, 4, 24],
-        "t": [0, 1, 4, 12, 0, 10, 0, 6, 14, 3, 8, 0, 10, 3, 4, 7, 20, 36, 10,
-              12, 14, 16, 22, 18, 32, 22, 36, 24, 28, 22, 32, 36, 36],
-        "u": [14, 10, 12, 14, 10, 12, 14, 8, 12, 4, 8, 12, 2, -1, 1, 12, 14,
-              -3, 1, -2, 5, 10, -5, -4, 2, 3, -5, 2, -8, 8, -4, -12, -4, 4,
-              -12, -10, -6, 6],
-        "v": [-8, -12, -12, -3, 5, 6, 8, 10, 1, 2, 6, 8, 10, 14, -12, -10, -6,
-              10, -3, 10, 12, 2, 4, -2, 0, -2, 6, 10, -12, -10, 3, -6, 3, 10,
-              2, -12, -2, -3, 1],
-        "w": [8, 14, -1, 8, 6, 8, 14, -4, -3, 2, 8, -10, -1, 3, -10, 3, 1, 2,
-              -8, -4, 1, -12, 1, -1, -1, 2, -12, -5, -10, -8, -6, -12, -10,
-              -12, -8],
-        "x": [14, 10, 10, 1, 2, 14, -2, 12, 5, 0, 4, 10, -10, -1, 6, -12, 0,
-              8, 3, -6, -2, 1, 1, -6, -3, 1, 8, -8, -10, -8, -5, -4, -12, -10,
-              -8, -6],
-        "y": [-3, 1, 5, 8, 8, -4, -1, 4, 5, -8, 4, 8, -6, 6, -2, 1, -8, -2,
-              -5, -8],
-        "z": [3, 6, 6, 8, 5, 6, 8, -2, 5, 6, 2, -6, 3, 1, 6, -6, -2, -6, -5,
-              -4, -1, -8, -4]}
-
-    n = {
-        "a": [0.110879558823853e-2, 0.572616740810616e3, -0.767051948380852e5,
-              -0.253321069529674e-1, 0.628008049345689e4, 0.234105654131876e6,
-              0.216867826045856, -0.156237904341963e3, -0.269893956176613e5,
-              -0.180407100085505e-3, 0.116732227668261e-2, 0.266987040856040e2,
-              0.282776617243286e5, -0.242431520029523e4, 0.435217323022733e-3,
-              -0.122494831387441e-1, 0.179357604019989e1, 0.442729521058314e2,
-              -0.593223489018342e-2, 0.453186261685774, 0.135825703129140e1,
-              0.408748415856745e-1, 0.474686397863312, 0.118646814997915e1,
-              0.546987265727549, 0.195266770452643, -0.502268790869663e-1,
-              -0.369645308193377, 0.633828037528420e-2, 0.797441793901017e-1],
-        "b": [-0.827670470003621e-1, 0.416887126010565e2, 0.483651982197059e-1,
-              -0.291032084950276e5, -0.111422582236948e3, -.202300083904014e-1,
-              0.294002509338515e3, 0.140244997609658e3, -0.344384158811459e3,
-              0.361182452612149e3, -0.140699677420738e4, -0.202023902676481e-2,
-              0.171346792457471e3, -0.425597804058632e1, 0.691346085000334e-5,
-              0.151140509678925e-2, -0.416375290166236e-1, -.413754957011042e2,
-              -0.506673295721637e2, -0.572212965569023e-3, 0.608817368401785e1,
-              0.239600660256161e2, 0.122261479925384e-1, 0.216356057692938e1,
-              0.398198903368642, -0.116892827834085, -0.102845919373532,
-              -0.492676637589284, 0.655540456406790e-1, -0.240462535078530,
-              -0.269798180310075e-1, 0.128369435967012],
-        "c": [0.311967788763030e1, 0.276713458847564e5, 0.322583103403269e8,
-              -0.342416065095363e3, -0.899732529907377e6, -0.793892049821251e8,
-              0.953193003217388e2, 0.229784742345072e4, 0.175336675322499e6,
-              0.791214365222792e7, 0.319933345844209e-4, -0.659508863555767e2,
-              -0.833426563212851e6, 0.645734680583292e-1, -0.382031020570813e7,
-              0.406398848470079e-4, 0.310327498492008e2, -0.892996718483724e-3,
-              0.234604891591616e3, 0.377515668966951e4, 0.158646812591361e-1,
-              0.707906336241843, 0.126016225146570e2, 0.736143655772152,
-              0.676544268999101, -0.178100588189137e2, -0.156531975531713,
-              0.117707430048158e2, 0.840143653860447e-1, -0.186442467471949,
-              -0.440170203949645e2, 0.123290423502494e7, -0.240650039730845e-1,
-              -0.107077716660869e7, 0.438319858566475e-1],
-        "d": [-0.452484847171645e-9, .315210389538801e-4, -.214991352047545e-2,
-              0.508058874808345e3, -0.127123036845932e8, 0.115371133120497e13,
-              -.197805728776273e-15, .241554806033972e-10,
-              -.156481703640525e-5, 0.277211346836625e-2, -0.203578994462286e2,
-              0.144369489909053e7, -0.411254217946539e11, 0.623449786243773e-5,
-              -.221774281146038e2, -0.689315087933158e5, -0.195419525060713e8,
-              0.316373510564015e4, 0.224040754426988e7, -0.436701347922356e-5,
-              -.404213852833996e-3, -0.348153203414663e3, -0.385294213555289e6,
-              0.135203700099403e-6, 0.134648383271089e-3, 0.125031835351736e6,
-              0.968123678455841e-1, 0.225660517512438e3, -0.190102435341872e-3,
-              -.299628410819229e-1, 0.500833915372121e-2, 0.387842482998411,
-              -0.138535367777182e4, 0.870745245971773, 0.171946252068742e1,
-              -.326650121426383e-1, 0.498044171727877e4, 0.551478022765087e-2],
-        "e": [0.715815808404721e9, -0.114328360753449e12, .376531002015720e-11,
-              -0.903983668691157e-4, 0.665695908836252e6, 0.535364174960127e10,
-              0.794977402335603e11, 0.922230563421437e2, -0.142586073991215e6,
-              -0.111796381424162e7, 0.896121629640760e4, -0.669989239070491e4,
-              0.451242538486834e-2, -0.339731325977713e2, -0.120523111552278e1,
-              0.475992667717124e5, -0.266627750390341e6, -0.153314954386524e-3,
-              0.305638404828265, 0.123654999499486e3, -0.104390794213011e4,
-              -0.157496516174308e-1, 0.685331118940253, 0.178373462873903e1,
-              -0.544674124878910, 0.204529931318843e4, -0.228342359328752e5,
-              0.413197481515899, -0.341931835910405e2],
-        "f": [-0.251756547792325e-7, .601307193668763e-5, -.100615977450049e-2,
-              0.999969140252192, 0.214107759236486e1, -0.165175571959086e2,
-              -0.141987303638727e-2, 0.269251915156554e1, 0.349741815858722e2,
-              -0.300208695771783e2, -0.131546288252539e1, -0.839091277286169e1,
-              0.181545608337015e-9, -0.591099206478909e-3, 0.152115067087106e1,
-              0.252956470663225e-4, 0.100726265203786e-14, -0.14977453386065e1,
-              -0.793940970562969e-9, -0.150290891264717e-3, .151205531275133e1,
-              0.470942606221652e-5, .195049710391712e-12, -.911627886266077e-8,
-              .604374640201265e-3, -.225132933900136e-15, .610916973582981e-11,
-              -.303063908043404e-6, -.137796070798409e-4, -.919296736666106e-3,
-              .639288223132545e-9, .753259479898699e-6, -0.400321478682929e-12,
-              .756140294351614e-8, -.912082054034891e-11, -.237612381140539e-7,
-              0.269586010591874e-4, -.732828135157839e-10, .241995578306660e-9,
-              -.405735532730322e-3, .189424143498011e-9, -.486632965074563e-9],
-        "g": [0.412209020652996e-4, -0.114987238280587e7, 0.948180885032080e10,
-              -0.195788865718971e18, 0.4962507048713e25, -0.105549884548496e29,
-              -0.758642165988278e12, -.922172769596101e23, .725379072059348e30,
-              -0.617718249205859e2, 0.107555033344858e5, -0.379545802336487e8,
-              0.228646846221831e12, -0.499741093010619e7, -.280214310054101e31,
-              0.104915406769586e7, 0.613754229168619e28, 0.802056715528378e32,
-              -0.298617819828065e8, -0.910782540134681e2, 0.135033227281565e6,
-              -0.712949383408211e19, -0.104578785289542e37, .304331584444093e2,
-              0.593250797959445e10, -0.364174062110798e28, 0.921791403532461,
-              -0.337693609657471, -0.724644143758508e2, -0.110480239272601,
-              0.536516031875059e1, -0.291441872156205e4, 0.616338176535305e40,
-              -0.120889175861180e39, 0.818396024524612e23, 0.940781944835829e9,
-              -0.367279669545448e5, -0.837513931798655e16],
-        "h": [0.561379678887577e-1, 0.774135421587083e10, 0.111482975877938e-8,
-              -0.143987128208183e-2, 0.193696558764920e4, -0.605971823585005e9,
-              0.171951568124337e14, -.185461154985145e17, 0.38785116807801e-16,
-              -.395464327846105e-13, -0.170875935679023e3, -0.21201062070122e4,
-              0.177683337348191e8, 0.110177443629575e2, -0.234396091693313e6,
-              -0.656174421999594e7, 0.156362212977396e-4, -0.212946257021400e1,
-              0.135249306374858e2, 0.177189164145813, 0.139499167345464e4,
-              -0.703670932036388e-2, -0.152011044389648, 0.981916922991113e-4,
-              0.147199658618076e-2, 0.202618487025578e2, 0.899345518944240,
-              -0.211346402240858, 0.249971752957491e2],
-        "i": [0.106905684359136e1, -0.148620857922333e1, 0.259862256980408e15,
-              -.446352055678749e-11, -.566620757170032e-6,
-              -.235302885736849e-2, -0.269226321968839, 0.922024992944392e1,
-              0.357633505503772e-11, -.173942565562222e2, 0.700681785556229e-5,
-              -.267050351075768e-3, -.231779669675624e1, -.753533046979752e-12,
-              .481337131452891e1, -0.223286270422356e22, -.118746004987383e-4,
-              .646412934136496e-2, -0.410588536330937e-9, .422739537057241e20,
-              .313698180473812e-12, 0.16439533434504e-23, -.339823323754373e-5,
-              -.135268639905021e-1, -.723252514211625e-14, .184386437538366e-8,
-              -.463959533752385e-1, -.99226310037675e14, .688169154439335e-16,
-              -.222620998452197e-10, -.540843018624083e-7, .345570606200257e-2,
-              .422275800304086e11, -.126974478770487e-14, .927237985153679e-9,
-              .612670812016489e-13, -.722693924063497e-11,
-              -.383669502636822e-3, .374684572410204e-3, -0.931976897511086e5,
-              -0.247690616026922e-1, .658110546759474e2],
-        "j": [-0.111371317395540e-3, 0.100342892423685e1, 0.530615581928979e1,
-              0.179058760078792e-5, -0.728541958464774e-3, -.187576133371704e2,
-              0.199060874071849e-2, 0.243574755377290e2, -0.177040785499444e-3,
-              -0.25968038522713e-2, -0.198704578406823e3, 0.738627790224287e-4,
-              -0.236264692844138e-2, -0.161023121314333e1, 0.622322971786473e4,
-              -.960754116701669e-8, -.510572269720488e-10, .767373781404211e-2,
-              .663855469485254e-14, -.717590735526745e-9, 0.146564542926508e-4,
-              .309029474277013e-11, -.464216300971708e-15,
-              -.390499637961161e-13, -.236716126781431e-9,
-              .454652854268717e-11, -.422271787482497e-2,
-              0.283911742354706e-10, 0.270929002720228e1],
-        "k": [-0.401215699576099e9, 0.484501478318406e11, .394721471363678e-14,
-              .372629967374147e5, -.369794374168666e-29, -.380436407012452e-14,
-              0.475361629970233e-6, -0.879148916140706e-3, 0.844317863844331,
-              0.122433162656600e2, -0.104529634830279e3, 0.589702771277429e3,
-              -.291026851164444e14, .170343072841850e-5, -0.277617606975748e-3,
-              -0.344709605486686e1, 0.221333862447095e2, -0.194646110037079e3,
-              .808354639772825e-15, -.18084520914547e-10, -.696664158132412e-5,
-              -0.181057560300994e-2, 0.255830298579027e1, 0.328913873658481e4,
-              -.173270241249904e-18, -.661876792558034e-6, -.39568892342125e-2,
-              .604203299819132e-17, -.400879935920517e-13, .160751107464958e-8,
-              .383719409025556e-4, -.649565446702457e-14, -.149095328506e-11,
-              0.541449377329581e-8],
-        "l": [0.260702058647537e10, -.188277213604704e15, 0.554923870289667e19,
-              -.758966946387758e23, .413865186848908e27, -.81503800073806e12,
-              -.381458260489955e33, -.123239564600519e-1, 0.226095631437174e8,
-              -.49501780950672e12, 0.529482996422863e16, -0.444359478746295e23,
-              .521635864527315e35, -0.487095672740742e55, -0.714430209937547e6,
-              0.127868634615495, -0.100752127917598e2, 0.777451437960990e7,
-              -.108105480796471e25, -.357578581169659e-5, -0.212857169423484e1,
-              0.270706111085238e30, -0.695953622348829e33, 0.110609027472280,
-              0.721559163361354e2, -0.306367307532219e15, 0.265839618885530e-4,
-              0.253392392889754e-1, -0.214443041836579e3, 0.937846601489667,
-              0.223184043101700e1, 0.338401222509191e2, 0.494237237179718e21,
-              -0.198068404154428, -0.141415349881140e31, -0.993862421613651e2,
-              0.125070534142731e3, -0.996473529004439e3, 0.473137909872765e5,
-              0.116662121219322e33, -0.315874976271533e16,
-              -0.445703369196945e33, 0.642794932373694e33],
-        "m": [0.811384363481847, -0.568199310990094e4, -0.178657198172556e11,
-              0.795537657613427e32, -0.814568209346872e5, -0.659774567602874e8,
-              -.152861148659302e11, -0.560165667510446e12, 0.458384828593949e6,
-              -0.385754000383848e14, 0.453735800004273e8, 0.939454935735563e12,
-              .266572856432938e28, -0.547578313899097e10, 0.200725701112386e15,
-              0.185007245563239e13, 0.185135446828337e9, -0.170451090076385e12,
-              0.157890366037614e15, -0.202530509748774e16, 0.36819392618357e60,
-              0.170215539458936e18, 0.639234909918741e42, -.821698160721956e15,
-              -.795260241872306e24, 0.23341586947851e18, -0.600079934586803e23,
-              0.594584382273384e25, 0.189461279349492e40, -.810093428842645e46,
-              0.188813911076809e22, 0.111052244098768e36, 0.291133958602503e46,
-              -.329421923951460e22, -.137570282536696e26, 0.181508996303902e28,
-              -.346865122768353e30, -.21196114877426e38, -0.128617899887675e49,
-              0.479817895699239e65],
-        "n": [.280967799943151e-38, .614869006573609e-30, .582238667048942e-27,
-              .390628369238462e-22, .821445758255119e-20, .402137961842776e-14,
-              .651718171878301e-12, -.211773355803058e-7, 0.264953354380072e-2,
-              -.135031446451331e-31, -.607246643970893e-23,
-              -.402352115234494e-18, -.744938506925544e-16,
-              .189917206526237e-12, .364975183508473e-5, .177274872361946e-25,
-              -.334952758812999e-18, -.421537726098389e-8,
-              -.391048167929649e-1, .541276911564176e-13, .705412100773699e-11,
-              .258585887897486e-8, -.493111362030162e-10, -.158649699894543e-5,
-              -0.525037427886100, 0.220019901729615e-2, -0.643064132636925e-2,
-              0.629154149015048e2, 0.135147318617061e3, 0.240560808321713e-6,
-              -.890763306701305e-3, -0.440209599407714e4, -0.302807107747776e3,
-              0.159158748314599e4, 0.232534272709876e6, -0.792681207132600e6,
-              -.869871364662769e11, .354542769185671e12, 0.400849240129329e15],
-        "o": [.128746023979718e-34, -.735234770382342e-11, .28907869214915e-2,
-              0.244482731907223, 0.141733492030985e-23, -0.354533853059476e-28,
-              -.594539202901431e-17, -.585188401782779e-8, .201377325411803e-5,
-              0.138647388209306e1, -0.173959365084772e-4, 0.137680878349369e-2,
-              .814897605805513e-14, .425596631351839e-25,
-              -.387449113787755e-17, .13981474793024e-12, -.171849638951521e-2,
-              0.641890529513296e-21, .118960578072018e-10,
-              -.155282762571611e-17, .233907907347507e-7,
-              -.174093247766213e-12, .377682649089149e-8,
-              -.516720236575302e-10],
-        "p": [-0.982825342010366e-4, 0.105145700850612e1, 0.116033094095084e3,
-              0.324664750281543e4, -0.123592348610137e4, -0.561403450013495e-1,
-              0.856677401640869e-7, 0.236313425393924e3, 0.972503292350109e-2,
-              -.103001994531927e1, -0.149653706199162e-8, -.215743778861592e-4,
-              -0.834452198291445e1, 0.586602660564988, 0.343480022104968e-25,
-              .816256095947021e-5, .294985697916798e-2, 0.711730466276584e-16,
-              0.400954763806941e-9, 0.107766027032853e2, -0.409449599138182e-6,
-              -.729121307758902e-5, 0.677107970938909e-8, 0.602745973022975e-7,
-              -.382323011855257e-10, .179946628317437e-2,
-              -.345042834640005e-3],
-        "q": [-0.820433843259950e5, 0.473271518461586e11, -.805950021005413e-1,
-              0.328600025435980e2, -0.35661702998249e4, -0.172985781433335e10,
-              0.351769232729192e8, -0.775489259985144e6, 0.710346691966018e-4,
-              0.993499883820274e5, -0.642094171904570, -0.612842816820083e4,
-              .232808472983776e3, -0.142808220416837e-4, -0.643596060678456e-2,
-              -0.428577227475614e1, 0.225689939161918e4, 0.100355651721510e-2,
-              0.333491455143516, 0.109697576888873e1, 0.961917379376452,
-              -0.838165632204598e-1, 0.247795908411492e1, -.319114969006533e4],
-        "r": [.144165955660863e-2, -.701438599628258e13, -.830946716459219e-16,
-              0.261975135368109, 0.393097214706245e3, -0.104334030654021e5,
-              0.490112654154211e9, -0.147104222772069e-3, 0.103602748043408e1,
-              0.305308890065089e1, -0.399745276971264e7, 0.569233719593750e-11,
-              -.464923504407778e-1, -.535400396512906e-17,
-              .399988795693162e-12, -.536479560201811e-6, .159536722411202e-1,
-              .270303248860217e-14, .244247453858506e-7, -0.983430636716454e-5,
-              0.663513144224454e-1, -0.993456957845006e1, 0.546491323528491e3,
-              -0.143365406393758e5, 0.150764974125511e6, -.337209709340105e-9,
-              0.377501980025469e-8],
-        "s": [-0.532466612140254e23, .100415480000824e32, -.191540001821367e30,
-              0.105618377808847e17, 0.202281884477061e59, 0.884585472596134e8,
-              0.166540181638363e23, -0.313563197669111e6, -.185662327545324e54,
-              -.624942093918942e-1, -0.50416072413259e10, 0.187514491833092e5,
-              0.121399979993217e-2, 0.188317043049455e1, -0.167073503962060e4,
-              0.965961650599775, 0.294885696802488e1, -0.653915627346115e5,
-              0.604012200163444e50, -0.198339358557937, -0.175984090163501e58,
-              0.356314881403987e1, -0.575991255144384e3, 0.456213415338071e5,
-              -.109174044987829e8, 0.437796099975134e34, -0.616552611135792e46,
-              0.193568768917797e10, 0.950898170425042e54],
-        "t": [0.155287249586268e1, 0.664235115009031e1, -0.289366236727210e4,
-              -0.385923202309848e13, -.291002915783761e1, -.829088246858083e12,
-              0.176814899675218e1, -0.534686695713469e9, 0.160464608687834e18,
-              0.196435366560186e6, 0.156637427541729e13, -0.178154560260006e1,
-              -0.229746237623692e16, 0.385659001648006e8, 0.110554446790543e10,
-              -.677073830687349e14, -.327910592086523e31, -.341552040860644e51,
-              -.527251339709047e21, .245375640937055e24, -0.168776617209269e27,
-              .358958955867578e29, -0.656475280339411e36, 0.355286045512301e39,
-              .569021454413270e58, -.700584546433113e48, -0.705772623326374e65,
-              0.166861176200148e53, -.300475129680486e61, -.668481295196808e51,
-              .428432338620678e69, -.444227367758304e72, -.281396013562745e77],
-        "u": [0.122088349258355e18, 0.104216468608488e10, -.882666931564652e16,
-              .259929510849499e20, 0.222612779142211e15, -0.878473585050085e18,
-              -0.314432577551552e22, -.216934916996285e13, .159079648196849e21,
-              -.339567617303423e3, 0.884387651337836e13, -0.843405926846418e21,
-              0.114178193518022e2, -0.122708229235641e-3, -0.106201671767107e3,
-              .903443213959313e25, -0.693996270370852e28, 0.648916718965575e-8,
-              0.718957567127851e4, 0.105581745346187e-2, -0.651903203602581e15,
-              -0.160116813274676e25, -0.510254294237837e-8, -0.152355388953402,
-              0.677143292290144e12, 0.276378438378930e15, 0.116862983141686e-1,
-              -.301426947980171e14, 0.169719813884840e-7, 0.104674840020929e27,
-              -0.10801690456014e5, -0.990623601934295e-12, 0.536116483602738e7,
-              .226145963747881e22, -0.488731565776210e-9, 0.151001548880670e-4,
-              -0.227700464643920e5, -0.781754507698846e28],
-        "v": [-.415652812061591e-54, .177441742924043e-60,
-              -.357078668203377e-54, 0.359252213604114e-25,
-              -0.259123736380269e2, 0.594619766193460e5, -0.624184007103158e11,
-              0.313080299915944e17, .105006446192036e-8, -0.192824336984852e-5,
-              0.654144373749937e6, 0.513117462865044e13, -.697595750347391e19,
-              -.103977184454767e29, .119563135540666e-47,
-              -.436677034051655e-41, .926990036530639e-29, .587793105620748e21,
-              .280375725094731e-17, -0.192359972440634e23, .742705723302738e27,
-              -0.517429682450605e2, 0.820612048645469e7, -0.188214882341448e-8,
-              .184587261114837e-1, -0.135830407782663e-5, -.723681885626348e17,
-              -.223449194054124e27, -.111526741826431e-34,
-              .276032601145151e-28, 0.134856491567853e15, 0.652440293345860e-9,
-              0.510655119774360e17, -.468138358908732e32, -.760667491183279e16,
-              -.417247986986821e-18, 0.312545677756104e14,
-              -.100375333864186e15, .247761392329058e27],
-        "w": [-.586219133817016e-7, -.894460355005526e11, .531168037519774e-30,
-              0.109892402329239, -0.575368389425212e-1, 0.228276853990249e5,
-              -.158548609655002e19, .329865748576503e-27,
-              -.634987981190669e-24, 0.615762068640611e-8, -.961109240985747e8,
-              -.406274286652625e-44, -0.471103725498077e-12, 0.725937724828145,
-              .187768525763682e-38, -.103308436323771e4, -0.662552816342168e-1,
-              0.579514041765710e3, .237416732616644e-26, .271700235739893e-14,
-              -0.9078862134836e2, -0.171242509570207e-36, 0.156792067854621e3,
-              0.923261357901470, -0.597865988422577e1, 0.321988767636389e7,
-              -.399441390042203e-29, .493429086046981e-7, .812036983370565e-19,
-              -.207610284654137e-11, -.340821291419719e-6,
-              .542000573372233e-17, -.856711586510214e-12,
-              0.266170454405981e-13, 0.858133791857099e-5],
-        "x": [.377373741298151e19, -.507100883722913e13, -0.10336322559886e16,
-              .184790814320773e-5, -.924729378390945e-3, -0.425999562292738e24,
-              -.462307771873973e-12, .107319065855767e22, 0.648662492280682e11,
-              0.244200600688281e1, -0.851535733484258e10, 0.169894481433592e22,
-              0.215780222509020e-26, -0.320850551367334, -0.382642448458610e17,
-              -.275386077674421e-28, -.563199253391666e6, -.326068646279314e21,
-              0.397949001553184e14, 0.100824008584757e-6, 0.162234569738433e5,
-              -0.432355225319745e11, -.59287424559861e12, 0.133061647281106e1,
-              0.157338197797544e7, 0.258189614270853e14, 0.262413209706358e25,
-              -.920011937431142e-1, 0.220213765905426e-2, -0.110433759109547e2,
-              0.847004870612087e7, -0.592910695762536e9, -0.183027173269660e-4,
-              0.181339603516302, -0.119228759669889e4, 0.430867658061468e7],
-        "y": [-0.525597995024633e-9, 0.583441305228407e4, -.134778968457925e17,
-              .118973500934212e26, -0.159096490904708e27, -.315839902302021e-6,
-              0.496212197158239e3, 0.327777227273171e19, -0.527114657850696e22,
-              .210017506281863e-16, 0.705106224399834e21, -.266713136106469e31,
-              -0.145370512554562e-7, 0.149333917053130e28, -.149795620287641e8,
-              -.3818819062711e16, 0.724660165585797e-4, -0.937808169550193e14,
-              0.514411468376383e10, -0.828198594040141e5],
-        "z": [0.24400789229065e-10, -0.463057430331242e7, 0.728803274777712e10,
-              .327776302858856e16, -.110598170118409e10, -0.323899915729957e13,
-              .923814007023245e16, 0.842250080413712e-12, 0.663221436245506e12,
-              -.167170186672139e15, .253749358701391e4, -0.819731559610523e-20,
-              0.328380587890663e12, -0.625004791171543e8, 0.803197957462023e21,
-              -.204397011338353e-10, -.378391047055938e4, 0.97287654593862e-2,
-              0.154355721681459e2, -0.373962862928643e4, -0.682859011374572e11,
-              -0.248488015614543e-3, 0.394536049497068e7]}
+    par = Const.Backward3_v_PT_par
+    Li = Const.Backward3_v_PT_Li
+    Lj = Const.Backward3_v_PT_Lj
+    n = Const.Backward3_v_PT_n
 
     v_, P_, T_, a, b, c, d, e = par[x]
 
     Pr = P / P_
     Tr = T / T_
-    suma = 0
     if x == "n":
-        for i, j, ni in zip(Li[x], Lj[x], n[x]):
-            suma += ni * (Pr - a) ** i * (Tr - b) ** j
-        return v_ * exp(suma)
+        return v_ * exp(np.sum(n[x] * (Pr-a)**Li[x] * (Tr-b)**Lj[x]))
 
-    for i, j, ni in zip(Li[x], Lj[x], n[x]):
-        suma += ni * (Pr - a) ** (c * i) * (Tr - b) ** (j * d)
-    return v_ * suma ** e
+    return v_ * np.sum(n[x] * (Pr-a)**(c*Li[x]) * (Tr-b)**(Lj[x]*d))**e
 
 
 # Region 4
@@ -3199,12 +2856,14 @@ def _Backward4_T_hs(h, s):
     >>> _Backward4_T_hs(2500,5.5)
     522.5579013
     """
+    n = Const.Backward4_T_hs_n
+    Li = Const.Backward4_T_hs_Li
+    Lj = Const.Backward4_T_hs_Lj
 
     nu = h / 2800
     sigma = s / 9.2
 
-    suma = np.sum(
-        Const.Backward4_T_hs_n * (nu - 0.119) ** Const.Backward4_T_hs_Li * (sigma - 1.07) ** Const.Backward4_T_hs_Lj)
+    suma = np.sum(n * (nu-0.119)**Li * (sigma-1.07)**Lj)
     return 550 * suma
 
 
@@ -3260,6 +2919,14 @@ def _Region5(T, P):
     >>> _Region5(2000,30)["kt"]
     0.0329193892
     """
+    n = Const.Region5_n
+    Li = Const.Region5_Li
+    Lj = Const.Region5_Lj
+    Li_1 = Const.Region5_Li_less_1
+    Li_2 = Const.Region5_Li_less_2
+    Lj_1 = Const.Region5_Lj_less_1
+    Lj_2 = Const.Region5_Lj_less_2
+
     if P < 0:
         P = Pmin
 
@@ -3268,14 +2935,12 @@ def _Region5(T, P):
 
     go, gop, gopp, got, gott, gopt = Region5_cp0(Tr, Pr)
 
-    gr = np.sum(Const.Region5_nr * Pr ** Const.Region5_Ir * Tr ** Const.Region5_Jr)
-    grp = np.sum(Const.Region5_nr_Ir_product * Pr ** Const.Region5_Ir_less_1 * Tr ** Const.Region5_Jr)
-    grpp = np.sum(Const.Region5_nr_Ir_product * Const.Region5_Ir_less_1 * Pr ** (
-        Const.Region5_Ir_less_2) * Tr ** Const.Region5_Jr)
-    grt = np.sum(Const.Region5_nr_Jr_product * Pr ** Const.Region5_Ir * Tr ** Const.Region5_Jr_less_1)
-    grtt = np.sum(Const.Region5_nr_Jr_product * Const.Region5_Jr_less_1 * Pr ** Const.Region5_Ir * Tr ** (
-        Const.Region5_Jr_less_2))
-    grpt = np.sum(Const.Region5_nr_Ir_Jr_product * Pr ** Const.Region5_Ir_less_1 * Tr ** Const.Region5_Jr_less_1)
+    gr = np.sum(n * Pr**Li * Tr**Lj)
+    grp = np.sum(n * Li * Pr**Li_1 * Tr**Lj)
+    grpp = np.sum(n * Li * Li_1 * Pr**Li_2 * Tr**Lj)
+    grt = np.sum(n * Lj * Pr**Li * Tr**Lj_1)
+    grtt = np.sum(n * Lj * Lj_1 * Pr**Li * Tr**Lj_2)
+    grpt = np.sum(n * Li * Lj * Pr**Li_1 * Tr**Lj_1)
 
     propiedades = {}
     propiedades["T"] = T
@@ -3284,10 +2949,10 @@ def _Region5(T, P):
     propiedades["h"] = Tr * (got + grt) * R * T
     propiedades["s"] = R * (Tr * (got + grt) - (go + gr))
     propiedades["cp"] = -R * Tr ** 2 * (gott + grtt)
-    propiedades["cv"] = R * (-Tr ** 2 * (gott + grtt) + ((gop + grp) - Tr * (gopt + grpt)) ** 2
-                             / (gopp + grpp))
-    propiedades["w"] = (R * T * 1000 * (1 + 2 * Pr * grp + Pr ** 2 * grp ** 2) / (1 - Pr ** 2 * grpp + (
-            1 + Pr * grp - Tr * Pr * grpt) ** 2 / Tr ** 2 / (gott + grtt))) ** 0.5
+    propiedades["cv"] = R * (-Tr**2*(gott+grtt) + ((gop+grp)-Tr*(gopt+grpt))**2
+                             / (gopp+grpp))
+    propiedades["w"] = (R*T*1000*(1 + 2*Pr*grp + Pr**2*grp**2) / (
+        1 - Pr**2*grpp + (1+Pr*grp-Tr*Pr*grpt)**2 / Tr**2 / (gott+grtt)))**0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
     propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 5
@@ -3323,12 +2988,17 @@ def Region5_cp0(Tr, Pr):
     Thermodynamic Properties of Water and Steam August 2007,
     http://www.iapws.org/relguide/IF97-Rev.html, Eq 33
     """
+    no = Const.Region5_cp0_no
+    Jo = Const.Region5_cp0_Jo
+    Jo_1 = Const.Region5_cp0_Jo_less_1
+    Jo_2 = Const.Region5_cp0_Jo_less_2
+
     gop = Pr ** -1
     gopp = -Pr ** -2
     gopt = 0
-    go = log(Pr) + np.sum(Const.Region5_cp0_no * Tr ** Const.Region5_cp0_Jo)
-    got = np.sum(Const.Region5_cp0_no_Jo_product * Tr ** Const.Region5_cp0_Jo_less_1)
-    gott = np.sum(Const.Region5_cp0_no_Jo_Jo_less_1_product * Tr ** Const.Region5_cp0_Jo_less_2)
+    go = log(Pr) + np.sum(no * Tr**Jo)
+    got = np.sum(no * Jo * Tr**Jo_1)
+    gott = np.sum(no * Jo * Jo_1 * Tr**Jo_2)
 
     return go, gop, gopp, got, gott, gopt
 
@@ -3868,6 +3538,7 @@ class IAPWS97(_fase):
 
     Liquid = None
     Vapor = None
+    Gas = None
 
     T = None
     P = None

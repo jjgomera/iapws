@@ -405,6 +405,7 @@ class MEoS(_fase):
 
     Liquid = None
     Gas = None
+    Vapor = None
 
     T = None
     Tr = None
@@ -1615,8 +1616,7 @@ class MEoS(_fase):
         rho_c = self._constants.get("rhoref", self.rhoc)
         T_c = self._constants.get("Tref", self.Tc)
 
-        if T > T_c:
-            T = T_c
+        T = min(T, T_c)
         tau = T_c/T
 
         rhoLo = self._Liquid_Density(T)
@@ -1686,8 +1686,7 @@ class MEoS(_fase):
             T = T[0]
         if rho < 0:
             rho = 1e-20
-        if T < 50:
-            T = 50
+        T = max(T, 50)
         rho_c = self._constants.get("rhoref", self.rhoc)
         T_c = self._constants.get("Tref", self.Tc)
         delta = rho/rho_c
