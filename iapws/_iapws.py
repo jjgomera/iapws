@@ -1085,7 +1085,7 @@ def _Kw(rho, T):
     http://www.iapws.org/relguide/Ionization.pdf
     """
     # Check input parameters
-    if rho < 0 or rho > 1250 or T < 273.15 or T > 1073.15:
+    if rho < 0 or rho > 1250 or T < 273.15 or T > 1273.15:
         raise NotImplementedError("Incoming out of bound")
 
     # The internal method of calculation use rho in g/cm³
@@ -1099,9 +1099,9 @@ def _Kw(rho, T):
     for i, g in enumerate(gamma):
         pKg += g/T**i
 
-    Q = d*exp(-0.864671+8659.19/T-22786.2/T**2*d**(2./3))
-    pKw = -12*(log10(1+Q)-Q/(Q+1)*d*(0.642044-56.8534/T-0.375754*d)) + \
-        pKg+2*log10(Mw/1000)
+    Z = d*exp(-0.702132+8681.05/T-24145.1/T**2*d**(2./3))
+    pKw = -12*(log10(1+Z)-Z/(Z+1)*d*(0.813876-51.4471/T-0.46992*d)) + \
+        pKg + 2*log10(Mw/1000)
     return pKw
 
 

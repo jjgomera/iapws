@@ -49,7 +49,7 @@ Releases:
 * R8-97: Release on the Static Dielectric Constant of Ordinary Water Substance for Temperatures from 238 K to 873 K and Pressures up to 1000 MPa, :func:`iapws._iapws._Dielectric`
 * R9-97: Release on the Refractive Index of Ordinary Water Substance as a Function of Wavelength, Temperature and Pressure, :func:`iapws._iapws._Refractive`
 * R10-06(2009): Revised Release on the Equation of State 2006 for H2O Ice Ih, :func:`iapws._iapws._Ice`
-* R11-07(2019): Release on the Ionization Constant of H2O, :func:`iapws._iapws._Kw`
+* R11-24(2024): Release on the Ionization Constant of H2O, :func:`iapws._iapws._Kw`
 * R12-08: Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance, :func:`iapws._iapws._Viscosity`
 * R13-08: Release on the IAPWS Formulation 2008 for the Thermodynamic Properties of Seawater, :func:`iapws.iapws08`
 * R14-08(2011): Revised Release on the Pressure along the Melting and Sublimation Curves of Ordinary Water Substance, :func:`iapws._iapws._Melting_Pressure`, :func:`iapws._iapws._Sublimation_Pressure`

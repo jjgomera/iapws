@@ -345,13 +345,14 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid.n, 6), 1.298369)
 
     def test_kw(self):
-        """Table 3, pag 5"""
+        """Table 2, pag 4"""
         self.assertRaises(NotImplementedError, _Kw, *(1000, 270))
-        self.assertEqual(round(_Kw(1000, 300), 6), 13.906565)
-        self.assertEqual(round(_Kw(70, 600), 6), 21.048874)
-        self.assertEqual(round(_Kw(700, 600), 6), 11.203153)
-        self.assertEqual(round(_Kw(200, 800), 6), 15.089765)
-        self.assertEqual(round(_Kw(1200, 800), 6), 6.438330)
+        self.assertEqual(round(_Kw(1000, 300), 6), 13.906672)
+        self.assertEqual(round(_Kw(70, 600), 6), 20.161651)
+        self.assertEqual(round(_Kw(700, 600), 6), 11.147093)
+        self.assertEqual(round(_Kw(200, 800), 6), 14.487671)
+        self.assertEqual(round(_Kw(1200, 800), 7), 6.4058649)
+        self.assertEqual(round(_Kw(0, 1270), 6), 35.081557)
 
     def test_liquid(self):
         """Table 8, pag 11"""
