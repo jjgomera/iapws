@@ -387,3 +387,9 @@ def deriv_G(state, z, x, y, fase):
 
     deriv = (dPdz * dTdy - dTdz * dPdy) / (dPdx * dTdy - dTdx * dPdy)
     return mul*deriv
+
+
+def _instanceBuilder(p2val, *args):
+    """Instance builder function"""
+    cls, p1name, p1val, p2name = args
+    return cls(**{p1name: p1val, p2name: p2val})

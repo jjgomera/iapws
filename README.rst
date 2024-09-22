@@ -80,9 +80,9 @@ IAPWS-IF97 (`see full documentation <https://iapws.readthedocs.io/en/latest/iapw
 .. code:: python
 
 	from iapws import IAPWS97
-	sat_steam=IAPWS97(P=1,x=1)                #saturated steam with known P
-	sat_liquid=IAPWS97(T=370, x=0)            #saturated liquid with known T
-	steam=IAPWS97(P=2.5, T=500)               #steam with known P and T
+	sat_steam = IAPWS97(P=1,x=1)                #saturated steam with known P
+	sat_liquid = IAPWS97(T=370, x=0)            #saturated liquid with known T
+	steam = IAPWS97(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
 
@@ -91,18 +91,41 @@ IAPWS-95 (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.
 .. code:: python
 
 	from iapws import IAPWS95
-	sat_steam=IAPWS95(P=1,x=1)                #saturated steam with known P
-	sat_liquid=IAPWS95(T=370, x=0)            #saturated liquid with known T
-	steam=IAPWS95(P=2.5, T=500)               #steam with known P and T
+	sat_steam = IAPWS95(P=1,x=1)                #saturated steam with known P
+	sat_liquid = IAPWS95(T=370, x=0)            #saturated liquid with known T
+	steam = IAPWS95(P=2.5, T=500)               #steam with known P and T
 	print(sat_steam.h, sat_liquid.h, steam.h) #calculated enthalpies
     
+For calculation of multiple states is possible use multiprocessing to speed up
+calculation, 6x in my laptop. Method valid too for D2O
+
+.. code:: python
+
+    from iapws import IAPWS95
+    from numpy import arange
+    from time import time
+
+    x = arange(0, 1.01, 0.01)
+
+    def fi(x):
+        return IAPWS95(P=20.8, x=x)
+
+    start = time()
+    for xi in x:
+        fi(xi)
+    print(f'Without multiprocessing: {time() - start}')
+
+    start = time()
+    states = IAPWS95.from_list("P", 20.8, "x", x)
+    print(f'With multiprocessing: {time() - start}')
+
 
 IAPWS-17 for Heavy water (`see full documentation <https://iapws.readthedocs.io/en/latest/iapws.iapws95.html#iapws.iapws95.D2O>`__)
 
 .. code:: python
 
 	from iapws import D2O
-	sat_liquid=D2O(T=370, x=0)            #saturated liquid with known T
+	sat_liquid = D2O(T=370, x=0)            #saturated liquid with known T
 	print(sat_liquid.h)                   #calculated enthalpy
 
 
@@ -111,7 +134,7 @@ IAPWS-06 for Ice Ih (`see full documentation <https://iapws.readthedocs.io/en/la
 .. code:: python
 
     from iapws import _Ice
-    ice=_Ice(273.15, 0.101325)            #Ice at normal melting point
+    ice = _Ice(273.15, 0.101325)            #Ice at normal melting point
     print(ice["rho"])                     #Calculated density
 
 

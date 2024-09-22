@@ -14,6 +14,8 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
 
 
 from __future__ import division
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
 import os
 import platform
 import warnings
@@ -25,7 +27,7 @@ from .iapws97 import _TSat_P, IAPWS97
 from ._iapws import M, Tc, Pc, rhoc, Tc_D2O, Pc_D2O, rhoc_D2O
 from ._iapws import _Viscosity, _ThCond, _Dielectric, _Refractive, _Tension
 from ._iapws import _D2O_Viscosity, _D2O_ThCond, _D2O_Tension
-from ._utils import _fase, getphase, deriv_H
+from ._utils import _fase, getphase, deriv_H, _instanceBuilder
 
 
 def _phir(tau, delta, coef):
@@ -432,6 +434,38 @@ class MEoS(_fase):
     cv0 = None
     cp0_cv = None
     gamma0 = None
+
+
+    @classmethod
+    def from_list(cls, p1name, p1val, p2name, p2val):
+        """Speed up method using multiprocessing for multiple point calculation
+        with a fixed input and changing other input parameter
+
+        Parameters
+        ----------
+        p1name : str
+            string with name of fixed input parameter
+        p1val : float
+            fixed input parameter value
+        p2name : str
+            string with name of changing input parameter
+        p2val : list
+            iterable with values of changing input parameter
+
+        Returns
+        -------
+        states : list
+            list with calculated states
+        """
+        with ProcessPoolExecutor() as executor:
+            states = executor.map(
+                _instanceBuilder, *(p2val, repeat(cls), repeat(p1name),
+                                    repeat(p1val), repeat(p2name)))
+
+        lst = []
+        for state in states:
+            lst.append(state)
+        return lst
 
     def __init__(self, **kwargs):
         """Constructor, define common constant and initinialice kwargs"""
