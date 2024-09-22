@@ -14,7 +14,13 @@ Implemented multiparameter equation of state as a Helmholtz free energy:
 
 
 from __future__ import division
-from concurrent.futures import ProcessPoolExecutor
+try:
+    from concurrent.futures import ProcessPoolExecutor
+except ImportError:
+    # python2
+    pass
+
+
 from itertools import repeat
 import os
 import platform
@@ -457,14 +463,24 @@ class MEoS(_fase):
         states : list
             list with calculated states
         """
-        with ProcessPoolExecutor() as executor:
-            states = executor.map(
-                _instanceBuilder, *(p2val, repeat(cls), repeat(p1name),
-                                    repeat(p1val), repeat(p2name)))
-
+        py_version = platform.python_version_tuple()[0]
         lst = []
-        for state in states:
-            lst.append(state)
+        if py_version == "3":
+            with ProcessPoolExecutor() as executor:
+                states = executor.map(
+                    _instanceBuilder, *(p2val, repeat(cls), repeat(p1name),
+                                        repeat(p1val), repeat(p2name)))
+
+            for state in states:
+                lst.append(state)
+        elif py_version == "2":
+            # Disable multithreading in python2
+            def fi(x):
+                return cls(**{p1name: p1val, p2name: x})
+
+            for xi in p2val:
+                lst.append(fi(xi))
+
         return lst
 
     def __init__(self, **kwargs):
@@ -2299,8 +2315,8 @@ def mainClassDoc():
     def decorator(f):
         # __doc__ is only writable in python3.
         # The doc build must be done with python3 so this snnippet do the work
-        py_version = platform.python_version()
-        if py_version[0] == "3":
+        py_version = platform.python_version_tuple()[0]
+        if py_version == 3:
             doc = f.__doc__.split(os.linesep)
             try:
                 ind = doc.index("")
