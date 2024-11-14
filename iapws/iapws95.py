@@ -1688,7 +1688,7 @@ class MEoS(_fase):
 
         rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
         if rhoL == rhoG:
-            Ps = self.Pc
+            Ps = self.Pc*1e3
         else:
             deltaL = rhoL/self.rhoc
             deltaG = rhoG/self.rhoc
