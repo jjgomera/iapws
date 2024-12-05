@@ -1964,12 +1964,20 @@ class MEoS(_fase):
                     + 2*A**2/bt**2*(((delta-1)**2)**(0.5/bt-1))**2
                     + A*Tita*4/bt*(0.5/bt-1)*((delta-1)**2)**(0.5/bt-2))
 
-            DeltaBd = b*Delta**(b-1)*Deltad
-            DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
-            DeltaBt = -2*Tita*b*Delta**(b-1)
-            DeltaBtt = 2*b*Delta**(b-1)+4*Tita**2*b*(b-1)*Delta**(b-2)
-            DeltaBdt = -A*b*2/bt*Delta**(b-1)*(delta-1)*((delta-1)**2)**(
-                0.5/bt-1)-2*Tita*b*(b-1)*Delta**(b-2)*Deltad
+            # Avoid ZeroDivisionError at critical point
+            if Delta == 0:
+                DeltaBd = 0
+                DeltaBdd = 0
+                DeltaBt = 0
+                DeltaBtt = 0
+                DeltaBdt = 0
+            else:
+                DeltaBd = b*Delta**(b-1)*Deltad
+                DeltaBdd = b*(Delta**(b-1)*Deltadd+(b-1)*Delta**(b-2)*Deltad**2)
+                DeltaBt = -2*Tita*b*Delta**(b-1)
+                DeltaBtt = 2*b*Delta**(b-1)+4*Tita**2*b*(b-1)*Delta**(b-2)
+                DeltaBdt = -A*b*2/bt*Delta**(b-1)*(delta-1)*((delta-1)**2)**(
+                    0.5/bt-1)-2*Tita*b*(b-1)*Delta**(b-2)*Deltad
 
             fir += n*Delta**b*delta*F
             fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
