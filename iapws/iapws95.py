@@ -180,7 +180,11 @@ def _phird(tau, delta, coef):
         Delta = Tita**2+B*((delta-1)**2)**a
         Deltad = (delta-1)*(A*Tita*2/bt*((delta-1)**2)**(0.5/bt-1)
                             + 2*B*a*((delta-1)**2)**(a-1))
-        DeltaBd = b*Delta**(b-1)*Deltad
+
+        if Delta == 0:
+            DeltaBd = 0
+        else:
+            DeltaBd = b*Delta**(b-1)*Deltad
 
         fird += n*(Delta**b*(F+delta*Fd)+DeltaBd*delta*F)
 
@@ -257,7 +261,12 @@ def _phirt(tau, delta, coef):
         F = exp(-C*(delta-1)**2-D*(tau-1)**2)
         Ft = -2*D*F*(tau-1)
         Delta = Tita**2+B*((delta-1)**2)**a
-        DeltaBt = -2*Tita*b*Delta**(b-1)
+
+        if Delta == 0:
+            DeltaBt = 0
+        else:
+            DeltaBt = -2*Tita*b*Delta**(b-1)
+
         firt += n*delta*(DeltaBt*F+Delta**b*Ft)
 
     return firt
@@ -440,7 +449,6 @@ class MEoS(_fase):
     cv0 = None
     cp0_cv = None
     gamma0 = None
-
 
     @classmethod
     def from_list(cls, p1name, p1val, p2name, p2val):
