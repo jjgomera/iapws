@@ -1381,7 +1381,7 @@ def _D2O_Tension(T):
     http://www.iapws.org/relguide/surfd2o.pdf
     """
     Tr = T/643.847
-    if 269.65 <= T < 643.847:
+    if 269.65 <= T <= 643.847:
         return 1e-3*(238*(1-Tr)**1.25*(1-0.639*(1-Tr)))
 
     raise NotImplementedError("Incoming out of bound")
