@@ -22,11 +22,13 @@ except ImportError:
 
 
 from itertools import repeat
+import json
 import os
 import platform
 import warnings
 
 from numpy import exp, log, ndarray
+from numpy.polynomial import chebyshev
 from scipy.optimize import fsolve
 
 from .iapws97 import _TSat_P, IAPWS97
@@ -1671,39 +1673,80 @@ class MEoS(_fase):
 
     def _saturation(self, T):
         """Saturation calculation for two phase search"""
-        rho_c = self._constants.get("rhoref", self.rhoc)
-        T_c = self._constants.get("Tref", self.Tc)
 
-        T = min(T, T_c)
-        tau = T_c/T
+        # Added support for superancillary equation to try speed up saturation
+        # iteration
+        # Using generated data from https://github.com/usnistgov/fastchebpure
 
-        rhoLo = self._Liquid_Density(T)
-        rhoGo = self._Vapor_Density(T)
+        Ps, rhoL, rhoG = None, None, None
+        anc_file = os.path.join(
+            os.path.dirname(__file__), "%s_anc.json" %self.__class__.__name__)
+        if os.path.isfile(anc_file):
+            with open(anc_file) as anc_file:
+                dat = json.load(anc_file)
+                for coefs in dat["jexpansions_p"]:
+                    coef = coefs["coef"]
+                    xmin = coefs["xmin"]
+                    xmax = coefs["xmax"]
+                    if xmin <= T <= xmax:
+                        c = chebyshev.Chebyshev(coef, domain=(xmin, xmax))
+                        Ps = c(T)/1e3
+                        break
 
-        def f(parr):
-            rhol, rhog = parr
-            deltaL = rhol/rho_c
-            deltaG = rhog/rho_c
-            phirL = _phir(tau, deltaL, self._constants)
-            phirG = _phir(tau, deltaG, self._constants)
-            phirdL = _phird(tau, deltaL, self._constants)
-            phirdG = _phird(tau, deltaG, self._constants)
-            Jl = deltaL*(1+deltaL*phirdL)
-            Jv = deltaG*(1+deltaG*phirdG)
-            Kl = deltaL*phirdL+phirL+log(deltaL)
-            Kv = deltaG*phirdG+phirG+log(deltaG)
-            return Kv-Kl, Jv-Jl
+                for coefs in dat["jexpansions_rhoL"]:
+                    coef = coefs["coef"]
+                    xmin = coefs["xmin"]
+                    xmax = coefs["xmax"]
+                    if xmin <= T <= xmax:
+                        c = chebyshev.Chebyshev(coef, domain=(xmin, xmax))
+                        rhoL = c(T)*self.M/1e3
+                        break
 
-        rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
-        if rhoL == rhoG:
-            Ps = self.Pc*1e3
-        else:
-            deltaL = rhoL/self.rhoc
-            deltaG = rhoG/self.rhoc
-            firL = _phir(tau, deltaL, self._constants)
-            firG = _phir(tau, deltaG, self._constants)
+                for coefs in dat["jexpansions_rhoV"]:
+                    coef = coefs["coef"]
+                    xmin = coefs["xmin"]
+                    xmax = coefs["xmax"]
+                    if xmin <= T <= xmax:
+                        c = chebyshev.Chebyshev(coef, domain=(xmin, xmax))
+                        rhoG = c(T)*self.M/1e3
+                        break
 
-            Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
+        if Ps is None:
+            rho_c = self._constants.get("rhoref", self.rhoc)
+            T_c = self._constants.get("Tref", self.Tc)
+
+            T = min(T, T_c)
+            tau = T_c/T
+
+            rhoLo = self._Liquid_Density(T)
+            rhoGo = self._Vapor_Density(T)
+
+            def f(parr):
+                rhol, rhog = parr
+                deltaL = rhol/rho_c
+                deltaG = rhog/rho_c
+                phirL = _phir(tau, deltaL, self._constants)
+                phirG = _phir(tau, deltaG, self._constants)
+                phirdL = _phird(tau, deltaL, self._constants)
+                phirdG = _phird(tau, deltaG, self._constants)
+                Jl = deltaL*(1+deltaL*phirdL)
+                Jv = deltaG*(1+deltaG*phirdG)
+                Kl = deltaL*phirdL+phirL+log(deltaL)
+                Kv = deltaG*phirdG+phirG+log(deltaG)
+                return Kv-Kl, Jv-Jl
+
+            rhoL, rhoG = fsolve(f, [rhoLo, rhoGo])
+            if rhoL == rhoG:
+                Ps = self.Pc*1e3
+            else:
+                deltaL = rhoL/self.rhoc
+                deltaG = rhoG/self.rhoc
+                firL = _phir(tau, deltaL, self._constants)
+                firG = _phir(tau, deltaG, self._constants)
+
+                Ps = self.R*T*rhoL*rhoG/(rhoL-rhoG)*(firL-firG+log(deltaL/deltaG))
+
+        # print(rhoL, rhoG, Ps)
         return rhoL, rhoG, Ps
 
     def _Helmholtz(self, rho, T):

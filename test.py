@@ -153,7 +153,7 @@ class Test(unittest.TestCase):
         self.assertEqual(round(Ps, 9), 0.698451167)
         self.assertEqual(round(rhol, 6), 999.887406)
         self.assertEqual(round(rhov, 11), 0.00550664919)
-        self.assertEqual(round(liquid["h"], 8), 7.75972202)
+        self.assertEqual(round(liquid["h"], 8), 7.75972201)
         self.assertEqual(round(vapor["h"], 5), 2504.28995)
         self.assertEqual(round(liquid["s"], 10), 0.0283094670)
         self.assertEqual(round(vapor["s"], 8), 9.10660121)
