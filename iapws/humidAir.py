@@ -23,7 +23,7 @@ try:
     from numpy import atan
 except ImportError:
     from math import atan
-    
+
 import warnings
 
 from scipy.optimize import fsolve
