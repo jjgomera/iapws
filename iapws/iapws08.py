@@ -23,7 +23,7 @@ Other functionality:
 """
 
 from __future__ import division
-from math import exp, log
+from numpy import exp, log
 import warnings
 
 from scipy.optimize import fsolve
@@ -508,7 +508,7 @@ def _Tf(P, S):
     Properties of Seawater, http://www.iapws.org/relguide/Advise5.html, Eq 12
     """
     def f(T):
-        T = float(T)
+        T = float(T.item())
         pw = _Region1(T, P)
         gw = pw["h"]-T*pw["s"]
 

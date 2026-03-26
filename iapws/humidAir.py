@@ -18,7 +18,12 @@ include:
 
 
 from __future__ import division
-from math import exp, log, pi, atan
+from numpy import exp, log, pi
+try:
+    from numpy import atan
+except ImportError:
+    from math import atan
+
 import warnings
 
 from scipy.optimize import fsolve
@@ -733,11 +738,13 @@ class HumidAir(object):
         if A_sat:
             self.xa_sat = A_sat*MW/Ma/(1-A_sat*(1-MW/Ma))
             self.RH = (1-self.xa)/(1-self.xa_sat)
+            self.HR_sat = 1 / A_sat - 1
         else:
             self.xa_sat = None
             self.RH = None
             self.msg = "Saturation state don't converge"
             self.status = 3
+            self.HR_sat = None
 
     def derivative(self, z, x, y):
         """
