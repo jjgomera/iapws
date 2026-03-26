@@ -33,7 +33,12 @@ Miscelaneous IAPWS standards. This module include:
 from __future__ import division
 
 from cmath import log as log_c
-from math import log, exp, tan, atan, acos, sin, pi, log10
+from numpy import log, exp, tan, sin, pi, log10
+try:
+    from numpy import acos, atan
+except ImportError:
+    from math import acos, atan
+
 import warnings
 
 from scipy.optimize import newton

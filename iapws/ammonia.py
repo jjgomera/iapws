@@ -14,7 +14,7 @@ include:
 
 
 from __future__ import division
-from math import exp, log, pi
+from numpy import exp, log, pi
 import warnings
 
 from scipy.constants import Boltzmann

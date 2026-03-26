@@ -87,7 +87,7 @@ doi: 10.1007/978-3-540-74234-0
 """
 
 from __future__ import division
-from math import sqrt, log, exp
+from numpy import sqrt, log, exp
 from scipy.optimize import fsolve, newton
 import numpy as np
 
