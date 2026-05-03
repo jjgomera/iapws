@@ -270,7 +270,7 @@ def deriv_G(state, z, x, y, fase):
     y : str
         Name of constant variable in partial derivaritive
     fase : any python object
-        Define phase specific properties (v, cp, alfav, s, xkappa)
+        Define phase specific properties (v, cp, alfav, s, kappa)
 
     Notes
     -----
@@ -311,10 +311,10 @@ def deriv_G(state, z, x, y, fase):
         dPdx = 0.0
         dTdx = 1.0
     elif x == "v":
-        dPdx = -fase.v*fase.xkappa
+        dPdx = -fase.v*fase.kappa
         dTdx = fase.v*fase.alfav
     elif x == "u":
-        dPdx = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
+        dPdx = fase.v*(state.P*1000.0*fase.kappa-state.T*fase.alfav)
         dTdx = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif x == "h":
         dPdx = fase.v*(1.0-state.T*fase.alfav)
@@ -326,7 +326,7 @@ def deriv_G(state, z, x, y, fase):
         dPdx = fase.v
         dTdx = -fase.s
     elif x == "a":
-        dPdx = state.P*1000.0*fase.v*fase.xkappa
+        dPdx = state.P*1000.0*fase.v*fase.kappa
         dTdx = -state.P * 1000.0 * fase.v * fase.alfav - fase.s
     else:
         raise ValueError("x must be one of P, T, v, u, h, s, g, a")
@@ -338,10 +338,10 @@ def deriv_G(state, z, x, y, fase):
         dPdy = 0.0
         dTdy = 1.0
     elif y == "v":
-        dPdy = -fase.v*fase.xkappa
+        dPdy = -fase.v*fase.kappa
         dTdy = fase.v*fase.alfav
     elif y == "u":
-        dPdy = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
+        dPdy = fase.v*(state.P*1000.0*fase.kappa-state.T*fase.alfav)
         dTdy = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif y == "h":
         dPdy = fase.v*(1.0-state.T*fase.alfav)
@@ -353,7 +353,7 @@ def deriv_G(state, z, x, y, fase):
         dPdy = fase.v
         dTdy = -fase.s
     elif y == "a":
-        dPdy = state.P*1000.0*fase.v*fase.xkappa
+        dPdy = state.P*1000.0*fase.v*fase.kappa
         dTdy = -state.P * 1000.0 * fase.v * fase.alfav - fase.s
     else:
         raise ValueError("y must be one of P, T, v, u, h, s, g, a")
@@ -365,10 +365,10 @@ def deriv_G(state, z, x, y, fase):
         dPdz = 0.0
         dTdz = 1.0
     elif z == "v":
-        dPdz = -fase.v*fase.xkappa
+        dPdz = -fase.v*fase.kappa
         dTdz = fase.v*fase.alfav
     elif z == "u":
-        dPdz = fase.v*(state.P*1000.0*fase.xkappa-state.T*fase.alfav)
+        dPdz = fase.v*(state.P*1000.0*fase.kappa-state.T*fase.alfav)
         dTdz = fase.cp-state.P*1000.0*fase.v*fase.alfav
     elif z == "h":
         dPdz = fase.v*(1.0-state.T*fase.alfav)
@@ -380,7 +380,7 @@ def deriv_G(state, z, x, y, fase):
         dPdz = fase.v
         dTdz = -fase.s
     elif z == "a":
-        dPdz = state.P*1000.0*fase.v*fase.xkappa
+        dPdz = state.P*1000.0*fase.v*fase.kappa
         dTdz = -state.P * 1000.0 * fase.v * fase.alfav - fase.s
     else:
         raise ValueError("z must be one of P, T, v, u, h, s, g, a")

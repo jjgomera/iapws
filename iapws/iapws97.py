@@ -660,7 +660,7 @@ def _Region1(T, P):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -686,7 +686,7 @@ def _Region1(T, P):
     1240.71337
     >>> _Region1(500,3)["alfav"]
     0.00164118128
-    >>> _Region1(500,3)["kt"]
+    >>> _Region1(500,3)["xpakka"]
     0.00112892188
     """
     if P < 0:
@@ -721,7 +721,7 @@ def _Region1(T, P):
     propiedades["w"] = sqrt(R * T * 1000 * gp ** 2 / \
                             ((gp - Tr * gpt) ** 2 / (Tr ** 2 * gtt) - gpp))
     propiedades["alfav"] = (1 - Tr * gpt / gp) / T
-    propiedades["kt"] = -Pr * gpp / gp / P
+    propiedades["kappa"] = -Pr * gpp / gp / P
     propiedades["region"] = 1
     propiedades["x"] = 0
     return propiedades
@@ -867,7 +867,7 @@ def _Region2(T, P):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -893,7 +893,7 @@ def _Region2(T, P):
     427.920172
     >>> _Region2(300,0.0035)["alfav"]
     0.00337578289
-    >>> _Region2(300,0.0035)["kt"]
+    >>> _Region2(300,0.0035)["kappa"]
     286.239651
     """
     if P < 0:
@@ -932,7 +932,7 @@ def _Region2(T, P):
                         / (1 - Pr**2*grpp + (1 + Pr*grp - Tr*Pr*grpt)**2
                            / Tr**2 / (gott + grtt))) ** 0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
-    propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
+    propiedades["kappa"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 2
     propiedades["x"] = 1
     return propiedades
@@ -1007,7 +1007,7 @@ def _Region2_meta(T, P):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -1066,7 +1066,7 @@ def _Region2_meta(T, P):
                         / (1-Pr**2*grpp + (1+Pr*grp-Tr*Pr*grpt)**2 / Tr**2
                            / (gott + grtt))) ** 0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
-    propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
+    propiedades["kappa"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 2
     propiedades["x"] = 1
     return propiedades
@@ -1623,7 +1623,7 @@ def _Region3(rho, T):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -1650,7 +1650,7 @@ def _Region3(rho, T):
     383.444594
     >>> _Region3(500,750)["alfav"]
     0.00441515098
-    >>> _Region3(500,750)["kt"]
+    >>> _Region3(500,750)["kappa"]
     0.00806710817
     """
 
@@ -1683,7 +1683,7 @@ def _Region3(rho, T):
     propiedades["w"] = sqrt(R*T*1000 * (2*d*gd + d**2*gdd
                                         - (d*gd - d*Tr*gdt)**2 / Tr**2 / gtt))
     propiedades["alfav"] = (gd - Tr * gdt) / (2 * gd + d * gdd) / T
-    propiedades["kt"] = 1 / (2 * d * gd + d ** 2 * gdd) / rho / R / T * 1000
+    propiedades["kappa"] = 1 / (2 * d * gd + d ** 2 * gdd) / rho / R / T * 1000
     propiedades["region"] = 3
 
     propiedades["x"] = 1
@@ -2821,7 +2821,7 @@ def _Region4(P, x):
     propiedades["cv"] = None
     propiedades["w"] = None
     propiedades["alfav"] = None
-    propiedades["kt"] = None
+    propiedades["kappa"] = None
     propiedades["region"] = 4
     propiedades["x"] = x
     return propiedades
@@ -2893,7 +2893,7 @@ def _Region5(T, P):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
 
     References
     ----------
@@ -2919,7 +2919,7 @@ def _Region5(T, P):
     1067.36948
     >>> _Region5(2000,30)["alfav"]
     0.000508830641
-    >>> _Region5(2000,30)["kt"]
+    >>> _Region5(2000,30)["kappa"]
     0.0329193892
     """
     n = Const.Region5_n
@@ -2957,7 +2957,7 @@ def _Region5(T, P):
     propiedades["w"] = (R*T*1000*(1 + 2*Pr*grp + Pr**2*grp**2) / (
         1 - Pr**2*grpp + (1+Pr*grp-Tr*Pr*grpt)**2 / Tr**2 / (gott+grtt)))**0.5
     propiedades["alfav"] = (1 + Pr * grp - Tr * Pr * grpt) / (1 + Pr * grp) / T
-    propiedades["kt"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
+    propiedades["kappa"] = (1 - Pr ** 2 * grpp) / (1 + Pr * grp) / P
     propiedades["region"] = 5
     propiedades["x"] = 1
     return propiedades
@@ -3395,7 +3395,7 @@ def prop0(T, P):
             * cv: Specific isocoric heat capacity, [kJ/kgK]
             * w: Speed of sound, [m/s]
             * alfav: Cubic expansion coefficient, [1/K]
-            * kt: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
     """
     if T <= 1073.15:
         Tr = 540 / T
@@ -3415,7 +3415,7 @@ def prop0(T, P):
 
     p0["w"] = (R * T * 1000 / (1 + 1 / Tr ** 2 / gott)) ** 0.5
     p0["alfav"] = 1 / T
-    p0["xkappa"] = 1 / P
+    p0["kappa"] = 1 / P
     return p0
 
 
@@ -3470,7 +3470,7 @@ class IAPWS97(_fase):
 
             * gamma: Isoentropic exponent, [-]
             * alfav: Isobaric cubic expansion coefficient, [1/K]
-            * xkappa: Isothermal compressibility, [1/MPa]
+            * kappa: Isothermal compressibility, [1/MPa]
             * kappas: Adiabatic compresibility, [1/MPa]
             * alfap: Relative pressure coefficient, [1/K]
             * betap: Isothermal stress coefficient, [kg/m³]
@@ -3918,7 +3918,7 @@ class IAPWS97(_fase):
 
         fase.Z = self.P * fase.v / R * 1000 / self.T
         fase.alfav = estado["alfav"]
-        fase.xkappa = estado["kt"]
+        fase.kappa = estado["kappa"]
         fase.kappas = -1 / fase.v * self.derivative("v", "P", "s", fase)
 
         fase.joule = self.derivative("T", "P", "h", fase)
@@ -3926,7 +3926,7 @@ class IAPWS97(_fase):
         fase.gamma = -fase.v/self.P \
             * self.derivative("P", "v", "T", fase)*fase.cp_cv
 
-        fase.alfap = fase.alfav / self.P / fase.xkappa
+        fase.alfap = fase.alfav / self.P / fase.kappa
         fase.betap = -1 / self.P * self.derivative("P", "v", "T", fase)
 
         fase.fi = exp((fase.g - self.g0) / R / self.T)
