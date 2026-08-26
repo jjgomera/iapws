@@ -858,6 +858,22 @@ class Test(unittest.TestCase):
         self.assertEqual(round(fluid["cp"], 8), 2.88569882)
         self.assertEqual(round(fluid["w"], 5), 1067.36948)
 
+    def test_IAPWS97_pressure_derivative_units(self):
+        """Joule-Thomson properties use the documented per-MPa units."""
+        # Cover each single-phase IF97 region. With v in m³/kg and cp in
+        # kJ/kg/K, these identities are naturally per kPa, hence the 1e3
+        # conversion to the public K/MPa and kJ/kg/MPa units.
+        states = ((300, 3, 1), (700, 1, 2),
+                  (650, 25, 3), (1500, 0.5, 5))
+        for T, P, region in states:
+            fluid = IAPWS97(T=T, P=P)
+            joule = 1e3 * fluid.v / fluid.cp * (T * fluid.alfav - 1)
+            deltat = 1e3 * fluid.v * (1 - T * fluid.alfav)
+
+            self.assertEqual(fluid.region, region)
+            self.assertAlmostEqual(fluid.joule, joule, places=10)
+            self.assertAlmostEqual(fluid.deltat, deltat, places=10)
+
     def test_IAPWS97_custom(self):
         """Cycle input parameter from selected point for IAPWS97"""
         # Region 1
