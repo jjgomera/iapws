@@ -3921,8 +3921,10 @@ class IAPWS97(_fase):
         fase.kappa = estado["kappa"]
         fase.kappas = -1 / fase.v * self.derivative("v", "P", "s", fase)
 
-        fase.joule = self.derivative("T", "P", "h", fase)
-        fase.deltat = self.derivative("h", "P", "T", fase)
+        # deriv_G combines kJ with m³, so pressure derivatives are
+        # numerically per kPa. Convert to the documented per-MPa units.
+        fase.joule = self.derivative("T", "P", "h", fase) * 1e3
+        fase.deltat = self.derivative("h", "P", "T", fase) * 1e3
         fase.gamma = -fase.v/self.P \
             * self.derivative("P", "v", "T", fase)*fase.cp_cv
 
