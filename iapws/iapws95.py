@@ -1632,8 +1632,8 @@ class MEoS(_fase):
             * self.derivative("P", "v", "T", fase)*fase.cp_cv*1e-3
         fase.kt = -fase.v/self.P*self.derivative("P", "v", "T", fase)*1e-3
         fase.ks = -self.derivative("v", "P", "s", fase)/fase.v*1e3
-        fase.Kt = -fase.v*self.derivative("P", "v", "s", fase)*1e-3
-        fase.Ks = -fase.v*self.derivative("P", "v", "T", fase)*1e-3
+        fase.Kt = -fase.v*self.derivative("P", "v", "T", fase)*1e-3
+        fase.Ks = -fase.v*self.derivative("P", "v", "s", fase)*1e-3
         fase.dhdT_rho = self.derivative("h", "T", "rho", fase)
         fase.dhdT_P = self.derivative("h", "T", "P", fase)
         fase.dhdP_T = self.derivative("h", "P", "T", fase)*1e3
