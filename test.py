@@ -44,6 +44,31 @@ class Test(unittest.TestCase):
     Run for python2 and python3 before to release distribution
     """
 
+    def test_bulk_moduli(self):
+        """Isothermal and isentropic bulk moduli have distinct identities."""
+        for fluid in (IAPWS95, D2O):
+            for temperature, pressure in ((300, 0.1), (500, 0.1), (700, 30)):
+                state = fluid(T=temperature, P=pressure)
+                self.assertAlmostEqual(state.Kt*state.kappa, 1.0, places=9)
+                self.assertAlmostEqual(state.Ks*state.ks, 1.0, places=9)
+                self.assertAlmostEqual(state.Ks/state.Kt, state.cp_cv, places=9)
+                self.assertAlmostEqual(
+                    state.Ks/(state.rho*state.w**2/1e6), 1.0, places=9)
+
+                # Independent isothermal pressure-density finite difference.
+                drho = state.rho*1e-5
+                lower = fluid(T=temperature, rho=state.rho-drho)
+                upper = fluid(T=temperature, rho=state.rho+drho)
+                modulus = state.rho*(upper.P-lower.P)/(2*drho)
+                self.assertAlmostEqual(state.Kt/modulus, 1.0, places=6)
+
+            # fill() also populates the properties of both saturated phases.
+            mixture = fluid(T=450, x=0.5)
+            for phase in (mixture.Liquid, mixture.Gas):
+                self.assertAlmostEqual(phase.Kt*phase.kappa, 1.0, places=9)
+                self.assertAlmostEqual(phase.Ks*phase.ks, 1.0, places=9)
+                self.assertAlmostEqual(phase.Ks/phase.Kt, phase.cp_cv, places=9)
+
     def test_Helmholtz(self):
         """Table 6 from IAPWS95, pag 14"""
         T = 500
