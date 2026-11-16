@@ -2444,6 +2444,32 @@ class Test(unittest.TestCase):
         self.assertEqual(round(Air(rho=5*28.9586, T=300).k, 7), 32.6062e-3)
         # self.assertEqual(round(Air(rho=10.4*28.9586, T=132.64).k, 7), 75.6231e-3)
 
+    def test_HumidAir_unknown_inputs(self):
+        """Unsupported keywords fail before changing an existing state (#84)."""
+        for name in ("RH", "phi", "rh", "relative_humidity", "temperature"):
+            with self.assertRaises(TypeError) as caught:
+                HumidAir(T=300, P=0.101325, **{name: 0.5})
+            self.assertIn(name, str(caught.exception))
+
+        state = HumidAir(T=300, P=0.101325, A=0.99)
+        before = state.kwargs.copy()
+        properties = (state.T, state.P, state.A, state.RH, state.status)
+        with self.assertRaises(TypeError) as caught:
+            state(T=310, RH=0.5)
+        self.assertIn("RH", str(caught.exception))
+        self.assertEqual(state.kwargs, before)
+        self.assertEqual((state.T, state.P, state.A, state.RH, state.status),
+                         properties)
+
+        # Empty and partially specified objects still support staged input.
+        state = HumidAir()
+        state(T=300)
+        state(P=0.101325)
+        self.assertEqual(state.status, 0)
+        state(HR=0.01/0.99)
+        self.assertEqual(state.status, 1)
+        self.assertAlmostEqual(state.A, 0.99)
+
     def test_HumidAir(self):
         """Tables 13-15 from page 19"""
         # Table 13
