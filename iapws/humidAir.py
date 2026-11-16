@@ -552,6 +552,8 @@ class HumidAir(object):
     * It needs two incoming properties of T, P, rho.
     * v as a alternate input parameter to rho
     * For composition need one of A, xa, W, xw, HR.
+    * RH is a calculated property, not an input parameter. Unsupported input
+      keywords raise TypeError, including when updating an existing instance.
 
     The calculated instance has the following properties:
 
@@ -635,6 +637,10 @@ class HumidAir(object):
 
     def __call__(self, **kwargs):
         """Make instance callable to can add input parameter one to one"""
+        unknown = set(kwargs).difference(HumidAir.kwargs)
+        if unknown:
+            raise TypeError("Unsupported HumidAir input parameter(s): %s" %
+                            ", ".join(sorted(unknown)))
         # Check alernate input parameters
         if kwargs.get("v", None) is not None:
             kwargs["rho"] = 1./kwargs["v"]
