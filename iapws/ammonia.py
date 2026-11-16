@@ -286,8 +286,8 @@ class H2ONH3(object):
                         / (1+2*delta*fird+delta**2*firdd))
         prop["w"] = (R*T*1000*(1+2*delta*fird+delta**2*firdd
                                + (1+delta*fird-delta*tau*firdt)**2 / cvR))**0.5
-        prop["fugH2O"] = Z*exp(fir+delta*fird-x*F)
-        prop["fugNH3"] = Z*exp(fir+delta*fird+(1-x)*F)
+        prop["fugH2O"] = exp(fir+delta*fird-x*F)/Z
+        prop["fugNH3"] = exp(fir+delta*fird+(1-x)*F)/Z
         return prop
 
     @staticmethod
