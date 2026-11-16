@@ -1,5 +1,5 @@
 import unittest
-from math import exp, log
+from math import log
 from iapws.ammonia import H2ONH3, NH3
 from iapws import IAPWS95
 
