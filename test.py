@@ -2447,14 +2447,16 @@ class Test(unittest.TestCase):
     def test_HumidAir_unknown_inputs(self):
         """Unsupported keywords fail before changing an existing state (#84)."""
         for name in ("RH", "phi", "rh", "relative_humidity", "temperature"):
-            with self.assertRaisesRegex(TypeError, name):
+            with self.assertRaises(TypeError) as caught:
                 HumidAir(T=300, P=0.101325, **{name: 0.5})
+            self.assertIn(name, str(caught.exception))
 
         state = HumidAir(T=300, P=0.101325, A=0.99)
         before = state.kwargs.copy()
         properties = (state.T, state.P, state.A, state.RH, state.status)
-        with self.assertRaisesRegex(TypeError, "RH"):
+        with self.assertRaises(TypeError) as caught:
             state(T=310, RH=0.5)
+        self.assertIn("RH", str(caught.exception))
         self.assertEqual(state.kwargs, before)
         self.assertEqual((state.T, state.P, state.A, state.RH, state.status),
                          properties)
