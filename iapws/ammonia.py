@@ -422,12 +422,14 @@ class H2ONH3(object):
         """
         # Temperature reducing value, Eq 4
         Tc12 = 0.9648407/2*(IAPWS95.Tc+NH3.Tc)
-        Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-x**1.125455)*Tc12
+        a = 1.125455
+        xa = x**a
+        Tn = (1-x)**2*IAPWS95.Tc + x**2*NH3.Tc + 2*x*(1-xa)*Tc12
 
         # sympy.diff("(1-x)^2*Tc1 + x^2*Tc2 + 2*x*(1-x^a)*Tc12", "x")
         # Out[]: Tc1*(2*x - 2) - 2*Tc12*a*x**a + 2*Tc12*(1 - x**a) + 2*Tc2*x
-        dTnx = -2*IAPWS95.Tc*(1-x) + 2*x*NH3.Tc + 2*Tc12*(1-x**1.125455) - \
-            2*Tc12*1.12455*x**1.12455
+        dTnx = -2*IAPWS95.Tc*(1-x) + 2*x*NH3.Tc + 2*Tc12*(1-xa) - \
+            2*Tc12*a*xa
 
         # Density reducing value, Eq 5
         b = 0.8978069
@@ -555,7 +557,7 @@ class H2ONH3(object):
             firtt += x*n*t*(t-1)*delta**d*tau**(t-2)*exp(-delta**c)
             firdt += x*n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*exp(
                 -delta**c)
-            firx += x*dfx*n*delta**d*tau**t*exp(-delta**c)
+            firx += (x*dfx+fx)*n*delta**d*tau**t*exp(-delta**c)
 
         n = -0.7777897
         t = 4
@@ -569,7 +571,7 @@ class H2ONH3(object):
         firtt += x**2*n*t*(t-1)*delta**d*tau**(t-2)*exp(-delta**c)
         firdt += x**2*n*t*delta**(d-1)*tau**(t-1)*(d-c*delta**c)*exp(
             -delta**c)
-        firx += x**2*dfx*n*delta**d*tau**t*exp(-delta**c)
+        firx += (x**2*dfx+2*x*fx)*n*delta**d*tau**t*exp(-delta**c)
 
         prop = {}
         prop["fir"] = fir*fx
